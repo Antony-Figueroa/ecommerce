@@ -1,199 +1,78 @@
-# Arquitectura del Sistema - Ana's Supplements
+# 🏗️ Arquitectura del Sistema - Ana's Supplements
 
-## Visión General
+Este documento describe la estructura técnica, el stack tecnológico y el modelo de datos del proyecto.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Vite + React + TypeScript)    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
-│  │   Catálogo   │  │   Carrito   │  │     Admin Dashboard      │ │
-│  │   Público    │  │  WhatsApp   │  │  (Productos, Ventas)    │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
-└──────────────────────────┬────────────────────────────────────┘
-                           │ API REST
-┌──────────────────────────┴────────────────────────────────────┐
-│                    BACKEND (Express + TypeScript)              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐ │
-│  │   Auth JWT   │  │   Rutas API  │  │    Servicios de       │ │
-│  │              │  │   /admin/    │  │    Negocio           │ │
-│  └──────────────┘  └──────────────┘  └──────────────────────┘ │
-└──────────────────────────┬────────────────────────────────────┘
-                           │ Prisma ORM
-┌──────────────────────────┴────────────────────────────────────┐
-│                    BASE DE DATOS (SQLite)                      │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────────────┐  │
-│  │  Users   │ │ Products │ │ Sales    │ │ Requirements    │  │
-│  │ Categories│ │ Inventory│ │ BCV Rate │ │ Inventory Logs  │  │
-│  └──────────┘ └──────────┘ └──────────┘ └─────────────────┘  │
-└────────────────────────────────────────────────────────────────┘
-```
+---
 
-## Stack Tecnológico
+## 💻 Stack Tecnológico
+
+El sistema utiliza una arquitectura moderna de tipo **SPA (Single Page Application)** para el frontend y una **API RESTful** para el backend.
 
 ### Frontend
-- **Framework**: React 18 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui (Radix UI)
-- **Icons**: Lucide React
-- **State Management**: React Context / Zustand (pendiente)
+- **Framework**: React 18 + TypeScript + Vite.
+- **Estilos**: Tailwind CSS + shadcn/ui (Radix UI).
+- **Estado**: React Context (Auth, Cart, Favorites).
+- **Enrutado**: React Router DOM v6.
+- **Iconografía**: Lucide React.
 
 ### Backend
-- **Runtime**: Node.js 18+
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **ORM**: Prisma 5
-- **Database**: SQLite (desarrollo) / PostgreSQL (producción)
-- **Authentication**: JWT (jsonwebtoken)
-- **Security**: Helmet, CORS, Rate Limiting
+- **Servidor**: Node.js + Express + TypeScript.
+- **ORM**: Prisma 5.
+- **Base de Datos**: SQLite (almacenada localmente).
+- **Seguridad**: JWT (jsonwebtoken) + bcryptjs + Helmet.
+- **Validación**: Zod.
 
-## Estructura de Proyecto
+---
 
-```
-ecommerce/
-├── src/                    # Frontend
-│   ├── components/         # Componentes React
-│   │   ├── ui/           # Componentes base (shadcn)
-│   │   ├── layout/       # Navbar, Footer, Layout
-│   │   ├── shop/         # Catálogo, filtros, búsqueda
-│   │   ├── product/      # Detalles de producto
-│   │   └── cart/         # Carrito, WhatsApp
-│   ├── pages/             # Páginas de rutas
-│   ├── hooks/            # Custom hooks
-│   ├── contexts/         # React Contexts
-│   ├── lib/              # Utilidades, API client
-│   └── types/            # Tipos TypeScript
-│
-├── server/               # Backend
+## 📂 Estructura del Proyecto
+
+```text
+├── src/                # Frontend (React)
+│   ├── components/     # Componentes UI y de negocio
+│   ├── contexts/       # Gestión de estado global
+│   ├── hooks/          # Hooks personalizados
+│   ├── lib/            # Clientes API y utilidades
+│   ├── pages/          # Vistas principales y administrativas
+│   └── types/          # Definiciones TypeScript
+├── server/             # Backend (Express)
 │   ├── src/
-│   │   ├── routes/       # Rutas Express
-│   │   │   ├── *.routes.ts
-│   │   │   └── admin/    # Rutas protegidas
-│   │   ├── services/     # Lógica de negocio
-│   │   ├── middleware/   # Auth, validation
-│   │   ├── lib/         # Prisma client, config
-│   │   ├── utils/       # Helpers, errors
-│   │   └── index.ts     # Entry point
-│   │
-│   └── prisma/
-│       ├── schema.prisma # Schema de BD
-│       └── seed.ts       # Datos iniciales
-│
-└── docs/                 # Documentación
+│   │   ├── controllers/# Lógica de rutas
+│   │   ├── middleware/ # Auth, validación, errores
+│   │   ├── routes/     # Definición de endpoints
+│   │   └── services/   # Lógica de negocio pesada
+│   └── prisma/         # Esquema y migraciones de DB
 ```
 
-## Modelo de Datos
+---
 
-### User (Administradores)
-```
-id: String (UUID)
-email: String (único)
-passwordHash: String
-role: String ('ADMIN')
-isActive: Boolean
-createdAt/updatedAt: DateTime
-```
+## 📊 Modelo de Datos (Prisma)
 
-### Category (Categorías)
-```
-id: String (UUID)
-name: String
-slug: String (único)
-description: String?
-icon: String?
-sortOrder: Int
-isActive: Boolean
-```
+El esquema de la base de datos está diseñado para garantizar la integridad referencial y facilitar la auditoría.
 
-### Product (Productos)
-```
-id: UUID │ sku: String(único) │ name: String
-slug: String(único) │ description: String
-price: Decimal │ purchasePrice: Decimal │ shippingCost: Decimal
-profitMargin: Decimal (default: 1.5)
-categoryId: String │ brand: String │ format: String │ weight: String?
-stock: Int │ minStock: Int (default: 5)
-inStock: Boolean │ isActive: Boolean │ isFeatured: Boolean
-image: String?
-createdAt/updatedAt: DateTime
-```
+### Entidades Principales
+- **User**: Almacena administradores y clientes. Soporta login tradicional y Google OAuth.
+- **Product**: Ficha técnica de productos, incluyendo costos, márgenes y niveles de stock.
+- **Category**: Clasificación de productos con reglas de borrado protegido.
+- **Sale**: Registro de transacciones cerradas, vinculadas a productos y tasas de cambio.
+- **Requirement**: Órdenes de compra a proveedores para reposición.
+- **BCVRate**: Historial de tasas de cambio USD/VES.
+- **InventoryLog**: Auditoría de cada entrada y salida de mercancía.
 
-### Sale (Ventas)
-```
-id: UUID │ saleNumber: String(único)
-customerName?: String │ customerPhone?: String
-status: String ('PENDING'|'COMPLETED'|'CANCELLED')
-subtotalUSD: Decimal │ shippingCostUSD: Decimal │ totalUSD: Decimal
-bcvRate: Decimal │ totalBS: Decimal
-profitUSD: Decimal │ profitBS: Decimal
-notes: String?
-items: SaleItem[]
-createdAt/updatedAt: DateTime
-```
+---
 
-### SaleItem (Items de Venta)
-```
-id: UUID │ saleId: String │ productId: String
-name: String │ quantity: Int
-unitCost: Decimal │ unitPrice: Decimal │ total: Decimal
-profitPerUnit: Decimal │ totalProfit: Decimal
-```
+## 🔐 Estrategia de Seguridad
 
-### Requirement (Requerimientos a Proveedores)
-```
-id: UUID │ code: String(único) │ supplier: String
-status: String ('PENDING'|'APPROVED'|'ORDERED'|'RECEIVED'|'CANCELLED')
-subtotalUSD: Decimal │ totalUSD: Decimal
-notes: String?
-items: RequirementItem[]
-createdAt/updatedAt: DateTime
-```
+1. **Autenticación**: JWT almacenado en `localStorage`.
+2. **Protección de Rutas**: Middlewares en backend y componentes `ProtectedRoute` en frontend.
+3. **CORS/COOP**: Configuración estricta para permitir la integración con Google Auth.
+4. **Sanitización**: Validación de entrada en todas las rutas administrativas mediante Zod.
 
-### BCVRate (Tasa BCV)
-```
-id: UUID │ rate: Decimal │ source: String
-isActive: Boolean │ validFrom: DateTime
-```
+---
 
-### InventoryLog (Historial de Inventario)
-```
-id: UUID │ productId: String
-changeType: String ('INITIAL_STOCK'|'RESTOCK'|'SALE'|'CANCELLED_SALE')
-previousStock: Int │ newStock: Int │ changeAmount: Int
-reason: String?
-createdAt: DateTime
-```
+## 🔗 Enlaces Rápidos
+- [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
+- [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
+- [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
+- [Guía de Desarrollo](file:///c:/Users/Server%20Admin/Desktop/ecommerce/AGENTS.md)
 
-## Flujo de Datos
-
-### Catálogo Público
-```
-1. Frontend → GET /api/products/public
-2. Backend → InventoryService.getPublicProducts()
-3. Prisma → SELECT * FROM Product WHERE isActive = true
-4. Response → JSON con productos activos
-5. Frontend → Renderiza catálogo
-```
-
-### Crear Venta → WhatsApp
-```
-1. Cliente selecciona productos
-2. Carrito → POST /api/sales
-3. SaleService.createSale():
-   - Calcula totales USD y BS
-   - Decrementa stock de productos
-   - Crea InventoryLog
-4. Response → Sale con items
-5. Frontend → Genera mensaje WhatsApp
-```
-
-### Reporte de Rentabilidad
-```
-1. Admin → GET /api/admin/reports/profitability
-2. BCVService.getCurrentRate()
-3. Para cada producto:
-   - CostoTotal = purchasePrice + shippingCost
-   - Ganancia = price - CostoTotal
-   - GananciaBS = Ganancia * BCVRate
-4. Response → Array con todos los cálculos
-```
+*Última actualización: 2026-02-05*
