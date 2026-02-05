@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 120 10% 97%;
+    --foreground: 135 36% 6%;
+    --card: 0 0% 100%;
+    --card-foreground: 135 36% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 135 36% 6%;
+    --primary: 135 85% 50%;
+    --primary-foreground: 135 36% 6%;
+    --secondary: 137 33% 93%;
+    --secondary-foreground: 135 36% 10%;
+    --muted: 137 33% 93%;
+    --muted-foreground: 135 34% 45%;
+    --accent: 137 33% 93%;
+    --accent-foreground: 135 36% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 137 33% 93%;
+    --input: 137 33% 93%;
+    --ring: 135 85% 50%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 135 36% 10%;
+    --foreground: 120 10% 97%;
+    --card: 135 36% 10%;
+    --card-foreground: 120 10% 97%;
+    --popover: 135 36% 10%;
+    --popover-foreground: 120 10% 97%;
+    --primary: 135 85% 50%;
+    --primary-foreground: 135 36% 10%;
+    --secondary: 137 25% 18%;
+    --secondary-foreground: 120 10% 97%;
+    --muted: 137 25% 18%;
+    --muted-foreground: 135 34% 65%;
+    --accent: 137 25% 18%;
+    --accent-foreground: 120 10% 97%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 137 25% 18%;
+    --input: 137 25% 18%;
+    --ring: 135 85% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
