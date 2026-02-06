@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
-import { ShoppingBag, ChevronRight, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart } from "lucide-react"
+import { ShoppingBag, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -92,17 +92,7 @@ export function OrdersPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-primary">Inicio</Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link to="/perfil" className="hover:text-primary">Mi Cuenta</Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="font-medium text-foreground">Mis Pedidos</span>
-        </nav>
-      </div>
-
+    <>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -346,6 +336,8 @@ export function OrdersPage() {
           ) : null}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
+
+export default OrdersPage

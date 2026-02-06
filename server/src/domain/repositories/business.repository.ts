@@ -25,13 +25,27 @@ export interface SaleRepository {
 }
 
 export interface NotificationRepository {
-  create(data: { type: string; title: string; message: string; userId?: string }): Promise<any>
+  create(data: { 
+    type: string; 
+    priority?: string;
+    category?: string;
+    title: string; 
+    message: string; 
+    userId?: string;
+    link?: string;
+    metadata?: string;
+  }): Promise<any>
   findUnread(userId?: string): Promise<any[]>
-  findAll(userId?: string, limit?: number, skip?: number): Promise<any[]>
-  count(userId?: string): Promise<number>
+  findAll(options: { 
+    userId?: string; 
+    category?: string;
+    limit?: number; 
+    skip?: number;
+  }): Promise<any[]>
+  count(userId?: string, category?: string): Promise<number>
   update(id: string, data: any): Promise<any>
   findFirst(where: any): Promise<any | null>
-  markAllAsRead(userId?: string): Promise<void>
+  markAllAsRead(userId?: string, category?: string): Promise<void>
   delete(id: string): Promise<void>
 }
 
@@ -53,4 +67,14 @@ export interface BatchRepository {
   findNearExpiry(days: number): Promise<any[]>
   update(id: string, data: any): Promise<any>
   create(data: any): Promise<any>
+}
+
+export interface NotificationSettingRepository {
+  findByUserId(userId: string): Promise<any | null>
+  upsert(userId: string, data: {
+    orders?: boolean
+    favorites?: boolean
+    promotions?: boolean
+    system?: boolean
+  }): Promise<any>
 }

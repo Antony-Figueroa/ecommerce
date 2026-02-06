@@ -6,6 +6,8 @@ describe('InventoryService', () => {
   let mockCategoryRepo: any
   let mockBrandRepo: any
   let mockLogRepo: any
+  let mockNotificationService: any
+  let mockFavoriteRepo: any
 
   beforeEach(() => {
     mockProductRepo = {
@@ -29,12 +31,21 @@ describe('InventoryService', () => {
       create: jest.fn(),
       findAll: jest.fn(),
     }
+    mockNotificationService = {
+      notifyPriceChange: jest.fn(),
+      notifyLowStock: jest.fn(),
+    }
+    mockFavoriteRepo = {
+      findByProductId: jest.fn(),
+    }
 
     inventoryService = new InventoryService(
       mockProductRepo,
       mockCategoryRepo,
       mockBrandRepo,
-      mockLogRepo
+      mockLogRepo,
+      mockNotificationService,
+      mockFavoriteRepo
     )
   })
 

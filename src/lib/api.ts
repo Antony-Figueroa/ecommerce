@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:3001/api'
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'
 
 class ApiClient {
   private token: string | null = null
@@ -123,6 +123,22 @@ class ApiClient {
   // Notificaciones Cliente
   async getClientNotifications() {
     return this.request<any[]>('/notifications')
+  }
+
+  async getNotificationSettings() {
+    return this.request<any>('/notifications/settings')
+  }
+
+  async updateNotificationSettings(settings: {
+    orders?: boolean
+    favorites?: boolean
+    promotions?: boolean
+    system?: boolean
+  }) {
+    return this.request<any>('/notifications/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settings),
+    })
   }
 
   // Settings
@@ -640,6 +656,37 @@ class ApiClient {
   async markAllClientNotificationsRead() {
     return this.request('/notifications/read-all', {
       method: 'POST',
+    })
+  }
+
+  // Cart
+  async getCart() {
+    return this.request<any>('/cart')
+  }
+
+  async addToCart(productId: string, quantity: number) {
+    return this.request<any>('/cart/items', {
+      method: 'POST',
+      body: JSON.stringify({ productId, quantity }),
+    })
+  }
+
+  async updateCartItem(productId: string, quantity: number) {
+    return this.request<any>(`/cart/items/${productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity }),
+    })
+  }
+
+  async removeFromCart(productId: string) {
+    return this.request<any>(`/cart/items/${productId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async clearCart() {
+    return this.request<any>('/cart', {
+      method: 'DELETE',
     })
   }
 }

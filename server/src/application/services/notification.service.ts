@@ -1,40 +1,69 @@
-import { NotificationRepository, BatchRepository } from '../../domain/repositories/business.repository.js'
+import { NotificationRepository, BatchRepository, NotificationSettingRepository } from '../../domain/repositories/business.repository.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
+import { socketService } from '../../infrastructure/socket.service.js'
 
 export class NotificationService {
   constructor(
     private notificationRepo: NotificationRepository,
     private productRepo: ProductRepository,
-    private batchRepo: BatchRepository
+    private batchRepo: BatchRepository,
+    private settingRepo?: NotificationSettingRepository
   ) {}
 
   async createNotification(data: {
-    type: 'LOW_STOCK' | 'EXPIRATION' | 'SYSTEM' | 'SALE' | 'SALE_STATUS'
+    type: string
+    priority?: string
+    category?: string
     title: string
     message: string
     userId?: string
+    link?: string
+    metadata?: string
   }) {
-    return this.notificationRepo.create(data)
+    // Si hay un usuario, verificar si tiene silenciada esta categoría
+    if (data.userId && this.settingRepo && data.category) {
+      const settings = await this.settingRepo.findByUserId(data.userId)
+      if (settings) {
+        const categoryKey = data.category.toLowerCase() as keyof typeof settings
+        // @ts-ignore
+        if (settings[categoryKey] === false) {
+          // Si está silenciada, no creamos la notificación (o podríamos crearla pero no emitirla)
+          // Para este caso, la crearemos para el historial pero no la emitiremos por socket
+          const notification = await this.notificationRepo.create(data)
+          return notification
+        }
+      }
+    }
+
+    const notification = await this.notificationRepo.create(data)
+    
+    if (data.userId) {
+      socketService.emitToUser(data.userId, 'notification', notification)
+    } else {
+      socketService.emitToAdmin('notification', notification)
+    }
+
+    return notification
   }
 
   async getUnreadNotifications(userId?: string) {
     return this.notificationRepo.findUnread(userId)
   }
 
-  async getAllNotifications(userId?: string, limit?: number, skip?: number) {
-    return this.notificationRepo.findAll(userId, limit, skip)
+  async getAllNotifications(userId?: string, category?: string, limit?: number, skip?: number) {
+    return this.notificationRepo.findAll({ userId, category, limit, skip })
   }
 
-  async countNotifications(userId?: string) {
-    return this.notificationRepo.count(userId)
+  async countNotifications(userId?: string, category?: string) {
+    return this.notificationRepo.count(userId, category)
   }
 
   async markAsRead(id: string) {
     return this.notificationRepo.update(id, { isRead: true })
   }
 
-  async markAllAsRead(userId?: string) {
-    return this.notificationRepo.markAllAsRead(userId)
+  async markAllAsRead(userId?: string, category?: string) {
+    return this.notificationRepo.markAllAsRead(userId, category)
   }
 
   async deleteNotification(id: string) {

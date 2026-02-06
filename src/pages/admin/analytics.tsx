@@ -39,7 +39,8 @@ export function AdminAnalyticsPage() {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    setIsReady(true)
+    const timer = setTimeout(() => setIsReady(true), 100)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -210,9 +211,9 @@ export function AdminAnalyticsPage() {
               <CardDescription>Comparativa de ingresos y órdenes en el tiempo</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[350px] w-full pt-4 relative">
+              <div className="h-[350px] w-full pt-4 relative min-h-[350px]">
                 {isReady && (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <AreaChart data={monthlyData}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -257,9 +258,9 @@ export function AdminAnalyticsPage() {
               <CardDescription>Distribución porcentual de ventas</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center pt-4">
-              <div className="h-[250px] w-full">
+              <div className="h-[250px] w-full min-h-[250px]">
                 {isReady && (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <PieChart>
                     <Pie
                       data={categoryStats}
@@ -300,9 +301,9 @@ export function AdminAnalyticsPage() {
               <CardDescription>Top 10 productos por volumen de ventas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full pt-4">
+              <div className="h-[300px] w-full pt-4 min-h-[300px]">
                 {isReady && (
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <BarChart data={topProducts} layout="vertical" margin={{ left: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
                     <XAxis type="number" hide />

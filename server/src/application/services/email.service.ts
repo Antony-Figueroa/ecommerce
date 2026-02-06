@@ -6,9 +6,7 @@ export class EmailService {
 
   constructor() {
     this.transporter = nodemailer.createTransport({
-      host: config.smtpHost,
-      port: config.smtpPort,
-      secure: config.smtpPort === 465,
+      service: 'gmail',
       auth: {
         user: config.smtpUser,
         pass: config.smtpPass,
@@ -83,6 +81,51 @@ export class EmailService {
     } catch (error) {
       console.error('[Email Service] Error al enviar correo:', error)
       throw new Error('No se pudo enviar el correo de restablecimiento')
+    }
+  }
+
+  async sendAbandonedCartEmail(email: string, name: string, items: any[]) {
+    const cartUrl = `${config.frontendUrl}/cart`
+    const itemsHtml = items.map(item => `
+      <div style="display: flex; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <div style="flex: 1;">
+          <p style="margin: 0; font-weight: bold;">${item.product.name}</p>
+          <p style="margin: 0; color: #666; font-size: 14px;">Cantidad: ${item.quantity}</p>
+        </div>
+      </div>
+    `).join('')
+
+    const mailOptions = {
+      from: `"Ana's Supplements" <${config.emailFrom}>`,
+      to: email,
+      subject: '¡Te extrañamos! Tu carrito te espera',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>¡Hola ${name}!</h2>
+          <p>Notamos que dejaste algunos productos increíbles en tu carrito. ¡Aún están disponibles para ti!</p>
+          <div style="margin: 20px 0; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+            <h3 style="margin-top: 0;">Tu Carrito:</h3>
+            ${itemsHtml}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cartUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Volver a mi carrito
+            </a>
+          </div>
+          <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© ${new Date().getFullYear()} Ana's Supplements. Todos los derechos reservados.</p>
+        </div>
+      `,
+    }
+
+    try {
+      await this.transporter.sendMail(mailOptions)
+      console.log(`[Email Service] Correo de carrito abandonado enviado a: ${email}`)
+    } catch (error) {
+      console.error('[Email Service] Error al enviar correo de carrito abandonado:', error)
+      // No lanzamos error para no detener el proceso de fondo
     }
   }
 }

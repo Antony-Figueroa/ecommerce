@@ -22,7 +22,12 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
   const [sortBy, setSortBy] = useState("popular")
-  const [viewMode, setViewMode] = useState<"default" | "list">("default")
+  const [viewMode, setViewMode] = useState<"default" | "list">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("catalogViewMode") as "default" | "list") || "default"
+    }
+    return "default"
+  })
 
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -34,6 +39,12 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("catalogViewMode", viewMode)
+    }
+  }, [viewMode])
 
   useEffect(() => {
     async function loadData() {

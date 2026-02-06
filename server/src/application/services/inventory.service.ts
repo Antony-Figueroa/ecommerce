@@ -1,13 +1,17 @@
 import { NotFoundError, ValidationError } from '../../shared/errors/app.errors.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { CategoryRepository, BrandRepository, InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
+import { NotificationService } from './notification.service.js'
+import { FavoriteRepository } from '../../domain/repositories/favorite.repository.js'
 
 export class InventoryService {
   constructor(
     private productRepo: ProductRepository,
     private categoryRepo: CategoryRepository,
     private brandRepo: BrandRepository,
-    private logRepo: InventoryLogRepository
+    private logRepo: InventoryLogRepository,
+    private notificationService: NotificationService,
+    private favoriteRepo: FavoriteRepository
   ) {}
 
   async updatePricesByBCV(newRate: number, previousRate: number) {
@@ -239,6 +243,48 @@ export class InventoryService {
     }
 
     const updatedProduct = await this.productRepo.update(id, updateData)
+
+    // Notificar a usuarios que tienen este producto en favoritos si el precio bajó
+    if (price !== undefined && Number(price) < Number(product.price)) {
+      try {
+        const interestedUsers = await this.favoriteRepo.findAllByProductId(id)
+        for (const fav of interestedUsers) {
+          await this.notificationService.createNotification({
+            type: 'PRICE_DROP',
+            category: 'FAVORITES',
+            priority: 'NORMAL',
+            title: '¡Bajada de precio!',
+            message: `El producto ${updatedProduct.name} ha bajado de precio de $${product.price} a $${price}. ¡Aprovecha ahora!`,
+            userId: fav.userId,
+            link: `/product/${updatedProduct.slug}`,
+            metadata: JSON.stringify({ productId: updatedProduct.id, oldPrice: product.price, newPrice: price })
+          })
+        }
+      } catch (error) {
+        console.error('Error sending price drop notifications:', error)
+      }
+    }
+
+    // Notificar a usuarios que tienen este producto en favoritos si el stock pasó de 0 a > 0
+    if (product.stock === 0 && updatedProduct.stock > 0) {
+      try {
+        const interestedUsers = await this.favoriteRepo.findAllByProductId(id)
+        for (const fav of interestedUsers) {
+          await this.notificationService.createNotification({
+            type: 'FAVORITE_ALERT',
+            category: 'FAVORITES',
+            priority: 'NORMAL',
+            title: '¡Producto Disponible!',
+            message: `El producto ${updatedProduct.name} que tienes en tus favoritos ya está disponible de nuevo.`,
+            userId: fav.userId,
+            link: `/product/${updatedProduct.slug}`,
+            metadata: JSON.stringify({ productId: updatedProduct.id })
+          })
+        }
+      } catch (error) {
+        console.error('Error sending favorite notifications:', error)
+      }
+    }
 
     if (stockChange !== 0) {
       await this.logRepo.create({

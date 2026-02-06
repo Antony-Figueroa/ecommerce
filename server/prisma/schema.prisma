@@ -30,6 +30,8 @@ model User {
   settingHistory           SettingHistory[]
   auditLogs                SaleAuditLog[]
   notifications            Notification[]
+  notificationSettings     NotificationSetting?
+  cart                     Cart?
 }
 
 model Favorite {
@@ -77,6 +79,32 @@ model Product {
   images           ProductImage[]
   requirementItems RequirementItem[]
   saleItems        SaleItem[]
+  cartItems        CartItem[]
+}
+
+model Cart {
+  id               String     @id @default(uuid())
+  userId           String     @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  lastInteraction  DateTime   @default(now())
+  reminderSent     Boolean    @default(false)
+  lastReminderSent DateTime?
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items            CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
 }
 
 model ProductImage {
@@ -277,14 +305,31 @@ model SettingHistory {
 
 model Notification {
   id        String   @id @default(uuid())
-  type      String   // 'LOW_STOCK', 'EXPIRATION', 'SYSTEM', 'SALE_STATUS', etc.
+  type      String   // 'ORDER_STATUS', 'FAVORITE_ALERT', 'PROMOTION', 'SYSTEM', 'CART_REMINDER'
+  priority  String   @default("NORMAL") // 'LOW', 'NORMAL', 'URGENT'
+  category  String   @default("SYSTEM") // 'ORDERS', 'FAVORITES', 'PROMOTIONS', 'SYSTEM'
   title     String
   message   String
   isRead    Boolean  @default(false)
   userId    String?  // Si es null, es para administradores
+  link      String?  // URL para acción directa
+  metadata  String?  // JSON stringificado para datos adicionales (ej: id del pedido)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([category])
+}
+
+model NotificationSetting {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  orders     Boolean  @default(true)
+  favorites  Boolean  @default(true)
+  promotions Boolean  @default(true)
+  system     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

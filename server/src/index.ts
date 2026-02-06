@@ -25,19 +25,37 @@ import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
 import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
-import { notificationService, bcvUpdaterService } from './shared/container.js'
+import { notificationService, bcvUpdaterService, cartService } from './shared/container.js'
 import path from 'path'
+import cartRoutes from './infrastructure/web/routes/cart.routes.js'
+
+import { createServer } from 'http'
+import { socketService } from './infrastructure/socket.service.js'
 
 const app = express()
+const httpServer = createServer(app)
 
-// app.use(helmet())
+// Initialize Socket.io
+socketService.init(httpServer)
+
+app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}))
 app.use(cors({
-  origin: config.frontendUrl,
+  origin: [config.frontendUrl, 'http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }))
 app.use((_req, res, next) => {
   // Permitir comunicación con popups para Google Auth
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+  next();
+});
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 app.use(express.json())
@@ -68,6 +86,7 @@ app.use('/api/categories', categoryRoutes)
 app.use('/api/favorites', favoriteRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/cart', cartRoutes)
 app.use('/api/admin/bcv', bcvAdminRoutes)
 app.use('/api/admin/products', adminProductRoutes)
 app.use('/api/admin/categories', adminCategoryRoutes)
@@ -99,16 +118,22 @@ if (RUN_TASKS) {
     bcvUpdaterService.updateRate()
   }, 60 * 60 * 1000)
 
+  // Verificar carritos abandonados cada 6 horas
+  setInterval(() => {
+    cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
+  }, 6 * 60 * 60 * 1000)
+
   // Ejecución inicial después de un retraso
   setTimeout(() => {
     console.log('Ejecutando tareas iniciales de segundo plano...')
     notificationService.checkLowStock().catch(err => console.error('Error en checkLowStock:', err))
     notificationService.checkExpirations().catch(err => console.error('Error en checkExpirations:', err))
     bcvUpdaterService.updateRate().catch(err => console.error('Error en updateRate:', err))
+    cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
   }, 30000)
 }
 
-app.listen(config.port, '0.0.0.0', () => {
+httpServer.listen(config.port, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════╗
 ║                                                   ║

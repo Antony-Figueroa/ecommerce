@@ -17,6 +17,15 @@ export class PrismaFavoriteRepository implements FavoriteRepository {
     })
   }
 
+  async findAllByProductId(productId: string): Promise<any[]> {
+    return prisma.favorite.findMany({
+      where: { productId },
+      include: {
+        user: true
+      }
+    })
+  }
+
   async findUnique(userId: string, productId: string): Promise<Favorite | null> {
     return prisma.favorite.findUnique({
       where: {
@@ -52,6 +61,12 @@ export class PrismaFavoriteRepository implements FavoriteRepository {
           productId
         }
       }
+    })
+  }
+
+  async findProductById(productId: string): Promise<any | null> {
+    return prisma.product.findUnique({
+      where: { id: productId }
     })
   }
 }

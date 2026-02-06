@@ -118,7 +118,12 @@ export function AdminProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [stockFilter, setStockFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("adminProductsViewMode") as "grid" | "list") || "grid"
+    }
+    return "grid"
+  })
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
@@ -164,6 +169,10 @@ export function AdminProductsPage() {
     batchNumber: "",
     expirationDate: "",
   })
+
+  useEffect(() => {
+    localStorage.setItem("adminProductsViewMode", viewMode)
+  }, [viewMode])
 
   useEffect(() => {
     fetchProducts()

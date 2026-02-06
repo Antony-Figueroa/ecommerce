@@ -96,13 +96,26 @@ export class PrismaSaleRepository implements SaleRepository {
 }
 
 export class PrismaNotificationRepository implements NotificationRepository {
-  async create(data: { type: string; title: string; message: string; userId?: string }) {
+  async create(data: { 
+    type: string; 
+    priority?: string;
+    category?: string;
+    title: string; 
+    message: string; 
+    userId?: string;
+    link?: string;
+    metadata?: string;
+  }) {
     return prisma.notification.create({
       data: {
-        type: data.type as any,
+        type: data.type,
+        priority: data.priority || 'NORMAL',
+        category: data.category || 'SYSTEM',
         title: data.title,
         message: data.message,
-        userId: data.userId,
+        userId: data.userId || null,
+        link: data.link,
+        metadata: data.metadata,
       },
     })
   }
@@ -117,10 +130,17 @@ export class PrismaNotificationRepository implements NotificationRepository {
     })
   }
 
-  async findAll(userId?: string, limit: number = 20, skip: number = 0) {
+  async findAll(options: { 
+    userId?: string; 
+    category?: string;
+    limit?: number; 
+    skip?: number;
+  }) {
+    const { userId, category, limit = 20, skip = 0 } = options
     return prisma.notification.findMany({
       where: { 
-        userId: userId || null 
+        userId: userId || null,
+        category: category || undefined
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -128,10 +148,11 @@ export class PrismaNotificationRepository implements NotificationRepository {
     })
   }
 
-  async count(userId?: string) {
+  async count(userId?: string, category?: string) {
     return prisma.notification.count({
       where: {
-        userId: userId || null
+        userId: userId || null,
+        category: category || undefined
       }
     })
   }
@@ -147,10 +168,11 @@ export class PrismaNotificationRepository implements NotificationRepository {
     return prisma.notification.findFirst({ where })
   }
 
-  async markAllAsRead(userId?: string) {
+  async markAllAsRead(userId?: string, category?: string) {
     await prisma.notification.updateMany({
       where: { 
         userId: userId || null,
+        category: category || undefined,
         isRead: false 
       },
       data: { isRead: true }

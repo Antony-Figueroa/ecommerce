@@ -165,7 +165,18 @@ export class DashboardService {
           lte: end,
         },
       },
-      include: { items: true, user: true },
+      include: { 
+        items: { 
+          include: { 
+            product: { 
+              include: { 
+                category: true 
+              } 
+            } 
+          } 
+        }, 
+        user: true 
+      },
     })
 
     // 1. Monthly Stats (grouped by month-year)
@@ -188,14 +199,29 @@ export class DashboardService {
         revenue: Math.round(data.revenue * 100) / 100
       }))
 
-    // 2. Top Products
+    // 2. Top Products and Category Stats
     const productStatsMap = new Map()
+    const categoryStatsMap = new Map()
+    let totalItemsRevenue = 0
+
     sales.forEach((sale: any) => {
       (sale.items || []).forEach((item: any) => {
-        const existing = productStatsMap.get(item.productId) || { name: item.name, sales: 0, revenue: 0 }
-        existing.sales += item.quantity
-        existing.revenue += Number(item.total || 0)
-        productStatsMap.set(item.productId, existing)
+        const revenue = Number(item.total || 0)
+        totalItemsRevenue += revenue
+
+        // Product Stats
+        const existingProduct = productStatsMap.get(item.productId) || { name: item.name, sales: 0, revenue: 0 }
+        existingProduct.sales += item.quantity
+        existingProduct.revenue += revenue
+        productStatsMap.set(item.productId, existingProduct)
+
+        // Category Stats
+        if (item.product && item.product.category) {
+          const categoryName = item.product.category.name
+          const existingCategory = categoryStatsMap.get(categoryName) || { name: categoryName, revenue: 0 }
+          existingCategory.revenue += revenue
+          categoryStatsMap.set(categoryName, existingCategory)
+        }
       })
     })
 
@@ -207,16 +233,18 @@ export class DashboardService {
         revenue: Math.round(p.revenue * 100) / 100
       }))
 
+    const categoryStats = Array.from(categoryStatsMap.values())
+      .map(c => ({
+        name: c.name,
+        percentage: totalItemsRevenue > 0 ? Math.round((c.revenue / totalItemsRevenue) * 100) : 0
+      }))
+      .sort((a, b) => b.percentage - a.percentage)
+
     return {
       period: { startDate: start, endDate: end },
       monthlyStats,
       topProducts,
-      // Default category stats if not implemented in DB yet
-      categoryStats: [
-        { name: "Suplementos", percentage: 45 },
-        { name: "Vitaminas", percentage: 30 },
-        { name: "Proteínas", percentage: 25 },
-      ]
+      categoryStats
     }
   }
 

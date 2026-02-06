@@ -1,0 +1,77 @@
+import { Server as SocketServer } from 'socket.io'
+import { Server as HttpServer } from 'http'
+import jwt from 'jsonwebtoken'
+import { config } from '../shared/config/index.js'
+
+export class SocketService {
+  private io: SocketServer | null = null
+  private userSockets: Map<string, string[]> = new Map() // userId -> socketIds[]
+
+  init(server: HttpServer) {
+    this.io = new SocketServer(server, {
+      cors: {
+        origin: config.frontendUrl,
+        credentials: true
+      }
+    })
+
+    this.io.use((socket, next) => {
+      const token = socket.handshake.auth.token
+      if (!token) return next(new Error('Authentication error'))
+
+      try {
+        const decoded = jwt.verify(token, config.jwtSecret) as any
+        socket.data.userId = decoded.id
+        socket.data.role = decoded.role
+        next()
+      } catch (err) {
+        next(new Error('Authentication error'))
+      }
+    })
+
+    this.io.on('connection', (socket) => {
+      const userId = socket.data.userId
+      if (userId) {
+        const sockets = this.userSockets.get(userId) || []
+        this.userSockets.set(userId, [...sockets, socket.id])
+        
+        // Join a room for this user
+        socket.join(`user:${userId}`)
+        
+        // Join admin room if applicable
+        if (socket.data.role === 'ADMIN') {
+          socket.join('admin')
+        }
+      }
+
+      socket.on('disconnect', () => {
+        if (userId) {
+          const sockets = this.userSockets.get(userId) || []
+          this.userSockets.set(userId, sockets.filter(id => id !== socket.id))
+        }
+      })
+    })
+
+    console.log('WebSocket service initialized')
+  }
+
+  emitToUser(userId: string, event: string, data: any) {
+    if (this.io) {
+      this.io.to(`user:${userId}`).emit(event, data)
+    }
+  }
+
+  emitToAdmin(event: string, data: any) {
+    if (this.io) {
+      this.io.to('admin').emit(event, data)
+    }
+  }
+
+  emitToAll(event: string, data: any) {
+    if (this.io) {
+      this.io.emit(event, data)
+    }
+  }
+}
+
+export const socketService = new SocketService()

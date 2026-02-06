@@ -16,6 +16,7 @@ export function CartPage() {
   const navigate = useNavigate()
 
   const [showCheckout, setShowCheckout] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [checkoutData, setCheckoutData] = useState({
     customerName: "",
     customerPhone: "",
@@ -67,7 +68,10 @@ export function CartPage() {
   }
 
   const generateWhatsAppOrder = async () => {
+    if (isProcessing) return
+    
     try {
+      setIsProcessing(true)
       // 1. First, create the order in the database
       const orderData = {
         userId: user?.id,
@@ -118,19 +122,26 @@ export function CartPage() {
       const encodedMessage = encodeURIComponent(message)
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
 
-      clearCart()
-      setShowCheckout(false)
+      // Importante: No cerramos el checkout ni limpiamos el carrito inmediatamente
+      // para evitar que la UI cambie drásticamente mientras se abre la ventana
       
-      // Abrir WhatsApp en una nueva pestaña
-      window.open(whatsappUrl, "_blank")
+      // Abrir WhatsApp
+      const win = window.open(whatsappUrl, "_blank")
       
-      // Redirigir a la página de inicio o de éxito después de un breve delay
-      setTimeout(() => {
+      // Si el popup fue bloqueado, redirigir en la misma pestaña
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        window.location.href = whatsappUrl
+      } else {
+        // Si se abrió con éxito, limpiamos y volvemos al inicio
+        clearCart()
+        setShowCheckout(false)
         navigate("/")
-      }, 500)
+      }
     } catch (error: any) {
       console.error("Error creating order:", error)
       alert(error.message || "Hubo un error al procesar tu pedido. Por favor intenta de nuevo.")
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -250,10 +261,14 @@ export function CartPage() {
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={generateWhatsAppOrder}
-                    disabled={!checkoutData.customerName || !checkoutData.customerPhone || !checkoutData.deliveryAddress}
+                    disabled={!checkoutData.customerName || !checkoutData.customerPhone || !checkoutData.deliveryAddress || isProcessing}
                   >
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Enviar por WhatsApp
+                    {isProcessing ? (
+                      <RotateCcw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                    )}
+                    {isProcessing ? "Procesando..." : "Enviar por WhatsApp"}
                   </Button>
                 </div>
               </CardContent>

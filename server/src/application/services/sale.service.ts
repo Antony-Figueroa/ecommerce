@@ -3,6 +3,7 @@ import { SaleRepository, BatchRepository, NotificationRepository } from '../../d
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
 import { BCVRepository, SettingsRepository } from '../../domain/repositories/settings.repository.js'
+import { NotificationService } from './notification.service.js'
 
 function generateSaleNumber(): string {
   const date = new Date()
@@ -21,7 +22,8 @@ export class SaleService {
     private bcvRepo: BCVRepository,
     private batchRepo: BatchRepository,
     private notificationRepo: NotificationRepository,
-    private settingsRepo: SettingsRepository
+    private settingsRepo: SettingsRepository,
+    private notificationService: NotificationService
   ) {}
 
   async createSale(data: any) {
@@ -289,11 +291,15 @@ export class SaleService {
                             status === 'COMPLETED' ? 'completado ✨' : 
                             status === 'CANCELLED' ? 'cancelado 🚫' : status.toLowerCase()
 
-        await this.notificationRepo.create({
-          type: 'SALE_STATUS',
+        await this.notificationService.createNotification({
+          type: 'ORDER_STATUS',
+          category: 'ORDERS',
+          priority: status === 'REJECTED' || status === 'CANCELLED' ? 'URGENT' : 'NORMAL',
           title: 'Actualización de Pedido',
           message: `Tu pedido #${updatedSale.saleNumber} ha sido ${statusLabel}.`,
-          userId: updatedSale.userId
+          userId: updatedSale.userId,
+          link: `/profile/orders/${updatedSale.id}`,
+          metadata: JSON.stringify({ saleId: updatedSale.id, status })
         })
       } catch (error) {
         console.error('Error creating in-app notification for client:', error)

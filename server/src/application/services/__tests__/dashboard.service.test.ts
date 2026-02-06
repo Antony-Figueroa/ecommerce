@@ -88,21 +88,39 @@ describe('DashboardService', () => {
   })
 
   describe('getAnalyticsReport', () => {
-    it('should aggregate data by month and product correctly', async () => {
+    it('should aggregate data by month, product and category correctly', async () => {
       const mockSales = [
         {
           createdAt: new Date('2024-01-15'),
           totalUSD: 100,
           items: [
-            { productId: 'p1', name: 'Product 1', quantity: 2, total: 40 },
-            { productId: 'p2', name: 'Product 2', quantity: 1, total: 60 },
+            { 
+              productId: 'p1', 
+              name: 'Product 1', 
+              quantity: 2, 
+              total: 40,
+              product: { category: { name: 'Category A' } }
+            },
+            { 
+              productId: 'p2', 
+              name: 'Product 2', 
+              quantity: 1, 
+              total: 60,
+              product: { category: { name: 'Category B' } }
+            },
           ]
         },
         {
           createdAt: new Date('2024-02-10'),
           totalUSD: 200,
           items: [
-            { productId: 'p1', name: 'Product 1', quantity: 3, total: 60 },
+            { 
+              productId: 'p1', 
+              name: 'Product 1', 
+              quantity: 3, 
+              total: 60,
+              product: { category: { name: 'Category A' } }
+            },
           ]
         }
       ]
@@ -123,6 +141,18 @@ describe('DashboardService', () => {
       expect(result.topProducts[0].name).toBe('Product 1')
       expect(result.topProducts[0].sales).toBe(5)
       expect(result.topProducts[0].revenue).toBe(100)
+
+      // Check category stats
+      expect(result.categoryStats).toHaveLength(2)
+      // Category A revenue: 40 + 60 = 100
+      // Category B revenue: 60
+      // Total revenue from items: 160
+      // Category A %: (100 / 160) * 100 = 62.5 -> round to 63
+      // Category B %: (60 / 160) * 100 = 37.5 -> round to 38
+      expect(result.categoryStats[0].name).toBe('Category A')
+      expect(result.categoryStats[0].percentage).toBe(63)
+      expect(result.categoryStats[1].name).toBe('Category B')
+      expect(result.categoryStats[1].percentage).toBe(38)
     })
   })
 

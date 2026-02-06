@@ -336,10 +336,22 @@ export function AdminTopNav() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2 hover:bg-secondary/50 transition-all rounded-xl">
-              <div className="h-8 w-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shadow-sm">
-                {user?.name?.charAt(0) || <User className="h-4 w-4" />}
+              <div className="h-8 w-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden">
+                {user?.avatarUrl ? (
+                  <img 
+                    src={user.avatarUrl} 
+                    alt={user.name || ''} 
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
+                    }}
+                  />
+                ) : (
+                  user?.name?.charAt(0) || <User className="h-4 w-4" />
+                )}
               </div>
-              <div className="flex flex-col items-start hidden sm:flex">
+              <div className="hidden sm:flex flex-col items-start">
                 <span className="text-xs font-bold leading-tight">{user?.name || "Admin"}</span>
                 <span className="text-[10px] text-muted-foreground leading-tight">Administrador</span>
               </div>

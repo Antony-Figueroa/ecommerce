@@ -2,7 +2,7 @@ import * as React from "react"
 import { Link } from "react-router-dom"
 import { useFavorites } from "@/contexts/favorites-context"
 import { ProductCard } from "@/components/shop/product-card"
-import { ShoppingBag, ChevronRight, HeartOff } from "lucide-react"
+import { ShoppingBag, HeartOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
 
@@ -23,24 +23,15 @@ export function FavoritesPage() {
   }, [])
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-primary">Inicio</Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="font-medium text-foreground">Mis Favoritos</span>
-        </nav>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Mis Favoritos</h1>
+        <p className="text-muted-foreground">
+          {favorites.length === 1 
+            ? "Tienes 1 producto guardado" 
+            : `Tienes ${favorites.length} productos guardados`}
+        </p>
       </div>
-
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mis Favoritos</h1>
-          <p className="text-muted-foreground">
-            {favorites.length === 1 
-              ? "Tienes 1 producto guardado" 
-              : `Tienes ${favorites.length} productos guardados`}
-          </p>
-        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -71,7 +62,6 @@ export function FavoritesPage() {
             ))}
           </div>
         )}
-      </div>
     </div>
   )
 }

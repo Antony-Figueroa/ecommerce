@@ -1,31 +1,63 @@
 import { SaleService } from '../sale.service.js'
-import { prisma } from '../../lib/prisma.js'
-import { NotFoundError } from '../../utils/errors.js'
-
-jest.mock('../../lib/prisma.js', () => ({
-  prisma: {
-    product: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-    sale: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    batch: {
-      findMany: jest.fn(),
-      update: jest.fn(),
-    },
-    inventoryLog: {
-      create: jest.fn(),
-    },
-  },
-}))
+import { NotFoundError } from '../../../shared/errors/app.errors.js'
 
 describe('SaleService', () => {
+  let saleService: SaleService
+  let mockSaleRepo: any
+  let mockProductRepo: any
+  let mockLogRepo: any
+  let mockBcvRepo: any
+  let mockBatchRepo: any
+  let mockNotificationRepo: any
+  let mockSettingsRepo: any
+  let mockNotificationService: any
+
   beforeEach(() => {
-    jest.clearAllMocks()
+    mockSaleRepo = {
+      create: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      findAll: jest.fn(),
+      count: jest.fn(),
+      findBySaleNumber: jest.fn(),
+      findDuplicate: jest.fn(),
+      createAuditLog: jest.fn(),
+    }
+    mockProductRepo = {
+      findById: jest.fn(),
+      update: jest.fn(),
+    }
+    mockLogRepo = {
+      create: jest.fn(),
+    }
+    mockBcvRepo = {
+      getCurrentRate: jest.fn().mockResolvedValue(36),
+    }
+    mockBatchRepo = {
+      findMany: jest.fn(),
+      update: jest.fn(),
+    }
+    mockNotificationRepo = {
+      create: jest.fn(),
+    }
+    mockSettingsRepo = {
+      findByKey: jest.fn(),
+    }
+    mockNotificationService = {
+      notifySaleStatusChange: jest.fn(),
+      notifyLowStock: jest.fn(),
+    }
+
+    saleService = new SaleService(
+      mockSaleRepo,
+      mockProductRepo,
+      mockLogRepo,
+      mockBcvRepo,
+      mockBatchRepo,
+      mockNotificationRepo,
+      mockSettingsRepo,
+      mockNotificationService
+    )
   })
 
   describe('createSale', () => {
@@ -51,48 +83,45 @@ describe('SaleService', () => {
     }
 
     it('should create a sale successfully', async () => {
-      ;(prisma.product.findUnique as jest.Mock).mockResolvedValue(mockProduct)
-      ;(prisma.sale.findUnique as jest.Mock).mockResolvedValue(null) // For unique sale number
-      ;(prisma.sale.create as jest.Mock).mockResolvedValue({ id: 'sale-1', saleNumber: 'VTA-001' })
-      ;((prisma as any).batch.findMany as jest.Mock).mockResolvedValue([
+      mockProductRepo.findById.mockResolvedValue(mockProduct)
+      mockSaleRepo.findBySaleNumber.mockResolvedValue(null)
+      mockSaleRepo.create.mockResolvedValue({ id: 'sale-1', saleNumber: 'VTA-001' })
+      mockBatchRepo.findMany.mockResolvedValue([
         { id: 'batch-1', stock: 10, expirationDate: new Date() },
         { id: 'batch-2', stock: 20, expirationDate: new Date() },
       ])
 
-      const result = await SaleService.createSale(saleData)
+      const result = await saleService.createSale(saleData)
 
-      expect(prisma.product.findUnique).toHaveBeenCalledWith({ where: { id: 'prod-1' } })
-      expect(prisma.sale.create).toHaveBeenCalled()
-      expect(prisma.product.update).toHaveBeenCalledWith({
-        where: { id: 'prod-1' },
-        data: {
-          stock: 18,
-          inStock: true,
-        },
-      })
-      expect(prisma.inventoryLog.create).toHaveBeenCalled()
+      expect(mockProductRepo.findById).toHaveBeenCalledWith('prod-1')
+      expect(mockSaleRepo.create).toHaveBeenCalled()
+      expect(mockProductRepo.update).toHaveBeenCalledWith('prod-1', expect.objectContaining({
+        stock: 18,
+        inStock: true,
+      }))
+      expect(mockLogRepo.create).toHaveBeenCalled()
       expect(result).toBeDefined()
     })
 
     it('should throw NotFoundError if product does not exist', async () => {
-      ;(prisma.product.findUnique as jest.Mock).mockResolvedValue(null)
+      mockProductRepo.findById.mockResolvedValue(null)
 
-      await expect(SaleService.createSale(saleData)).rejects.toThrow(NotFoundError)
+      await expect(saleService.createSale(saleData)).rejects.toThrow(NotFoundError)
     })
 
     it('should calculate totals correctly', async () => {
-      ;(prisma.product.findUnique as jest.Mock).mockResolvedValue(mockProduct)
-      ;(prisma.sale.findUnique as jest.Mock).mockResolvedValue(null)
-      ;(prisma.sale.create as jest.Mock).mockImplementation(({ data }) => Promise.resolve({ ...data, id: 'sale-1' }))
-      ;((prisma as any).batch.findMany as jest.Mock).mockResolvedValue([])
+      mockProductRepo.findById.mockResolvedValue(mockProduct)
+      mockSaleRepo.findBySaleNumber.mockResolvedValue(null)
+      mockSaleRepo.create.mockImplementation((data: any) => Promise.resolve({ ...data, id: 'sale-1' }))
+      mockBatchRepo.findMany.mockResolvedValue([])
 
-      await SaleService.createSale(saleData)
+      await saleService.createSale(saleData)
 
-      const createCall = (prisma.sale.create as jest.Mock).mock.calls[0][0]
-      expect(createCall.data.subtotalUSD).toBe(40) // 2 * 20
-      expect(createCall.data.totalUSD).toBe(40)
-      expect(createCall.data.totalBS).toBe(40 * 36)
-      expect(createCall.data.profitUSD).toBe(16) // (20 - (10+2)) * 2 = 8 * 2 = 16
+      const createCall = mockSaleRepo.create.mock.calls[0][0]
+      expect(createCall.subtotalUSD).toBe(40) // 2 * 20
+      expect(createCall.totalUSD).toBe(40)
+      expect(createCall.totalBS).toBe(40 * 36)
+      expect(createCall.profitUSD).toBe(16) // (20 - (10+2)) * 2 = 8 * 2 = 16
     })
   })
 })

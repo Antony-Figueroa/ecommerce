@@ -14,7 +14,7 @@ router.get('/', async (req: Request, res: Response) => {
     const skip = (page - 1) * limit
 
     const [notifications, total] = await Promise.all([
-      notificationService.getAllNotifications(undefined, limit, skip),
+      notificationService.getAllNotifications(undefined, undefined, limit, skip),
       notificationService.countNotifications(undefined)
     ])
 

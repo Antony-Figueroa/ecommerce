@@ -10,6 +10,7 @@ describe('SaleService Sync & Delivery Status', () => {
   let mockBatchRepo: any
   let mockNotificationRepo: any
   let mockSettingsRepo: any
+  let mockNotificationService: any
 
   beforeEach(() => {
     mockSaleRepo = {
@@ -42,6 +43,9 @@ describe('SaleService Sync & Delivery Status', () => {
     mockSettingsRepo = {
       findByKey: jest.fn(),
     }
+    mockNotificationService = {
+      notifySaleStatusChange: jest.fn(),
+    }
 
     saleService = new SaleService(
       mockSaleRepo,
@@ -50,7 +54,8 @@ describe('SaleService Sync & Delivery Status', () => {
       mockBcvRepo,
       mockBatchRepo,
       mockNotificationRepo,
-      mockSettingsRepo
+      mockSettingsRepo,
+      mockNotificationService
     )
   })
 

@@ -44,9 +44,11 @@ export class AuthService {
       throw new ValidationError('El email ya está registrado')
     }
 
-    const existingUsername = await this.userRepo.findByUsername(username)
-    if (existingUsername) {
-      throw new ValidationError('El nombre de usuario ya está en uso')
+    if (username) {
+      const existingUsername = await this.userRepo.findByUsername(username)
+      if (existingUsername) {
+        throw new ValidationError('El nombre de usuario ya está en uso')
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
@@ -124,9 +126,11 @@ export class AuthService {
   async completeGoogleRegistration(data: any) {
     const { email, googleId, name, username, avatarUrl } = data
 
-    const existingUsername = await this.userRepo.findByUsername(username)
-    if (existingUsername) {
-      throw new ValidationError('El nombre de usuario ya está en uso')
+    if (username) {
+      const existingUsername = await this.userRepo.findByUsername(username)
+      if (existingUsername) {
+        throw new ValidationError('El nombre de usuario ya está en uso')
+      }
     }
 
     let user = await this.userRepo.findByEmail(email)

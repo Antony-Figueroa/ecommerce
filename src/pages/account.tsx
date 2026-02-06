@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { ChevronRight, User, ShoppingBag, LogOut, Package, Heart, Camera } from "lucide-react"
+import { Package, ShoppingBag, User, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,7 +22,7 @@ interface Order {
 }
 
 export function AccountPage() {
-  const { user, logout, refreshUser } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [orders, setOrders] = React.useState<Order[]>([])
   const [isLoadingOrders, setIsLoadingOrders] = React.useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
@@ -79,12 +79,6 @@ export function AccountPage() {
 
   if (!user) return null
 
-  const menuItems = [
-    { path: "/pedidos", label: "Mis Pedidos", icon: ShoppingBag },
-    { path: "/favoritos", label: "Mis Favoritos", icon: Heart },
-    { path: "/perfil", label: "Mi Información", icon: User },
-  ]
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; class: string }> = {
       pending: { label: "Pendiente", class: "bg-yellow-100 text-yellow-800" },
@@ -97,82 +91,14 @@ export function AccountPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-primary">Inicio</Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="font-medium text-foreground">Mi Cuenta</span>
-        </nav>
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-4">
-        <aside className="lg:col-span-1">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                  {user.avatarUrl ? (
-                    <img 
-                      src={user.avatarUrl} 
-                      alt={user.name} 
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const parent = target.parentElement;
-                        if (parent) {
-                          const icon = document.createElement('div');
-                          icon.className = 'flex items-center justify-center w-full h-full';
-                          icon.innerHTML = '<svg class=\"h-8 w-8 text-primary\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>';
-                          parent.appendChild(icon);
-                        }
-                      }}
-                    />
-                  ) : (
-                    <User className="h-8 w-8 text-primary" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold">{user.name}</p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-              <nav className="space-y-1">
-                {menuItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  )
-                })}
-                <button 
-                  onClick={logout}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-muted text-red-600 transition-colors text-left"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Cerrar Sesión</span>
-                </button>
-              </nav>
-            </CardContent>
-          </Card>
-        </aside>
-
-        <main className="lg:col-span-3 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Mis Pedidos Recientes
-              </CardTitle>
-            </CardHeader>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Mis Pedidos Recientes
+          </CardTitle>
+        </CardHeader>
             <CardContent>
               {isLoadingOrders ? (
                 <div className="space-y-4">
@@ -270,8 +196,6 @@ export function AccountPage() {
               </CardContent>
             </Card>
           </div>
-        </main>
-      </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

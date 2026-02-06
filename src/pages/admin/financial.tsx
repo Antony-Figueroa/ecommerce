@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { formatUSD, formatBS, cn } from "@/lib/utils"
-import { api } from "@/lib/api"
+import { api, API_BASE } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
 
@@ -229,7 +229,7 @@ export function FinancialDashboard() {
     }))
 
     try {
-      const response = await fetch("http://localhost:3001/api/financial/sales", {
+      const response = await fetch(`${API_BASE}/financial/sales`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
