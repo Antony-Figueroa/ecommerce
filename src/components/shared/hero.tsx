@@ -3,20 +3,29 @@ import { Shield, Truck, Clock, Search } from "lucide-react"
 export function Hero() {
   return (
     <section className="relative min-h-[70vh] flex items-center overflow-hidden py-16 lg:py-24">
-      {/* Background Image */}
+      {/* Background Video/Image */}
       <div className="absolute inset-0 z-0">
-        <img
-          src="https://images.unsplash.com/photo-1586015555751-63bb77f4322a?q=80&w=2000&auto=format&fit=crop"
-          alt="Pharmacy Background"
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
           className="h-full w-full object-cover"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=2000&auto=format&fit=crop";
-            target.onerror = null;
-          }}
-        />
+          poster="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?q=80&w=2000&auto=format&fit=crop"
+        >
+          <source 
+            src="https://cdn.pixabay.com/video/2021/04/12/70860-536962388_tiny.mp4" 
+            type="video/mp4" 
+          />
+          {/* Fallback image if video fails to load or is not supported */}
+          <img
+            src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?q=80&w=2000&auto=format&fit=crop"
+            alt="Supplements Background"
+            className="h-full w-full object-cover"
+          />
+        </video>
         {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
       </div>
 
       <div className="container relative z-10 mx-auto px-4">
