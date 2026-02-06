@@ -27,6 +27,27 @@ export class InventoryService {
       const newPrice = currentPrice * ratio
       
       await this.productRepo.update(product.id, { price: newPrice })
+
+      // Notificar a usuarios si el precio cambió significativamente
+      if (Math.abs(newPrice - currentPrice) > 0.01) {
+        try {
+          const interestedUsers = await this.favoriteRepo.findAllByProductId(product.id)
+          for (const fav of interestedUsers) {
+            await this.notificationService.createNotification({
+              type: 'PRICE_UPDATE',
+              category: 'FAVORITES',
+              priority: 'NORMAL',
+              title: 'Actualización de precio',
+              message: `El precio de ${product.name} se ha actualizado a $${newPrice.toFixed(2)} debido al cambio de tasa BCV.`,
+              userId: fav.userId,
+              link: `/product/${product.slug}`,
+              metadata: JSON.stringify({ productId: product.id, oldPrice: currentPrice, newPrice: newPrice })
+            })
+          }
+        } catch (error) {
+          console.error('Error sending price update notifications:', error)
+        }
+      }
     }
   }
 

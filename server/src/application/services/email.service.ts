@@ -128,4 +128,53 @@ export class EmailService {
       // No lanzamos error para no detener el proceso de fondo
     }
   }
+
+  async sendCatalogEmail(email: string, pdfBuffer: Buffer) {
+    const mailOptions = {
+      from: `"Ana's Supplements" <${config.emailFrom}>`,
+      to: email,
+      subject: 'Nuestro Catálogo de Productos - Ana\'s Supplements',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #10b981;">¡Hola!</h2>
+          <p>Adjunto encontrarás nuestro catálogo actualizado de productos en formato PDF.</p>
+          <p>En Ana's Supplements nos esforzamos por ofrecerte los mejores suplementos y productos para tu salud al mejor precio.</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p style="margin: 0; font-weight: bold;">¿Qué encontrarás en este catálogo?</p>
+            <ul style="margin-top: 10px;">
+              <li>Vitaminas y Multivitamínicos</li>
+              <li>Suplementos Nutricionales</li>
+              <li>Productos de Cuidado Personal</li>
+              <li>¡Y mucho más!</li>
+            </ul>
+          </div>
+          <p>Puedes realizar tus pedidos directamente en nuestra plataforma web:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${config.frontendUrl}" 
+               style="background-color: #10b981; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Visitar Tienda Online
+            </a>
+          </div>
+          <p>Si tienes alguna pregunta, no dudes en contactarnos respondiendo a este correo.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© 2026 Ana's Supplements. Todos los derechos reservados.</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: 'catalogo-anas-supplements.pdf',
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
+    }
+
+    try {
+      await this.transporter.sendMail(mailOptions)
+      console.log(`[Email Service] Catálogo enviado a: ${email}`)
+    } catch (error) {
+      console.error('[Email Service] Error al enviar catálogo:', error)
+      throw new Error('No se pudo enviar el catálogo por correo')
+    }
+  }
 }

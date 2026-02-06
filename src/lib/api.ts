@@ -120,9 +120,11 @@ class ApiClient {
     return this.request<any[]>('/admin/notifications')
   }
 
-  // Notificaciones Cliente
-  async getClientNotifications() {
-    return this.request<any[]>('/notifications')
+  async requestCatalog(email: string) {
+    return this.request('/catalog/request', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    })
   }
 
   async getNotificationSettings() {
@@ -177,7 +179,7 @@ class ApiClient {
     }>('/auth/me')
   }
 
-  async updateProfile(data: { name?: string; phone?: string; avatarUrl?: string }) {
+  async updateProfile(data: { name?: string; phone?: string; avatarUrl?: string; password?: string }) {
     return this.request<any>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),
@@ -228,6 +230,7 @@ class ApiClient {
     name: string;
     avatarUrl?: string | null;
     username: string;
+    password?: string;
   }) {
     const result = await this.request<{ success: boolean; token: string; user: any }>(
       '/auth/google/register',
@@ -651,6 +654,10 @@ class ApiClient {
   // Notifications (Client)
   async getClientUnreadNotifications() {
     return this.request<any[]>('/notifications/unread')
+  }
+
+  async getClientNotifications() {
+    return this.request<any[]>('/notifications')
   }
 
   async markClientNotificationRead(id: string) {

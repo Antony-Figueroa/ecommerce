@@ -117,81 +117,26 @@ export function HomePage() {
       <section className="container mx-auto px-4 py-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div className="space-y-1">
-            <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Productos <span className="text-primary">Destacados</span></h2>
-            <p className="text-muted-foreground font-semibold">
+            <h2 className="text-4xl font-black tracking-tight text-foreground uppercase italic">Productos <span className="text-primary">Destacados</span></h2>
+            <p className="text-muted-foreground font-semibold text-lg">
               Nuestros productos más recomendados por profesionales de la salud.
             </p>
           </div>
-          <Button variant="ghost" className="rounded-full font-bold text-primary hover:bg-primary/10 w-fit" asChild>
+          <Button variant="ghost" className="rounded-full font-bold text-primary hover:bg-primary/10 w-fit h-12 px-6 border-2 border-primary/20" asChild>
             <Link to="/productos">
               Ver Todo el Catálogo
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} bcvRate={bcvRate} />
           ))}
         </div>
       </section>
 
-      <section className="bg-primary/5 py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="flex flex-col justify-center">
-              <Badge variant="secondary" className="w-fit mb-4">
-                Oferta especial
-              </Badge>
-              <h2 className="text-3xl font-bold mb-4">
-                Hasta 40% de descuento en Vitamins & Supplements
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Aprovecha nuestras ofertas en multivitamínicos, suplementos
-                nutricionales y productos para fortalecer tu sistema inmune.
-                ¡Limited stock!
-              </p>
-              <div className="flex gap-4">
-                <Button size="lg" asChild>
-                  <Link to="/productos">Ver ofertas</Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link to="/productos">Ver catálogo completo</Link>
-                </Button>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {featuredProducts.slice(0, 2).map((product) => (
-                <ProductCard key={product.id} product={product} bcvRate={bcvRate} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-bold">Novedades</h2>
-            <p className="text-muted-foreground">
-              Los últimos productos añadidos a nuestra tienda
-            </p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link to="/productos?sort=nuevos">
-              Ver todos
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredProducts.slice(0, 4).map((product) => (
-            <ProductCard key={product.id} product={product} bcvRate={bcvRate} />
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-muted/30 py-16">
+      <section className="bg-muted/30 py-24">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">¿Por qué elegirnos?</h2>
@@ -242,19 +187,19 @@ export function HomePage() {
 
       <section className="bg-primary py-12 text-white">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
-                <Phone className="h-6 w-6" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20 shadow-inner">
+                <Phone className="h-7 w-7" />
               </div>
               <div>
-                <p className="text-sm opacity-80">¿Tienes dudas? Llámanos</p>
-                <p className="text-2xl font-bold">800-FARMACIA</p>
+                <p className="text-sm font-medium uppercase tracking-wider opacity-80">Contacto Directo</p>
+                <p className="text-3xl font-black tracking-tighter">800-FARMACIA</p>
               </div>
             </div>
-            <p className="text-center md:text-left opacity-80">
-              ¡Te asesoramos sin compromiso! Nuestro equipo de farmacéuticos está
-              listo para ayudarte.
+            <div className="h-px w-12 bg-white/20 hidden md:block" />
+            <p className="text-center md:text-left text-xl font-bold italic opacity-90 max-w-md">
+              "Tu bienestar, nuestra prioridad. Estamos aquí para ti."
             </p>
           </div>
         </div>

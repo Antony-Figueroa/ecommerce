@@ -43,5 +43,29 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   }
 })
 
+// Generar factura PDF
+router.get('/:id/invoice', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id
+    const saleId = req.params.id as string
+
+    const sale = await saleService.getSaleById(saleId)
+    
+    // Verificar que el pedido pertenezca al usuario o sea admin
+    if (sale.userId !== userId && req.user!.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'No tienes permiso para ver esta factura' })
+    }
+
+    const pdfBuffer = await saleService.generateInvoicePDF(saleId)
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename=factura-${sale.saleNumber}.pdf`)
+    res.send(pdfBuffer)
+  } catch (error) {
+    console.error('Error al generar factura:', error)
+    res.status(500).json({ error: 'Error al generar la factura' })
+  }
+})
+
 export default router
 

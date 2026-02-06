@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
-import { formatUSD } from "@/lib/utils"
+import { formatUSD, formatBS } from "@/lib/utils"
 import { api } from "@/lib/api"
 
 export function CartPage() {
@@ -17,6 +17,7 @@ export function CartPage() {
 
   const [showCheckout, setShowCheckout] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [bcvRate, setBcvRate] = useState<number>(0)
   const [checkoutData, setCheckoutData] = useState({
     customerName: "",
     customerPhone: "",
@@ -43,7 +44,19 @@ export function CartPage() {
   useEffect(() => {
     setSavedItems(getSavedItems())
     fetchPublicSettings()
+    fetchBCVRate()
   }, [getSavedItems])
+
+  const fetchBCVRate = async () => {
+    try {
+      const data = await api.getBCVRate()
+      if (data && data.rate) {
+        setBcvRate(data.rate)
+      }
+    } catch (error) {
+      console.error("Error fetching BCV rate:", error)
+    }
+  }
 
   const fetchPublicSettings = async () => {
     try {
@@ -109,7 +122,14 @@ export function CartPage() {
 
       message += `*💰 Resumen:*\n`
       message += `   Subtotal: $${formatUSD(subtotal)}\n`
+      if (bcvRate > 0) {
+        message += `   Subtotal (Bs.): Bs. ${formatBS(subtotal * bcvRate)}\n`
+      }
       message += `*   Total: $${formatUSD(total)}*\n`
+      if (bcvRate > 0) {
+        message += `*   Total (Bs.): Bs. ${formatBS(total * bcvRate)}*\n`
+        message += `   (Tasa BCV: Bs. ${formatBS(bcvRate)})\n`
+      }
 
       message += `\n*📍 Dirección de Entrega:*\n${checkoutData.deliveryAddress}\n`
 
@@ -233,7 +253,12 @@ export function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${formatUSD(subtotal)}</span>
+                    <div className="text-right">
+                      <div>${formatUSD(subtotal)}</div>
+                      {bcvRate > 0 && (
+                        <div className="text-xs text-muted-foreground">Bs. {formatBS(subtotal * bcvRate)}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -241,7 +266,14 @@ export function CartPage() {
 
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>${formatUSD(total)}</span>
+                  <div className="text-right">
+                    <div>${formatUSD(total)}</div>
+                    {bcvRate > 0 && (
+                      <div className="text-sm font-normal text-muted-foreground italic">
+                        Bs. {formatBS(total * bcvRate)}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-lg">
@@ -321,9 +353,19 @@ export function CartPage() {
                               <h3 className="font-medium">{item.product.name}</h3>
                               <p className="text-sm text-muted-foreground">{item.product.brand}</p>
                               <p className="text-sm text-muted-foreground">{item.product.format} • {item.product.weight}</p>
-                              <p className="text-sm font-semibold mt-1">${formatUSD(item.product.price)}</p>
+                              <div className="mt-1">
+                                <p className="text-sm font-semibold">${formatUSD(item.product.price)}</p>
+                                {bcvRate > 0 && (
+                                  <p className="text-xs text-muted-foreground">Bs. {formatBS(Number(item.product.price) * bcvRate)}</p>
+                                )}
+                              </div>
                             </div>
-                            <p className="font-semibold">${formatUSD(Number(item.product.price) * item.quantity)}</p>
+                            <div className="text-right">
+                              <p className="font-semibold">${formatUSD(Number(item.product.price) * item.quantity)}</p>
+                              {bcvRate > 0 && (
+                                <p className="text-xs text-muted-foreground italic">Bs. {formatBS(Number(item.product.price) * item.quantity * bcvRate)}</p>
+                              )}
+                            </div>
                           </div>
                           <div className="mt-auto flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -416,7 +458,12 @@ export function CartPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${formatUSD(subtotal)}</span>
+                    <div className="text-right">
+                      <div>${formatUSD(subtotal)}</div>
+                      {bcvRate > 0 && (
+                        <div className="text-xs text-muted-foreground">Bs. {formatBS(subtotal * bcvRate)}</div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -424,8 +471,21 @@ export function CartPage() {
 
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>${formatUSD(total)}</span>
+                  <div className="text-right">
+                    <div>${formatUSD(total)}</div>
+                    {bcvRate > 0 && (
+                      <div className="text-sm font-normal text-muted-foreground italic">
+                        Bs. {formatBS(total * bcvRate)}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {bcvRate > 0 && (
+                  <p className="text-[10px] text-center text-muted-foreground">
+                    Tasa de cambio BCV: Bs. {formatBS(bcvRate)}
+                  </p>
+                )}
 
                 <Button className="w-full" size="lg" onClick={handleCheckout}>
                   <MessageCircle className="mr-2 h-4 w-4" />

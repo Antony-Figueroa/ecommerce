@@ -30,13 +30,19 @@ export async function authenticate(
   next: NextFunction
 ): Promise<void> {
   try {
-    const authHeader = req.headers.authorization
+    let token: string | undefined;
+    const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AuthenticationError('Token de autenticación requerido')
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query.token) {
+      // Permitir autenticación vía query string para facturas/archivos
+      token = req.query.token as string;
     }
 
-    const token = authHeader.split(' ')[1]
+    if (!token) {
+      throw new AuthenticationError('Token de autenticación requerido')
+    }
 
     try {
       const decoded = jwt.verify(token, config.jwtSecret) as JWTPayload

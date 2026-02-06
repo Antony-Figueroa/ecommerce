@@ -7,11 +7,13 @@ const router = Router()
 // Obtener todos los favoritos del usuario
 router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    console.log('GET /api/favorites - User ID:', req.user?.id)
     const userId = req.user!.id
     const products = await favoriteService.getFavorites(userId)
+    console.log('Favorites found:', products.length)
     res.json({ favorites: products })
   } catch (error) {
-    console.error('Error al obtener favoritos:', error)
+    console.error('Error al obtener favoritos (Route):', error)
     res.status(500).json({ error: 'Error al obtener favoritos' })
   }
 })

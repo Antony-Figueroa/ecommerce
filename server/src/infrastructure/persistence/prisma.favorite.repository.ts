@@ -3,18 +3,25 @@ import { Favorite, FavoriteRepository } from '../../domain/repositories/favorite
 
 export class PrismaFavoriteRepository implements FavoriteRepository {
   async findAllByUserId(userId: string): Promise<any[]> {
-    return prisma.favorite.findMany({
-      where: { userId },
-      include: {
-        product: {
-          include: {
-            categories: true,
-            images: true
+    try {
+      return await prisma.favorite.findMany({
+        where: { userId },
+        include: {
+          product: {
+            include: {
+              categories: true,
+              images: {
+                orderBy: { sortOrder: 'asc' }
+              }
+            }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+    } catch (error) {
+      console.error('Error in PrismaFavoriteRepository.findAllByUserId:', error)
+      throw error
+    }
   }
 
   async findAllByProductId(productId: string): Promise<any[]> {

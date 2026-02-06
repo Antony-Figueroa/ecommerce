@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { Check, X, Loader2, User as UserIcon } from "lucide-react"
+import { Check, X, Loader2, User as UserIcon, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,8 @@ export function GoogleConfirmPage() {
   const googleData = location.state?.googleData
   
   const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [isChecking, setIsChecking] = useState(false)
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
   const [usernameError, setUsernameError] = useState("")
@@ -91,6 +93,7 @@ export function GoogleConfirmPage() {
         name: googleData.name,
         avatarUrl: googleData.avatarUrl,
         username: username,
+        password: password,
       })
       
       toast({
@@ -188,10 +191,41 @@ export function GoogleConfirmPage() {
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="password">Crea una contraseña</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="********"
+                  className="pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  disabled={loading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Mínimo 8 caracteres, debe incluir una mayúscula y un número.
+              </p>
+            </div>
+
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={loading || isAvailable !== true}
+              disabled={loading || isAvailable !== true || password.length < 8}
             >
               {loading ? "Completando registro..." : "Completar registro"}
             </Button>

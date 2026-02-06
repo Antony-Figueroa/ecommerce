@@ -8,11 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { formatUSD } from "@/lib/utils"
-import { api } from "@/lib/api"
+import { formatUSD, formatBS } from "@/lib/utils"
+import { api, API_BASE } from "@/lib/api"
 import { toast } from "@/hooks/use-toast"
 import { useCart } from "@/contexts/cart-context"
-import type { Sale as Order } from "@/types"
+import type { Sale as Order, SaleItem, SaleAuditLog } from "@/types"
 
 export function OrdersPage() {
   const [orders, setOrders] = React.useState<Order[]>([])
@@ -21,12 +21,38 @@ export function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null)
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [isLoadingDetail, setIsLoadingDetail] = React.useState(false)
+  const [bcvRate, setBcvRate] = React.useState<number>(0)
+  
+  // Función para determinar qué tasa usar (histórica del pedido o actual)
+  const getOrderRate = (order: Order) => {
+    // Si el pedido está completado, entregado o pagado, DEBEMOS usar la tasa que se guardó en ese momento
+    if (order.status.toLowerCase() === 'completed' || 
+        order.status.toLowerCase() === 'delivered' || 
+        order.isPaid || 
+        order.bcvRate > 0) {
+      return Number(order.bcvRate);
+    }
+    // Si no tiene tasa guardada (pedidos muy viejos o pendientes), usar la tasa actual del estado
+    return bcvRate;
+  };
   
   const { addItem } = useCart()
 
   React.useEffect(() => {
     loadOrders()
+    fetchBCVRate()
   }, [])
+
+  const fetchBCVRate = async () => {
+    try {
+      const data = await api.getBCVRate()
+      if (data && data.rate) {
+        setBcvRate(data.rate)
+      }
+    } catch (error) {
+      console.error("Error fetching BCV rate:", error)
+    }
+  }
 
   const loadOrders = async () => {
     try {
@@ -61,17 +87,66 @@ export function OrdersPage() {
   const handleRepeatOrder = (order: Order) => {
     if (!order.items) return
     
+    let addedCount = 0;
+    let outOfStockCount = 0;
+
     order.items.forEach(item => {
-      if (item.product) {
-        addItem(item.product, item.quantity || 1)
+      // Solo podemos agregar al carrito si tenemos la información completa del producto
+      const product = item.product;
+      
+      if (product) {
+        // Validar stock: El producto debe tener stock y la cantidad solicitada debe ser menor o igual al stock disponible
+        const availableStock = product.stock || 0;
+        
+        if (availableStock > 0) {
+          // Si el stock es menor a lo que pidió originalmente, agregamos lo que haya disponible (máximo la cantidad original)
+          const quantityToAdd = Math.min(item.quantity || 1, availableStock);
+          addItem(product, quantityToAdd);
+          addedCount++;
+          
+          if (quantityToAdd < (item.quantity || 1)) {
+            // Se agregó parcialmente por falta de stock
+            console.warn(`Producto ${product.name} agregado parcialmente (${quantityToAdd}/${item.quantity}) por stock limitado.`);
+          }
+        } else {
+          outOfStockCount++;
+        }
+      } else {
+        // Si no hay información del producto, lo contamos como no disponible
+        outOfStockCount++;
       }
-    })
+    });
     
-    toast({
-      title: "Productos agregados",
-      description: "Los productos del pedido han sido agregados al carrito."
-    })
+    if (addedCount > 0) {
+      toast({
+        title: outOfStockCount > 0 ? "Pedido repetido parcialmente" : "Productos agregados",
+        description: outOfStockCount > 0 
+          ? `Se agregaron ${addedCount} productos al carrito. ${outOfStockCount} productos no tienen stock suficiente.`
+          : "Todos los productos del pedido han sido agregados al carrito.",
+        variant: outOfStockCount > 0 ? "default" : "default"
+      });
+    } else if (outOfStockCount > 0) {
+      toast({
+        title: "No se pudo repetir el pedido",
+        description: "Ninguno de los productos tiene stock disponible actualmente.",
+        variant: "destructive"
+      });
+    }
   }
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      const token = api.getToken();
+      const url = `${API_BASE}/sales/${orderId}/invoice?token=${token}`;
+      window.open(url, '_blank');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo generar la factura",
+        variant: "destructive"
+      });
+    }
+  };
 
   const filteredOrders = React.useMemo(() => {
     if (!searchTerm) return orders
@@ -82,13 +157,15 @@ export function OrdersPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; class: string }> = {
-      pending: { label: "Pendiente", class: "bg-yellow-100 text-yellow-800" },
-      confirmed: { label: "Confirmado", class: "bg-blue-100 text-blue-800" },
-      shipped: { label: "Enviado", class: "bg-purple-100 text-purple-800" },
-      delivered: { label: "Entregado", class: "bg-green-100 text-green-800" },
-      cancelled: { label: "Cancelado", class: "bg-red-100 text-red-800" },
+      pending: { label: "Pendiente", class: "bg-amber-100 text-amber-900 border-amber-200" },
+      confirmed: { label: "Confirmado", class: "bg-sky-100 text-sky-900 border-sky-200" },
+      shipped: { label: "Enviado", class: "bg-indigo-100 text-indigo-900 border-indigo-200" },
+      delivered: { label: "Entregado", class: "bg-emerald-100 text-emerald-900 border-emerald-200" },
+      cancelled: { label: "Cancelado", class: "bg-rose-100 text-rose-900 border-rose-200" },
+      accepted: { label: "Aceptado", class: "bg-blue-100 text-blue-900 border-blue-200" },
+      completed: { label: "Completado", class: "bg-green-100 text-green-900 border-green-200" },
     }
-    return statusMap[status] || { label: status, class: "bg-gray-100 text-gray-800" }
+    return statusMap[status.toLowerCase()] || { label: status, class: "bg-slate-100 text-slate-900 border-slate-200" }
   }
 
   return (
@@ -153,33 +230,57 @@ export function OrdersPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center">
                       <div className="flex-1 p-6">
                         <div className="mb-2 flex items-center gap-3">
-                          <span className="font-bold">{order.saleNumber}</span>
-                          <Badge className={status.class} variant="secondary">
+                          <span className="font-bold text-base">{order.saleNumber}</span>
+                          <Badge className={status.class} variant="outline">
                             {status.label}
                           </Badge>
                         </div>
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                          <p>Fecha: {new Date(order.createdAt).toLocaleDateString("es-MX")}</p>
-                          <p>Total: {formatUSD(order.totalUSD)}</p>
-                          <p>{order.items?.length || 0} productos</p>
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-foreground/80 font-medium">
+                          <p className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            {new Date(order.createdAt).toLocaleDateString("es-MX")}
+                          </p>
+                          <p className="flex items-center gap-1.5">
+                            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="font-bold text-primary">{formatUSD(order.totalUSD)}</span>
+                          </p>
+                          <p className="flex items-center gap-1.5 text-muted-foreground font-normal">
+                            <Package className="h-3.5 w-3.5" />
+                            {order.items?.length || 0} productos
+                          </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 border-t p-4 sm:border-l sm:border-t-0 sm:p-6">
+                      <div className="flex items-center gap-3 border-t p-4 sm:border-l sm:border-t-0 sm:p-6 bg-muted/20">
                         <Button 
-                          variant="outline" 
+                          variant="default" 
                           size="sm" 
-                          className="flex-1 sm:flex-none"
+                          className="flex-1 sm:flex-none shadow-sm px-4"
                           onClick={() => handleViewDetails(order.id)}
                         >
                           Ver detalles
                         </Button>
-                        <Button 
-                          size="sm" 
-                          className="flex-1 sm:flex-none"
-                          onClick={() => handleRepeatOrder(order)}
-                        >
-                          Repetir pedido
-                        </Button>
+                        {(order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered') && (
+                          <>
+                            <Button 
+                              variant="secondary" 
+                              size="sm" 
+                              className="flex-1 sm:flex-none px-4"
+                              onClick={() => handleRepeatOrder(order)}
+                            >
+                              <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                              Repetir
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="flex-1 sm:flex-none px-4"
+                              onClick={() => handleDownloadInvoice(order.id)}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                              Factura
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -221,116 +322,163 @@ export function OrdersPage() {
                       Resumen de Productos
                     </h3>
                     <div className="space-y-3">
-                      {selectedOrder.items?.map((item: any, idx: number) => (
-                        <div key={idx} className="flex gap-3">
-                          <div className="h-16 w-16 rounded-md bg-muted overflow-hidden flex-shrink-0 border">
-                            {item.product?.images?.[0] ? (
-                              <img 
-                                src={item.product.images[0]} 
-                                alt={item.product.name} 
-                                className="h-full w-full object-cover" 
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
-                                  target.onerror = null;
-                                }}
-                              />
-                            ) : (
-                              <Package className="h-8 w-8 m-4 text-muted-foreground" />
-                            )}
+                      {selectedOrder.items?.map((item: SaleItem, idx: number) => {
+                        const unitPrice = Number(item.unitPrice || 0);
+                        const itemName = item.product?.name || item.name || "Producto";
+                        const itemImage = item.product?.images?.[0]?.url;
+                        const effectiveRate = getOrderRate(selectedOrder);
+                        
+                        return (
+                          <div key={idx} className="flex gap-3">
+                            <div className="h-16 w-16 rounded-md bg-muted overflow-hidden flex-shrink-0 border">
+                              {itemImage ? (
+                                <img 
+                                  src={itemImage} 
+                                  alt={itemName} 
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
+                                    target.onerror = null;
+                                  }}
+                                />
+                              ) : (
+                                <Package className="h-8 w-8 m-4 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm line-clamp-1">{itemName}</p>
+                              <p className="text-xs text-muted-foreground">Cant: {item.quantity} • {formatUSD(unitPrice)} c/u</p>
+                              {effectiveRate > 0 && (
+                                <p className="text-[10px] text-muted-foreground/70">
+                                  Bs. {formatBS(unitPrice * effectiveRate)} c/u
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="font-semibold text-sm">{formatUSD(unitPrice * item.quantity)}</p>
+                              {effectiveRate > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  Bs. {formatBS(unitPrice * item.quantity * effectiveRate)}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm line-clamp-1">{item.product?.name || "Producto"}</p>
-                            <p className="text-xs text-muted-foreground">Cant: {item.quantity} • {formatUSD(item.priceUSD)} c/u</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-sm">{formatUSD(item.priceUSD * item.quantity)}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span>{formatUSD(selectedOrder.subtotalUSD || selectedOrder.totalUSD)}</span>
-                    </div>
-                    {selectedOrder.taxUSD !== undefined && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Impuestos</span>
-                        <span>{formatUSD(selectedOrder.taxUSD)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                      <span>Total</span>
-                      <span className="text-primary">{formatUSD(selectedOrder.totalUSD)}</span>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-6">
-                  <div className="rounded-lg bg-muted/50 p-4 space-y-4 border">
-                    <div>
-                      <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-2">
-                        <MapPin className="h-3 w-3" />
-                        Envío
-                      </h4>
-                      <p className="text-sm font-medium">{selectedOrder.shippingCostUSD > 0 ? "Envío a domicilio" : "Retiro en tienda"}</p>
-                      {selectedOrder.shippingCostUSD > 0 && (
-                        <p className="text-xs text-muted-foreground mt-1">Costo: {formatUSD(selectedOrder.shippingCostUSD)}</p>
-                      )}
-                    </div>
-
-                    <Separator className="bg-border/50" />
-
-                    <div>
-                      <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-2">
-                        <CreditCard className="h-3 w-3" />
-                        Información Adicional
-                      </h4>
-                      <p className="text-sm text-muted-foreground italic">
-                        {selectedOrder.notes || "Sin notas adicionales"}
-                      </p>
-                    </div>
-
-                    <Separator className="bg-border/50" />
-
-                    <div>
-                      <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-2">
-                        <Calendar className="h-3 w-3" />
-                        Cronología
-                      </h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-2 rounded-full bg-primary" />
-                          <p className="text-[11px]">Pedido realizado: {new Date(selectedOrder.createdAt).toLocaleString("es-MX")}</p>
-                        </div>
-                        {selectedOrder.status !== 'pending' && (
-                          <div className="flex items-center gap-2">
-                            <div className="h-2 w-2 rounded-full bg-primary" />
-                            <p className="text-[11px]">Estado actualizado a {getStatusBadge(selectedOrder.status).label}</p>
-                          </div>
+                  <div className="rounded-xl bg-muted/30 p-4 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="h-4 w-4 text-primary mt-1" />
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Envío</p>
+                        <p className="text-sm font-medium">{selectedOrder.deliveryAddress || "Retiro en tienda"}</p>
+                        {selectedOrder.shippingCostUSD > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">Costo: {formatUSD(selectedOrder.shippingCostUSD)}</p>
                         )}
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CreditCard className="h-4 w-4 text-primary mt-1" />
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Método de Pago</p>
+                        <p className="text-sm font-medium">{selectedOrder.paymentMethod || "WhatsApp"}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <Button className="w-full gap-2" onClick={() => handleRepeatOrder(selectedOrder)}>
-                      <ShoppingCart className="h-4 w-4" />
-                      Repetir este pedido
-                    </Button>
-                    <Button variant="outline" className="w-full gap-2" asChild>
-                      <a href={`/api/sales/${selectedOrder.id}/invoice`} target="_blank" rel="noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                        Descargar Factura (PDF)
-                      </a>
-                    </Button>
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <ExternalLink className="h-3 w-3" />
+                      Información Adicional
+                    </p>
+                    <p className="text-sm italic text-muted-foreground">
+                      {selectedOrder.notes || "Sin notas adicionales"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <Calendar className="h-3 w-3" />
+                      Cronología
+                    </p>
+                    <ScrollArea className="h-[150px] pr-4">
+                      <div className="space-y-4">
+                        {selectedOrder.auditLogs && selectedOrder.auditLogs.length > 0 ? (
+                          selectedOrder.auditLogs.map((log: SaleAuditLog, idx: number) => (
+                            <div key={idx} className="flex gap-3 text-xs relative">
+                              {selectedOrder.auditLogs && idx !== selectedOrder.auditLogs.length - 1 && (
+                                <div className="absolute left-[3.5px] top-[14px] bottom-[-16px] w-[1px] bg-muted-foreground/20" />
+                              )}
+                              <div className="mt-1 h-2 w-2 rounded-full bg-primary flex-shrink-0 z-10 shadow-[0_0_0_2px_white]" />
+                              <div>
+                                <p className="font-medium">
+                                  {log.action === 'CREATED' ? 'Pedido realizado' : 
+                                   log.action === 'STATUS_CHANGE' ? `Estado actualizado a ${log.newStatus}` : 
+                                   log.action}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {new Date(log.createdAt).toLocaleDateString("es-MX")} {new Date(log.createdAt).toLocaleTimeString("es-MX", { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                                {log.reason && <p className="text-muted-foreground mt-0.5">{log.reason}</p>}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex gap-3 text-xs">
+                            <div className="mt-1 h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                            <p className="font-medium">Pedido realizado: {new Date(selectedOrder.createdAt).toLocaleString("es-MX")}</p>
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-8 border-t pt-6 space-y-3">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <div className="text-right">
+                    <span className="font-medium">{formatUSD(Number(selectedOrder.subtotalUSD))}</span>
+                    {getOrderRate(selectedOrder) > 0 && (
+                      <p className="text-xs text-muted-foreground">Bs. {formatBS(Number(selectedOrder.subtotalUSD) * getOrderRate(selectedOrder))}</p>
+                    )}
+                  </div>
+                </div>
+                {Number(selectedOrder.shippingCostUSD) > 0 && (
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-muted-foreground">Envío</span>
+                    <div className="text-right">
+                      <span className="font-medium">{formatUSD(Number(selectedOrder.shippingCostUSD))}</span>
+                      {getOrderRate(selectedOrder) > 0 && (
+                        <p className="text-xs text-muted-foreground">Bs. {formatBS(Number(selectedOrder.shippingCostUSD) * getOrderRate(selectedOrder))}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <Separator className="my-2" />
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xl font-bold">Total</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-black text-primary">{formatUSD(Number(selectedOrder.totalUSD))}</span>
+                    {getOrderRate(selectedOrder) > 0 && (
+                      <div className="text-sm font-bold text-muted-foreground text-right">
+                        <div>Bs. {formatBS(Number(selectedOrder.totalUSD) * getOrderRate(selectedOrder))}</div>
+                        <div className="text-[10px] opacity-70 font-normal">(Tasa: {formatBS(getOrderRate(selectedOrder))})</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {getOrderRate(selectedOrder) > 0 && (
+                  <p className="text-[10px] text-center text-muted-foreground/60 mt-6 pt-4 border-t">
+                    Tasa de cambio aplicada: 1 USD = {formatBS(getOrderRate(selectedOrder))} Bs.
+                  </p>
+                )}
               </div>
             </ScrollArea>
           ) : null}

@@ -12,14 +12,42 @@ export class PrismaSaleRepository implements SaleRepository {
   async findById(id: string) {
     return prisma.sale.findUnique({
       where: { id },
-      include: { items: true, user: true, auditLogs: { orderBy: { createdAt: 'desc' } } },
+      include: { 
+        items: {
+          include: {
+            product: {
+              include: {
+                images: {
+                  orderBy: { sortOrder: 'asc' }
+                }
+              }
+            }
+          }
+        }, 
+        user: true, 
+        auditLogs: { orderBy: { createdAt: 'desc' } } 
+      },
     })
   }
 
   async findBySaleNumber(saleNumber: string) {
     return prisma.sale.findUnique({
       where: { saleNumber },
-      include: { items: true, user: true, auditLogs: { orderBy: { createdAt: 'desc' } } },
+      include: { 
+        items: {
+          include: {
+            product: {
+              include: {
+                images: {
+                  orderBy: { sortOrder: 'asc' }
+                }
+              }
+            }
+          }
+        }, 
+        user: true, 
+        auditLogs: { orderBy: { createdAt: 'desc' } } 
+      },
     })
   }
 

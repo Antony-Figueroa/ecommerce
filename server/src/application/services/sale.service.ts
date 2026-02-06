@@ -4,6 +4,7 @@ import { ProductRepository } from '../../domain/repositories/product.repository.
 import { InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
 import { BCVRepository, SettingsRepository } from '../../domain/repositories/settings.repository.js'
 import { NotificationService } from './notification.service.js'
+import PDFDocument from 'pdfkit'
 
 function generateSaleNumber(): string {
   const date = new Date()
@@ -535,6 +536,87 @@ export class SaleService {
     return this.saleRepo.findAll({
       orderBy: { createdAt: 'desc' },
       take: limit,
+    })
+  }
+
+  async generateInvoicePDF(id: string): Promise<Buffer> {
+    const sale = await this.saleRepo.findById(id)
+    if (!sale) {
+      throw new NotFoundError('Venta')
+    }
+
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 50 })
+      const buffers: Buffer[] = []
+
+      doc.on('data', buffers.push.bind(buffers))
+      doc.on('end', () => resolve(Buffer.concat(buffers)))
+      doc.on('error', reject)
+
+      // Header
+      doc.fontSize(20).text('Ana\'s Supplements', { align: 'center' })
+      doc.fontSize(10).text('RIF: J-12345678-9', { align: 'center' })
+      doc.text('Dirección: Valencia, Carabobo', { align: 'center' })
+      doc.moveDown()
+
+      doc.fontSize(16).text(`FACTURA #${sale.saleNumber}`, { align: 'right' })
+      doc.fontSize(10).text(`Fecha: ${new Date(sale.createdAt).toLocaleDateString()}`, { align: 'right' })
+      doc.moveDown()
+
+      // Customer Info
+      doc.fontSize(12).text('DATOS DEL CLIENTE', { underline: true })
+      doc.fontSize(10).text(`Nombre: ${sale.customerName}`)
+      doc.text(`Teléfono: ${sale.customerPhone || 'N/A'}`)
+      doc.text(`Email: ${sale.customerEmail || 'N/A'}`)
+      doc.text(`Dirección: ${sale.deliveryAddress || 'N/A'}`)
+      doc.moveDown()
+
+      // Table Header
+      const tableTop = doc.y
+      doc.fontSize(10)
+      doc.text('Producto', 50, tableTop)
+      doc.text('Cant.', 250, tableTop, { width: 50, align: 'right' })
+      doc.text('Precio ($)', 300, tableTop, { width: 100, align: 'right' })
+      doc.text('Total ($)', 400, tableTop, { width: 100, align: 'right' })
+      doc.moveDown()
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke()
+      doc.moveDown(0.5)
+
+      // Table Items
+      sale.items.forEach((item: any) => {
+        const y = doc.y
+        doc.text(item.name, 50, y, { width: 200 })
+        doc.text(item.quantity.toString(), 250, y, { width: 50, align: 'right' })
+        doc.text(item.unitPrice.toFixed(2), 300, y, { width: 100, align: 'right' })
+        doc.text(item.total.toFixed(2), 400, y, { width: 100, align: 'right' })
+        doc.moveDown()
+      })
+
+      doc.moveDown()
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke()
+      doc.moveDown()
+
+      // Totals
+      const totalsY = doc.y
+      doc.text('Subtotal:', 350, totalsY, { width: 100, align: 'right' })
+      doc.text(`$${sale.subtotalUSD.toFixed(2)}`, 450, totalsY, { width: 100, align: 'right' })
+      
+      doc.text('Envío:', 350, doc.y, { width: 100, align: 'right' })
+      doc.text(`$${(sale.shippingCostUSD || 0).toFixed(2)}`, 450, doc.y, { width: 100, align: 'right' })
+      
+      doc.fontSize(12).text('TOTAL USD:', 350, doc.y, { width: 100, align: 'right', bold: true })
+      doc.text(`$${sale.totalUSD.toFixed(2)}`, 450, doc.y, { width: 100, align: 'right', bold: true })
+      
+      doc.fontSize(10).moveDown()
+      doc.text(`Tasa BCV: ${sale.bcvRate.toFixed(2)} Bs/$`, 350, doc.y, { width: 100, align: 'right' })
+      doc.text('TOTAL BS:', 350, doc.y, { width: 100, align: 'right', bold: true })
+      doc.text(`${sale.totalBS.toFixed(2)} Bs`, 450, doc.y, { width: 100, align: 'right', bold: true })
+
+      // Footer
+      doc.moveDown(2)
+      doc.fontSize(8).text('Gracias por su compra. Esta es una factura generada digitalmente.', { align: 'center', color: 'gray' })
+
+      doc.end()
     })
   }
 }

@@ -150,7 +150,7 @@ export function Navbar() {
               </Link>
             )}
             
-            {user && <div className="hidden xs:block"><NotificationBell /></div>}
+            {user && <NotificationBell />}
 
             <Separator orientation="vertical" className="h-6 hidden lg:block" />
 
@@ -282,6 +282,7 @@ export function Navbar() {
                         <Link to="/perfil" className="text-sm hover:text-primary">Mi Perfil</Link>
                         <Link to="/pedidos" className="text-sm hover:text-primary">Mis Pedidos</Link>
                         <Link to="/favoritos" className="text-sm hover:text-primary">Mis Favoritos</Link>
+                        <Link to="/notificaciones" className="text-sm hover:text-primary">Notificaciones</Link>
                         <button 
                           onClick={logout}
                           className="text-sm text-destructive text-left hover:opacity-80"

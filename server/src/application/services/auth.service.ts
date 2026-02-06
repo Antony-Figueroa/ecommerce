@@ -124,7 +124,7 @@ export class AuthService {
   }
 
   async completeGoogleRegistration(data: any) {
-    const { email, googleId, name, username, avatarUrl } = data
+    const { email, googleId, name, username, avatarUrl, password } = data
 
     if (username) {
       const existingUsername = await this.userRepo.findByUsername(username)
@@ -133,6 +133,7 @@ export class AuthService {
       }
     }
 
+    const passwordHash = password ? await bcrypt.hash(password, 12) : undefined
     let user = await this.userRepo.findByEmail(email)
 
     if (user) {
@@ -141,7 +142,8 @@ export class AuthService {
         username,
         name: name || user.name,
         avatarUrl: avatarUrl || user.avatarUrl,
-        emailVerified: true
+        emailVerified: true,
+        passwordHash: passwordHash || user.passwordHash
       })
     } else {
       user = await this.userRepo.create({
@@ -150,6 +152,7 @@ export class AuthService {
         username,
         name,
         avatarUrl,
+        passwordHash,
         emailVerified: true,
         role: 'USER'
       })
@@ -188,8 +191,15 @@ export class AuthService {
   }
 
   async updateProfile(userId: string, data: any) {
-    const { name, phone, avatarUrl } = data
-    const user = await this.userRepo.update(userId, { name, phone, avatarUrl })
+    const { name, phone, avatarUrl, password } = data
+    
+    const updateData: any = { name, phone, avatarUrl }
+    
+    if (password) {
+      updateData.passwordHash = await bcrypt.hash(password, 12)
+    }
+    
+    const user = await this.userRepo.update(userId, updateData)
     return this.sanitizeUser(user)
   }
 

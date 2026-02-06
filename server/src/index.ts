@@ -28,6 +28,7 @@ import { authenticate } from './infrastructure/web/middleware/auth.middleware.js
 import { notificationService, bcvUpdaterService, cartService } from './shared/container.js'
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
+import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
 
 import { createServer } from 'http'
 import { socketService } from './infrastructure/socket.service.js'
@@ -87,6 +88,7 @@ app.use('/api/favorites', favoriteRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/cart', cartRoutes)
+app.use('/api/catalog', catalogRoutes)
 app.use('/api/admin/bcv', bcvAdminRoutes)
 app.use('/api/admin/products', adminProductRoutes)
 app.use('/api/admin/categories', adminCategoryRoutes)

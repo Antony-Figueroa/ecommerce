@@ -8,8 +8,16 @@ export class FavoriteService {
   ) {}
 
   async getFavorites(userId: string) {
-    const favorites = await this.favoriteRepo.findAllByUserId(userId)
-    return favorites.map((f: any) => f.product)
+    try {
+      const favorites = await this.favoriteRepo.findAllByUserId(userId)
+      // Filtrar favoritos que puedan tener el producto nulo y mapear a productos
+      return favorites
+        .filter((f: any) => f.product !== null)
+        .map((f: any) => f.product)
+    } catch (error) {
+      console.error('Error in FavoriteService.getFavorites:', error)
+      throw error
+    }
   }
 
   async checkFavorite(userId: string, productId: string) {

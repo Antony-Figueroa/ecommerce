@@ -58,8 +58,12 @@ export interface CartItem {
 export interface Sale {
   id: string
   saleNumber: string
+  userId?: string | null
   customerName?: string | null
   customerPhone?: string | null
+  customerEmail?: string | null
+  deliveryAddress?: string | null
+  paymentMethod: string
   status: string
   subtotalUSD: number
   shippingCostUSD: number
@@ -69,8 +73,12 @@ export interface Sale {
   totalBS: number
   profitUSD: number
   profitBS: number
+  isPaid: boolean
+  paidAmountUSD?: number | null
+  deliveryStatus: string
   notes?: string | null
   items: SaleItem[]
+  auditLogs?: SaleAuditLog[]
   createdAt: string
   updatedAt?: string
 }
@@ -87,6 +95,19 @@ export interface SaleItem {
   profitPerUnit: number
   totalProfit: number
   product?: Product
+}
+
+export interface SaleAuditLog {
+  id: string
+  saleId: string
+  action: string
+  oldStatus?: string | null
+  newStatus?: string | null
+  oldDeliveryStatus?: string | null
+  newDeliveryStatus?: string | null
+  userId?: string | null
+  reason?: string | null
+  createdAt: string
 }
 
 export interface Requirement {

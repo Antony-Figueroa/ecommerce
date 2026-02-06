@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Package, ShoppingBag, User, Camera } from "lucide-react"
+import { Package, ShoppingBag, User, Camera, Eye, EyeOff, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -27,10 +27,12 @@ export function AccountPage() {
   const [isLoadingOrders, setIsLoadingOrders] = React.useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
   const [isUpdating, setIsUpdating] = React.useState(false)
+  const [showPassword, setShowPassword] = React.useState(false)
   const [editForm, setEditForm] = React.useState({
     name: "",
     phone: "",
-    avatarUrl: ""
+    avatarUrl: "",
+    password: ""
   })
   
   React.useEffect(() => {
@@ -39,7 +41,8 @@ export function AccountPage() {
       setEditForm({
         name: user.name || "",
         phone: user.phone || "",
-        avatarUrl: user.avatarUrl || ""
+        avatarUrl: user.avatarUrl || "",
+        password: ""
       })
     }
   }, [user])
@@ -59,8 +62,14 @@ export function AccountPage() {
     e.preventDefault()
     try {
       setIsUpdating(true)
-      await api.updateProfile(editForm)
+      // Solo enviamos la contraseña si se ha modificado
+      const updateData = { ...editForm }
+      if (!updateData.password) {
+        delete (updateData as any).password
+      }
+      await api.updateProfile(updateData)
       await refreshUser()
+      setEditForm(prev => ({ ...prev, password: "" }))
       setIsEditDialogOpen(false)
       toast({
         title: "Perfil actualizado",
@@ -268,6 +277,37 @@ export function AccountPage() {
                 onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
                 placeholder="+58 412 1234567"
               />
+            </div>
+
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Nueva Contraseña</Label>
+                <span className="text-[10px] text-muted-foreground">Opcional</span>
+              </div>
+              <div className="relative">
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"}
+                  value={editForm.password} 
+                  onChange={(e) => setEditForm({...editForm, password: e.target.value})}
+                  placeholder="********"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Deja en blanco para mantener la actual. Mínimo 8 caracteres, una mayúscula y un número.
+              </p>
             </div>
 
             <DialogFooter>

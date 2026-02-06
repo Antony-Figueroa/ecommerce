@@ -63,6 +63,7 @@ export const googleRegisterSchema = z.object({
   name: authRules.name,
   avatarUrl: z.string().optional().nullable(),
   username: authRules.username,
+  password: authRules.password,
 })
 
 export const loginSchema = z.object({

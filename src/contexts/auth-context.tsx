@@ -30,6 +30,7 @@ interface AuthContextType {
     name: string;
     avatarUrl?: string | null;
     username: string;
+    password?: string;
   }) => Promise<void>
   logout: () => void
   refreshUser: () => Promise<void>
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string;
     avatarUrl?: string | null;
     username: string;
+    password?: string;
   }) => {
     const result = await api.googleRegister(data)
     if (result.success) {
