@@ -149,13 +149,7 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
                 </DialogDescription>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-border/50">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Disponibilidad</p>
-                  <p className={cn("text-sm font-bold", product.inStock ? "text-green-600" : "text-destructive")}>
-                    {product.inStock ? `${product.stock} unidades` : "Sin stock"}
-                  </p>
-                </div>
+              <div className="grid grid-cols-1 gap-4 py-4 border-y border-border/50">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Categoría</p>
                   <p className="text-sm font-bold">{product.category?.name || "General"}</p>

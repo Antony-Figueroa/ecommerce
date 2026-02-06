@@ -1,9 +1,10 @@
 import * as React from "react"
 import { useState, useRef } from "react"
-import { Upload, X, Star, Loader2 } from "lucide-react"
+import { Upload, X, Star, Loader2, Link } from "lucide-react"
 import imageCompression from "browser-image-compression"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -19,7 +20,37 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
   const { toast } = useToast()
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [urlInput, setUrlInput] = useState("")
+  const [showUrlInput, setShowUrlInput] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleUrlSubmit = () => {
+    if (!urlInput.trim()) return
+
+    if (images.length >= maxImages) {
+      toast({
+        title: "Límite alcanzado",
+        description: `Solo puedes subir hasta ${maxImages} imágenes`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    const newImage: Partial<ProductImage> = {
+      url: urlInput.trim(),
+      isMain: images.length === 0,
+      sortOrder: images.length
+    }
+
+    onChange([...images, newImage])
+    setUrlInput("")
+    setShowUrlInput(false)
+    
+    toast({
+      title: "Imagen añadida",
+      description: "La imagen por URL ha sido añadida correctamente",
+    })
+  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -100,10 +131,52 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
 
   return (
     <div className="space-y-4">
+      {showUrlInput ? (
+        <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border border-dashed animate-in fade-in zoom-in duration-200">
+          <Input
+            placeholder="Pega la URL de la imagen aquí..."
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            className="flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handleUrlSubmit()}
+            autoFocus
+          />
+          <Button onClick={handleUrlSubmit} size="sm">Añadir</Button>
+          <Button onClick={() => setShowUrlInput(false)} variant="ghost" size="icon" className="h-8 w-8">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm" 
+            className="text-xs uppercase tracking-wider font-bold h-9"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Subir Archivos
+          </Button>
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm" 
+            className="text-xs uppercase tracking-wider font-bold h-9"
+            onClick={() => setShowUrlInput(true)}
+            disabled={isUploading}
+          >
+            <Link className="h-4 w-4 mr-2" />
+            Desde URL
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {images.map((image, index) => (
           <div 
-            key={image.url || index} 
+            key={image.url || `img-${index}`} 
             className={cn(
               "relative aspect-square rounded-xl overflow-hidden border-2 transition-all group",
               image.isMain ? "border-primary shadow-md" : "border-border/50 hover:border-primary/50"
@@ -146,7 +219,7 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
           </div>
         ))}
 
-        {images.length < maxImages && (
+        {images.length < maxImages && !showUrlInput && (
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}

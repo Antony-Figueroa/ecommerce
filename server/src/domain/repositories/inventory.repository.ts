@@ -1,0 +1,59 @@
+export interface Category {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  image: string | null
+  icon: string | null
+  isActive: boolean
+  sortOrder: number
+  createdAt: Date
+  updatedAt: Date
+  _count?: {
+    products: number
+  }
+}
+
+export interface Brand {
+  id: string
+  name: string
+  description: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface InventoryLog {
+  id: string
+  productId: string
+  changeType: string
+  previousStock: number
+  newStock: number
+  changeAmount: number
+  reason: string | null
+  createdAt: Date
+}
+
+export interface CategoryRepository {
+  findAll(options?: any): Promise<Category[]>
+  findFirst(options: any): Promise<Category | null>
+  findById(id: string): Promise<Category | null>
+  findBySlug(slug: string): Promise<Category | null>
+  findByName(name: string): Promise<Category | null>
+  create(data: any): Promise<Category>
+  update(id: string, data: any): Promise<Category>
+  delete(id: string): Promise<void>
+  upsert(slug: string, data: any): Promise<Category>
+}
+
+export interface BrandRepository {
+  findAll(): Promise<Brand[]>
+  findById(id: string): Promise<Brand | null>
+  findByName(name: string): Promise<Brand | null>
+  upsert(name: string): Promise<Brand>
+}
+
+export interface InventoryLogRepository {
+  create(data: any): Promise<InventoryLog>
+  findAll(productId?: string): Promise<InventoryLog[]>
+}

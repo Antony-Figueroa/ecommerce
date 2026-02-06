@@ -2,28 +2,27 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
-import { config } from './config/index.js'
-import { ErrorHandler, notFoundHandler, rateLimitHandler } from './middleware/errorHandler.js'
-import authRoutes from './routes/auth.routes.js'
-import productRoutes from './routes/product.routes.js'
-import saleRoutes from './routes/sale.routes.js'
-import bcvRoutes from './routes/bcv.routes.js'
-import bcvAdminRoutes from './routes/admin/bcv.routes.js'
-import categoryRoutes from './routes/category.routes.js'
-import favoriteRoutes from './routes/favorite.routes.js'
-import adminProductRoutes from './routes/admin/product.routes.js'
-import adminCategoryRoutes from './routes/admin/category.routes.js'
-import adminStatsRoutes from './routes/admin/stats.routes.js'
-import adminRequirementRoutes from './routes/admin/requirement.routes.js'
-import adminSaleRoutes from './routes/admin/sale.routes.js'
-import adminReportRoutes from './routes/admin/report.routes.js'
-import adminCustomerRoutes from './routes/admin/customer.routes.js'
-import adminUploadRoutes from './routes/admin/upload.routes.js'
-import adminSettingsRoutes from './routes/admin/settings.routes.js'
-import adminManagementRoutes from './routes/admin/admin-management.routes.js'
-import { authenticate } from './middleware/auth.js'
-import { NotificationService } from './services/notification.service.js'
-import { BCVUpdaterService } from './services/bcv-updater.service.js'
+import { config } from './shared/config/index.js'
+import { ErrorHandler, notFoundHandler, rateLimitHandler } from './infrastructure/web/middleware/error.middleware.js'
+import authRoutes from './infrastructure/web/routes/auth.routes.js'
+import productRoutes from './infrastructure/web/routes/product.routes.js'
+import saleRoutes from './infrastructure/web/routes/sale.routes.js'
+import bcvRoutes from './infrastructure/web/routes/bcv.routes.js'
+import bcvAdminRoutes from './infrastructure/web/routes/admin/bcv.routes.js'
+import categoryRoutes from './infrastructure/web/routes/category.routes.js'
+import favoriteRoutes from './infrastructure/web/routes/favorite.routes.js'
+import adminProductRoutes from './infrastructure/web/routes/admin/product.routes.js'
+import adminCategoryRoutes from './infrastructure/web/routes/admin/category.routes.js'
+import adminStatsRoutes from './infrastructure/web/routes/admin/stats.routes.js'
+import adminRequirementRoutes from './infrastructure/web/routes/admin/requirement.routes.js'
+import adminSaleRoutes from './infrastructure/web/routes/admin/sale.routes.js'
+import adminReportRoutes from './infrastructure/web/routes/admin/report.routes.js'
+import adminCustomerRoutes from './infrastructure/web/routes/admin/customer.routes.js'
+import adminUploadRoutes from './infrastructure/web/routes/admin/upload.routes.js'
+import adminSettingsRoutes from './infrastructure/web/routes/admin/settings.routes.js'
+import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
+import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
+import { notificationService, bcvUpdaterService } from './shared/container.js'
 import path from 'path'
 
 const app = express()
@@ -85,22 +84,22 @@ const RUN_TASKS = process.env.NODE_ENV !== 'test'
 if (RUN_TASKS) {
   // Check stock and expirations every 12 hours
   setInterval(() => {
-    NotificationService.checkLowStock()
-    NotificationService.checkExpirations()
+    notificationService.checkLowStock()
+    notificationService.checkExpirations()
   }, 12 * 60 * 60 * 1000)
 
   // Actualizar tasa BCV cada hora
   setInterval(() => {
-    BCVUpdaterService.updateRate()
+    bcvUpdaterService.updateRate()
   }, 60 * 60 * 1000)
 
   // Ejecución inicial después de un retraso
   setTimeout(() => {
     console.log('Ejecutando tareas iniciales de segundo plano...')
-    NotificationService.checkLowStock().catch(err => console.error('Error en checkLowStock:', err))
-    NotificationService.checkExpirations().catch(err => console.error('Error en checkExpirations:', err))
-    BCVUpdaterService.updateRate().catch(err => console.error('Error en updateRate:', err))
-  }, 10000)
+    notificationService.checkLowStock().catch(err => console.error('Error en checkLowStock:', err))
+    notificationService.checkExpirations().catch(err => console.error('Error en checkExpirations:', err))
+    bcvUpdaterService.updateRate().catch(err => console.error('Error en updateRate:', err))
+  }, 30000)
 }
 
 app.listen(config.port, '0.0.0.0', () => {

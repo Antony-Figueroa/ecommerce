@@ -15,6 +15,7 @@ import {
   Leaf,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AdminTopNav } from "./admin-top-nav"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -90,6 +91,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       </aside>
 
       <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
+        <AdminTopNav />
         <main className="p-6">
           {children}
         </main>

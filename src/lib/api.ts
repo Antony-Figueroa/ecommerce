@@ -383,10 +383,10 @@ class ApiClient {
     })
   }
 
-  async updateSaleStatus(id: string, status: string) {
+  async updateSaleStatus(id: string, status: string, reason?: string) {
     return this.request(`/admin/sales/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, reason }),
     })
   }
 

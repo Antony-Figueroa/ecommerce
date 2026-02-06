@@ -52,13 +52,22 @@ interface Product {
   isActive: boolean
   image: string
   images?: ProductImage[]
-  salesCount: number
-  viewCount: number
+  category?: { id: string; name: string }
+  salesCount?: number
+  viewCount?: number
 }
 
 interface Category {
   id: string
   name: string
+  slug: string
+  description?: string | null
+  image?: string | null
+  icon?: string | null
+  isActive: boolean
+  sortOrder: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface ProductFormData {
@@ -86,6 +95,7 @@ interface ProductErrors {
   brand?: string
   format?: string
   description?: string
+  images?: string
 }
 
 export function AdminProductsPage() {
@@ -158,7 +168,8 @@ export function AdminProductsPage() {
     try {
       const data = await api.getAdminProducts()
       setProducts(data.products || [])
-    } catch {
+    } catch (error: any) {
+      console.error("Error fetching products:", error)
     } finally {
       setLoading(false)
     }
@@ -168,7 +179,8 @@ export function AdminProductsPage() {
     try {
       const data = await api.getAdminCategories()
       setCategories(data.categories || [])
-    } catch {
+    } catch (error: any) {
+      console.error("Error fetching categories:", error)
     }
   }
 
@@ -240,6 +252,11 @@ export function AdminProductsPage() {
       isValid = false
     }
 
+    if (formData.images.length === 0) {
+      newErrors.images = "Debes añadir al menos una imagen"
+      isValid = false
+    }
+
     setErrors(newErrors)
     return isValid
   }
@@ -273,28 +290,94 @@ export function AdminProductsPage() {
   }
 
   const handleEdit = (product: Product) => {
+    console.log("Editing product:", product);
     setEditingProduct(product)
-    setFormData({
-      name: product.name,
-      sku: product.sku,
-      description: product.description,
-      price: Number(product.price),
+    
+    // Extract categoryId correctly handling both string and object
+    let catId = ""
+    if (typeof (product as any).categoryId === 'string' && (product as any).categoryId) {
+      catId = (product as any).categoryId
+    } else if (product.category?.id) {
+      catId = product.category.id
+    } else if ((product as any).category && typeof (product as any).category === 'string') {
+      catId = (product as any).category
+    }
+
+    const brandValue = typeof product.brand === 'string' 
+      ? product.brand 
+      : (product as any).brandName || (product as any).brand?.name || ""
+
+    const formatValue = String(product.format || "")
+
+    const newFormData: ProductFormData = {
+      name: String(product.name || ""),
+      sku: String(product.sku || ""),
+      description: String(product.description || ""),
+      price: Number(product.price) || 0,
       originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
-      stock: product.stock,
-      categoryId: product.categoryId,
-      brand: product.brand,
-      format: product.format,
-      isFeatured: product.isFeatured,
-      isActive: product.isActive,
-      image: product.image,
-      images: product.images || [],
-    })
+      stock: Number(product.stock) || 0,
+      categoryId: String(catId || ""), // Asegurar que sea string
+      brand: String(brandValue || ""), // Asegurar que sea string
+      format: String(formatValue || ""), // Asegurar que sea string
+      isFeatured: !!product.isFeatured,
+      isActive: !!product.isActive,
+      image: String(product.image || "/placeholder.jpg"),
+      images: Array.isArray(product.images) 
+        ? product.images.map(img => ({
+            id: img.id,
+            url: img.url,
+            thumbnail: img.thumbnail,
+            medium: img.medium,
+            large: img.large,
+            isMain: !!img.isMain,
+            sortOrder: Number(img.sortOrder) || 0
+          })) 
+        : [],
+    }
+
+    console.log("Setting form data:", newFormData);
+    setFormData(newFormData)
+
+    // Reset custom brand/format states if they match existing options
+    if (brandValue && !brands.includes(brandValue)) {
+      setBrands(prev => [...new Set([...prev, brandValue])].sort())
+    }
+    
+    setShowCustomBrand(false)
+    setShowCustomFormat(false)
+    setCustomBrand("")
+    setCustomFormat("")
+    
     setShowAddDialog(true)
+  }
+
+  const [showAddStockDialog, setShowAddStockDialog] = useState(false)
+  const [productToAddStock, setProductToAddStock] = useState<Product | null>(null)
+  const [stockToAdd, setStockToAdd] = useState(1)
+
+  const handleAddStock = async () => {
+    if (!productToAddStock) return
+    try {
+      const newStock = Number(productToAddStock.stock) + Number(stockToAdd)
+      await api.updateProduct(productToAddStock.id, { stock: newStock })
+      setShowAddStockDialog(false)
+      setProductToAddStock(null)
+      setStockToAdd(1)
+      fetchProducts()
+    } catch (error) {
+      console.error("Error adding stock:", error)
+      alert("Error al añadir stock")
+    }
   }
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
       await api.updateProduct(productId, { isActive: !currentStatus })
+      const updatedProduct = products.find(p => p.id === productId)
+      if (!currentStatus && updatedProduct) { // Si se está activando
+        setProductToAddStock(updatedProduct)
+        setShowAddStockDialog(true)
+      }
       fetchProducts()
     } catch {
     }
@@ -387,7 +470,7 @@ export function AdminProductsPage() {
             <SelectContent>
               <SelectItem value="all">Todas las categorias</SelectItem>
               {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                <SelectItem key={cat.id} value={cat.id}>{String(cat.name || "")}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -434,7 +517,9 @@ export function AdminProductsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="font-semibold line-clamp-1">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground">{product.brand}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
+                    </p>
                   </div>
                   <p className="text-lg font-bold text-green-600">
                     {formatUSD(product.price)}
@@ -442,9 +527,10 @@ export function AdminProductsPage() {
                 </div>
                 
                 <div className="flex items-center gap-2 mt-2 text-sm">
-                  <Badge variant="outline">{product.format}</Badge>
+                  <Badge variant="outline">{String(product.format || "N/A")}</Badge>
+                  <Badge variant="outline">{String(product.category?.name || "Sin categoría")}</Badge>
                   <Badge variant={product.inStock ? "secondary" : "destructive"}>
-                    Stock: {product.stock}
+                    Stock: {Number(product.stock)}
                   </Badge>
                   {product.stock < 10 && product.inStock && (
                     <AlertTriangle className="h-4 w-4 text-yellow-500" />
@@ -516,6 +602,47 @@ export function AdminProductsPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Add Stock Dialog */}
+        <Dialog open={showAddStockDialog} onOpenChange={setShowAddStockDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reactivar Producto</DialogTitle>
+              <DialogDescription>
+                Has activado <strong>{productToAddStock?.name}</strong>. ¿Deseas añadir stock inicial? 
+                (Stock actual: {productToAddStock?.stock})
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center space-x-2 py-4">
+              <div className="grid flex-1 gap-2">
+                <label htmlFor="stock" className="text-sm font-medium">Cantidad a añadir</label>
+                <Input
+                  id="stock"
+                  type="number"
+                  min="0"
+                  value={stockToAdd}
+                  onChange={(e) => setStockToAdd(parseInt(e.target.value) || 0)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="sm:justify-start">
+              <Button
+                type="button"
+                variant="default"
+                onClick={handleAddStock}
+              >
+                Añadir Stock y Cerrar
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setShowAddStockDialog(false)}
+              >
+                Omitir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Add/Edit Dialog */}
         <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -604,7 +731,7 @@ export function AdminProductsPage() {
                     </SelectTrigger>
                     <SelectContent className="max-h-60 overflow-y-auto">
                       {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        <SelectItem key={cat.id} value={cat.id}>{String(cat.name || "")}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -628,9 +755,15 @@ export function AdminProductsPage() {
                       <SelectValue placeholder="Seleccionar marca" />
                     </SelectTrigger>
                     <SelectContent>
-                      {brands.map((brand) => (
-                        <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                      ))}
+                      {brands.map((brand, index) => {
+                        const brandValue = typeof brand === 'string' ? brand : (brand as any).name || "";
+                        if (!brandValue) return null;
+                        return (
+                          <SelectItem key={`${brandValue}-${index}`} value={String(brandValue)}>
+                            {String(brandValue)}
+                          </SelectItem>
+                        );
+                      })}
                       <SelectItem value="custom" className="text-primary font-medium">
                         + Nueva marca...
                       </SelectItem>
@@ -673,8 +806,12 @@ export function AdminProductsPage() {
                 <label className="text-sm font-medium mb-2 block">Imágenes del producto</label>
                 <ImageUpload 
                   images={formData.images} 
-                  onChange={(images) => setFormData({ ...formData, images })}
+                  onChange={(images) => {
+                    setFormData({ ...formData, images })
+                    if (errors.images) setErrors({ ...errors, images: undefined })
+                  }}
                 />
+                {errors.images && <p className="text-xs text-red-500 mt-1">{errors.images}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -798,8 +935,10 @@ export function AdminProductsPage() {
             <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                  <CardTitle>{viewingProduct.name}</CardTitle>
-                  <p className="text-muted-foreground">{viewingProduct.brand}</p>
+                  <CardTitle>{String(viewingProduct.name || "")}</CardTitle>
+                  <p className="text-muted-foreground">
+                    {typeof viewingProduct.brand === 'string' ? viewingProduct.brand : (viewingProduct as any).brandName || (viewingProduct as any).brand?.name || "Sin marca"}
+                  </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setViewingProduct(null)}>
                   <X className="h-5 w-5" />
@@ -816,8 +955,8 @@ export function AdminProductsPage() {
                   </div>
                   {viewingProduct.images && viewingProduct.images.length > 0 && (
                     <div className="grid grid-cols-5 gap-2">
-                      {viewingProduct.images.map((img, idx) => (
-                        <div key={idx} className={cn(
+                      {viewingProduct.images.map((img) => (
+                        <div key={String(img.id || img.url)} className={cn(
                           "aspect-square rounded-md overflow-hidden border",
                           img.isMain ? "border-primary" : "border-border"
                         )}>
@@ -830,13 +969,17 @@ export function AdminProductsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">SKU</p>
-                    <p className="font-medium">{viewingProduct.sku}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Formato</p>
-                    <p className="font-medium">{viewingProduct.format}</p>
-                  </div>
+                  <p className="text-sm text-muted-foreground">SKU</p>
+                  <p className="font-medium">{String(viewingProduct.sku || "N/A")}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Categoria</p>
+                  <p className="font-medium">{String(viewingProduct.categoryName || viewingProduct.category?.name || "Sin categoría")}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Formato</p>
+                  <p className="font-medium">{String(viewingProduct.format || "N/A")}</p>
+                </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Precio</p>
                     <p className="text-2xl font-bold text-green-600">
@@ -845,17 +988,17 @@ export function AdminProductsPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Stock</p>
-                    <p className="font-medium">{viewingProduct.stock} unidades</p>
+                    <p className="font-medium">{Number(viewingProduct.stock)} unidades</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Ventas</p>
-                    <p className="font-medium">{viewingProduct.salesCount} unidades</p>
+                    <p className="font-medium">{Number(viewingProduct.salesCount || 0)} unidades</p>
                   </div>
                 </div>
 
                 <div>
                   <p className="text-sm text-muted-foreground">Descripcion</p>
-                  <p className="mt-1">{viewingProduct.description}</p>
+                  <p className="mt-1">{String(viewingProduct.description || "Sin descripción")}</p>
                 </div>
 
                 <div className="flex gap-2">

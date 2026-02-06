@@ -7,19 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/contexts/cart-context"
 import { formatUSD } from "@/lib/utils"
-
-interface Coupon {
-  code: string
-  discount: number
-  type: "percentage" | "fixed"
-  minPurchase: number
-}
-
-const availableCoupons: Coupon[] = [
-  { code: "BIENVENIDO10", discount: 10, type: "percentage", minPurchase: 200 },
-  { code: "AHORRO20", discount: 20, type: "percentage", minPurchase: 500 },
-  { code: "ENVIOGRATIS", discount: 49.99, type: "fixed", minPurchase: 300 },
-]
+import { api } from "@/lib/api"
 
 export function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice, saveForLater, moveToCart, getSavedItems } = useCart()
@@ -33,9 +21,6 @@ export function CartPage() {
     deliveryAddress: "",
     notes: "",
   })
-  const [couponCode, setCouponCode] = useState("")
-  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null)
-  const [couponError, setCouponError] = useState("")
   const [savedItems, setSavedItems] = useState<typeof items>([])
 
   useEffect(() => {
@@ -43,92 +28,71 @@ export function CartPage() {
   }, [getSavedItems])
 
   const subtotal = totalPrice
-  const discount = appliedCoupon
-    ? appliedCoupon.type === "percentage"
-      ? subtotal * (appliedCoupon.discount / 100)
-      : appliedCoupon.discount
-    : 0
-  const shipping = subtotal >= 500 ? 0 : 49.99
-  const tax = (subtotal - discount) * 0.16
-  const total = subtotal - discount + shipping + tax
-
-  const applyCoupon = () => {
-    const coupon = availableCoupons.find(
-      (c) => c.code.toUpperCase() === couponCode.toUpperCase()
-    )
-
-    if (!coupon) {
-      setCouponError("Código de cupón no válido")
-      setAppliedCoupon(null)
-      return
-    }
-
-    if (subtotal < coupon.minPurchase) {
-      setCouponError(`最小 compra de $${coupon.minPurchase} para usar este cupón`)
-      setAppliedCoupon(null)
-      return
-    }
-
-    setAppliedCoupon(coupon)
-    setCouponError("")
-    setCouponCode("")
-  }
-
-  const removeCoupon = () => {
-    setAppliedCoupon(null)
-    setCouponCode("")
-    setCouponError("")
-  }
+  const total = subtotal
 
   const handleCheckout = () => {
     if (items.length === 0) return
     setShowCheckout(true)
   }
 
-  const generateWhatsAppOrder = () => {
-    const phoneNumber = "5215551234567"
+  const generateWhatsAppOrder = async () => {
+    try {
+      // 1. First, create the order in the database
+      const orderData = {
+        customerName: checkoutData.customerName,
+        customerPhone: checkoutData.customerPhone,
+        customerEmail: checkoutData.customerEmail,
+        deliveryAddress: checkoutData.deliveryAddress,
+        notes: checkoutData.notes,
+        paymentMethod: 'WHATSAPP',
+        items: items.map(item => ({
+          productId: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          unitPrice: Number(item.product.price)
+        }))
+      }
 
-    let message = `*🧪 Nueva Orden - Ana's Supplements*%0A%0A`
-    message += `*Cliente:* ${checkoutData.customerName}%0A`
-    message += `*Email:* ${checkoutData.customerEmail}%0A`
-    message += `*Telefono:* ${checkoutData.customerPhone}%0A`
+      await api.createSale(orderData)
 
-    if (appliedCoupon) {
-      message += `*Cupón aplicado:* ${appliedCoupon.code}%0A`
-      message += `*Descuento:* -$${formatUSD(discount)}%0A%0A`
+      // 2. If database creation is successful, proceed with WhatsApp
+      const phoneNumber = "5215551234567"
+
+      let message = `*🧪 Nueva Orden - Ana's Supplements*%0A%0A`
+      message += `*Cliente:* ${checkoutData.customerName}%0A`
+      message += `*Email:* ${checkoutData.customerEmail}%0A`
+      message += `*Telefono:* ${checkoutData.customerPhone}%0A%0A`
+
+      message += `*📦 Productos:*%0A`
+      items.forEach((item, index) => {
+        message += `${index + 1}. ${item.product.name}%0A`
+        message += `   Cantidad: ${item.quantity}%0A`
+        message += `   Precio: $${formatUSD(item.product.price)}%0A`
+        message += `   Subtotal: $${formatUSD(Number(item.product.price) * item.quantity)}%0A%0A`
+      })
+
+      message += `*💰 Resumen:*%0A`
+      message += `   Subtotal: $${formatUSD(subtotal)}%0A`
+      message += `*   Total: $${formatUSD(total)}*%0A`
+
+      message += `%0A*📍 Direccion de Entrega:*%0A${checkoutData.deliveryAddress}%0A`
+
+      if (checkoutData.notes) {
+        message += `%0A*📝 Notas:*%0A${checkoutData.notes}%0A`
+      }
+
+      message += `%0A_%0APedido generado desde Ana's Supplements E-commerce_`
+
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`
+
+      clearCart()
+      setShowCheckout(false)
+      window.open(whatsappUrl, "_blank")
+      navigate("/")
+    } catch (error: any) {
+      console.error("Error creating order:", error)
+      alert(error.message || "Hubo un error al procesar tu pedido. Por favor intenta de nuevo.")
     }
-
-    message += `*📦 Productos:*%0A`
-    items.forEach((item, index) => {
-      message += `${index + 1}. ${item.product.name}%0A`
-      message += `   Cantidad: ${item.quantity}%0A`
-      message += `   Precio: $${formatUSD(item.product.price)}%0A`
-      message += `   Subtotal: $${formatUSD(Number(item.product.price) * item.quantity)}%0A%0A`
-    })
-
-    message += `*💰 Resumen:*%0A`
-    message += `   Subtotal: $${formatUSD(subtotal)}%0A`
-    if (appliedCoupon) {
-      message += `   Descuento: -$${formatUSD(discount)}%0A`
-    }
-    message += `   Envio: $${formatUSD(shipping)}%0A`
-    message += `   IVA: $${formatUSD(tax)}%0A`
-    message += `*   Total: $${formatUSD(total)}*%0A`
-
-    message += `%0A*📍 Direccion de Entrega:*%0A${checkoutData.deliveryAddress}%0A`
-
-    if (checkoutData.notes) {
-      message += `%0A*📝 Notas:*%0A${checkoutData.notes}%0A`
-    }
-
-    message += `%0A_%0APedido generado desde Ana's Supplements E-commerce_`
-
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`
-
-    clearCart()
-    setShowCheckout(false)
-    window.open(whatsappUrl, "_blank")
-    navigate("/")
   }
 
   if (showCheckout) {
@@ -214,33 +178,12 @@ export function CartPage() {
                   ))}
                 </div>
 
-                {appliedCoupon && (
-                  <div className="flex justify-between text-sm text-green-600 bg-green-50 p-2 rounded">
-                    <span>Cupón {appliedCoupon.code}</span>
-                    <span>-${formatUSD(discount)}</span>
-                  </div>
-                )}
-
                 <Separator />
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>${formatUSD(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Descuento</span>
-                    <span className={discount > 0 ? "text-green-600" : ""}>
-                      {discount > 0 ? `-$${formatUSD(discount)}` : "$0.00"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Envio</span>
-                    <span>{shipping === 0 ? <span className="text-green-600">Gratis</span> : `$${formatUSD(shipping)}`}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">IVA (16%)</span>
-                    <span>${formatUSD(tax)}</span>
                   </div>
                 </div>
 
@@ -411,20 +354,6 @@ export function CartPage() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>${formatUSD(subtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Descuento</span>
-                    <span className={discount > 0 ? "text-green-600" : ""}>
-                      {discount > 0 ? `-$${formatUSD(discount)}` : "$0.00"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Envio estimado</span>
-                    <span>{shipping === 0 ? <span className="text-green-600">Gratis</span> : `$${formatUSD(shipping)}`}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">IVA (16%)</span>
-                    <span>${formatUSD(tax)}</span>
-                  </div>
                 </div>
 
                 <Separator />
@@ -434,39 +363,6 @@ export function CartPage() {
                   <span>${formatUSD(total)}</span>
                 </div>
 
-                {appliedCoupon ? (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2">
-                        <span className="text-green-600 font-medium">{appliedCoupon.code}</span>
-                        <span className="text-xs text-green-500">
-                          -{appliedCoupon.type === "percentage" ? `${appliedCoupon.discount}%` : `$${appliedCoupon.discount}`}
-                        </span>
-                      </div>
-                      <Button variant="ghost" size="sm" className="text-green-600 h-6 w-6 p-0" onClick={removeCoupon}>
-                        ×
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Código de cupón</label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="EJEMPLO10"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className={couponError ? "border-red-500" : ""}
-                      />
-                      <Button variant="outline" onClick={applyCoupon}>Aplicar</Button>
-                    </div>
-                    {couponError && <p className="text-xs text-red-500">{couponError}</p>}
-                    <p className="text-xs text-muted-foreground">
-                      Cupones disponibles: {availableCoupons.map(c => c.code).join(", ")}
-                    </p>
-                  </div>
-                )}
-
                 <Button className="w-full" size="lg" onClick={handleCheckout}>
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Finalizar Pedido
@@ -475,18 +371,6 @@ export function CartPage() {
                 <Link to="/productos" className="block text-center text-sm text-primary hover:underline">
                   Continuar comprando
                 </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Añade ${formatUSD(500 - subtotal)} más para obtener envío gratis</span>
-                </div>
-                <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full bg-primary" style={{ width: `${Math.min(100, (subtotal / 500) * 100)}%` }} />
-                </div>
               </CardContent>
             </Card>
 

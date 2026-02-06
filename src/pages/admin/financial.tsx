@@ -48,7 +48,7 @@ interface BCVRate {
 export function FinancialDashboard() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
-  const [bcvRate, setBcvRate] = useState<BCVRate>({ rate: 36.50, timestamp: new Date().toISOString() })
+  const [bcvRate, setBcvRate] = useState<BCVRate>({ rate: 375.00, timestamp: new Date().toISOString() })
   const [products, setProducts] = useState<Product[]>([])
   const [cart, setCart] = useState<CartItem[]>([])
   const [sales, setSales] = useState<any[]>([])
@@ -67,7 +67,7 @@ export function FinancialDashboard() {
       return sum + price * (item.quantity || 0)
     }, 0)
 
-    const rate = Number(bcvRate?.rate) || 36.50
+    const rate = Number(bcvRate?.rate) || 375.00
     const totalBs = totalUSD * rate
     const profitUSD = totalUSD - totalCostUSD
     const profitBs = profitUSD * rate
@@ -91,7 +91,7 @@ export function FinancialDashboard() {
       const rateData = await api.getBCVStatus()
       if (rateData && rateData.currentRate) {
         setBcvRate({ 
-          rate: Number(rateData.currentRate.rate) || 36.50, 
+          rate: Number(rateData.currentRate.rate) || 375.00, 
           timestamp: rateData.currentRate.createdAt || rateData.currentRate.timestamp || new Date().toISOString() 
         })
       }

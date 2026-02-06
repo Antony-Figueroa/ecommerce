@@ -8,26 +8,27 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String?
-  username     String?  @unique
-  googleId     String?  @unique
-  avatarUrl    String?
-  role         String   @default("CUSTOMER")
-  isActive     Boolean  @default(true)
-  emailVerified Boolean  @default(false)
-  verificationToken String? @unique
+  id                       String           @id @default(uuid())
+  email                    String           @unique
+  passwordHash             String?
+  username                 String?          @unique
+  googleId                 String?          @unique
+  avatarUrl                String?
+  role                     String           @default("CUSTOMER")
+  isActive                 Boolean          @default(true)
+  emailVerified            Boolean          @default(false)
+  verificationToken        String?          @unique
   verificationTokenExpires DateTime?
-  resetPasswordToken String? @unique
-  resetPasswordExpires DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  name         String?
-  phone        String?
-  sales        Sale[]
-  favorites    Favorite[]
-  settingHistory SettingHistory[]
+  resetPasswordToken       String?          @unique
+  resetPasswordExpires     DateTime?
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  name                     String?
+  phone                    String?
+  favorites                Favorite[]
+  sales                    Sale[]
+  settingHistory           SettingHistory[]
+  auditLogs                SaleAuditLog[]
 }
 
 model Favorite {
@@ -35,8 +36,8 @@ model Favorite {
   userId    String
   productId String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
 }
@@ -66,14 +67,14 @@ model Product {
   originalPrice    Decimal?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
-  batches          Batch[]
-  category         Category          @relation(fields: [categoryId], references: [id])
   brandId          String?
+  batches          Batch[]
+  favorites        Favorite[]
   brandRelation    Brand?            @relation(fields: [brandId], references: [id])
+  category         Category          @relation(fields: [categoryId], references: [id])
   images           ProductImage[]
   requirementItems RequirementItem[]
   saleItems        SaleItem[]
-  favorites        Favorite[]
 }
 
 model ProductImage {
@@ -139,28 +140,32 @@ model RequirementItem {
   createdAt      DateTime    @default(now())
   batchNumber    String?
   expirationDate DateTime?
-  product        Product     @relation(fields: [productId], references: [id])
   requirement    Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  product        Product     @relation(fields: [productId], references: [id])
 }
 
 model Sale {
-  id              String     @id @default(uuid())
-  saleNumber      String     @unique
+  id              String         @id @default(uuid())
+  saleNumber      String         @unique
   userId          String?
   customerName    String?
   customerPhone   String?
-  status          String     @default("PENDING")
-  subtotalUSD     Decimal    @default(0)
-  shippingCostUSD Decimal    @default(0)
-  totalUSD        Decimal    @default(0)
+  customerEmail   String?
+  deliveryAddress String?
+  paymentMethod   String         @default("WHATSAPP")
+  status          String         @default("PENDING")
+  subtotalUSD     Decimal        @default(0)
+  shippingCostUSD Decimal        @default(0)
+  totalUSD        Decimal        @default(0)
   bcvRate         Decimal
-  totalBS         Decimal    @default(0)
-  profitUSD       Decimal    @default(0)
-  profitBS        Decimal    @default(0)
+  totalBS         Decimal        @default(0)
+  profitUSD       Decimal        @default(0)
+  profitBS        Decimal        @default(0)
   notes           String?
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  user            User?      @relation(fields: [userId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  user            User?          @relation(fields: [userId], references: [id])
+  auditLogs       SaleAuditLog[]
   items           SaleItem[]
 }
 
@@ -176,8 +181,21 @@ model SaleItem {
   profitPerUnit Decimal
   totalProfit   Decimal
   createdAt     DateTime @default(now())
-  product       Product  @relation(fields: [productId], references: [id])
   sale          Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product       Product  @relation(fields: [productId], references: [id])
+}
+
+model SaleAuditLog {
+  id        String   @id @default(uuid())
+  saleId    String
+  action    String
+  oldStatus String?
+  newStatus String?
+  userId    String?
+  reason    String?
+  createdAt DateTime @default(now())
+  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 }
 
 model BCVRate {
@@ -215,7 +233,7 @@ model Setting {
   id          String           @id @default(uuid())
   key         String           @unique
   value       String
-  type        String           @default("string") // string, number, boolean, json
+  type        String           @default("string")
   group       String           @default("general")
   label       String
   description String?
@@ -233,8 +251,8 @@ model SettingHistory {
   userId    String
   reason    String?
   createdAt DateTime @default(now())
-  setting   Setting  @relation(fields: [settingId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
+  setting   Setting  @relation(fields: [settingId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

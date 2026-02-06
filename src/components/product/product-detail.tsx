@@ -129,7 +129,6 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
-              <span className="text-sm text-muted-foreground">{product.stock} disponibles</span>
             </div>
 
             <div className="flex gap-3">
