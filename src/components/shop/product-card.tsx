@@ -67,14 +67,14 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
         )}>
           <div className="flex">
             <div 
-          className="relative w-48 h-48 flex-shrink-0 bg-secondary/30 p-4 cursor-pointer group/image"
+          className="relative w-48 h-48 flex-shrink-0 bg-secondary/20 dark:bg-white/5 p-4 cursor-pointer group/image"
           onClick={() => setIsQuickViewOpen(true)}
         >
           {mainImage ? (
             <img
               src={mainImage}
               alt={product.name}
-              className="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover/image:scale-110"
+              className="h-full w-full object-contain transition-transform duration-500 group-hover/image:scale-110"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
@@ -114,8 +114,8 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
                 )}
               </div>
               {!product.inStock && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-[2px] z-20">
-                  <Badge variant="outline" className="bg-background text-foreground border-border font-bold">
+                <div className="absolute inset-0 flex items-center justify-center bg-background/60 dark:bg-black/40 backdrop-blur-[2px] z-20">
+                  <Badge variant="outline" className="bg-background dark:bg-card text-foreground border-border font-bold">
                     AGOTADO
                   </Badge>
                 </div>
@@ -237,14 +237,14 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
         isInCart && "border-primary/30 ring-1 ring-primary/10"
       )}>
         <div 
-          className="relative aspect-square flex-shrink-0 bg-secondary/30 p-6 overflow-hidden cursor-pointer group/image"
+          className="relative aspect-square flex-shrink-0 bg-secondary/20 dark:bg-white/5 p-6 overflow-hidden cursor-pointer group/image"
           onClick={() => setIsQuickViewOpen(true)}
         >
           {mainImage ? (
             <img
               src={mainImage}
               alt={product.name}
-              className="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover/image:scale-110"
+              className="h-full w-full object-contain transition-transform duration-500 group-hover/image:scale-110"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
@@ -285,8 +285,8 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
           </div>
 
           {!product.inStock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-[2px] z-20">
-              <Badge variant="outline" className="bg-background text-foreground border-border font-extrabold px-4 py-1">
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 dark:bg-black/40 backdrop-blur-[2px] z-20">
+              <Badge variant="outline" className="bg-background dark:bg-card text-foreground border-border font-extrabold px-4 py-1">
                 AGOTADO
               </Badge>
             </div>

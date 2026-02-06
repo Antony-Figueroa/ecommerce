@@ -56,12 +56,12 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
       <DialogContent className="max-w-3xl p-0 overflow-hidden sm:rounded-3xl border-none shadow-2xl">
         <div className="grid md:grid-cols-2 h-full max-h-[90vh] overflow-y-auto">
           {/* Image Section */}
-          <div className="relative bg-secondary/30 p-8 flex items-center justify-center aspect-square md:aspect-auto">
+          <div className="relative bg-secondary/20 dark:bg-white/5 p-8 flex items-center justify-center aspect-square md:aspect-auto">
             {mainImage ? (
               <img
                 src={mainImage}
                 alt={product.name}
-                className="max-h-full max-w-full object-contain mix-blend-multiply drop-shadow-xl"
+                className="max-h-full max-w-full object-contain drop-shadow-xl"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";

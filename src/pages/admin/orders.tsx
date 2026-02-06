@@ -793,33 +793,16 @@ export function AdminOrdersPage() {
                           </div>
                         </div>
 
-                        {/* Status Update Buttons */}
-                        <div className="mt-4 pt-4 border-t dark:border-gray-800 flex flex-wrap items-center gap-3">
-                          <span className="text-sm text-muted-foreground">Cambiar estado:</span>
-                          <Select value={order.status} onValueChange={(val) => updateOrderStatus(order.id, val)}>
-                            <SelectTrigger className="w-40 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="PENDING">Pendiente</SelectItem>
-                              <SelectItem value="PROCESSING">Procesando</SelectItem>
-                              <SelectItem value="ACCEPTED">Aceptado</SelectItem>
-                              <SelectItem value="REJECTED">Rechazado</SelectItem>
-                              <SelectItem value="COMPLETED">Completado</SelectItem>
-                              <SelectItem value="CANCELLED">Cancelado</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
-                          <div className="ml-auto">
-                             <Button 
-                               variant="ghost" 
-                               size="sm" 
-                               className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                               onClick={() => setSelectedOrder(order)}
-                             >
-                               Ver Historial
-                             </Button>
-                          </div>
+                        {/* Order Detail Link */}
+                        <div className="mt-4 pt-4 border-t dark:border-gray-800 flex items-center justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            onClick={() => setSelectedOrder(order)}
+                          >
+                            Ver Historial y Detalles
+                          </Button>
                         </div>
                         </div>
                       </CardContent>

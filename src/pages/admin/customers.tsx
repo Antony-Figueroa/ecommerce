@@ -397,12 +397,18 @@ export function AdminCustomersPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <Badge variant={customer.role === 'ADMIN' ? 'default' : 'secondary'} className={customer.role === 'ADMIN' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' : ''}>
-                          {customer.role}
+                        <Badge variant={customer.role === 'ADMIN' ? 'default' : 'secondary'} className={customer.role === 'ADMIN' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300' : ''}>
+                          {customer.role === 'ADMIN' ? 'Administrador' : customer.role === 'USER' ? 'Cliente' : customer.role}
                         </Badge>
                       </td>
                       <td className="p-4">
-                        <Badge variant={customer.isActive ? "outline" : "secondary"} className={customer.isActive ? "border-green-500 text-green-700" : ""}>
+                        <Badge 
+                          variant={customer.isActive ? "outline" : "secondary"} 
+                          className={customer.isActive 
+                            ? "border-green-500 text-green-700 dark:border-green-400 dark:text-green-400" 
+                            : "dark:bg-slate-800 dark:text-slate-400"
+                          }
+                        >
                           {customer.isActive ? "Activo" : "Desactivado"}
                         </Badge>
                       </td>
