@@ -19,6 +19,11 @@ export function Cart({ item, onUpdateQuantity, onRemove }: CartItemProps) {
             src={item.product.image || "/placeholder.png"}
             alt={item.product.name}
             className="h-full w-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=Img";
+              target.onerror = null;
+            }}
           />
         </div>
 

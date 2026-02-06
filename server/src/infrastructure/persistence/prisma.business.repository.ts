@@ -24,12 +24,14 @@ export class PrismaSaleRepository implements SaleRepository {
   }
 
   async findAll(options: any) {
+    const { include, ...rest } = options || {}
     return prisma.sale.findMany({
-      ...options,
+      ...rest,
       include: { 
         user: true, 
-        _count: { select: { items: true } },
-        auditLogs: { take: 1, orderBy: { createdAt: 'desc' } } 
+        items: true,
+        auditLogs: { take: 1, orderBy: { createdAt: 'desc' } },
+        ...include
       },
     })
   }
@@ -94,20 +96,43 @@ export class PrismaSaleRepository implements SaleRepository {
 }
 
 export class PrismaNotificationRepository implements NotificationRepository {
-  async create(data: { type: string; title: string; message: string }) {
+  async create(data: { type: string; title: string; message: string; userId?: string }) {
     return prisma.notification.create({
       data: {
         type: data.type as any,
         title: data.title,
         message: data.message,
+        userId: data.userId,
       },
     })
   }
 
-  async findUnread() {
+  async findUnread(userId?: string) {
     return prisma.notification.findMany({
-      where: { isRead: false },
+      where: { 
+        isRead: false,
+        userId: userId || null // null for admin
+      },
       orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async findAll(userId?: string, limit: number = 20, skip: number = 0) {
+    return prisma.notification.findMany({
+      where: { 
+        userId: userId || null 
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: skip
+    })
+  }
+
+  async count(userId?: string) {
+    return prisma.notification.count({
+      where: {
+        userId: userId || null
+      }
     })
   }
 
@@ -120,6 +145,22 @@ export class PrismaNotificationRepository implements NotificationRepository {
 
   async findFirst(where: any) {
     return prisma.notification.findFirst({ where })
+  }
+
+  async markAllAsRead(userId?: string) {
+    await prisma.notification.updateMany({
+      where: { 
+        userId: userId || null,
+        isRead: false 
+      },
+      data: { isRead: true }
+    })
+  }
+
+  async delete(id: string) {
+    await prisma.notification.delete({
+      where: { id }
+    })
   }
 }
 

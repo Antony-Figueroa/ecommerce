@@ -74,8 +74,12 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
             <img
               src={mainImage}
               alt={product.name}
-              crossOrigin="anonymous"
               className="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover/image:scale-110"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
+                target.onerror = null; // Prevent infinite loop if placeholder also fails
+              }}
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-muted/50 rounded-lg">
@@ -240,8 +244,12 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
             <img
               src={mainImage}
               alt={product.name}
-              crossOrigin="anonymous"
               className="h-full w-full object-contain mix-blend-multiply transition-transform duration-500 group-hover/image:scale-110"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
+                target.onerror = null;
+              }}
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center bg-muted/50 rounded-2xl">

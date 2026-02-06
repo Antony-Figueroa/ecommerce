@@ -9,8 +9,9 @@ import {
   Download,
   Eye,
   MoreHorizontal,
+  Truck,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +23,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +63,9 @@ interface Order {
   paymentMethod: string
   deliveryAddress: string | null
   notes: string | null
+  isPaid: boolean
+  paidAmountUSD: number | null
+  deliveryStatus: string
   createdAt: string
   updatedAt: string
   auditLogs?: AuditLog[]
@@ -63,6 +76,8 @@ interface AuditLog {
   action: string
   oldStatus: string | null
   newStatus: string | null
+  oldDeliveryStatus: string | null
+  newDeliveryStatus: string | null
   userId: string | null
   reason: string | null
   createdAt: string
@@ -78,6 +93,22 @@ export function AdminOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [rejectionModalOpen, setRejectionModalOpen] = useState(false)
+  const [rejectionOrderId, setRejectionOrderId] = useState<string | null>(null)
+  const [rejectionReason, setRejectionReason] = useState("")
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
+  // Payment confirmation states
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState<string>("")
+  const [paymentReason, setPaymentReason] = useState("")
+
+  // Delivery status states
+  const [deliveryModalOpen, setDeliveryModalOpen] = useState(false)
+  const [deliveryOrderId, setDeliveryOrderId] = useState<string | null>(null)
+  const [newDeliveryStatus, setNewDeliveryStatus] = useState<string>("")
+  const [deliveryReason, setDeliveryReason] = useState("")
 
   useEffect(() => {
     fetchOrders()
@@ -89,6 +120,7 @@ export function AdminOrdersPage() {
   const fetchOrders = async () => {
     try {
       const data = await api.getSales()
+      console.log("Fetched orders:", data.sales) // Depuración
       setOrders(data.sales || [])
     } catch (error) {
       console.error("Error fetching orders:", error)
@@ -104,12 +136,36 @@ export function AdminOrdersPage() {
 
   const formatStatus = (status: string) => {
     const statusMap: Record<string, { label: string; class: string; color: string }> = {
-      PENDING: { label: "Pendiente", class: "bg-yellow-100 text-yellow-800", color: "yellow" },
-      PROCESSING: { label: "Procesando", class: "bg-blue-100 text-blue-800", color: "blue" },
-      ACCEPTED: { label: "Aceptado", class: "bg-green-100 text-green-800", color: "green" },
-      REJECTED: { label: "Rechazado", class: "bg-red-100 text-red-800", color: "red" },
-      COMPLETED: { label: "Completado", class: "bg-emerald-100 text-emerald-800", color: "emerald" },
-      CANCELLED: { label: "Cancelado", class: "bg-gray-100 text-gray-800", color: "gray" },
+      PENDING: { 
+        label: "Pendiente", 
+        class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800", 
+        color: "yellow" 
+      },
+      PROCESSING: { 
+        label: "Procesando", 
+        class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
+        color: "blue" 
+      },
+      ACCEPTED: { 
+        label: "Aceptado", 
+        class: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800", 
+        color: "green" 
+      },
+      REJECTED: { 
+        label: "Rechazado", 
+        class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800", 
+        color: "red" 
+      },
+      COMPLETED: { 
+        label: "Completado", 
+        class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
+        color: "emerald" 
+      },
+      CANCELLED: { 
+        label: "Cancelado", 
+        class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700", 
+        color: "gray" 
+      },
     }
     return statusMap[status] || { label: status, class: "bg-gray-100 text-gray-800", color: "gray" }
   }
@@ -133,6 +189,40 @@ export function AdminOrdersPage() {
     }
   }
 
+  const formatDeliveryStatus = (status: string) => {
+    const statusMap: Record<string, { label: string; class: string; color: string }> = {
+      NOT_DELIVERED: { 
+        label: "No entregado", 
+        class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700", 
+        color: "gray" 
+      },
+      IN_TRANSIT: { 
+        label: "En tránsito", 
+        class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
+        color: "blue" 
+      },
+      DELIVERED: { 
+        label: "Entregado", 
+        class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
+        color: "emerald" 
+      },
+    }
+    return statusMap[status] || { label: status || "Pendiente", class: "bg-gray-100 text-gray-800", color: "gray" }
+  }
+
+  const getDeliveryStatusIcon = (status: string) => {
+    switch (status) {
+      case "NOT_DELIVERED":
+        return <Package className="h-4 w-4 text-gray-500" />
+      case "IN_TRANSIT":
+        return <Package className="h-4 w-4 text-blue-500 animate-pulse" />
+      case "DELIVERED":
+        return <CheckCircle className="h-4 w-4 text-emerald-500" />
+      default:
+        return <Package className="h-4 w-4 text-gray-500" />
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-MX", {
       year: "numeric",
@@ -144,18 +234,24 @@ export function AdminOrdersPage() {
   }
 
   const updateOrderStatus = async (orderId: string, status: string, reason?: string) => {
+    setUpdatingId(orderId)
     try {
       await api.updateSaleStatus(orderId, status, reason)
       toast({
         title: "Estado actualizado",
         description: `La orden ha sido marcada como ${formatStatus(status).label}`,
       })
-      fetchOrders()
+      await fetchOrders()
       if (selectedOrder?.id === orderId) {
         // Refresh detail view if it's the current one
         const updatedOrders = await api.getSales()
         const updatedOrder = updatedOrders.sales.find((o: any) => o.id === orderId)
         if (updatedOrder) setSelectedOrder(updatedOrder)
+      }
+      if (status === 'REJECTED') {
+        setRejectionModalOpen(false)
+        setRejectionReason("")
+        setRejectionOrderId(null)
       }
     } catch (error: any) {
       toast({
@@ -163,6 +259,110 @@ export function AdminOrdersPage() {
         description: error.message || "No se pudo actualizar el estado",
         variant: "destructive"
       })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const updateDeliveryStatus = async (orderId: string, deliveryStatus: string, reason?: string) => {
+    setUpdatingId(orderId)
+    try {
+      await api.updateSaleDeliveryStatus(orderId, deliveryStatus, reason)
+      toast({
+        title: "Entrega actualizada",
+        description: `El estado de entrega ha sido marcado como ${formatDeliveryStatus(deliveryStatus).label}`,
+      })
+      setDeliveryModalOpen(false)
+      setDeliveryReason("")
+      await fetchOrders()
+      if (selectedOrder?.id === orderId) {
+        const updatedOrders = await api.getSales()
+        const updatedOrder = updatedOrders.sales.find((o: any) => o.id === orderId)
+        if (updatedOrder) setSelectedOrder(updatedOrder)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el estado de entrega",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const handleDeliveryStatusClick = (orderId: string, status: string) => {
+    setDeliveryOrderId(orderId)
+    setNewDeliveryStatus(status)
+    setDeliveryReason("")
+    setDeliveryModalOpen(true)
+  }
+
+  const confirmDeliveryStatus = () => {
+    if (deliveryOrderId && newDeliveryStatus) {
+      updateDeliveryStatus(deliveryOrderId, newDeliveryStatus, deliveryReason)
+    }
+  }
+
+  const handleRejectClick = (orderId: string) => {
+    setRejectionOrderId(orderId)
+    setRejectionModalOpen(true)
+  }
+
+  const confirmRejection = () => {
+    if (rejectionOrderId && rejectionReason.trim()) {
+      updateOrderStatus(rejectionOrderId, 'REJECTED', rejectionReason)
+    } else {
+      toast({
+        title: "Motivo requerido",
+        description: "Por favor, ingresa el motivo del rechazo",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handlePaymentClick = (order: Order) => {
+    setPaymentOrderId(order.id)
+    setPaymentAmount(order.totalUSD.toString())
+    setPaymentReason("")
+    setPaymentModalOpen(true)
+  }
+
+  const confirmPayment = async () => {
+    if (!paymentOrderId) return
+    
+    const amount = parseFloat(paymentAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: "Monto inválido",
+        description: "Por favor, ingresa un monto válido mayor a 0",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setUpdatingId(paymentOrderId)
+    try {
+      await api.confirmSalePayment(paymentOrderId, amount, paymentReason)
+      toast({
+        title: "Pago confirmado",
+        description: `La orden ha sido marcada como Pagada y Completada`,
+      })
+      setPaymentModalOpen(false)
+      await fetchOrders()
+      if (selectedOrder?.id === paymentOrderId) {
+        const updatedOrders = await api.getSales()
+        const updatedOrder = updatedOrders.sales.find((o: any) => o.id === paymentOrderId)
+        if (updatedOrder) setSelectedOrder(updatedOrder)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo confirmar el pago",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -198,8 +398,8 @@ export function AdminOrdersPage() {
     const items = Array.isArray(order.items) ? order.items : []
     const companyInfo = {
       name: "Ana's Supplements",
-      address: "Av. Principal #123, Col. Centro, Ciudad de Mexico",
-      phone: "55 5123 4567",
+      address: "Av. Principal, Edificio Ana, Piso 1, Caracas",
+      phone: "+58 412 345 6789",
       email: "contacto@anas-supplements.com",
     }
 
@@ -326,7 +526,7 @@ export function AdminOrdersPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Ordenes">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/4"></div>
           <div className="h-64 bg-muted rounded"></div>
@@ -336,12 +536,11 @@ export function AdminOrdersPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Ordenes">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gestion de Ordenes</h1>
             <p className="text-muted-foreground">Administra y da seguimiento a todos los pedidos</p>
           </div>
           <Button onClick={exportOrders}>
@@ -397,93 +596,180 @@ export function AdminOrdersPage() {
                   const items = Array.isArray(order.items) ? order.items : []
                   
                   return (
-                    <Card key={order.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                          <div className="flex items-start gap-4">
-                            <div className="p-3 rounded-full bg-gray-100 shrink-0">
-                              {getStatusIcon(order.status)}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-lg font-semibold">{order.saleNumber}</h3>
-                                <Badge className={status.class}>{status.label}</Badge>
-                                {order.paymentMethod === 'WHATSAPP' && (
-                                  <Badge variant="outline" className="bg-green-50 text-green-700">
-                                    <MessageCircle className="h-3 w-3 mr-1" />
-                                    WhatsApp
-                                  </Badge>
-                                )}
+                    <Card key={order.id} className="group hover:shadow-lg transition-all duration-300 border-gray-200/60 dark:border-gray-800/60 overflow-hidden">
+                      <CardContent className="p-0">
+                        <div className="p-6">
+                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                            <div className="flex items-start gap-4">
+                              <div className={`p-3 rounded-2xl ${status.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : 
+                                               status.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' :
+                                               status.color === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
+                                               status.color === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
+                                               status.color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
+                                               'bg-gray-50 dark:bg-gray-800'} shrink-0 transition-colors group-hover:scale-110 duration-300`}>
+                                {getStatusIcon(order.status)}
                               </div>
-                              <p className="text-muted-foreground mt-1 truncate">
-                                {order.customerName} • {order.customerEmail || "Sin email"}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {formatDate(order.createdAt)}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between md:justify-end gap-4">
-                            <div className="text-right">
-                              <p className="text-2xl font-bold">${formatUSD(order.totalUSD)}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {items.length} producto{items.length !== 1 ? "s" : ""}
-                              </p>
+                              <div className="min-w-0 space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">{order.saleNumber}</h3>
+                                  <Select
+                            disabled={updatingId === order.id}
+                            value={order.deliveryStatus}
+                            onValueChange={(value) => handleDeliveryStatusClick(order.id, value)}
+                          >
+                                    <SelectTrigger className="h-7 w-[140px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-xs">
+                                      <SelectValue placeholder="Estado Entrega" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="NOT_DELIVERED">No entregado</SelectItem>
+                                      <SelectItem value="IN_TRANSIT">En tránsito</SelectItem>
+                                      <SelectItem value="DELIVERED">Entregado</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+
+                                  <Select
+                                    disabled={updatingId === order.id}
+                                    value={order.status}
+                                    onValueChange={(value) => {
+                                      if (value === 'REJECTED') {
+                                        handleRejectClick(order.id)
+                                      } else {
+                                        updateOrderStatus(order.id, value)
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className={`h-7 w-[130px] ${status.class} font-medium border-current/20 text-xs`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="PENDING">Pendiente</SelectItem>
+                                      <SelectItem value="PROCESSING">Procesando</SelectItem>
+                                      <SelectItem value="ACCEPTED">Aceptado</SelectItem>
+                                      <SelectItem value="REJECTED">Rechazado</SelectItem>
+                                      <SelectItem value="COMPLETED">Completado</SelectItem>
+                                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  {order.isPaid ? (
+                                    <Badge className="bg-emerald-500 text-white dark:bg-emerald-600 border-none">
+                                      <CheckCircle className="h-3 w-3 mr-1" />
+                                      Pagado
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 dark:border-amber-800/50">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Pendiente de Pago
+                                    </Badge>
+                                  )}
+                                  {order.paymentMethod === 'WHATSAPP' && (
+                                    <Badge variant="outline" className="bg-green-50/50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800/50">
+                                      <MessageCircle className="h-3 w-3 mr-1" />
+                                      WhatsApp
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-1 text-sm">
+                                  <p className="font-medium text-gray-700 dark:text-gray-300">
+                                    {order.customerName}
+                                  </p>
+                                  <span className="hidden sm:inline text-gray-300 dark:text-gray-700">•</span>
+                                  <p className="text-muted-foreground truncate max-w-[200px]">
+                                    {order.customerEmail || "Sin email"}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                                  <Clock className="h-3 w-3" />
+                                  {formatDate(order.createdAt)}
+                                </p>
+                              </div>
                             </div>
                             
-                            <div className="flex gap-2">
-                              <Button variant="outline" size="icon" onClick={() => setSelectedOrder(order)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="icon">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    Ver detalles
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => sendWhatsAppReminder(order)}>
-                                    <MessageCircle className="h-4 w-4 mr-2" />
-                                    Enviar WhatsApp
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => generateInvoicePDF(order)}>
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Descargar factura
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                            <div className="flex items-center justify-between md:justify-end gap-6">
+                              <div className="text-right">
+                                <p className="text-2xl font-black text-gray-900 dark:text-white">${formatUSD(order.totalUSD)}</p>
+                                <p className="text-xs font-medium text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full inline-block mt-1">
+                                  {items.length} producto{items.length !== 1 ? "s" : ""}
+                                </p>
+                              </div>
+                              
+                              <div className="flex gap-2">
+                                <Button variant="outline" size="icon" className="rounded-full hover:bg-primary hover:text-primary-foreground transition-colors" onClick={() => setSelectedOrder(order)}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="icon" className="rounded-full">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      Ver detalles
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => sendWhatsAppReminder(order)}>
+                                      <MessageCircle className="h-4 w-4 mr-2 text-green-500" />
+                                      Enviar WhatsApp
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => generateInvoicePDF(order)}>
+                                      <Download className="h-4 w-4 mr-2 text-blue-500" />
+                                      Descargar factura
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Quick Actions for Pending */}
-                        {order.status === 'PENDING' && (
-                          <div className="mt-4 p-3 bg-blue-50 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-3">
-                            <span className="text-sm font-medium text-blue-900">¿Aceptar este pedido?</span>
+                        <div className="px-6 pb-6">
+                          {/* Quick Actions for Pending */}
+                          {order.status === 'PENDING' && (
+                            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                <Clock className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <span className="text-sm font-semibold text-blue-900 dark:text-blue-300 block">Nuevo pedido pendiente</span>
+                                <span className="text-xs text-blue-700/70 dark:text-blue-400/70">Revisa los detalles antes de aceptar</span>
+                              </div>
+                            </div>
                             <div className="flex gap-2 w-full sm:w-auto">
                               <Button 
                                 size="sm" 
-                                className="bg-green-600 hover:bg-green-700 flex-1 sm:flex-none"
+                                disabled={updatingId === order.id}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1 sm:flex-none h-10 px-4"
+                                onClick={() => handlePaymentClick(order)}
+                              >
+                                {updatingId === order.id ? (
+                                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                )}
+                                Confirmar Pago
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                disabled={updatingId === order.id}
+                                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white flex-1 sm:flex-none h-10 px-4"
                                 onClick={() => updateOrderStatus(order.id, 'ACCEPTED')}
                               >
-                                <CheckCircle className="h-4 w-4 mr-1" />
+                                {updatingId === order.id ? (
+                                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                )}
                                 Aceptar
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="destructive" 
-                                className="flex-1 sm:flex-none"
-                                onClick={() => {
-                                  const reason = prompt("Motivo del rechazo:")
-                                  if (reason !== null) updateOrderStatus(order.id, 'REJECTED', reason)
-                                }}
+                                disabled={updatingId === order.id}
+                                className="flex-1 sm:flex-none h-10 px-4"
+                                onClick={() => handleRejectClick(order.id)}
                               >
-                                <XCircle className="h-4 w-4 mr-1" />
+                                <XCircle className="h-4 w-4 mr-2" />
                                 Rechazar
                               </Button>
                             </div>
@@ -491,16 +777,16 @@ export function AdminOrdersPage() {
                         )}
 
                         {/* Order Items Preview */}
-                        <div className="mt-4 pt-4 border-t">
+                        <div className="mt-4 pt-4 border-t dark:border-gray-800">
                           <div className="flex flex-wrap gap-2">
                             {items.slice(0, 3).map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-sm">
-                                <span className="truncate max-w-[200px]">{item.name}</span>
+                              <div key={idx} className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm">
+                                <span className="truncate max-w-[200px] text-gray-800 dark:text-gray-200 font-medium">{item.name}</span>
                                 <span className="text-muted-foreground">x{item.quantity}</span>
                               </div>
                             ))}
                             {items.length > 3 && (
-                              <span className="px-3 py-1 text-sm text-muted-foreground">
+                              <span className="px-3 py-1 text-sm text-muted-foreground bg-gray-50 dark:bg-gray-900/50 rounded-full border border-dashed border-gray-200 dark:border-gray-700">
                                 +{items.length - 3} más
                               </span>
                             )}
@@ -508,10 +794,10 @@ export function AdminOrdersPage() {
                         </div>
 
                         {/* Status Update Buttons */}
-                        <div className="mt-4 pt-4 border-t flex flex-wrap items-center gap-3">
+                        <div className="mt-4 pt-4 border-t dark:border-gray-800 flex flex-wrap items-center gap-3">
                           <span className="text-sm text-muted-foreground">Cambiar estado:</span>
                           <Select value={order.status} onValueChange={(val) => updateOrderStatus(order.id, val)}>
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-40 bg-white dark:bg-gray-950 border-gray-200 dark:border-gray-800">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -528,12 +814,13 @@ export function AdminOrdersPage() {
                              <Button 
                                variant="ghost" 
                                size="sm" 
-                               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                               className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                onClick={() => setSelectedOrder(order)}
                              >
                                Ver Historial
                              </Button>
                           </div>
+                        </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -553,135 +840,326 @@ export function AdminOrdersPage() {
         </Tabs>
 
         {/* Order Detail Modal */}
-        {selectedOrder && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Orden {selectedOrder.saleNumber}</CardTitle>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(null)}>
-                  <XCircle className="h-5 w-5" />
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Cliente</h4>
-                      <p className="font-medium">{selectedOrder.customerName}</p>
-                      {selectedOrder.customerEmail && <p className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</p>}
-                      {selectedOrder.customerPhone && <p className="text-sm text-muted-foreground">{selectedOrder.customerPhone}</p>}
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Método de Pago</h4>
-                      <Badge variant="outline">{selectedOrder.paymentMethod}</Badge>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Estado Actual</h4>
-                      <Badge className={formatStatus(selectedOrder.status).class}>
-                        {formatStatus(selectedOrder.status).label}
-                      </Badge>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Fecha de Pedido</h4>
-                      <p className="text-sm">{formatDate(selectedOrder.createdAt)}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedOrder.deliveryAddress && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Dirección de Entrega</h4>
-                    <p className="text-sm">{selectedOrder.deliveryAddress}</p>
-                  </div>
-                )}
-
-                {selectedOrder.notes && (
-                  <div className="p-3 bg-yellow-50 rounded-lg">
-                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Notas del Cliente</h4>
-                    <p className="text-sm italic text-yellow-900">{selectedOrder.notes}</p>
-                  </div>
-                )}
-
-                <div>
-                  <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Resumen de Productos</h4>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left">Producto</th>
-                          <th className="px-4 py-2 text-center">Cant.</th>
-                          <th className="px-4 py-2 text-right">Precio</th>
-                          <th className="px-4 py-2 text-right">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {Array.isArray(selectedOrder.items) && selectedOrder.items.map((item, idx) => (
-                          <tr key={idx}>
-                            <td className="px-4 py-2">{item.name}</td>
-                            <td className="px-4 py-2 text-center">{item.quantity}</td>
-                            <td className="px-4 py-2 text-right">${formatUSD(item.unitPrice)}</td>
-                            <td className="px-4 py-2 text-right font-medium">${formatUSD(item.total)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-gray-50 font-bold">
-                        <tr>
-                          <td colSpan={3} className="px-4 py-3 text-right">TOTAL</td>
-                          <td className="px-4 py-3 text-right text-lg">${formatUSD(selectedOrder.totalUSD)}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Audit Logs */}
-                {selectedOrder.auditLogs && selectedOrder.auditLogs.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Historial de la Orden</h4>
-                    <div className="space-y-3 border-l-2 border-gray-100 ml-2 pl-4">
-                      {selectedOrder.auditLogs.map((log) => (
-                        <div key={log.id} className="relative">
-                          <div className="absolute -left-[21px] top-1.5 h-3 w-3 rounded-full bg-gray-200 border-2 border-white" />
-                          <p className="text-sm font-medium">
-                            {log.action === 'STATUS_CHANGE' 
-                              ? `Estado cambiado de ${formatStatus(log.oldStatus || '').label} a ${formatStatus(log.newStatus || '').label}`
-                              : log.action === 'CREATED' 
-                                ? 'Pedido recibido' 
-                                : log.action}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDate(log.createdAt)} {log.user?.name ? `por ${log.user.name}` : ''}
-                          </p>
-                          {log.reason && (
-                            <p className="text-xs mt-1 text-red-600 bg-red-50 p-1 rounded inline-block">
-                              Motivo: {log.reason}
-                            </p>
+        <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+          <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {selectedOrder && (
+              <>
+                <DialogHeader className="flex flex-col pr-8">
+                  <DialogTitle className="text-2xl">Orden {selectedOrder.saleNumber}</DialogTitle>
+                  <DialogDescription>
+                    Detalles completos del pedido, historial de cambios y acciones de gestión.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Cliente</h4>
+                        <p className="font-medium text-lg">{selectedOrder.customerName}</p>
+                        {selectedOrder.customerEmail && <p className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</p>}
+                        {selectedOrder.customerPhone && <p className="text-sm text-muted-foreground">{selectedOrder.customerPhone}</p>}
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Método de Pago</h4>
+                        <div className="flex flex-col gap-2">
+                          <Badge variant="outline" className="text-sm px-3 py-1 w-fit">
+                            {selectedOrder.paymentMethod}
+                          </Badge>
+                          {selectedOrder.isPaid ? (
+                            <div className="flex flex-col gap-1">
+                              <Badge className="bg-emerald-500 text-white dark:bg-emerald-600 border-none w-fit">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Pagado
+                              </Badge>
+                              {selectedOrder.paidAmountUSD && (
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  Monto: ${formatUSD(selectedOrder.paidAmountUSD)}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 dark:border-amber-800/50 w-fit">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Pendiente
+                              </Badge>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-8 text-xs border-primary text-primary hover:bg-primary hover:text-white"
+                                onClick={() => handlePaymentClick(selectedOrder)}
+                              >
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Confirmar Pago Ahora
+                              </Button>
+                            </div>
                           )}
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Estado Actual</h4>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className={`${formatStatus(selectedOrder.status).class} text-sm px-3 py-1`}>
+                            {formatStatus(selectedOrder.status).label}
+                          </Badge>
+                          <Badge variant="outline" className={`${formatDeliveryStatus(selectedOrder.deliveryStatus).class} text-sm px-3 py-1 border-current/20`}>
+                            {getDeliveryStatusIcon(selectedOrder.deliveryStatus)}
+                            <span className="ml-1">{formatDeliveryStatus(selectedOrder.deliveryStatus).label}</span>
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Fecha de Pedido</h4>
+                        <p className="text-sm font-medium">{formatDate(selectedOrder.createdAt)}</p>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
-                  <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => sendWhatsAppReminder(selectedOrder)}>
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Enviar WhatsApp
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => generateInvoicePDF(selectedOrder)}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Descargar PDF
-                  </Button>
+                  {selectedOrder.deliveryAddress && (
+                    <div className="p-4 bg-muted/30 dark:bg-muted/10 rounded-lg border dark:border-gray-800">
+                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Dirección de Entrega</h4>
+                      <p className="text-sm dark:text-gray-300">{selectedOrder.deliveryAddress}</p>
+                    </div>
+                  )}
+
+                  {selectedOrder.notes && (
+                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
+                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1 text-yellow-800 dark:text-yellow-500">Notas del Cliente</h4>
+                      <p className="text-sm italic text-yellow-900 dark:text-yellow-200/80">{selectedOrder.notes}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Resumen de Productos</h4>
+                    <div className="border dark:border-gray-800 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50 dark:bg-muted/20">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold">Producto</th>
+                            <th className="px-4 py-3 text-center font-semibold">Cant.</th>
+                            <th className="px-4 py-3 text-right font-semibold">Precio</th>
+                            <th className="px-4 py-3 text-right font-semibold">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y dark:divide-gray-800">
+                          {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                            selectedOrder.items.map((item, idx) => (
+                              <tr key={idx} className="hover:bg-muted/30 dark:hover:bg-muted/10 transition-colors">
+                                <td className="px-4 py-3 font-medium dark:text-gray-200">{item.name}</td>
+                                <td className="px-4 py-3 text-center dark:text-gray-300">{item.quantity}</td>
+                                <td className="px-4 py-3 text-right dark:text-gray-300">{formatUSD(item.unitPrice)}</td>
+                                <td className="px-4 py-3 text-right font-semibold dark:text-white">{formatUSD(item.total)}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground italic">
+                                No hay productos registrados en esta orden
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                        <tfoot className="bg-muted/50 dark:bg-muted/20 font-bold border-t dark:border-gray-800">
+                          <tr>
+                            <td colSpan={3} className="px-4 py-4 text-right text-base">TOTAL</td>
+                            <td className="px-4 py-4 text-right text-xl text-primary">{formatUSD(selectedOrder.totalUSD)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Audit Logs */}
+                  {selectedOrder.auditLogs && selectedOrder.auditLogs.length > 0 && (
+                    <div className="pt-4">
+                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-4">Historial de la Orden</h4>
+                      <div className="space-y-4 border-l-2 border-muted dark:border-gray-800 ml-2 pl-6">
+                        {selectedOrder.auditLogs.map((log) => (
+                          <div key={log.id} className="relative">
+                            <div className="absolute -left-[31px] top-1.5 h-4 w-4 rounded-full bg-background border-2 border-primary" />
+                            <p className="text-sm font-semibold dark:text-gray-200">
+                              {log.action === 'STATUS_CHANGE' 
+                                ? `Estado cambiado de ${formatStatus(log.oldStatus || '').label} a ${formatStatus(log.newStatus || '').label}`
+                                : log.action === 'DELIVERY_STATUS_CHANGE'
+                                  ? `Entrega cambiada de ${formatDeliveryStatus(log.oldDeliveryStatus || '').label} a ${formatDeliveryStatus(log.newDeliveryStatus || '').label}`
+                                  : log.action === 'CREATED' 
+                                    ? 'Pedido recibido' 
+                                    : log.action}
+                            </p>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {formatDate(log.createdAt)} {log.user?.name ? `• por ${log.user.name}` : ''}
+                            </p>
+                            {log.reason && (
+                              <p className="text-xs mt-2 text-destructive dark:text-red-400 bg-destructive/10 dark:bg-red-900/20 px-2 py-1 rounded inline-block font-medium">
+                                Motivo: {log.reason}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+                    <Button className="flex-1 bg-green-600 hover:bg-green-700 h-11" onClick={() => sendWhatsAppReminder(selectedOrder)}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Enviar WhatsApp
+                    </Button>
+                    <Button variant="outline" className="flex-1 h-11" onClick={() => generateInvoicePDF(selectedOrder)}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Descargar PDF
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Confirmation Modal */}
+        <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-primary">
+                <CheckCircle className="h-5 w-5" />
+                Confirmar Pago del Pedido
+              </DialogTitle>
+              <DialogDescription>
+                Ingresa el monto recibido y opcionalmente una nota. El pedido se marcará como <strong>PAGADO</strong> y <strong>COMPLETADO</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Monto Recibido (USD)</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  className="font-bold text-lg"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notas de Pago (Opcional)</label>
+                <Textarea
+                  placeholder="Ej: Pago recibido vía Zelle, transferencia Banesco, efectivo..."
+                  value={paymentReason}
+                  onChange={(e) => setPaymentReason(e.target.value)}
+                  className="min-h-[80px] resize-none"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setPaymentModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground" 
+                onClick={confirmPayment}
+                disabled={!paymentAmount || parseFloat(paymentAmount) <= 0 || updatingId !== null}
+              >
+                {updatingId !== null ? (
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                Confirmar y Completar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection Reason Modal */}
+        <Dialog open={rejectionModalOpen} onOpenChange={setRejectionModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <XCircle className="h-5 w-5" />
+                Rechazar Pedido
+              </DialogTitle>
+              <DialogDescription>
+                Por favor, indica el motivo del rechazo. Este mensaje será visible en el historial del pedido.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Textarea
+                placeholder="Ej: Producto agotado, problemas con el pago, zona de entrega no disponible..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="min-h-[100px] resize-none"
+                autoFocus
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setRejectionModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={confirmRejection}
+                disabled={!rejectionReason.trim() || updatingId !== null}
+              >
+                {updatingId !== null ? (
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                ) : (
+                  <XCircle className="h-4 w-4 mr-2" />
+                )}
+                Confirmar Rechazo
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delivery Status Modal */}
+        <Dialog open={deliveryModalOpen} onOpenChange={setDeliveryModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-primary">
+                <Truck className="h-5 w-5" />
+                Actualizar Estado de Entrega
+              </DialogTitle>
+              <DialogDescription>
+                Cambiar el estado de entrega a: <strong>{formatDeliveryStatus(newDeliveryStatus).label}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nota u Observación (Opcional)</label>
+                <Textarea
+                  placeholder="Ej: Entregado al cliente, En camino con el repartidor..."
+                  value={deliveryReason}
+                  onChange={(e) => setDeliveryReason(e.target.value)}
+                  className="min-h-[100px] resize-none"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setDeliveryModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground" 
+                onClick={confirmDeliveryStatus}
+                disabled={updatingId !== null}
+              >
+                {updatingId !== null ? (
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                ) : (
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                )}
+                Confirmar Cambio
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   )

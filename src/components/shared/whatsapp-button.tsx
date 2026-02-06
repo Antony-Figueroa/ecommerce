@@ -2,18 +2,35 @@ import { useState, useEffect } from "react"
 import { MessageCircle, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { api } from "@/lib/api"
 
 export function WhatsAppButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const [phoneNumber, setPhoneNumber] = useState("584123456789")
 
-  const phoneNumber = "5215551234567"
   const businessHours = "Lunes a Viernes: 8:00 AM - 8:00 PM"
-  const weekendHours = "Sabado: 9:00 AM - 2:00 PM"
+  const weekendHours = "Sábado: 9:00 AM - 2:00 PM"
+
+  useEffect(() => {
+    fetchPhoneNumber()
+  }, [])
+
+  const fetchPhoneNumber = async () => {
+    try {
+      const settings = await api.getPublicSettings()
+      if (settings.whatsapp_number) {
+        const cleanNumber = settings.whatsapp_number.replace(/\+/g, '').replace(/\D/g, '')
+        setPhoneNumber(cleanNumber)
+      }
+    } catch (error) {
+      console.error("Error fetching whatsapp number:", error)
+    }
+  }
 
   const quickMessages = [
-    { label: "Hola, me interesa un producto", text: "Hola, me gustaria obtener mas informacion sobre un producto de su catalogo." },
-    { label: "Pregunta sobre disponibilidad", text: "Hola, quiero saber si tienen disponible un producto especifico." },
-    { label: "Consulta sobre precios", text: "Hola, me interesa conocer los precios de sus productos farmaceuticos." },
+    { label: "Hola, me interesa un producto", text: "Hola, me gustaría obtener más información sobre un producto de su catálogo." },
+    { label: "Pregunta sobre disponibilidad", text: "Hola, quiero saber si tienen disponible un producto específico." },
+    { label: "Consulta sobre precios", text: "Hola, me interesa conocer los precios de sus productos farmacéuticos." },
   ]
 
   const handleQuickMessage = (message: string) => {

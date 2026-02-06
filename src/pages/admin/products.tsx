@@ -9,6 +9,8 @@ import {
   X,
   Check,
   AlertTriangle,
+  Grid,
+  List,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,6 +43,8 @@ interface Product {
   sku: string
   description: string
   price: number
+  purchasePrice: number
+  profitMargin: number
   originalPrice: number | null
   stock: number
   inStock: boolean
@@ -53,6 +57,8 @@ interface Product {
   image: string
   images?: ProductImage[]
   category?: { id: string; name: string }
+  batches?: any[]
+  priceHistory?: any[]
   salesCount?: number
   viewCount?: number
 }
@@ -75,6 +81,8 @@ interface ProductFormData {
   sku: string
   description: string
   price: number
+  purchasePrice: number
+  profitMargin: number
   originalPrice: number | null
   stock: number
   categoryId: string
@@ -84,12 +92,15 @@ interface ProductFormData {
   isActive: boolean
   image: string
   images: Partial<ProductImage>[]
+  batchNumber?: string
+  expirationDate?: string
 }
 
 interface ProductErrors {
   name?: string
   sku?: string
   price?: string
+  purchasePrice?: string
   stock?: string
   categoryId?: string
   brand?: string
@@ -107,6 +118,7 @@ export function AdminProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [stockFilter, setStockFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
@@ -138,6 +150,8 @@ export function AdminProductsPage() {
     sku: "",
     description: "",
     price: 0,
+    purchasePrice: 0,
+    profitMargin: 1.5,
     originalPrice: null,
     stock: 0,
     categoryId: "",
@@ -147,6 +161,8 @@ export function AdminProductsPage() {
     isActive: true,
     image: "/placeholder.jpg",
     images: [],
+    batchNumber: "",
+    expirationDate: "",
   })
 
   useEffect(() => {
@@ -190,6 +206,8 @@ export function AdminProductsPage() {
       sku: "",
       description: "",
       price: 0,
+      purchasePrice: 0,
+      profitMargin: 1.5,
       originalPrice: null,
       stock: 0,
       categoryId: "",
@@ -199,6 +217,8 @@ export function AdminProductsPage() {
       isActive: true,
       image: "/placeholder.jpg",
       images: [],
+      batchNumber: "",
+      expirationDate: "",
     })
     setEditingProduct(null)
     setShowCustomBrand(false)
@@ -220,7 +240,12 @@ export function AdminProductsPage() {
     }
 
     if (formData.price <= 0) {
-      newErrors.price = "El precio debe ser mayor a 0"
+      newErrors.price = "El precio de venta debe ser mayor a 0"
+      isValid = false
+    }
+
+    if (formData.purchasePrice <= 0) {
+      newErrors.purchasePrice = "El precio de compra es obligatorio"
       isValid = false
     }
 
@@ -314,6 +339,8 @@ export function AdminProductsPage() {
       sku: String(product.sku || ""),
       description: String(product.description || ""),
       price: Number(product.price) || 0,
+      purchasePrice: Number(product.purchasePrice) || 0,
+      profitMargin: Number(product.profitMargin) || 1.5,
       originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
       stock: Number(product.stock) || 0,
       categoryId: String(catId || ""), // Asegurar que sea string
@@ -333,6 +360,8 @@ export function AdminProductsPage() {
             sortOrder: Number(img.sortOrder) || 0
           })) 
         : [],
+      batchNumber: "", // Limpiar campos de lote al editar
+      expirationDate: "",
     }
 
     console.log("Setting form data:", newFormData);
@@ -353,20 +382,40 @@ export function AdminProductsPage() {
 
   const [showAddStockDialog, setShowAddStockDialog] = useState(false)
   const [productToAddStock, setProductToAddStock] = useState<Product | null>(null)
-  const [stockToAdd, setStockToAdd] = useState(1)
+  const [batchFormData, setBatchFormData] = useState({
+    batchNumber: "",
+    expirationDate: "",
+    purchasePrice: 0,
+    salePrice: 0,
+    stock: 1
+  })
 
   const handleAddStock = async () => {
     if (!productToAddStock) return
     try {
-      const newStock = Number(productToAddStock.stock) + Number(stockToAdd)
-      await api.updateProduct(productToAddStock.id, { stock: newStock })
+      const updateData = {
+        batch: {
+          batchNumber: batchFormData.batchNumber,
+          expirationDate: batchFormData.expirationDate,
+          purchasePrice: batchFormData.purchasePrice,
+          salePrice: batchFormData.salePrice,
+          stock: batchFormData.stock
+        }
+      }
+      await api.updateProduct(productToAddStock.id, updateData)
       setShowAddStockDialog(false)
       setProductToAddStock(null)
-      setStockToAdd(1)
+      setBatchFormData({
+        batchNumber: "",
+        expirationDate: "",
+        purchasePrice: 0,
+        salePrice: 0,
+        stock: 1
+      })
       fetchProducts()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding stock:", error)
-      alert("Error al añadir stock")
+      alert(error.message || "Error al añadir stock")
     }
   }
 
@@ -376,6 +425,13 @@ export function AdminProductsPage() {
       const updatedProduct = products.find(p => p.id === productId)
       if (!currentStatus && updatedProduct) { // Si se está activando
         setProductToAddStock(updatedProduct)
+        setBatchFormData({
+          batchNumber: `RESTOCK-${Date.now()}`,
+          expirationDate: "",
+          purchasePrice: Number(updatedProduct.purchasePrice),
+          salePrice: Number(updatedProduct.price),
+          stock: 1
+        })
         setShowAddStockDialog(true)
       }
       fetchProducts()
@@ -416,7 +472,7 @@ export function AdminProductsPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Productos">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/4"></div>
           <div className="h-64 bg-muted rounded"></div>
@@ -426,12 +482,11 @@ export function AdminProductsPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Productos">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gestion de Productos</h1>
             <p className="text-muted-foreground">
               {products.length} productos en tu catalogo
               {lowStockCount > 0 && (
@@ -495,92 +550,264 @@ export function AdminProductsPage() {
               <SelectItem value="out">Agotado</SelectItem>
             </SelectContent>
           </Select>
+
+          <div className="flex items-center border rounded-md h-10">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="rounded-r-none h-full"
+              onClick={() => setViewMode("grid")}
+            >
+              <Grid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="rounded-l-none h-full"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden">
-              <div className="aspect-square relative bg-gray-100 p-2">
-                <img
-                  src={product.images?.find(img => img.isMain)?.url || product.image}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                />
-                {!product.inStock && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <Badge variant="destructive">Agotado</Badge>
-                  </div>
-                )}
-              </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold line-clamp-1">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
+        {/* Products Display */}
+        {viewMode === "grid" ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProducts.map((product) => (
+              <Card key={product.id} className="overflow-hidden">
+                <div className="aspect-square relative bg-gray-100 dark:bg-slate-800/50 p-2">
+                  <img
+                    src={product.images?.find(img => img.isMain)?.url || product.image}
+                    alt={product.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Sin+Imagen";
+                      target.onerror = null;
+                    }}
+                  />
+                  {!product.inStock && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <Badge variant="destructive">Agotado</Badge>
+                    </div>
+                  )}
+                </div>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold line-clamp-1">{product.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
+                      </p>
+                    </div>
+                    <p className="text-lg font-bold text-primary">
+                      {formatUSD(product.price)}
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-green-600">
-                    {formatUSD(product.price)}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-2 text-sm">
-                  <Badge variant="outline">{String(product.format || "N/A")}</Badge>
-                  <Badge variant="outline">{String(product.category?.name || "Sin categoría")}</Badge>
-                  <Badge variant={product.inStock ? "secondary" : "destructive"}>
-                    Stock: {Number(product.stock)}
-                  </Badge>
-                  {product.stock < 10 && product.inStock && (
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 mt-3">
-                  <Badge variant={product.isActive ? "default" : "secondary"}>
-                    {product.isActive ? "Activo" : "Inactivo"}
-                  </Badge>
-                  {product.isFeatured && (
-                    <Badge variant="outline" className="bg-yellow-50">Destacado</Badge>
-                  )}
-                </div>
-
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setViewingProduct(product)}
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Ver
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleEdit(product)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toggleProductStatus(product.id, product.isActive)}
-                  >
-                    {product.isActive ? (
-                      <X className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <Check className="h-4 w-4 text-green-500" />
+                  
+                  <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+                    <Badge variant="outline">{String(product.format || "N/A")}</Badge>
+                    <Badge variant="outline">{String(product.category?.name || "Sin categoría")}</Badge>
+                    <Badge variant={product.inStock ? "secondary" : "destructive"}>
+                      Stock: {Number(product.stock)}
+                    </Badge>
+                    {product.stock < 10 && product.inStock && (
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
                     )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-3">
+                    <Badge variant={product.isActive ? "default" : "secondary"}>
+                      {product.isActive ? "Activo" : "Inactivo"}
+                    </Badge>
+                    {product.isFeatured && (
+                      <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800">Destacado</Badge>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      onClick={() => {
+                        setProductToAddStock(product)
+                        setBatchFormData({
+                          batchNumber: `RESTOCK-${Date.now()}`,
+                          expirationDate: "",
+                          purchasePrice: Number(product.purchasePrice),
+                          salePrice: Number(product.price),
+                          stock: 1
+                        })
+                        setShowAddStockDialog(true)
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Stock
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setViewingProduct(product)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Ver
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => handleEdit(product)}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleProductStatus(product.id, product.isActive)}
+                    >
+                      {product.isActive ? (
+                        <X className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <Check className="h-4 w-4 text-green-500" />
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Producto</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Marca/Cat</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Precio</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Stock</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filteredProducts.map((product) => (
+                    <tr key={product.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-4">
+                          <div className="bg-slate-100 dark:bg-slate-800 aspect-square rounded-lg size-12 flex-shrink-0 overflow-hidden">
+                            <img
+                              src={product.images?.find(img => img.isMain)?.url || product.image}
+                              alt={product.name}
+                              className="w-full h-full object-contain"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
+                                target.onerror = null;
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{product.name}</p>
+                            <p className="text-xs text-slate-400 font-medium">SKU: {product.sku}</p>
+                            <div className="flex items-center gap-1 mt-1">
+                              {product.isFeatured && (
+                                <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-200">Destacado</Badge>
+                              )}
+                              {!product.isActive && (
+                                <Badge variant="secondary" className="text-[10px] h-4 px-1">Inactivo</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                            {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            {String(product.category?.name || "Sin categoría")}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-bold text-primary">{formatUSD(product.price)}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-1">
+                          <span className={cn(
+                            "inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold",
+                            product.stock === 0 ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" :
+                            product.stock < 10 ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" :
+                            "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                          )}>
+                            {product.stock === 0 ? "Agotado" : `En Stock (${product.stock})`}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium uppercase">{product.format}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-green-500"
+                            onClick={() => {
+                              setProductToAddStock(product)
+                              setBatchFormData({
+                                batchNumber: `RESTOCK-${Date.now()}`,
+                                expirationDate: "",
+                                purchasePrice: Number(product.purchasePrice),
+                                salePrice: Number(product.price),
+                                stock: 1
+                              })
+                              setShowAddStockDialog(true)
+                            }}
+                            title="Reabastecer"
+                          >
+                            <Package className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-primary"
+                            onClick={() => setViewingProduct(product)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-blue-500"
+                            onClick={() => handleEdit(product)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-red-500"
+                            onClick={() => toggleProductStatus(product.id, product.isActive)}
+                          >
+                            {product.isActive ? (
+                              <X className="h-4 w-4" />
+                            ) : (
+                              <Check className="h-4 w-4 text-green-500" />
+                            )}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
 
         {filteredProducts.length === 0 && (
           <Card>
@@ -607,22 +834,55 @@ export function AdminProductsPage() {
         <Dialog open={showAddStockDialog} onOpenChange={setShowAddStockDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Reactivar Producto</DialogTitle>
+              <DialogTitle>Reabastecimiento / Reactivación</DialogTitle>
               <DialogDescription>
-                Has activado <strong>{productToAddStock?.name}</strong>. ¿Deseas añadir stock inicial? 
-                (Stock actual: {productToAddStock?.stock})
+                Añade un nuevo lote para <strong>{productToAddStock?.name}</strong>.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex items-center space-x-2 py-4">
-              <div className="grid flex-1 gap-2">
-                <label htmlFor="stock" className="text-sm font-medium">Cantidad a añadir</label>
-                <Input
-                  id="stock"
-                  type="number"
-                  min="0"
-                  value={stockToAdd}
-                  onChange={(e) => setStockToAdd(parseInt(e.target.value) || 0)}
-                />
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Nro Lote</label>
+                  <Input
+                    value={batchFormData.batchNumber}
+                    onChange={(e) => setBatchFormData({ ...batchFormData, batchNumber: e.target.value })}
+                    placeholder="Ej: LOTE-2024"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Vencimiento</label>
+                  <Input
+                    type="date"
+                    value={batchFormData.expirationDate}
+                    onChange={(e) => setBatchFormData({ ...batchFormData, expirationDate: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Costo Compra</label>
+                  <Input
+                    type="number"
+                    value={batchFormData.purchasePrice}
+                    onChange={(e) => setBatchFormData({ ...batchFormData, purchasePrice: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Precio Venta</label>
+                  <Input
+                    type="number"
+                    value={batchFormData.salePrice}
+                    onChange={(e) => setBatchFormData({ ...batchFormData, salePrice: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium">Cantidad</label>
+                  <Input
+                    type="number"
+                    value={batchFormData.stock}
+                    onChange={(e) => setBatchFormData({ ...batchFormData, stock: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
               </div>
             </div>
             <DialogFooter className="sm:justify-start">
@@ -630,15 +890,16 @@ export function AdminProductsPage() {
                 type="button"
                 variant="default"
                 onClick={handleAddStock}
+                disabled={!batchFormData.batchNumber || !batchFormData.expirationDate || batchFormData.stock <= 0}
               >
-                Añadir Stock y Cerrar
+                Registrar Lote y Stock
               </Button>
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => setShowAddStockDialog(false)}
               >
-                Omitir
+                Cancelar
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -672,7 +933,7 @@ export function AdminProductsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <label className="text-sm font-medium">SKU (Opcional)</label>
                   <Input
@@ -681,18 +942,62 @@ export function AdminProductsPage() {
                       setFormData({ ...formData, sku: e.target.value })
                       if (errors.sku) setErrors({ ...errors, sku: undefined })
                     }}
-                    placeholder="Auto-generado si se deja vacío"
+                    placeholder="Auto-generado"
                     className={errors.sku ? "border-red-500" : ""}
                   />
                   {errors.sku && <p className="text-xs text-red-500 mt-1">{errors.sku}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Precio *</label>
+                  <label className="text-sm font-medium">Costo Compra *</label>
+                  <Input
+                    type="number"
+                    value={formData.purchasePrice || ""}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0
+                      const newPrice = val * formData.profitMargin
+                      setFormData({ 
+                        ...formData, 
+                        purchasePrice: val,
+                        price: Number(newPrice.toFixed(2))
+                      })
+                      if (errors.purchasePrice) setErrors({ ...errors, purchasePrice: undefined })
+                    }}
+                    placeholder="0.00"
+                    className={errors.purchasePrice ? "border-red-500" : ""}
+                  />
+                  {errors.purchasePrice && <p className="text-xs text-red-500 mt-1">{errors.purchasePrice}</p>}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Margen (x1.5)</label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formData.profitMargin || ""}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 0
+                      const newPrice = formData.purchasePrice * val
+                      setFormData({ 
+                        ...formData, 
+                        profitMargin: val,
+                        price: Number(newPrice.toFixed(2))
+                      })
+                    }}
+                    placeholder="1.5"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Precio Venta *</label>
                   <Input
                     type="number"
                     value={formData.price || ""}
                     onChange={(e) => {
-                      setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
+                      const val = parseFloat(e.target.value) || 0
+                      const newMargin = formData.purchasePrice > 0 ? val / formData.purchasePrice : 1.5
+                      setFormData({ 
+                        ...formData, 
+                        price: val,
+                        profitMargin: Number(newMargin.toFixed(2))
+                      })
                       if (errors.price) setErrors({ ...errors, price: undefined })
                     }}
                     placeholder="0.00"
@@ -700,8 +1005,47 @@ export function AdminProductsPage() {
                   />
                   {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
                 </div>
+              </div>
+
+              {!editingProduct && (
+                <div className="grid grid-cols-3 gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <div className="col-span-3 text-xs font-bold uppercase text-slate-500 mb-1">Datos del Lote Inicial</div>
+                  <div>
+                    <label className="text-sm font-medium">Stock Inicial *</label>
+                    <Input
+                      type="number"
+                      value={formData.stock || ""}
+                      onChange={(e) => {
+                        setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
+                        if (errors.stock) setErrors({ ...errors, stock: undefined })
+                      }}
+                      placeholder="0"
+                      className={errors.stock ? "border-red-500" : ""}
+                    />
+                    {errors.stock && <p className="text-xs text-red-500 mt-1">{errors.stock}</p>}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Nro Lote</label>
+                    <Input
+                      value={formData.batchNumber}
+                      onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
+                      placeholder="Ej: LOTE-001"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Vencimiento</label>
+                    <Input
+                      type="date"
+                      value={formData.expirationDate}
+                      onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {editingProduct && (
                 <div>
-                  <label className="text-sm font-medium">Stock *</label>
+                  <label className="text-sm font-medium">Stock Total</label>
                   <Input
                     type="number"
                     value={formData.stock || ""}
@@ -710,11 +1054,14 @@ export function AdminProductsPage() {
                       if (errors.stock) setErrors({ ...errors, stock: undefined })
                     }}
                     placeholder="0"
-                    className={errors.stock ? "border-red-500" : ""}
+                    disabled
+                    className="bg-slate-50"
                   />
-                  {errors.stock && <p className="text-xs text-red-500 mt-1">{errors.stock}</p>}
+                  <p className="text-[10px] text-muted-foreground mt-1 italic">
+                    Para añadir stock usa el botón de reabastecimiento en la lista.
+                  </p>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -951,6 +1298,11 @@ export function AdminProductsPage() {
                       src={viewingProduct.images?.find(img => img.isMain)?.url || viewingProduct.image}
                       alt={viewingProduct.name}
                       className="w-full h-full object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://placehold.co/600x400/f8fafc/6366f1?text=Sin+Imagen";
+                        target.onerror = null;
+                      }}
                     />
                   </div>
                   {viewingProduct.images && viewingProduct.images.length > 0 && (
@@ -960,7 +1312,16 @@ export function AdminProductsPage() {
                           "aspect-square rounded-md overflow-hidden border",
                           img.isMain ? "border-primary" : "border-border"
                         )}>
-                          <img src={img.thumbnail || img.url} alt="" className="w-full h-full object-cover" />
+                          <img 
+                            src={img.thumbnail || img.url} 
+                            alt="" 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
+                              target.onerror = null;
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
@@ -991,13 +1352,35 @@ export function AdminProductsPage() {
                     <p className="font-medium">{Number(viewingProduct.stock)} unidades</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Ventas</p>
-                    <p className="font-medium">{Number(viewingProduct.salesCount || 0)} unidades</p>
+                  <p className="text-sm text-muted-foreground">Ventas</p>
+                  <p className="font-medium">{Number(viewingProduct.salesCount || 0)} unidades</p>
+                </div>
+              </div>
+
+              {viewingProduct.priceHistory && viewingProduct.priceHistory.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-bold uppercase text-muted-foreground border-b pb-1">Historial de Precios y Lotes</p>
+                  <div className="max-h-40 overflow-y-auto space-y-2">
+                    {viewingProduct.priceHistory.map((history: any, idx: number) => (
+                      <div key={idx} className="flex justify-between items-center text-sm p-2 bg-slate-50 dark:bg-slate-800/40 rounded border border-slate-100 dark:border-slate-800">
+                        <div>
+                          <p className="font-medium">Lote: {history.batchNumber || 'N/A'}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(history.createdAt || Date.now()).toLocaleDateString()} - {history.batchQuantity} unidades
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-primary">{formatUSD(Number(history.salePrice))}</p>
+                          <p className="text-[10px] text-muted-foreground">Costo: {formatUSD(Number(history.purchasePrice))}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+              )}
 
-                <div>
-                  <p className="text-sm text-muted-foreground">Descripcion</p>
+              <div>
+                <p className="text-sm text-muted-foreground">Descripcion</p>
                   <p className="mt-1">{String(viewingProduct.description || "Sin descripción")}</p>
                 </div>
 
@@ -1011,6 +1394,24 @@ export function AdminProductsPage() {
                 </div>
 
                 <div className="flex gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
+                    onClick={() => {
+                      setProductToAddStock(viewingProduct)
+                      setBatchFormData({
+                        batchNumber: `RESTOCK-${Date.now()}`,
+                        expirationDate: "",
+                        purchasePrice: Number(viewingProduct.purchasePrice),
+                        salePrice: Number(viewingProduct.price),
+                        stock: 1
+                      })
+                      setShowAddStockDialog(true)
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Reabastecer
+                  </Button>
                   <Button className="flex-1" onClick={() => {
                     handleEdit(viewingProduct)
                     setViewingProduct(null)

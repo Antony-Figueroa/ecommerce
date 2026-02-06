@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { api } from "@/lib/api"
 import type { Category } from "@/types"
 import { cn } from "@/lib/utils"
+import { NotificationBell } from "./notification-bell"
 
 const navLinks = [
   { name: "Inicio", href: "/" },
@@ -52,19 +53,19 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
-                <Leaf className="h-6 w-6" />
+      <div className="container mx-auto px-2 sm:px-4">
+        <div className="flex h-16 items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-8 min-w-0">
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
+              <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
+                <Leaf className="h-5 w-5 sm:h-6 sm:w-6" />
               </div>
-              <span className="hidden text-xl font-extrabold tracking-tight text-foreground sm:block">
+              <span className="hidden text-base sm:text-xl font-extrabold tracking-tight text-foreground xs:block truncate">
                 Ana's Supplements
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-4 lg:gap-6">
               {navLinks.map((link) => {
                 const isActive = location.pathname === link.href
                 return (
@@ -72,7 +73,7 @@ export function Navbar() {
                     key={link.name}
                     to={link.href}
                     className={cn(
-                      "text-sm font-semibold transition-colors relative py-1",
+                      "text-sm font-semibold transition-colors relative py-1 whitespace-nowrap",
                       isActive 
                         ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full" 
                         : "text-muted-foreground hover:text-primary"
@@ -84,7 +85,7 @@ export function Navbar() {
               })}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 font-semibold text-muted-foreground hover:text-primary">
+                  <Button variant="ghost" size="sm" className="gap-1 font-semibold text-muted-foreground hover:text-primary px-2">
                     Categorías
                     <ChevronDown className="h-4 w-4" />
                   </Button>
@@ -94,29 +95,30 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   {categories.map((category) => (
                     <DropdownMenuItem key={category.id} asChild>
-                      <Link to={`/productos?category=${category.slug}`}>
-                        {category.name}
-                      </Link>
-                    </DropdownMenuItem>
+                            <Link to={`/productos/${category.slug}`}>
+                              {category.name}
+                            </Link>
+                          </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block relative">
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <div className="hidden lg:block relative">
               <Input
                 type="search"
                 placeholder="Buscar productos..."
-                className="w-64 pl-9 bg-secondary/50 border-none focus-visible:ring-primary"
+                className="w-48 xl:w-64 pl-9 bg-secondary/50 border-none focus-visible:ring-primary"
               />
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             </div>
+            
             <Button
               variant="ghost"
               size="icon"
-              className="sm:hidden text-muted-foreground hover:text-primary"
+              className="lg:hidden text-muted-foreground hover:text-primary size-9 sm:size-10"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
               <Search className="h-5 w-5" />
@@ -125,46 +127,53 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-primary bg-secondary/50 rounded-lg size-10"
+              className="text-muted-foreground hover:text-primary bg-secondary/50 rounded-lg size-9 sm:size-10"
               onClick={() => setIsDark(!isDark)}
             >
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               <span className="sr-only">Cambiar tema</span>
             </Button>
 
-            <Link to="/carrito">
-              <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary bg-secondary/50 rounded-lg size-10">
-                <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
-                  <Badge
-                    className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground font-black"
-                  >
-                    {totalItems}
-                  </Badge>
-                )}
-                <span className="sr-only">Carrito</span>
-              </Button>
-            </Link>
+            {user && (
+              <Link to="/carrito">
+                <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary bg-secondary/50 rounded-lg size-9 sm:size-10">
+                  <ShoppingCart className="h-5 w-5" />
+                  {totalItems > 0 && (
+                    <Badge
+                      className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-primary text-primary-foreground font-black"
+                    >
+                      {totalItems}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Carrito</span>
+                </Button>
+              </Link>
+            )}
+            
+            {user && <div className="hidden xs:block"><NotificationBell /></div>}
 
-            <Separator orientation="vertical" className="h-6 hidden sm:block" />
+            <Separator orientation="vertical" className="h-6 hidden lg:block" />
 
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 px-2 hover:bg-secondary/50 rounded-lg">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary overflow-hidden">
+                  <Button variant="ghost" className="gap-2 px-1 sm:px-2 hover:bg-secondary/50 rounded-lg h-9 sm:h-10">
+                    <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-primary/10 text-primary overflow-hidden flex-shrink-0">
                       {user.avatarUrl ? (
                         <img 
                           src={user.avatarUrl} 
                           alt={user.name || ''} 
                           className="h-full w-full object-cover"
                           referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
+                          }}
                         />
                       ) : (
                         <User className="h-4 w-4" />
                       )}
                     </div>
-                    <div className="hidden lg:flex flex-col items-start text-left">
+                    <div className="hidden xl:flex flex-col items-start text-left">
                       <span className="text-xs font-bold leading-none">{user.name}</span>
                       <span className="text-[10px] text-muted-foreground leading-none mt-1">Mi cuenta</span>
                     </div>

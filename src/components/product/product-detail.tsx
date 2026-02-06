@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { Heart, Share2, Truck, Shield, RefreshCcw, ChevronLeft, Minus, Plus, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -7,6 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { ProductCard } from "@/components/shop/product-card"
 import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
+import { useFavorites } from "@/contexts/favorites-context"
+import { toast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
 import { formatUSD, formatBS, cn } from "@/lib/utils"
 import type { Product } from "@/types"
@@ -18,6 +21,9 @@ interface ProductDetailProps {
 
 export function ProductDetail({ product, relatedProducts = [] }: ProductDetailProps) {
   const { addItem } = useCart()
+  const { user } = useAuth()
+  const { toggleFavorite, isFavorite } = useFavorites()
+  const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState("description")
   const [bcvRate, setBcvRate] = useState(42.50)
@@ -40,8 +46,30 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
   }
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para agregar productos al carrito",
+        variant: "destructive",
+      })
+      navigate("/login")
+      return
+    }
     addItem(product, quantity)
     setQuantity(1)
+  }
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para guardar favoritos",
+        variant: "destructive",
+      })
+      navigate("/login")
+      return
+    }
+    await toggleFavorite(product)
   }
 
   return (
@@ -60,6 +88,11 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
               src={activeImage} 
               alt={product.name} 
               className="h-full w-full object-contain transition-all duration-300" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://placehold.co/800x800/f8fafc/6366f1?text=Imagen+No+Disponible";
+                target.onerror = null;
+              }}
             />
             {!product.inStock && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -79,7 +112,16 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
                     activeImage === img.url ? "border-primary" : "border-border/50 hover:border-primary/30"
                   )}
                 >
-                  <img src={img.thumbnail || img.url} alt="" className="w-full h-full object-contain" />
+                  <img 
+                    src={img.thumbnail || img.url} 
+                    alt="" 
+                    className="w-full h-full object-contain" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://placehold.co/200x200/f8fafc/6366f1?text=X";
+                      target.onerror = null;
+                    }}
+                  />
                 </button>
               ))}
             </div>
@@ -136,7 +178,14 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 {product.inStock ? "Agregar al carrito" : "Agotado"}
               </Button>
-              <Button variant="outline" size="lg"><Heart className="h-5 w-5" /></Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                onClick={handleToggleFavorite}
+                className={cn(isFavorite(product.id) && "text-red-500 hover:text-red-600")}
+              >
+                <Heart className={cn("h-5 w-5", isFavorite(product.id) && "fill-current")} />
+              </Button>
               <Button variant="outline" size="lg"><Share2 className="h-5 w-5" /></Button>
             </div>
 

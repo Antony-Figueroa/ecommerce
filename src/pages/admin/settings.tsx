@@ -153,7 +153,7 @@ export function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Configuración">
         <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
           <p className="text-muted-foreground font-medium">Cargando configuración...</p>
@@ -165,11 +165,10 @@ export function AdminSettingsPage() {
   const groups = Object.keys(settingsGrouped)
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Configuración">
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Configuración</h1>
             <p className="text-muted-foreground">
               Gestiona los parámetros globales del sistema.
             </p>

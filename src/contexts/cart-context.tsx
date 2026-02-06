@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
 import type { Product, CartItem } from "@/types"
+import { useAuth } from "./auth-context"
 
 interface CartContextType {
   items: CartItem[]
@@ -20,12 +21,22 @@ const CART_STORAGE_KEY = "farmasiaplus_cart"
 const SAVED_ITEMS_STORAGE_KEY = "farmasiaplus_saved"
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   const [items, setItems] = useState<CartItem[]>([])
   const [savedItems, setSavedItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      if (!user) {
+        setItems([])
+        setSavedItems([])
+        localStorage.removeItem(CART_STORAGE_KEY)
+        localStorage.removeItem(SAVED_ITEMS_STORAGE_KEY)
+        setIsLoaded(true)
+        return
+      }
+
       try {
         const storedCart = localStorage.getItem(CART_STORAGE_KEY)
         const storedSaved = localStorage.getItem(SAVED_ITEMS_STORAGE_KEY)
@@ -47,7 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       setIsLoaded(true)
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (isLoaded && typeof window !== "undefined") {

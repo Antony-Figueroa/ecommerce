@@ -262,6 +262,12 @@ export class SaleService {
     }
 
     const oldStatus = sale.status
+    
+    // Validación: No permitir completar si no está pagado
+    if (status === 'COMPLETED' && !sale.isPaid) {
+      throw new ValidationError('No se puede marcar como completada una orden que no ha sido pagada. Por favor, confirma el pago primero.')
+    }
+
     const updatedSale = await this.saleRepo.update(id, { status })
 
     // Create audit log for status change
@@ -273,6 +279,26 @@ export class SaleService {
       userId,
       reason
     })
+
+    // Create in-app notification for Client
+    if (updatedSale.userId) {
+      try {
+        const statusLabel = status === 'ACCEPTED' ? 'aceptado ✅' : 
+                            status === 'REJECTED' ? 'rechazado ❌' : 
+                            status === 'PROCESSING' ? 'en proceso ⏳' : 
+                            status === 'COMPLETED' ? 'completado ✨' : 
+                            status === 'CANCELLED' ? 'cancelado 🚫' : status.toLowerCase()
+
+        await this.notificationRepo.create({
+          type: 'SALE_STATUS',
+          title: 'Actualización de Pedido',
+          message: `Tu pedido #${updatedSale.saleNumber} ha sido ${statusLabel}.`,
+          userId: updatedSale.userId
+        })
+      } catch (error) {
+        console.error('Error creating in-app notification for client:', error)
+      }
+    }
 
     // Notify Client via WhatsApp about status change
     try {
@@ -298,6 +324,117 @@ export class SaleService {
 
         console.log(`[WhatsApp Client Notification] To: ${updatedSale.customerPhone}, Message: ${whatsappMessage}`)
         // In a real implementation, you would call a WhatsApp API provider here
+      }
+    } catch (error) {
+      console.error('Error sending WhatsApp notification to client:', error)
+    }
+
+    return updatedSale
+  }
+
+  async updateDeliveryStatus(id: string, deliveryStatus: string, userId?: string, reason?: string) {
+    const sale = await this.saleRepo.findById(id)
+    if (!sale) {
+      throw new NotFoundError('Venta')
+    }
+
+    const validStatuses = ['NOT_DELIVERED', 'IN_TRANSIT', 'DELIVERED']
+    if (!validStatuses.includes(deliveryStatus)) {
+      throw new ValidationError('Estado de entrega inválido')
+    }
+
+    const oldDeliveryStatus = sale.deliveryStatus
+    const updatedSale = await this.saleRepo.update(id, { deliveryStatus })
+
+    // Create audit log for delivery status change
+    await this.saleRepo.createAuditLog({
+      saleId: id,
+      action: 'DELIVERY_STATUS_CHANGE',
+      oldDeliveryStatus,
+      newDeliveryStatus: deliveryStatus,
+      userId,
+      reason
+    })
+
+    // Notify Client via WhatsApp about delivery status change
+    try {
+      if (updatedSale.customerPhone) {
+        const statusLabel = deliveryStatus === 'IN_TRANSIT' ? 'EN TRÁNSITO 🚚' : 
+                            deliveryStatus === 'DELIVERED' ? 'ENTREGADO ✅' : 
+                            deliveryStatus === 'NOT_DELIVERED' ? 'PENDIENTE DE ENTREGA 📦' : deliveryStatus
+        
+        let whatsappMessage = `*Actualización de entrega - Ana's Supplements* 🚚\n\n` +
+          `Hola *${updatedSale.customerName}*,\n\n` +
+          `Tu pedido *#${updatedSale.saleNumber}* ha cambiado su estado de entrega a: *${statusLabel}*.\n`
+        
+        if (reason) {
+          whatsappMessage += `\n*Nota:* ${reason}\n`
+        }
+
+        if (deliveryStatus === 'IN_TRANSIT') {
+          whatsappMessage += `\nTu pedido ya va en camino. ¡Pronto lo tendrás contigo!`
+        } else if (deliveryStatus === 'DELIVERED') {
+          whatsappMessage += `\nEsperamos que disfrutes tus productos. ¡Gracias por confiar en nosotros!`
+        }
+
+        whatsappMessage += `\n\n¡Feliz día!`
+
+        console.log(`[WhatsApp Client Notification] To: ${updatedSale.customerPhone}, Message: ${whatsappMessage}`)
+      }
+    } catch (error) {
+      console.error('Error sending WhatsApp notification to client:', error)
+    }
+
+    return updatedSale
+  }
+
+  async confirmPayment(id: string, amount: number, userId?: string, reason?: string) {
+    const sale = await this.saleRepo.findById(id)
+    if (!sale) {
+      throw new NotFoundError('Venta')
+    }
+
+    const oldStatus = sale.status
+    const updatedSale = await this.saleRepo.update(id, {
+      status: 'COMPLETED',
+      isPaid: true,
+      paidAmountUSD: amount
+    })
+
+    // Create audit log for payment confirmation
+    await this.saleRepo.createAuditLog({
+      saleId: id,
+      action: 'PAYMENT_CONFIRMED',
+      oldStatus,
+      newStatus: 'COMPLETED',
+      userId,
+      reason: reason || `Pago confirmado por un monto de $${amount.toFixed(2)}`
+    })
+
+    // Create in-app notification for Client
+    if (updatedSale.userId) {
+      try {
+        await this.notificationRepo.create({
+          type: 'SALE_STATUS',
+          title: 'Pago Confirmado',
+          message: `Tu pedido #${updatedSale.saleNumber} ha sido pagado y completado. ✨`,
+          userId: updatedSale.userId
+        })
+      } catch (error) {
+        console.error('Error creating in-app notification for client:', error)
+      }
+    }
+
+    // Notify Client via WhatsApp
+    try {
+      if (updatedSale.customerPhone) {
+        const whatsappMessage = `*¡Pago Confirmado!* ✨ Ana's Supplements\n\n` +
+          `Hola *${updatedSale.customerName}*,\n\n` +
+          `Hemos recibido tu pago por un monto de *$${amount.toFixed(2)}* para el pedido *#${updatedSale.saleNumber}*.\n` +
+          `Tu pedido ha sido marcado como *COMPLETADO*.\n\n` +
+          `¡Gracias por tu compra! Te esperamos pronto.`
+
+        console.log(`[WhatsApp Client Notification] To: ${updatedSale.customerPhone}, Message: ${whatsappMessage}`)
       }
     } catch (error) {
       console.error('Error sending WhatsApp notification to client:', error)
@@ -352,26 +489,28 @@ export class SaleService {
   async getSalesSummary(options?: any) {
     const sales = await this.saleRepo.getSummary(options || {})
 
+    const completedSalesData = (sales || []).filter((s: any) => s.status === 'COMPLETED')
+
     const totals = {
-      subtotalUSD: sales.reduce((sum: number, s: any) => sum + Number(s.subtotalUSD), 0),
-      shippingCostUSD: sales.reduce((sum: number, s: any) => sum + Number(s.shippingCostUSD), 0),
-      totalUSD: sales.reduce((sum: number, s: any) => sum + Number(s.totalUSD), 0),
-      totalBS: sales.reduce((sum: number, s: any) => sum + Number(s.totalBS), 0),
-      profitUSD: sales.reduce((sum: number, s: any) => sum + Number(s.profitUSD), 0),
-      profitBS: sales.reduce((sum: number, s: any) => sum + Number(s.profitBS), 0),
+      subtotalUSD: completedSalesData.reduce((sum: number, s: any) => sum + Number(s.subtotalUSD || 0), 0),
+      shippingCostUSD: completedSalesData.reduce((sum: number, s: any) => sum + Number(s.shippingCostUSD || 0), 0),
+      totalUSD: completedSalesData.reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0),
+      totalBS: completedSalesData.reduce((sum: number, s: any) => sum + Number(s.totalBS || 0), 0),
+      profitUSD: completedSalesData.reduce((sum: number, s: any) => sum + Number(s.profitUSD || 0), 0),
+      profitBS: completedSalesData.reduce((sum: number, s: any) => sum + Number(s.profitBS || 0), 0),
     }
 
-    const totalItems = sales.reduce((sum: number, sale: any) => {
-      return sum + sale.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0)
+    const totalItems = (sales || []).reduce((sum: number, sale: any) => {
+      return sum + (sale.items || []).reduce((itemSum: number, item: any) => itemSum + (item.quantity || 0), 0)
     }, 0)
 
-    const completedSales = sales.filter((s: any) => s.status === 'COMPLETED').length
-    const pendingSales = sales.filter((s: any) => s.status === 'PENDING').length
+    const completedSalesCount = (sales || []).filter((s: any) => s.status === 'COMPLETED').length
+    const pendingSalesCount = (sales || []).filter((s: any) => s.status === 'PENDING').length
 
     return {
-      totalSales: sales.length,
-      completedSales,
-      pendingSales,
+      totalSales: (sales || []).length,
+      completedSales: completedSalesCount,
+      pendingSales: pendingSalesCount,
       totalItems,
       summaryUSD: {
         subtotal: totals.subtotalUSD,

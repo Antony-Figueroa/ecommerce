@@ -12,6 +12,8 @@ export interface SaleRepository {
     action: string
     oldStatus?: string
     newStatus?: string
+    oldDeliveryStatus?: string
+    newDeliveryStatus?: string
     userId?: string
     reason?: string
   }): Promise<any>
@@ -23,10 +25,14 @@ export interface SaleRepository {
 }
 
 export interface NotificationRepository {
-  create(data: { type: string; title: string; message: string }): Promise<any>
-  findUnread(): Promise<any[]>
+  create(data: { type: string; title: string; message: string; userId?: string }): Promise<any>
+  findUnread(userId?: string): Promise<any[]>
+  findAll(userId?: string, limit?: number, skip?: number): Promise<any[]>
+  count(userId?: string): Promise<number>
   update(id: string, data: any): Promise<any>
   findFirst(where: any): Promise<any | null>
+  markAllAsRead(userId?: string): Promise<void>
+  delete(id: string): Promise<void>
 }
 
 export interface RequirementRepository {

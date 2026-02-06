@@ -83,8 +83,7 @@ export const productCreateSchema = z.object({
   name: z.string().min(3).max(200),
   description: z.string().min(10),
   price: z.number().positive(),
-  purchasePrice: z.number().nonnegative().optional().default(0),
-  shippingCost: z.number().nonnegative().optional().default(0),
+  purchasePrice: z.number().positive("El precio de compra es obligatorio y debe ser mayor a 0"),
   profitMargin: z.number().positive().optional().default(1.5),
   image: z.string().optional().nullable().or(z.literal('')),
   images: z.array(z.object({
@@ -106,9 +105,19 @@ export const productCreateSchema = z.object({
   isFeatured: z.boolean().optional().default(false),
   isOffer: z.boolean().optional().default(false),
   originalPrice: z.number().nonnegative().optional().nullable(),
+  batchNumber: z.string().optional(),
+  expirationDate: z.string().optional().nullable(),
 })
 
-export const productUpdateSchema = productCreateSchema.partial()
+export const productUpdateSchema = productCreateSchema.partial().extend({
+  batch: z.object({
+    batchNumber: z.string().min(1, "El número de lote es obligatorio"),
+    expirationDate: z.string().min(1, "La fecha de vencimiento es obligatoria"),
+    stock: z.number().int().positive("La cantidad debe ser mayor a 0"),
+    purchasePrice: z.number().positive("El precio de compra es obligatorio"),
+    salePrice: z.number().positive().optional(),
+  }).optional()
+})
 
 export const categoryCreateSchema = z.object({
   name: z.string().min(2).max(100),

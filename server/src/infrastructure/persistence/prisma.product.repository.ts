@@ -46,7 +46,12 @@ export class PrismaProductRepository implements ProductRepository {
       where: { id },
       include: { 
         category: true, 
-        batches: true,
+        batches: {
+          orderBy: { createdAt: 'desc' }
+        },
+        priceHistory: {
+          orderBy: { createdAt: 'desc' }
+        },
         images: {
           orderBy: { sortOrder: 'asc' }
         }

@@ -9,6 +9,11 @@ export function Hero() {
           src="https://images.unsplash.com/photo-1586015555751-63bb77f4322a?q=80&w=2000&auto=format&fit=crop"
           alt="Pharmacy Background"
           className="h-full w-full object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=2000&auto=format&fit=crop";
+            target.onerror = null;
+          }}
         />
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" />

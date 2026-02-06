@@ -16,6 +16,11 @@ export function CategoryCard({ category }: CategoryCardProps) {
           src={category.image || ""}
           alt={category.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "https://placehold.co/600x400/f1f5f9/64748b?text=Categoría";
+            target.onerror = null;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-4 text-white">

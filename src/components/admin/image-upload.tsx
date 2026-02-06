@@ -186,6 +186,11 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
               src={image.thumbnail || image.url} 
               alt={`Product ${index + 1}`}
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://placehold.co/200x200/f8fafc/6366f1?text=Error";
+                target.onerror = null;
+              }}
             />
             
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">

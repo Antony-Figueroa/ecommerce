@@ -20,6 +20,9 @@ import adminReportRoutes from './infrastructure/web/routes/admin/report.routes.j
 import adminCustomerRoutes from './infrastructure/web/routes/admin/customer.routes.js'
 import adminUploadRoutes from './infrastructure/web/routes/admin/upload.routes.js'
 import adminSettingsRoutes from './infrastructure/web/routes/admin/settings.routes.js'
+import adminNotificationRoutes from './infrastructure/web/routes/admin/notification.routes.js'
+import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
+import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
 import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
 import { notificationService, bcvUpdaterService } from './shared/container.js'
@@ -34,7 +37,7 @@ app.use(cors({
 }))
 app.use((_req, res, next) => {
   // Permitir comunicación con popups para Google Auth
-  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   next();
 });
 app.use(express.json())
@@ -63,6 +66,8 @@ app.use('/api/sales', saleRoutes)
 app.use('/api/bcv', bcvRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/favorites', favoriteRoutes)
+app.use('/api/settings', settingsRoutes)
+app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin/bcv', bcvAdminRoutes)
 app.use('/api/admin/products', adminProductRoutes)
 app.use('/api/admin/categories', adminCategoryRoutes)
@@ -71,6 +76,7 @@ app.use('/api/admin/requirements', adminRequirementRoutes)
 app.use('/api/admin/sales', adminSaleRoutes)
 app.use('/api/admin/reports', adminReportRoutes)
 app.use('/api/admin/customers', adminCustomerRoutes)
+app.use('/api/admin/notifications', adminNotificationRoutes)
 app.use('/api/admin/upload', adminUploadRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)

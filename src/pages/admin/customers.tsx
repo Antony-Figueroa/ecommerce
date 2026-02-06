@@ -160,7 +160,7 @@ export function AdminCustomersPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Clientes">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-muted rounded w-1/4"></div>
           <div className="grid gap-4 md:grid-cols-4">
@@ -173,12 +173,11 @@ export function AdminCustomersPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Clientes">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
             <p className="text-muted-foreground">
               {totalCustomers} usuarios registrados ({activeCustomersCount} activos)
             </p>

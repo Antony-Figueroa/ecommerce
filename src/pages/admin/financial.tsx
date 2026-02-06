@@ -259,12 +259,11 @@ export function FinancialDashboard() {
 
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Gestión Financiera">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Control Financiero</h1>
             <p className="text-muted-foreground">Gestion de inventario, ventas y ganancias</p>
           </div>
           <div className="flex items-center gap-4">

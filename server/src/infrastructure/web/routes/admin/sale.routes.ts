@@ -89,6 +89,42 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
   }
 })
 
+router.patch('/:id/delivery-status', async (req: Request, res: Response) => {
+  try {
+    const { deliveryStatus, reason } = req.body
+    const userId = (req as any).user?.id
+    const sale = await saleService.updateDeliveryStatus(req.params.id as string, deliveryStatus, userId, reason)
+    res.json(sale)
+  } catch (error: any) {
+    if (error.name === 'NotFoundError') {
+      return res.status(404).json({ error: error.message })
+    }
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message })
+    }
+    res.status(500).json({ error: error.message || 'Error al actualizar estado de entrega' })
+  }
+})
+
+router.post('/:id/confirm-payment', async (req: Request, res: Response) => {
+  try {
+    const { amount, reason } = req.body
+    const userId = (req as any).user?.id
+    
+    if (amount === undefined || amount === null) {
+      return res.status(400).json({ error: 'El monto es obligatorio' })
+    }
+
+    const sale = await saleService.confirmPayment(req.params.id as string, Number(amount), userId, reason)
+    res.json(sale)
+  } catch (error: any) {
+    if (error.name === 'NotFoundError') {
+      return res.status(404).json({ error: error.message })
+    }
+    res.status(500).json({ error: error.message || 'Error al confirmar pago' })
+  }
+})
+
 router.post('/:id/cancel', async (req: Request, res: Response) => {
   try {
     const sale = await saleService.cancelSale(req.params.id as string)

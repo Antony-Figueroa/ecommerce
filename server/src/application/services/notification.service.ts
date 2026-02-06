@@ -9,19 +9,36 @@ export class NotificationService {
   ) {}
 
   async createNotification(data: {
-    type: 'LOW_STOCK' | 'EXPIRATION' | 'SYSTEM' | 'SALE'
+    type: 'LOW_STOCK' | 'EXPIRATION' | 'SYSTEM' | 'SALE' | 'SALE_STATUS'
     title: string
     message: string
+    userId?: string
   }) {
     return this.notificationRepo.create(data)
   }
 
-  async getUnreadNotifications() {
-    return this.notificationRepo.findUnread()
+  async getUnreadNotifications(userId?: string) {
+    return this.notificationRepo.findUnread(userId)
+  }
+
+  async getAllNotifications(userId?: string, limit?: number, skip?: number) {
+    return this.notificationRepo.findAll(userId, limit, skip)
+  }
+
+  async countNotifications(userId?: string) {
+    return this.notificationRepo.count(userId)
   }
 
   async markAsRead(id: string) {
     return this.notificationRepo.update(id, { isRead: true })
+  }
+
+  async markAllAsRead(userId?: string) {
+    return this.notificationRepo.markAllAsRead(userId)
+  }
+
+  async deleteNotification(id: string) {
+    return this.notificationRepo.delete(id)
   }
 
   async checkLowStock() {

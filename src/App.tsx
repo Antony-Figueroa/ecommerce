@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom"
+import { useEffect } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { CartProvider } from "@/contexts/cart-context"
 import { FavoritesProvider } from "@/contexts/favorites-context"
@@ -27,12 +28,18 @@ import { AdminInventoryPage } from "@/pages/admin/inventory"
 import { AdminAnalyticsPage } from "@/pages/admin/analytics"
 import { AdminSettingsPage } from "@/pages/admin/settings"
 import { FinancialDashboard } from "@/pages/admin/financial"
+import { AdminNotificationsPage } from "@/pages/admin/notifications"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 
 import { Toaster } from "@/components/ui/toaster"
 
 function App() {
   const location = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   const isAdminPath = location.pathname.startsWith("/admin")
   const isAuthPath = [
     "/login", 
@@ -57,7 +64,7 @@ function App() {
                 <Route path="/productos/:slug" element={<CatalogPage />} />
                 <Route path="/ofertas" element={<CatalogPage offersOnly={true} />} />
                 <Route path="/producto/:id" element={<ProductPage />} />
-                <Route path="/carrito" element={<CartPage />} />
+                <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/registro" element={<RegisterPage />} />
                 <Route path="/registro/confirmacion" element={<GoogleConfirmPage />} />
@@ -80,6 +87,7 @@ function App() {
               <Route path="/admin/analytics" element={<ProtectedRoute adminOnly={true}><AdminAnalyticsPage /></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute adminOnly={true}><AdminSettingsPage /></ProtectedRoute>} />
               <Route path="/admin/financial" element={<ProtectedRoute adminOnly={true}><FinancialDashboard /></ProtectedRoute>} />
+              <Route path="/admin/notifications" element={<ProtectedRoute adminOnly={true}><AdminNotificationsPage /></ProtectedRoute>} />
             </Routes>
           </main>
           {!hideLayout && <Footer />}

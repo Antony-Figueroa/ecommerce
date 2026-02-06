@@ -23,6 +23,7 @@ interface Order {
   customerName: string
   total: number
   status: string
+  isPaid: boolean
   whatsappSent: boolean
   createdAt: string
 }
@@ -161,25 +162,19 @@ export function AdminDashboard() {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-muted rounded"></div>
-            ))}
-          </div>
+      <AdminLayout title="Panel de Control">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
         </div>
       </AdminLayout>
     )
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Panel de Control">
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Vista General</h2>
-          <p className="text-muted-foreground font-semibold mt-1">Monitorea el rendimiento de tu farmacia en tiempo real.</p>
+          <p className="text-muted-foreground">Bienvenido de nuevo, aquí tienes un resumen de tu negocio.</p>
         </div>
 
         {/* Stats Grid */}
@@ -305,7 +300,9 @@ export function AdminDashboard() {
                     <div className="flex items-center gap-6">
                       <div className="text-right">
                         <p className="text-sm font-black text-foreground">${formatUSD(order.total)}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground/60">Pagado</p>
+                        <p className={`text-[10px] font-bold uppercase tracking-wider ${order.isPaid ? 'text-primary' : 'text-amber-500'}`}>
+                          {order.isPaid ? 'Pagado' : 'Pendiente'}
+                        </p>
                       </div>
                       <Badge className={`rounded-lg font-black text-[10px] tracking-wider px-3 py-1 ${
                         order.status === "PENDING" ? "bg-amber-500/10 text-amber-500" :

@@ -129,6 +129,18 @@ export function GoogleConfirmPage() {
                 src={googleData.avatarUrl} 
                 alt={googleData.name} 
                 className="h-20 w-20 rounded-full border-2 border-primary shadow-sm"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    const icon = document.createElement('div');
+                    icon.className = 'h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary';
+                    icon.innerHTML = '<svg class="h-10 w-10 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+                    parent.appendChild(icon);
+                  }
+                }}
               />
             ) : (
               <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary">

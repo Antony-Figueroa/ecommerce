@@ -61,8 +61,12 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
               <img
                 src={mainImage}
                 alt={product.name}
-                crossOrigin="anonymous"
                 className="max-h-full max-w-full object-contain mix-blend-multiply drop-shadow-xl"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
+                  target.onerror = null;
+                }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted/50 rounded-2xl">

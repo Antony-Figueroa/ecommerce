@@ -26,8 +26,13 @@ export class InventoryService {
     }
   }
 
-  private calculatePrice(purchasePrice: number, shippingCost: number, margin: number): number {
-    return (Number(purchasePrice) + Number(shippingCost)) * Number(margin)
+  private calculatePrice(purchasePrice: number, margin: number): number {
+    return Number(purchasePrice) * Number(margin)
+  }
+
+  private calculateMargin(purchasePrice: number, salePrice: number): number {
+    if (Number(purchasePrice) <= 0) return 0
+    return Number(salePrice) / Number(purchasePrice)
   }
 
   private async generateSKU(name: string, categoryId: string): Promise<string> {
@@ -68,7 +73,9 @@ export class InventoryService {
       throw new ValidationError('Ya existe un producto con este SKU')
     }
 
-    const finalPrice = data.price || this.calculatePrice(data.purchasePrice, data.shippingCost, data.profitMargin)
+    const purchasePrice = data.purchasePrice || 0
+    const salePrice = data.price || this.calculatePrice(purchasePrice, data.profitMargin || 1.5)
+    const profitMargin = data.profitMargin || this.calculateMargin(purchasePrice, salePrice)
 
     const mainImageUrl = data.images && data.images.length > 0 
       ? data.images.find((img: any) => img.isMain)?.url || data.images[0].url 
@@ -81,16 +88,15 @@ export class InventoryService {
       name: data.name,
       slug: data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
       description: data.description,
-      price: finalPrice,
+      price: salePrice,
       image: mainImageUrl,
       categoryId: data.categoryId,
       brand: data.brand,
       brandId: brandId,
       format: data.format,
       weight: data.weight,
-      purchasePrice: data.purchasePrice,
-      shippingCost: data.shippingCost,
-      profitMargin: data.profitMargin,
+      purchasePrice: purchasePrice,
+      profitMargin: profitMargin,
       stock: data.stock,
       minStock: data.minStock || 5,
       inStock: data.stock > 0,
@@ -104,6 +110,25 @@ export class InventoryService {
           sortOrder: img.sortOrder || index,
         })) || [],
       },
+      // Crear lote inicial
+      batches: {
+        create: {
+          batchNumber: data.batchNumber || `INIT-${Date.now()}`,
+          expirationDate: data.expirationDate ? new Date(data.expirationDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          stock: data.stock,
+          purchasePrice: purchasePrice,
+          salePrice: salePrice,
+        }
+      },
+      // Historial de precios inicial
+      priceHistory: {
+        create: {
+          purchasePrice: purchasePrice,
+          salePrice: salePrice,
+          batchQuantity: data.stock,
+          batchNumber: data.batchNumber || 'INITIAL',
+        }
+      }
     })
 
     await this.logRepo.create({
@@ -124,9 +149,66 @@ export class InventoryService {
       throw new NotFoundError('Producto')
     }
 
-    const { stock, price, images, ...rest } = data
+    const { stock, price, images, batch, ...rest } = data
     let stockChange = 0
 
+    // Si hay datos de un nuevo lote (Restock)
+    if (batch) {
+      const newBatchPurchasePrice = Number(batch.purchasePrice)
+      const newBatchSalePrice = Number(batch.salePrice) || this.calculatePrice(newBatchPurchasePrice, data.profitMargin || product.profitMargin)
+      const newBatchQuantity = Number(batch.stock)
+      
+      stockChange = newBatchQuantity
+
+      // Actualizar precios globales del producto si se indica
+      const updateData: any = {
+        ...rest,
+        stock: product.stock + newBatchQuantity,
+        inStock: true,
+        purchasePrice: newBatchPurchasePrice, // Actualizamos con el último precio de compra
+        price: newBatchSalePrice, // Actualizamos con el último precio de venta
+        profitMargin: this.calculateMargin(newBatchPurchasePrice, newBatchSalePrice),
+      }
+
+      // Añadir lote e historial
+      updateData.batches = {
+        create: {
+          batchNumber: batch.batchNumber,
+          expirationDate: new Date(batch.expirationDate),
+          stock: newBatchQuantity,
+          purchasePrice: newBatchPurchasePrice,
+          salePrice: newBatchSalePrice,
+        }
+      }
+
+      updateData.priceHistory = {
+        create: {
+          purchasePrice: newBatchPurchasePrice,
+          salePrice: newBatchSalePrice,
+          batchQuantity: newBatchQuantity,
+          batchNumber: batch.batchNumber,
+        }
+      }
+
+      if (images) {
+        await this.handleImagesUpdate(id, images, updateData)
+      }
+
+      const updatedProduct = await this.productRepo.update(id, updateData)
+
+      await this.logRepo.create({
+        productId: id,
+        changeType: 'RESTOCK',
+        previousStock: product.stock,
+        newStock: updateData.stock,
+        changeAmount: newBatchQuantity,
+        reason: `Nuevo lote: ${batch.batchNumber}`,
+      })
+
+      return updatedProduct
+    }
+
+    // Actualización normal (sin lote nuevo)
     if (stock !== undefined && stock !== product.stock) {
       stockChange = stock - product.stock
     }
@@ -144,32 +226,16 @@ export class InventoryService {
 
     if (price !== undefined) {
       updateData.price = price
-    } else if (data.purchasePrice !== undefined || data.shippingCost !== undefined || data.profitMargin !== undefined) {
+      // Recalcular margen si el precio de venta cambia manualmente
+      updateData.profitMargin = this.calculateMargin(Number(product.purchasePrice), Number(price))
+    } else if (data.purchasePrice !== undefined || data.profitMargin !== undefined) {
       const purchasePrice = data.purchasePrice ?? Number(product.purchasePrice)
-      const shippingCost = data.shippingCost ?? Number(product.shippingCost)
       const profitMargin = data.profitMargin ?? Number(product.profitMargin)
-      updateData.price = this.calculatePrice(purchasePrice, shippingCost, profitMargin)
+      updateData.price = this.calculatePrice(purchasePrice, profitMargin)
     }
 
     if (images) {
-      const mainImageUrl = images.length > 0 
-        ? images.find((img: any) => img.isMain)?.url || images[0].url 
-        : data.image
-
-      updateData.image = mainImageUrl
-
-      await this.productRepo.deleteImages(id)
-      
-      updateData.images = {
-        create: images.map((img: any, index: number) => ({
-          url: img.url,
-          thumbnail: img.thumbnail,
-          medium: img.medium,
-          large: img.large,
-          isMain: img.isMain || index === 0,
-          sortOrder: img.sortOrder || index,
-        }))
-      }
+      await this.handleImagesUpdate(id, images, updateData)
     }
 
     const updatedProduct = await this.productRepo.update(id, updateData)
@@ -179,13 +245,34 @@ export class InventoryService {
         productId: id,
         changeType: stockChange > 0 ? 'RESTOCK' : 'SALE',
         previousStock: product.stock,
-        newStock: stock!,
+        newStock: updateData.stock ?? product.stock,
         changeAmount: stockChange,
         reason: stockChange > 0 ? 'Reposicion' : 'Venta',
       })
     }
 
     return updatedProduct
+  }
+
+  private async handleImagesUpdate(productId: string, images: any[], updateData: any) {
+    const mainImageUrl = images.length > 0 
+      ? images.find((img: any) => img.isMain)?.url || images[0].url 
+      : images[0].url
+
+    updateData.image = mainImageUrl
+
+    await this.productRepo.deleteImages(productId)
+    
+    updateData.images = {
+      create: images.map((img: any, index: number) => ({
+        url: img.url,
+        thumbnail: img.thumbnail,
+        medium: img.medium,
+        large: img.large,
+        isMain: img.isMain || index === 0,
+        sortOrder: img.sortOrder || index,
+      }))
+    }
   }
 
   async getProductById(id: string) {
@@ -228,7 +315,7 @@ export class InventoryService {
     })
 
     const totalCost = products.reduce((sum, p) => {
-      return sum + (Number(p.purchasePrice) + Number(p.shippingCost)) * p.stock
+      return sum + Number(p.purchasePrice) * p.stock
     }, 0)
 
     const totalValue = products.reduce((sum, p) => {
@@ -253,10 +340,9 @@ export class InventoryService {
         stock: p.stock,
         minStock: p.minStock,
         purchasePrice: Number(p.purchasePrice),
-        shippingCost: Number(p.shippingCost),
         price: Number(p.price),
         profitMargin: Number(p.profitMargin),
-        totalCost: (Number(p.purchasePrice) + Number(p.shippingCost)) * p.stock,
+        totalCost: Number(p.purchasePrice) * p.stock,
         totalValue: Number(p.price) * p.stock,
       })),
       alerts: {

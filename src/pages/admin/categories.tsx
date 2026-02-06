@@ -217,7 +217,7 @@ export function AdminCategoriesPage() {
 
   if (loading) {
     return (
-      <AdminLayout>
+      <AdminLayout title="Categorías">
         <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
           <p className="text-muted-foreground font-medium">Cargando categorías...</p>
@@ -227,12 +227,11 @@ export function AdminCategoriesPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Categorías">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Gestion de Categorias</h1>
             <p className="text-muted-foreground">
               {categories.length} categorias en tu tienda
             </p>
@@ -298,7 +297,16 @@ export function AdminCategoriesPage() {
             <Card key={category.id} className="overflow-hidden">
               <div className="aspect-[2/1] relative bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
                 {category.image ? (
-                  <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
+                  <img 
+                    src={category.image} 
+                    alt={category.name} 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://placehold.co/600x300/f1f5f9/64748b?text=Categoría";
+                      target.onerror = null;
+                    }}
+                  />
                 ) : (
                   <span className="text-6xl">{category.icon || "📁"}</span>
                 )}

@@ -6,9 +6,11 @@ const router = Router()
 
 router.use(authenticate)
 
-router.get('/', async (_req: Request, res: Response) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
-    const stats = await dashboardService.getAdminStats()
+    const startDate = req.query.startDate as string | undefined
+    const endDate = req.query.endDate as string | undefined
+    const stats = await dashboardService.getAdminStats(startDate, endDate)
     res.json(stats)
   } catch (error) {
     console.error('Error fetching stats:', error)

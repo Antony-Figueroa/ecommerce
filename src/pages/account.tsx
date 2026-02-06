@@ -118,6 +118,17 @@ export function AccountPage() {
                       alt={user.name} 
                       className="h-full w-full object-cover"
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const icon = document.createElement('div');
+                          icon.className = 'flex items-center justify-center w-full h-full';
+                          icon.innerHTML = '<svg class=\"h-8 w-8 text-primary\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>';
+                          parent.appendChild(icon);
+                        }
+                      }}
                     />
                   ) : (
                     <User className="h-8 w-8 text-primary" />
@@ -279,6 +290,17 @@ export function AccountPage() {
                       src={editForm.avatarUrl} 
                       alt="Avatar" 
                       className="h-full w-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const icon = document.createElement('div');
+                          icon.className = 'flex items-center justify-center w-full h-full';
+                          icon.innerHTML = '<svg class=\"h-12 w-12 text-primary\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>';
+                          parent.appendChild(icon);
+                        }
+                      }}
                     />
                   ) : (
                     <User className="h-12 w-12 text-primary" />

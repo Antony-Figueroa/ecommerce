@@ -30,13 +30,12 @@ router.get('/sales', async (req: Request, res: Response) => {
     })
 
     const items = await dashboardService.getSalesReport(startDate, endDate)
-
-    const totalItems = items.reduce((sum: number, sale: any) => {
-      return sum + sale.items.reduce((itemSum: number, item: any) => itemSum + item.quantity, 0)
+    const totalItems = (items || []).reduce((sum: number, sale: any) => {
+      return sum + (sale.items || []).reduce((itemSum: number, item: any) => itemSum + (Number(item.quantity) || 0), 0)
     }, 0)
 
-    const avgProfitMargin = salesSummary.summaryUSD.total > 0
-      ? (salesSummary.profitUSD / salesSummary.summaryUSD.total) * 100
+    const avgProfitMargin = (salesSummary?.summaryUSD?.total || 0) > 0
+      ? ((salesSummary?.profitUSD || 0) / salesSummary.summaryUSD.total) * 100
       : 0
 
     res.json({
@@ -45,26 +44,30 @@ router.get('/sales', async (req: Request, res: Response) => {
       bcvRate,
       items,
       summary: {
-        totalSales: salesSummary.totalSales,
-        completedSales: salesSummary.completedSales,
-        pendingSales: salesSummary.pendingSales,
+        totalSales: salesSummary?.totalSales || 0,
+        completedSales: salesSummary?.completedSales || 0,
+        pendingSales: salesSummary?.pendingSales || 0,
         totalItems,
         financials: {
-          subtotalUSD: Math.round(salesSummary.summaryUSD.subtotal * 100) / 100,
-          shippingUSD: Math.round(salesSummary.summaryUSD.shipping * 100) / 100,
-          totalUSD: Math.round(salesSummary.summaryUSD.total * 100) / 100,
-          totalBS: Math.round(salesSummary.summaryBS.total * 100) / 100,
+          subtotalUSD: Math.round((salesSummary?.summaryUSD?.subtotal || 0) * 100) / 100,
+          shippingUSD: Math.round((salesSummary?.summaryUSD?.shipping || 0) * 100) / 100,
+          totalUSD: Math.round((salesSummary?.summaryUSD?.total || 0) * 100) / 100,
+          totalBS: Math.round((salesSummary?.summaryBS?.total || 0) * 100) / 100,
         },
         profit: {
-          USD: Math.round(salesSummary.profitUSD * 100) / 100,
-          BS: Math.round(salesSummary.profitBS * 100) / 100,
+          USD: Math.round((salesSummary?.profitUSD || 0) * 100) / 100,
+          BS: Math.round((salesSummary?.profitBS || 0) * 100) / 100,
           marginPercent: Math.round(avgProfitMargin * 100) / 100,
         },
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating sales report:', error)
-    res.status(500).json({ error: 'Error al generar reporte de ventas' })
+    res.status(500).json({ 
+      error: 'Error al generar reporte de ventas',
+      details: error?.message,
+      stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    })
   }
 })
 
@@ -129,6 +132,18 @@ router.get('/requirements', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error generating requirements report:', error)
     res.status(500).json({ error: 'Error al generar reporte de requerimientos' })
+  }
+})
+
+router.get('/analytics', async (req: Request, res: Response) => {
+  try {
+    const startDate = req.query.startDate as string | undefined
+    const endDate = req.query.endDate as string | undefined
+    const report = await dashboardService.getAnalyticsReport(startDate, endDate)
+    res.json(report)
+  } catch (error) {
+    console.error('Error generating analytics report:', error)
+    res.status(500).json({ error: 'Error al generar reporte de analíticas' })
   }
 })
 

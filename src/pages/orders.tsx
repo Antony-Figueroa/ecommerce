@@ -235,7 +235,16 @@ export function OrdersPage() {
                         <div key={idx} className="flex gap-3">
                           <div className="h-16 w-16 rounded-md bg-muted overflow-hidden flex-shrink-0 border">
                             {item.product?.images?.[0] ? (
-                              <img src={item.product.images[0]} alt={item.product.name} className="h-full w-full object-cover" />
+                              <img 
+                                src={item.product.images[0]} 
+                                alt={item.product.name} 
+                                className="h-full w-full object-cover" 
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
+                                  target.onerror = null;
+                                }}
+                              />
                             ) : (
                               <Package className="h-8 w-8 m-4 text-muted-foreground" />
                             )}

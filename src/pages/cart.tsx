@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/contexts/cart-context"
+import { useAuth } from "@/contexts/auth-context"
 import { formatUSD } from "@/lib/utils"
 import { api } from "@/lib/api"
 
 export function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice, saveForLater, moveToCart, getSavedItems } = useCart()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   const [showCheckout, setShowCheckout] = useState(false)
@@ -21,11 +23,40 @@ export function CartPage() {
     deliveryAddress: "",
     notes: "",
   })
+
+  // Pre-llenar datos del usuario si está autenticado
+  useEffect(() => {
+    if (user && !showCheckout) {
+      setCheckoutData(prev => ({
+        ...prev,
+        customerName: prev.customerName || user.name || "",
+        customerPhone: prev.customerPhone || user.phone || "",
+        customerEmail: prev.customerEmail || user.email || "",
+      }))
+    }
+  }, [user, showCheckout])
+
   const [savedItems, setSavedItems] = useState<typeof items>([])
+  const [whatsappNumber, setWhatsappNumber] = useState("584123456789") // Default fallback (Venezuela)
 
   useEffect(() => {
     setSavedItems(getSavedItems())
+    fetchPublicSettings()
   }, [getSavedItems])
+
+  const fetchPublicSettings = async () => {
+    try {
+      const settings = await api.getPublicSettings()
+      if (settings.whatsapp_number) {
+        // Limpiar el número para el enlace de WhatsApp (solo números)
+        // Asegurarse de que no tenga el signo + pero mantenga el código de país
+        const cleanNumber = settings.whatsapp_number.replace(/\+/g, '').replace(/\D/g, '')
+        setWhatsappNumber(cleanNumber)
+      }
+    } catch (error) {
+      console.error("Error fetching public settings:", error)
+    }
+  }
 
   const subtotal = totalPrice
   const total = subtotal
@@ -39,6 +70,7 @@ export function CartPage() {
     try {
       // 1. First, create the order in the database
       const orderData = {
+        userId: user?.id,
         customerName: checkoutData.customerName,
         customerPhone: checkoutData.customerPhone,
         customerEmail: checkoutData.customerEmail,
@@ -56,39 +88,46 @@ export function CartPage() {
       await api.createSale(orderData)
 
       // 2. If database creation is successful, proceed with WhatsApp
-      const phoneNumber = "5215551234567"
+      const phoneNumber = whatsappNumber
 
-      let message = `*🧪 Nueva Orden - Ana's Supplements*%0A%0A`
-      message += `*Cliente:* ${checkoutData.customerName}%0A`
-      message += `*Email:* ${checkoutData.customerEmail}%0A`
-      message += `*Telefono:* ${checkoutData.customerPhone}%0A%0A`
+      let message = `*🧪 Nueva Orden - Ana's Supplements*\n\n`
+      message += `*Cliente:* ${checkoutData.customerName}\n`
+      message += `*Email:* ${checkoutData.customerEmail}\n`
+      message += `*Teléfono:* ${checkoutData.customerPhone}\n\n`
 
-      message += `*📦 Productos:*%0A`
+      message += `*📦 Productos:*\n`
       items.forEach((item, index) => {
-        message += `${index + 1}. ${item.product.name}%0A`
-        message += `   Cantidad: ${item.quantity}%0A`
-        message += `   Precio: $${formatUSD(item.product.price)}%0A`
-        message += `   Subtotal: $${formatUSD(Number(item.product.price) * item.quantity)}%0A%0A`
+        message += `${index + 1}. ${item.product.name}\n`
+        message += `   Cantidad: ${item.quantity}\n`
+        message += `   Precio: $${formatUSD(item.product.price)}\n`
+        message += `   Subtotal: $${formatUSD(Number(item.product.price) * item.quantity)}\n\n`
       })
 
-      message += `*💰 Resumen:*%0A`
-      message += `   Subtotal: $${formatUSD(subtotal)}%0A`
-      message += `*   Total: $${formatUSD(total)}*%0A`
+      message += `*💰 Resumen:*\n`
+      message += `   Subtotal: $${formatUSD(subtotal)}\n`
+      message += `*   Total: $${formatUSD(total)}*\n`
 
-      message += `%0A*📍 Direccion de Entrega:*%0A${checkoutData.deliveryAddress}%0A`
+      message += `\n*📍 Dirección de Entrega:*\n${checkoutData.deliveryAddress}\n`
 
       if (checkoutData.notes) {
-        message += `%0A*📝 Notas:*%0A${checkoutData.notes}%0A`
+        message += `\n*📝 Notas:*\n${checkoutData.notes}\n`
       }
 
-      message += `%0A_%0APedido generado desde Ana's Supplements E-commerce_`
+      message += `\n_\nPedido generado desde Ana's Supplements E-commerce_`
 
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`
+      const encodedMessage = encodeURIComponent(message)
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
 
       clearCart()
       setShowCheckout(false)
+      
+      // Abrir WhatsApp en una nueva pestaña
       window.open(whatsappUrl, "_blank")
-      navigate("/")
+      
+      // Redirigir a la página de inicio o de éxito después de un breve delay
+      setTimeout(() => {
+        navigate("/")
+      }, 500)
     } catch (error: any) {
       console.error("Error creating order:", error)
       alert(error.message || "Hubo un error al procesar tu pedido. Por favor intenta de nuevo.")
@@ -124,11 +163,11 @@ export function CartPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Telefono (con WhatsApp)</label>
+                  <label className="text-sm font-medium">Teléfono (con WhatsApp)</label>
                   <Input
                     value={checkoutData.customerPhone}
                     onChange={(e) => setCheckoutData({ ...checkoutData, customerPhone: e.target.value })}
-                    placeholder="5523456789"
+                    placeholder="04121234567"
                   />
                 </div>
                 <div className="space-y-2">
@@ -137,15 +176,15 @@ export function CartPage() {
                     type="email"
                     value={checkoutData.customerEmail}
                     onChange={(e) => setCheckoutData({ ...checkoutData, customerEmail: e.target.value })}
-                    placeholder="juan@email.com"
+                    placeholder="cliente@email.com"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Direccion de entrega</label>
+                  <label className="text-sm font-medium">Dirección de entrega</label>
                   <Input
                     value={checkoutData.deliveryAddress}
                     onChange={(e) => setCheckoutData({ ...checkoutData, deliveryAddress: e.target.value })}
-                    placeholder="Calle 123, Colonia Centro, Ciudad de Mexico"
+                    placeholder="Av. Principal, Edificio Ana, Piso 1, Caracas"
                   />
                 </div>
                 <div className="space-y-2">
@@ -254,6 +293,11 @@ export function CartPage() {
                             src={item.product.image || "/placeholder.png"}
                             alt={item.product.name}
                             className="h-full w-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://placehold.co/200x200/f8fafc/6366f1?text=Error";
+                              target.onerror = null;
+                            }}
                           />
                         </div>
                         <div className="flex flex-1 flex-col">
@@ -317,6 +361,11 @@ export function CartPage() {
                             src={item.product.image || "/placeholder.png"}
                             alt={item.product.name}
                             className="h-full w-full object-cover opacity-70"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=Img";
+                              target.onerror = null;
+                            }}
                           />
                         </div>
                         <div className="flex flex-1 flex-col">

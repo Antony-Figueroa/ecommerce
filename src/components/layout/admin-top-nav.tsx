@@ -27,9 +27,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate, useLocation, Link } from "react-router-dom"
-import { formatUSD } from "@/lib/utils"
+import { Separator } from "@/components/ui/separator"
+import { formatDistanceToNow } from "date-fns"
+import { es } from "date-fns/locale"
 
 export function AdminTopNav() {
   const { user, logout } = useAuth()
@@ -44,15 +47,19 @@ export function AdminTopNav() {
     return false
   })
   const [updatingBcv, setUpdatingBcv] = useState(false)
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "Nueva orden #1234", time: "Hace 5 min", read: false },
-    { id: 2, title: "Stock bajo: Omega 3", time: "Hace 10 min", read: false },
-    { id: 3, title: "Pago confirmado #1230", time: "Hace 1 hora", read: true },
-  ])
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
 
   useEffect(() => {
     fetchBCVRate()
+    fetchNotifications()
     
+    // Refresh notifications every 2 minutes
+    const interval = setInterval(fetchNotifications, 2 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
     const root = window.document.documentElement
     if (isDark) {
       root.classList.add("dark")
@@ -75,6 +82,44 @@ export function AdminTopNav() {
     }
   }
 
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifications(true)
+      const data = await api.getAdminUnreadNotifications()
+      setNotifications(data)
+    } catch (error) {
+      console.error("Error fetching notifications:", error)
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await api.markAdminNotificationRead(id)
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
+    } catch (error) {
+      console.error("Error marking notification as read:", error)
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.markAllAdminNotificationsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error)
+    }
+  }
+
+  const formatTime = (dateString: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: es })
+    } catch (e) {
+      return "Recientemente"
+    }
+  }
+
   const handleUpdateBcv = async () => {
     setUpdatingBcv(true)
     try {
@@ -93,7 +138,7 @@ export function AdminTopNav() {
     navigate("/login")
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = notifications.filter(n => !n.isRead).length
 
   // Breadcrumb logic
   const pathnames = location.pathname.split("/").filter((x) => x)
@@ -124,7 +169,7 @@ export function AdminTopNav() {
           <Link to="/admin" className="hover:text-primary transition-colors">
             <Home className="h-4 w-4" />
           </Link>
-          {breadcrumbs.map((breadcrumb, index) => (
+          {breadcrumbs.map((breadcrumb) => (
             breadcrumb.routeTo !== "/admin" && (
               <div key={breadcrumb.routeTo} className="flex items-center gap-2">
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
@@ -191,7 +236,7 @@ export function AdminTopNav() {
         </DropdownMenu>
 
         {/* BCV Rate */}
-        <div className="hidden items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary lg:flex">
+        <div className="hidden items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold  lg:flex">
           <TrendingUp className="h-3.5 w-3.5" />
           <span>Tasa BCV: {typeof bcvRate === 'number' && !isNaN(bcvRate) ? `${bcvRate.toFixed(2)} Bs/$` : "Cargando..."}</span>
           <Button 
@@ -231,27 +276,55 @@ export function AdminTopNav() {
             <DropdownMenuLabel className="flex items-center justify-between">
               Notificaciones
               {unreadCount > 0 && (
-                <Button variant="ghost" size="sm" className="h-auto px-2 py-1 text-xs text-primary font-bold">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-auto px-2 py-1 text-xs text-primary font-bold"
+                  onClick={handleMarkAllRead}
+                >
                   Marcar todas como leídas
                 </Button>
               )}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
-              {notifications.map((notification) => (
-                <DropdownMenuItem key={notification.id} className="flex flex-col items-start gap-1 p-3 cursor-default">
-                  <div className="flex w-full items-center justify-between">
-                    <span className={`text-sm font-bold ${notification.read ? 'text-muted-foreground' : 'text-foreground'}`}>
-                      {notification.title}
+              {loadingNotifications && notifications.length === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">Cargando...</div>
+              ) : notifications.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  No hay notificaciones nuevas
+                </div>
+              ) : (
+                notifications.map((notification) => (
+                  <DropdownMenuItem 
+                    key={notification.id} 
+                    className={cn(
+                      "flex flex-col items-start gap-1 p-3 cursor-pointer transition-colors",
+                      notification.isRead ? "opacity-60 bg-transparent" : "bg-primary/5 hover:bg-primary/10"
+                    )}
+                    onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
+                  >
+                    <div className="flex w-full items-center justify-between">
+                      <span className={cn("text-sm text-foreground", !notification.isRead && "font-bold")}>
+                        {notification.title}
+                      </span>
+                      {!notification.isRead && <div className="h-2 w-2 rounded-full bg-primary" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <span className="text-[10px] text-muted-foreground/60">
+                      {formatTime(notification.createdAt)}
                     </span>
-                    {!notification.read && <div className="h-2 w-2 rounded-full bg-primary" />}
-                  </div>
-                  <span className="text-xs text-muted-foreground">{notification.time}</span>
-                </DropdownMenuItem>
-              ))}
+                  </DropdownMenuItem>
+                ))
+              )}
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="justify-center text-xs font-bold text-primary cursor-pointer">
+            <DropdownMenuItem 
+              className="justify-center text-xs font-bold text-primary cursor-pointer"
+              onClick={() => navigate("/admin/notifications")}
+            >
               Ver todas las notificaciones
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -292,11 +365,5 @@ export function AdminTopNav() {
         </DropdownMenu>
       </div>
     </header>
-  )
-}
-
-function Separator({ orientation = "horizontal", className = "" }) {
-  return (
-    <div className={`${orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]"} bg-border/50 ${className}`} />
   )
 }

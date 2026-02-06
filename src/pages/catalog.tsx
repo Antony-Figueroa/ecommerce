@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useParams, useNavigate } from "react-router-dom"
 import { ChevronRight, Grid, List, Search, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,6 +60,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   }, [])
 
   const { slug } = useParams<{ slug?: string }>()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (slug) {
@@ -69,6 +70,14 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
       setSelectedCategory(null)
     }
   }, [slug])
+
+  const handleCategoryChange = (categorySlug: string | null) => {
+    if (categorySlug) {
+      navigate(`/productos/${categorySlug}`)
+    } else {
+      navigate('/productos')
+    }
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -147,7 +156,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     }
 
     return result
-  }, [products, categories, searchQuery, selectedCategory, selectedBrands, priceRange, sortBy])
+  }, [products, categories, searchQuery, selectedCategory, selectedBrands, priceRange, sortBy, offersOnly])
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
   const paginatedProducts = useMemo(() => {
@@ -166,7 +175,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   }, [products])
 
   const handleClearFilters = () => {
-    setSelectedCategory(null)
+    handleCategoryChange(null)
     setSelectedBrands([])
     setPriceRange(null)
     setCurrentPage(1)
@@ -230,7 +239,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
               selectedBrands={selectedBrands}
               priceRange={priceRange}
               priceStats={priceStats}
-              onCategoryChange={setSelectedCategory}
+              onCategoryChange={handleCategoryChange}
               onBrandsChange={setSelectedBrands}
               onPriceRangeChange={setPriceRange}
               onClearAll={handleClearFilters}
@@ -279,7 +288,16 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                           className="flex items-center gap-3 px-3 py-2 hover:bg-muted"
                           onClick={() => setShowSuggestions(false)}
                         >
-                          <img src={product.image || "/placeholder.png"} alt={product.name} className="h-8 w-8 object-cover rounded" />
+                          <img 
+                            src={product.image || "/placeholder.png"} 
+                            alt={product.name} 
+                            className="h-8 w-8 object-cover rounded" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
+                              target.onerror = null;
+                            }}
+                          />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{product.name}</p>
                             <p className="text-xs text-muted-foreground">${formatUSD(product.price)}</p>
@@ -324,7 +342,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                   {categories.find((c) => c.slug === selectedCategory)?.name}
                   <button
                     className="ml-1 hover:text-destructive"
-                    onClick={() => setSelectedCategory(null)}
+                    onClick={() => handleCategoryChange(null)}
                   >
                     ×
                   </button>

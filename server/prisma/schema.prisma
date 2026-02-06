@@ -29,6 +29,7 @@ model User {
   sales                    Sale[]
   settingHistory           SettingHistory[]
   auditLogs                SaleAuditLog[]
+  notifications            Notification[]
 }
 
 model Favorite {
@@ -69,6 +70,7 @@ model Product {
   updatedAt        DateTime          @updatedAt
   brandId          String?
   batches          Batch[]
+  priceHistory     ProductPriceHistory[]
   favorites        Favorite[]
   brandRelation    Brand?            @relation(fields: [brandId], references: [id])
   category         Category          @relation(fields: [categoryId], references: [id])
@@ -97,9 +99,22 @@ model Batch {
   batchNumber    String
   expirationDate DateTime
   stock          Int
+  purchasePrice  Decimal  @default(0)
+  salePrice      Decimal  @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductPriceHistory {
+  id            String   @id @default(uuid())
+  productId     String
+  purchasePrice Decimal
+  salePrice     Decimal
+  batchQuantity Int
+  batchNumber   String?
+  createdAt     DateTime @default(now())
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Category {
@@ -161,6 +176,9 @@ model Sale {
   totalBS         Decimal        @default(0)
   profitUSD       Decimal        @default(0)
   profitBS        Decimal        @default(0)
+  isPaid          Boolean        @default(false)
+  paidAmountUSD   Decimal?
+  deliveryStatus  String         @default("NOT_DELIVERED") // NOT_DELIVERED, IN_TRANSIT, DELIVERED
   notes           String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -189,10 +207,12 @@ model SaleAuditLog {
   id        String   @id @default(uuid())
   saleId    String
   action    String
-  oldStatus String?
-  newStatus String?
-  userId    String?
-  reason    String?
+  oldStatus         String?
+  newStatus         String?
+  oldDeliveryStatus String?
+  newDeliveryStatus String?
+  userId            String?
+  reason            String?
   createdAt DateTime @default(now())
   sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   user      User?    @relation(fields: [userId], references: [id])
@@ -257,10 +277,14 @@ model SettingHistory {
 
 model Notification {
   id        String   @id @default(uuid())
-  type      String
+  type      String   // 'LOW_STOCK', 'EXPIRATION', 'SYSTEM', 'SALE_STATUS', etc.
   title     String
   message   String
   isRead    Boolean  @default(false)
+  userId    String?  // Si es null, es para administradores
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

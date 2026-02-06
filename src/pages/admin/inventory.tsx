@@ -226,12 +226,11 @@ export function AdminInventoryPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Inventario">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Control de Inventario</h1>
             <p className="text-muted-foreground">Monitorea y gestiona el inventario de tu farmacia</p>
           </div>
           <div className="flex gap-2">

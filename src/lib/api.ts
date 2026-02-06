@@ -111,6 +111,21 @@ class ApiClient {
   }
 
   // Settings
+  async getPublicSettings() {
+    return this.request<Record<string, any>>('/settings/public')
+  }
+
+  // Notificaciones Admin
+  async getAdminNotifications() {
+    return this.request<any[]>('/admin/notifications')
+  }
+
+  // Notificaciones Cliente
+  async getClientNotifications() {
+    return this.request<any[]>('/notifications')
+  }
+
+  // Settings
   async getSettings() {
     return this.request<Record<string, any[]>>('/admin/settings')
   }
@@ -390,6 +405,20 @@ class ApiClient {
     })
   }
 
+  async updateSaleDeliveryStatus(id: string, deliveryStatus: string, reason?: string) {
+    return this.request(`/admin/sales/${id}/delivery-status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ deliveryStatus, reason }),
+    })
+  }
+
+  async confirmSalePayment(id: string, amount: number, reason?: string) {
+    return this.request(`/admin/sales/${id}/confirm-payment`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, reason }),
+    })
+  }
+
   async cancelSale(id: string) {
     return this.request(`/admin/sales/${id}/cancel`, {
       method: 'POST',
@@ -508,6 +537,14 @@ class ApiClient {
     return this.request<any>(`/admin/reports/requirements${query ? `?${query}` : ''}`)
   }
 
+  async getAnalyticsReport(params?: { startDate?: string; endDate?: string }) {
+    const searchParams = new URLSearchParams()
+    if (params?.startDate) searchParams.set('startDate', params.startDate)
+    if (params?.endDate) searchParams.set('endDate', params.endDate)
+    const query = searchParams.toString()
+    return this.request<any>(`/admin/reports/analytics${query ? `?${query}` : ''}`)
+  }
+
   // Admin Customers
   async getCustomers(params?: { page?: number; limit?: number; search?: string }) {
     const searchParams = new URLSearchParams()
@@ -553,6 +590,56 @@ class ApiClient {
     return this.request<{ success: boolean; user: any }>('/admin/management', {
       method: 'POST',
       body: JSON.stringify(data),
+    })
+  }
+
+  // Notifications (Admin)
+  async getAdminUnreadNotifications() {
+    return this.request<any[]>('/admin/notifications/unread')
+  }
+
+  async getAdminAllNotifications(params?: { page?: number; limit?: number }) {
+    const searchParams = new URLSearchParams()
+    if (params?.page) searchParams.set('page', params.page.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
+    const query = searchParams.toString()
+    return this.request<{ notifications: any[]; pagination: any }>(
+      `/admin/notifications${query ? `?${query}` : ''}`
+    )
+  }
+
+  async markAdminNotificationRead(id: string) {
+    return this.request(`/admin/notifications/${id}/read`, {
+      method: 'POST',
+    })
+  }
+
+  async markAllAdminNotificationsRead() {
+    return this.request('/admin/notifications/read-all', {
+      method: 'POST',
+    })
+  }
+
+  async deleteAdminNotification(id: string) {
+    return this.request(`/admin/notifications/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Notifications (Client)
+  async getClientUnreadNotifications() {
+    return this.request<any[]>('/notifications/unread')
+  }
+
+  async markClientNotificationRead(id: string) {
+    return this.request(`/notifications/${id}/read`, {
+      method: 'POST',
+    })
+  }
+
+  async markAllClientNotificationsRead() {
+    return this.request('/notifications/read-all', {
+      method: 'POST',
     })
   }
 }

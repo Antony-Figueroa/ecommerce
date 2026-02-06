@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import {
   LayoutDashboard,
@@ -13,12 +13,14 @@ import {
   X,
   DollarSign,
   Leaf,
+  Bell,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminTopNav } from "./admin-top-nav"
 
 interface AdminLayoutProps {
   children: React.ReactNode
+  title?: string
 }
 
 const menuItems = [
@@ -30,12 +32,19 @@ const menuItems = [
   { path: "/admin/customers", label: "Clientes", icon: Users },
   { path: "/admin/inventory", label: "Inventario", icon: Box, alert: true },
   { path: "/admin/analytics", label: "Reportes", icon: BarChart3 },
+  { path: "/admin/notifications", label: "Notificaciones", icon: Bell },
   { path: "/admin/settings", label: "Configuracion", icon: Settings },
 ]
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const location = useLocation()
+
+  useEffect(() => {
+    if (title) {
+      document.title = `${title} | Ana's Supplements Admin`
+    }
+  }, [title])
 
   return (
     <div className="min-h-screen bg-secondary/30">
@@ -93,6 +102,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
         <AdminTopNav />
         <main className="p-6">
+          {title && (
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+            </div>
+          )}
           {children}
         </main>
       </div>
