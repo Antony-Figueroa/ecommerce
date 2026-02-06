@@ -39,7 +39,8 @@ export class InventoryService {
     return Number(salePrice) / Number(purchasePrice)
   }
 
-  private async generateSKU(name: string, categoryId: string): Promise<string> {
+  private async generateSKU(name: string, categoryIds: string[]): Promise<string> {
+    const categoryId = categoryIds[0]
     const category = await this.categoryRepo.findById(categoryId)
     const categoryPrefix = (category?.name || 'GEN').substring(0, 3).toUpperCase()
     const namePrefix = name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X')
@@ -69,7 +70,7 @@ export class InventoryService {
   async createProduct(data: any) {
     let sku = data.sku
     if (!sku || sku.trim() === '') {
-      sku = await this.generateSKU(data.name, data.categoryId)
+      sku = await this.generateSKU(data.name, data.categoryIds)
     }
 
     const existingSku = await this.productRepo.findBySku(sku)
@@ -94,7 +95,9 @@ export class InventoryService {
       description: data.description,
       price: salePrice,
       image: mainImageUrl,
-      categoryId: data.categoryId,
+      categories: {
+        connect: data.categoryIds.map((id: string) => ({ id }))
+      },
       brand: data.brand,
       brandId: brandId,
       format: data.format,
@@ -217,7 +220,14 @@ export class InventoryService {
       stockChange = stock - product.stock
     }
 
-    const updateData: any = { ...rest }
+    const { categoryIds, ...restUpdate } = rest
+    const updateData: any = { ...restUpdate }
+
+    if (categoryIds) {
+      updateData.categories = {
+        set: categoryIds.map((id: string) => ({ id }))
+      }
+    }
 
     if (data.brand) {
       updateData.brandId = await this.getOrCreateBrand(data.brand)
@@ -330,8 +340,8 @@ export class InventoryService {
   }
 
   async getAllProducts(options?: any) {
-    const { categoryId = null, search = '', page = 1, limit = 20, onlyActive = false } = options || {}
-    const { products, total } = await this.productRepo.findAll({ categoryId, search, page, limit, onlyActive })
+    const { categoryId = null, categoryIds = null, search = '', page = 1, limit = 20, onlyActive = false } = options || {}
+    const { products, total } = await this.productRepo.findAll({ categoryId, categoryIds, search, page, limit, onlyActive })
 
     return {
       products,
@@ -340,8 +350,8 @@ export class InventoryService {
   }
 
   async getPublicProducts(options?: any) {
-    const { categoryId = null, search = '' } = options || {}
-    const { products } = await this.productRepo.findAll({ categoryId, search, onlyActive: true, limit: 1000 })
+    const { categoryId = null, categoryIds = null, search = '' } = options || {}
+    const { products } = await this.productRepo.findAll({ categoryId, categoryIds, search, onlyActive: true, limit: 1000 })
     return products
   }
 
@@ -356,7 +366,7 @@ export class InventoryService {
 
   async getInventoryReport() {
     const products = await this.productRepo.findMany({
-      include: { category: true },
+      include: { categories: true },
       orderBy: { name: 'asc' },
     })
 

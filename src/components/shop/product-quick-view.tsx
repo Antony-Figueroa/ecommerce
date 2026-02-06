@@ -155,8 +155,12 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
 
               <div className="grid grid-cols-1 gap-4 py-4 border-y border-border/50">
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Categoría</p>
-                  <p className="text-sm font-bold">{product.category?.name || "General"}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Categorías</p>
+                  <p className="text-sm font-bold">
+                    {product.categories && product.categories.length > 0 
+                      ? product.categories.map(c => c.name).join(", ") 
+                      : product.category?.name || "General"}
+                  </p>
                 </div>
               </div>
             </div>

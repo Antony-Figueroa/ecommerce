@@ -4,15 +4,27 @@ import { ProductRepository } from '../../domain/repositories/product.repository.
 export class PrismaProductRepository implements ProductRepository {
   async findAll(options: {
     categoryId?: string | null
+    categoryIds?: string[] | null
     search?: string
     page?: number
     limit?: number
     onlyActive?: boolean
   }) {
-    const { categoryId = null, search = '', page = 1, limit = 20, onlyActive = false } = options
+    const { categoryId = null, categoryIds = null, search = '', page = 1, limit = 20, onlyActive = false } = options
 
     const where: any = {}
-    if (categoryId) where.categoryId = categoryId
+    
+    // Combinar categoryId y categoryIds
+    const allCategoryIds = [...(categoryIds || [])]
+    if (categoryId) allCategoryIds.push(categoryId)
+
+    if (allCategoryIds.length > 0) {
+      where.categories = {
+        some: {
+          id: { in: allCategoryIds }
+        }
+      }
+    }
     if (onlyActive) where.isActive = true
     if (search) {
       where.OR = [
@@ -26,7 +38,7 @@ export class PrismaProductRepository implements ProductRepository {
       prisma.product.findMany({
         where,
         include: { 
-          category: true,
+          categories: true,
           images: {
             orderBy: { sortOrder: 'asc' }
           }
@@ -45,7 +57,7 @@ export class PrismaProductRepository implements ProductRepository {
     return prisma.product.findUnique({
       where: { id },
       include: { 
-        category: true, 
+        categories: true, 
         batches: {
           orderBy: { createdAt: 'desc' }
         },
@@ -69,7 +81,7 @@ export class PrismaProductRepository implements ProductRepository {
     return prisma.product.create({
       data,
       include: { 
-        category: true,
+        categories: true,
         images: {
           orderBy: { sortOrder: 'asc' }
         }
@@ -82,7 +94,7 @@ export class PrismaProductRepository implements ProductRepository {
       where: { id },
       data,
       include: { 
-        category: true,
+        categories: true,
         images: {
           orderBy: { sortOrder: 'asc' }
         }

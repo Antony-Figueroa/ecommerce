@@ -170,7 +170,7 @@ export class DashboardService {
           include: { 
             product: { 
               include: { 
-                category: true 
+                categories: true 
               } 
             } 
           } 
@@ -216,11 +216,13 @@ export class DashboardService {
         productStatsMap.set(item.productId, existingProduct)
 
         // Category Stats
-        if (item.product && item.product.category) {
-          const categoryName = item.product.category.name
-          const existingCategory = categoryStatsMap.get(categoryName) || { name: categoryName, revenue: 0 }
-          existingCategory.revenue += revenue
-          categoryStatsMap.set(categoryName, existingCategory)
+        if (item.product && item.product.categories && item.product.categories.length > 0) {
+          item.product.categories.forEach((category: any) => {
+            const categoryName = category.name
+            const existingCategory = categoryStatsMap.get(categoryName) || { name: categoryName, revenue: 0 }
+            existingCategory.revenue += revenue
+            categoryStatsMap.set(categoryName, existingCategory)
+          })
         }
       })
     })

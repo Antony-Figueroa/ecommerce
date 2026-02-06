@@ -78,9 +78,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.get('/', async (req: Request, res: Response) => {
   try {
     const categoryId = req.query.categoryId as string | undefined
+    const categoryIds = req.query.categoryIds as string[] | undefined
     const search = req.query.search as string | undefined
     const result = await inventoryService.getAllProducts({
       categoryId: categoryId || null,
+      categoryIds: categoryIds || null,
       search: search || '',
       page: parseInt(req.query.page as string) || 1,
       limit: parseInt(req.query.limit as string) || 20,

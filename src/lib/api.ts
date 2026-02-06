@@ -297,9 +297,12 @@ class ApiClient {
     return this.request<string[]>('/admin/products/brands')
   }
 
-  async getPublicProducts(params: { categoryId?: string; search?: string } = {}) {
+  async getPublicProducts(params: { categoryId?: string; categoryIds?: string[]; search?: string } = {}) {
     const searchParams = new URLSearchParams()
     if (params?.categoryId) searchParams.set('categoryId', params.categoryId)
+    if (params?.categoryIds && params.categoryIds.length > 0) {
+      params.categoryIds.forEach(id => searchParams.append('categoryIds[]', id))
+    }
     if (params?.search) searchParams.set('search', params.search)
     const query = searchParams.toString()
     return this.request<{ products: any[] }>(`/products/public${query ? `?${query}` : ''}`)
@@ -346,11 +349,14 @@ class ApiClient {
   }
 
   // Admin Products
-  async getAdminProducts(params?: { page?: number; limit?: number; categoryId?: string; search?: string; onlyActive?: boolean }) {
+  async getAdminProducts(params?: { page?: number; limit?: number; categoryId?: string; categoryIds?: string[]; search?: string; onlyActive?: boolean }) {
     const searchParams = new URLSearchParams()
     if (params?.page) searchParams.set('page', params.page.toString())
     if (params?.limit) searchParams.set('limit', params.limit.toString())
     if (params?.categoryId) searchParams.set('categoryId', params.categoryId)
+    if (params?.categoryIds && params.categoryIds.length > 0) {
+      params.categoryIds.forEach(id => searchParams.append('categoryIds[]', id))
+    }
     if (params?.search) searchParams.set('search', params.search)
     if (params?.onlyActive !== undefined) searchParams.set('onlyActive', params.onlyActive.toString())
     const query = searchParams.toString()

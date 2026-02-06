@@ -136,7 +136,11 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     if (selectedCategory) {
       const cat = categories.find(c => c.slug === selectedCategory)
       if (cat) {
-        result = result.filter((p) => p.categoryId === cat.id)
+        result = result.filter((p) => 
+          (p as any).categoryId === cat.id || 
+          (p.categoryIds && p.categoryIds.includes(cat.id)) ||
+          (p.categories && p.categories.some(c => c.id === cat.id))
+        )
       }
     }
 

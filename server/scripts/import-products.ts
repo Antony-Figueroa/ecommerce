@@ -217,7 +217,9 @@ async function main() {
           profitMargin: profitMargin,
           stock: item.stock_inicial,
           inStock: item.stock_inicial > 0,
-          categoryId: category.id,
+          categories: {
+            connect: { id: category.id }
+          },
           brand: item.marca,
           brandId: brand.id,
           format: item.formato,

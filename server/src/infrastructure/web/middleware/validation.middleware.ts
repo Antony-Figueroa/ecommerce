@@ -94,7 +94,8 @@ export const productCreateSchema = z.object({
     isMain: z.boolean().optional(),
     sortOrder: z.number().optional(),
   })).optional(),
-  categoryId: z.string(),
+  categoryId: z.string().optional(),
+  categoryIds: z.array(z.string()).min(1, "Debe seleccionar al menos una categoría"),
   brand: z.string().min(1).max(100),
   format: z.string().min(1).max(50),
   weight: z.string().optional().nullable().or(z.literal('')),
@@ -175,7 +176,7 @@ export const paginationSchema = z.object({
 })
 
 export function validateProductCreate(req: Request, _res: Response, next: NextFunction) {
-  const { name, description, price, categoryId, brand, format } = req.body
+  const { name, description, price, categoryIds, categoryId, brand, format } = req.body
 
   const errors: string[] = []
 
@@ -188,8 +189,10 @@ export function validateProductCreate(req: Request, _res: Response, next: NextFu
   if (!price || parseFloat(price) <= 0) {
     errors.push('Precio debe ser mayor a 0')
   }
-  if (!categoryId) {
-    errors.push('Categoría es requerida')
+  
+  const hasCategories = (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) || categoryId;
+  if (!hasCategories) {
+    errors.push('Al menos una categoría es requerida')
   }
   if (!brand || brand.length < 1) {
     errors.push('Marca es requerida')

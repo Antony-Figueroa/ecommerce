@@ -11,15 +11,15 @@ export function Hero() {
           muted
           playsInline
           className="h-full w-full object-cover"
-          poster="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?q=80&w=2000&auto=format&fit=crop"
+          poster="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?q=80&w=2000&auto=format&fit=crop"
         >
           <source 
-            src="https://cdn.pixabay.com/video/2021/04/12/70860-536962388_tiny.mp4" 
+            src="https://player.vimeo.com/external/494252666.hd.mp4?s=2f8398f6358c2f168f615392e272e50570f7f3a8&profile_id=175" 
             type="video/mp4" 
           />
           {/* Fallback image if video fails to load or is not supported */}
           <img
-            src="https://images.unsplash.com/photo-1584017911766-d451b3d0e843?q=80&w=2000&auto=format&fit=crop"
+            src="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?q=80&w=2000&auto=format&fit=crop"
             alt="Supplements Background"
             className="h-full w-full object-cover"
           />

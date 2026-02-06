@@ -5,9 +5,10 @@ const router = Router()
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { categoryId, search, page, limit } = req.query
+    const { categoryId, categoryIds, search, page, limit } = req.query
     const result = await inventoryService.getAllProducts({
       categoryId: categoryId as string | null,
+      categoryIds: categoryIds as string[] | null,
       search: search as string,
       page: parseInt(page as string) || 1,
       limit: parseInt(limit as string) || 20,
@@ -21,9 +22,10 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.get('/public', async (req: Request, res: Response) => {
   try {
-    const { categoryId, search } = req.query
+    const { categoryId, categoryIds, search } = req.query
     const products = await inventoryService.getPublicProducts({
       categoryId: categoryId as string | null,
+      categoryIds: categoryIds as string[] | null,
       search: search as string,
     })
     res.json({ products })

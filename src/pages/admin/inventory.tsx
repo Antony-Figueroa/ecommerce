@@ -105,7 +105,9 @@ export function AdminInventoryPage() {
         maxStock: 100, // Default max stock
         unitCost: p.price,
         lastRestocked: p.updatedAt,
-        category: p.categoryName || "Sin Categoría",
+        category: p.categories && p.categories.length > 0 
+          ? p.categories.map((c: any) => c.name).join(", ") 
+          : "Sin Categoría",
         status: p.stock === 0 ? "critical" : p.stock < 10 ? "low" : p.stock > 100 ? "overstock" : "normal"
       }))
 

@@ -20,7 +20,7 @@ export interface Product {
   profitMargin?: number
   image?: string | null
   images?: ProductImage[]
-  categoryId: string
+  categoryIds: string[]
   brand: string
   format: string
   weight?: string | null
@@ -34,6 +34,7 @@ export interface Product {
   createdAt?: string
   updatedAt?: string
   category?: Category
+  categories?: Category[]
 }
 
 export interface Category {

@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { ImageUpload } from "@/components/admin/image-upload"
+import { MultiSelect } from "@/components/ui/multi-select"
 import { api } from "@/lib/api"
 import { formatUSD, cn } from "@/lib/utils"
 import type { ProductImage } from "@/types"
@@ -48,7 +49,7 @@ interface Product {
   originalPrice: number | null
   stock: number
   inStock: boolean
-  categoryId: string
+  categoryIds: string[]
   categoryName?: string
   brand: string
   format: string
@@ -56,7 +57,7 @@ interface Product {
   isActive: boolean
   image: string
   images?: ProductImage[]
-  category?: { id: string; name: string }
+  categories?: { id: string; name: string }[]
   batches?: any[]
   priceHistory?: any[]
   salesCount?: number
@@ -85,7 +86,7 @@ interface ProductFormData {
   profitMargin: number
   originalPrice: number | null
   stock: number
-  categoryId: string
+  categoryIds: string[]
   brand: string
   format: string
   isFeatured: boolean
@@ -102,7 +103,7 @@ interface ProductErrors {
   price?: string
   purchasePrice?: string
   stock?: string
-  categoryId?: string
+  categoryIds?: string
   brand?: string
   format?: string
   description?: string
@@ -159,7 +160,7 @@ export function AdminProductsPage() {
     profitMargin: 1.5,
     originalPrice: null,
     stock: 0,
-    categoryId: "",
+    categoryIds: [],
     brand: "",
     format: "",
     isFeatured: false,
@@ -209,6 +210,32 @@ export function AdminProductsPage() {
     }
   }
 
+  const handleCreateCategory = async (name: string) => {
+    try {
+      const result = await api.createCategory({
+        name,
+        isActive: true,
+        sortOrder: 0
+      })
+      
+      // Actualizar la lista de categorías localmente
+      await fetchCategories()
+      
+      return {
+        label: result.name,
+        value: result.id
+      }
+    } catch (error: any) {
+      console.error("Error creating category:", error)
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo crear la categoría",
+        variant: "destructive",
+      })
+      return null
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -219,7 +246,7 @@ export function AdminProductsPage() {
       profitMargin: 1.5,
       originalPrice: null,
       stock: 0,
-      categoryId: "",
+      categoryIds: [],
       brand: "",
       format: "",
       isFeatured: false,
@@ -263,8 +290,8 @@ export function AdminProductsPage() {
       isValid = false
     }
 
-    if (!formData.categoryId) {
-      newErrors.categoryId = "Debes seleccionar una categoría"
+    if (formData.categoryIds.length === 0) {
+      newErrors.categoryIds = "Debes seleccionar al menos una categoría"
       isValid = false
     }
 
@@ -327,14 +354,16 @@ export function AdminProductsPage() {
     console.log("Editing product:", product);
     setEditingProduct(product)
     
-    // Extract categoryId correctly handling both string and object
-    let catId = ""
-    if (typeof (product as any).categoryId === 'string' && (product as any).categoryId) {
-      catId = (product as any).categoryId
+    // Extract categoryIds correctly handling both array and single string (legacy)
+    let catIds: string[] = []
+    if (Array.isArray(product.categoryIds)) {
+      catIds = product.categoryIds
+    } else if (typeof (product as any).categoryId === 'string' && (product as any).categoryId) {
+      catIds = [(product as any).categoryId]
+    } else if (Array.isArray(product.categories)) {
+      catIds = product.categories.map(c => c.id)
     } else if (product.category?.id) {
-      catId = product.category.id
-    } else if ((product as any).category && typeof (product as any).category === 'string') {
-      catId = (product as any).category
+      catIds = [product.category.id]
     }
 
     const brandValue = typeof product.brand === 'string' 
@@ -352,7 +381,7 @@ export function AdminProductsPage() {
       profitMargin: Number(product.profitMargin) || 1.5,
       originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
       stock: Number(product.stock) || 0,
-      categoryId: String(catId || ""), // Asegurar que sea string
+      categoryIds: catIds,
       brand: String(brandValue || ""), // Asegurar que sea string
       format: String(formatValue || ""), // Asegurar que sea string
       isFeatured: !!product.isFeatured,
@@ -463,7 +492,10 @@ export function AdminProductsPage() {
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.brand.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = categoryFilter === "all" || product.categoryId === categoryFilter
+    const matchesCategory = categoryFilter === "all" || 
+      (product.categoryIds && product.categoryIds.includes(categoryFilter)) || 
+      (product.categories && product.categories.some(c => c.id === categoryFilter)) ||
+      (product as any).categoryId === categoryFilter // compatibility with legacy data
     const matchesStock =
       stockFilter === "all" ||
       (stockFilter === "low" && product.stock < 10) ||
@@ -617,7 +649,11 @@ export function AdminProductsPage() {
                   
                   <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
                     <Badge variant="outline">{String(product.format || "N/A")}</Badge>
-                    <Badge variant="outline">{String(product.category?.name || "Sin categoría")}</Badge>
+                    <Badge variant="outline">
+                      {product.categories && product.categories.length > 0 
+                        ? product.categories.map(c => c.name).join(", ") 
+                        : product.category?.name || "Sin categoría"}
+                    </Badge>
                     <Badge variant={product.inStock ? "secondary" : "destructive"}>
                       Stock: {Number(product.stock)}
                     </Badge>
@@ -739,7 +775,9 @@ export function AdminProductsPage() {
                             {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
                           </span>
                           <span className="text-xs text-slate-400">
-                            {String(product.category?.name || "Sin categoría")}
+                            {product.categories && product.categories.length > 0 
+                              ? product.categories.map(c => c.name).join(", ") 
+                              : product.category?.name || "Sin categoría"}
                           </span>
                         </div>
                       </td>
@@ -1074,24 +1112,19 @@ export function AdminProductsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Categoria *</label>
-                  <Select
-                    value={formData.categoryId}
-                    onValueChange={(val) => {
-                      setFormData({ ...formData, categoryId: val })
-                      if (errors.categoryId) setErrors({ ...errors, categoryId: undefined })
+                  <label className="text-sm font-medium">Categorías *</label>
+                  <MultiSelect
+                    options={categories.map(cat => ({ label: String(cat.name || ""), value: cat.id }))}
+                    selected={formData.categoryIds}
+                    onChange={(val) => {
+                      setFormData({ ...formData, categoryIds: val })
+                      if (errors.categoryIds) setErrors({ ...errors, categoryIds: undefined })
                     }}
-                  >
-                    <SelectTrigger className={errors.categoryId ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Seleccionar categoria" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-60 overflow-y-auto">
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>{String(cat.name || "")}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.categoryId && <p className="text-xs text-red-500 mt-1">{errors.categoryId}</p>}
+                    onCreateOption={handleCreateCategory}
+                    placeholder="Seleccionar categorías"
+                    className={errors.categoryIds ? "border-red-500" : ""}
+                  />
+                  {errors.categoryIds && <p className="text-xs text-red-500 mt-1">{errors.categoryIds}</p>}
                 </div>
                 <div>
                   <label className="text-sm font-medium">Marca *</label>
@@ -1343,8 +1376,12 @@ export function AdminProductsPage() {
                   <p className="font-medium">{String(viewingProduct.sku || "N/A")}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Categoria</p>
-                  <p className="font-medium">{String(viewingProduct.categoryName || viewingProduct.category?.name || "Sin categoría")}</p>
+                  <p className="text-sm text-muted-foreground">Categorías</p>
+                  <p className="font-medium">
+                    {viewingProduct.categories && viewingProduct.categories.length > 0 
+                      ? viewingProduct.categories.map(c => c.name).join(", ") 
+                      : viewingProduct.categoryName || viewingProduct.category?.name || "Sin categoría"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Formato</p>

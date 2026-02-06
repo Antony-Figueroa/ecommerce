@@ -28,7 +28,12 @@ export function ProductPage() {
         const productsRes = await api.getPublicProducts()
         const allProducts = productsRes.products || []
         const related = allProducts.filter(
-          (p: Product) => p.categoryId === productRes.product.categoryId && p.id !== id
+          (p: Product) => {
+            if (p.id === id) return false;
+            const pCats = p.categoryIds || [(p as any).categoryId];
+            const currentCats = productRes.product.categoryIds || [(productRes.product as any).categoryId];
+            return pCats.some(catId => currentCats.includes(catId));
+          }
         )
         setRelatedProducts(related)
       } catch (err) {

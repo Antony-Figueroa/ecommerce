@@ -8,7 +8,7 @@ export class PrismaFavoriteRepository implements FavoriteRepository {
       include: {
         product: {
           include: {
-            category: true,
+            categories: true,
             images: true
           }
         }

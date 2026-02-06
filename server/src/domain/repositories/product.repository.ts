@@ -1,6 +1,7 @@
 export interface ProductRepository {
   findAll(options: {
     categoryId?: string | null
+    categoryIds?: string[] | null
     search?: string
     page?: number
     limit?: number
