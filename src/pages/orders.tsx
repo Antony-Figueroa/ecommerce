@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
-import { ShoppingBag, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart } from "lucide-react"
+import { ShoppingBag, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart, CheckCircle, XCircle } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -93,6 +93,32 @@ export function OrdersPage() {
     }
   }
 
+  const handleRespondProposal = async (orderId: string, status: 'ACCEPTED' | 'REJECTED') => {
+    try {
+      setIsLoadingDetail(true)
+      await api.respondToProposal(orderId, status)
+      toast({
+        title: status === 'ACCEPTED' ? "Propuesta Aceptada" : "Propuesta Rechazada",
+        description: status === 'ACCEPTED' 
+          ? "El pedido continuará con los productos disponibles." 
+          : "El pedido ha sido cancelado exitosamente.",
+      })
+      
+      // Refresh order list and details
+      loadOrders()
+      const updatedOrder = await api.getMyOrderDetail(orderId)
+      setSelectedOrder(updatedOrder)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo procesar tu respuesta",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoadingDetail(false)
+    }
+  }
+
   const handleRepeatOrder = (order: Order) => {
     if (!order.items) return
     
@@ -157,6 +183,34 @@ export function OrdersPage() {
     }
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm("¿Estás seguro de que deseas cancelar este pedido?")) return;
+    
+    try {
+      setIsLoadingDetail(true);
+      await api.cancelMyOrder(orderId, "Cancelado por el cliente desde Mis Pedidos");
+      toast({
+        title: "Pedido Cancelado",
+        description: "Tu pedido ha sido cancelado exitosamente.",
+      });
+      
+      // Refresh order list and details
+      loadOrders();
+      if (selectedOrder && selectedOrder.id === orderId) {
+        const updatedOrder = await api.getMyOrderDetail(orderId);
+        setSelectedOrder(updatedOrder);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo cancelar el pedido",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  };
+
   const filteredOrders = React.useMemo(() => {
     if (!searchTerm) return orders
     return orders.filter(order => 
@@ -166,14 +220,15 @@ export function OrdersPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; class: string }> = {
-      pending: { label: "Pendiente", class: "bg-amber-100 text-amber-900 border-amber-200" },
-      processing: { label: "Procesando", class: "bg-blue-100 text-blue-900 border-blue-200" },
-      accepted: { label: "Aceptado", class: "bg-emerald-100 text-emerald-900 border-emerald-200" },
+      pending: { label: "Pendiente (por revisión)", class: "bg-amber-100 text-amber-900 border-amber-200" },
+      processing: { label: "Procesando (pendiente por pedir)", class: "bg-blue-100 text-blue-900 border-blue-200" },
+      accepted: { label: "Aceptado (ya viene en camino)", class: "bg-emerald-100 text-emerald-900 border-emerald-200" },
       shipped: { label: "Enviado", class: "bg-indigo-100 text-indigo-900 border-indigo-200" },
       delivered: { label: "Entregado", class: "bg-emerald-100 text-emerald-900 border-emerald-200" },
       completed: { label: "Completado", class: "bg-green-100 text-green-900 border-green-200" },
       cancelled: { label: "Cancelado", class: "bg-rose-100 text-rose-900 border-rose-200" },
       rejected: { label: "Rechazado", class: "bg-red-100 text-red-900 border-red-200" },
+      proposed: { label: "Propuesta Modificada", class: "bg-purple-100 text-purple-900 border-purple-200" },
     }
     return statusMap[status.toLowerCase()] || { label: status, class: "bg-slate-100 text-slate-900 border-slate-200" }
   }
@@ -269,6 +324,20 @@ export function OrdersPage() {
                         >
                           Ver detalles
                         </Button>
+                        {['pending', 'proposed'].includes(order.status.toLowerCase()) && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="flex-1 sm:flex-none px-4 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelOrder(order.id);
+                            }}
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                            Cancelar
+                          </Button>
+                        )}
                         {(order.status.toLowerCase() === 'completed' || order.status.toLowerCase() === 'delivered') && (
                           <>
                             <Button 
@@ -358,7 +427,18 @@ export function OrdersPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm line-clamp-1">{itemName}</p>
-                              <p className="text-xs text-muted-foreground">Cant: {item.quantity} • {formatUSD(unitPrice)} c/u</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs text-muted-foreground">
+                                  Cant: {item.quantity} 
+                                  {item.originalQuantity && item.originalQuantity !== item.quantity && (
+                                    <span className="ml-1 line-through opacity-60">({item.originalQuantity})</span>
+                                  )}
+                                  • {formatUSD(unitPrice)} c/u
+                                </p>
+                                {item.status === 'REJECTED' && (
+                                  <Badge variant="destructive" className="h-4 text-[8px] uppercase px-1">No Disponible</Badge>
+                                )}
+                              </div>
                               {effectiveRate > 0 && (
                                 <p className="text-[10px] text-muted-foreground/70">
                                   Bs. {formatBS(unitPrice * effectiveRate)} c/u
@@ -381,24 +461,40 @@ export function OrdersPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="rounded-xl bg-muted/30 p-4 space-y-4">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-4 w-4 text-primary mt-1" />
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Envío</p>
-                        <p className="text-sm font-medium">{selectedOrder.deliveryAddress || "Retiro en tienda"}</p>
-                        {selectedOrder.shippingCostUSD > 0 && (
-                          <p className="text-xs text-muted-foreground mt-1">Costo: {formatUSD(selectedOrder.shippingCostUSD)}</p>
-                        )}
+                  <div className="flex flex-col gap-2">
+                    <div className="rounded-xl bg-muted/30 p-4 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-4 w-4 text-primary mt-1" />
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Envío</p>
+                          <p className="text-sm font-medium">{selectedOrder.deliveryAddress || "Retiro en tienda"}</p>
+                          {selectedOrder.shippingCostUSD > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">Costo: {formatUSD(selectedOrder.shippingCostUSD)}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <CreditCard className="h-4 w-4 text-primary mt-1" />
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Método de Pago</p>
+                          <p className="text-sm font-medium">{selectedOrder.paymentMethod || "WhatsApp"}</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <CreditCard className="h-4 w-4 text-primary mt-1" />
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Método de Pago</p>
-                        <p className="text-sm font-medium">{selectedOrder.paymentMethod || "WhatsApp"}</p>
-                      </div>
-                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all font-bold gap-2"
+                      onClick={() => {
+                        const message = `Hola, contacto por mi pedido ${selectedOrder.saleNumber}`;
+                        window.open(`https://wa.me/584244000000?text=${encodeURIComponent(message)}`, '_blank');
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.659 1.432 5.631 1.432h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                      Contactar Proveedor
+                    </Button>
                   </div>
 
                   <div className="space-y-1">
@@ -449,6 +545,38 @@ export function OrdersPage() {
                   </div>
                 </div>
               </div>
+
+              {selectedOrder.status.toLowerCase() === 'proposed' && (
+                <div className="mt-8 p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl space-y-4">
+                  <div className="flex items-center gap-3 text-purple-900 dark:text-purple-300">
+                    <Package className="h-5 w-5" />
+                    <h4 className="font-bold">Propuesta de Pedido Modificada</h4>
+                  </div>
+                  <p className="text-sm text-purple-800/80 dark:text-purple-300/80">
+                    El administrador ha revisado tu pedido. Algunos productos no están disponibles. 
+                    Puedes aceptar continuar con los productos restantes o rechazar esta propuesta y cancelar el pedido.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button 
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => handleRespondProposal(selectedOrder.id, 'ACCEPTED')}
+                      disabled={isLoadingDetail}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Aceptar Propuesta
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 border-purple-200 text-purple-700 hover:bg-purple-100 dark:border-purple-800 dark:text-purple-300"
+                      onClick={() => handleRespondProposal(selectedOrder.id, 'REJECTED')}
+                      disabled={isLoadingDetail}
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Rechazar y Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-8 border-t pt-6 space-y-3">
                 <div className="flex justify-between items-baseline">

@@ -1,4 +1,4 @@
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:3001/api'
+export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
 
 class ApiClient {
   private token: string | null = null
@@ -351,6 +351,13 @@ class ApiClient {
     return this.request<any>(`/sales/${id}`)
   }
 
+  async cancelMyOrder(id: string, reason?: string) {
+    return this.request(`/sales/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    })
+  }
+
   // Admin Products
   async getAdminProducts(params?: { page?: number; limit?: number; categoryId?: string; categoryIds?: string[]; search?: string; onlyActive?: boolean }) {
     const searchParams = new URLSearchParams()
@@ -447,6 +454,33 @@ class ApiClient {
   async cancelSale(id: string) {
     return this.request(`/admin/sales/${id}/cancel`, {
       method: 'POST',
+    })
+  }
+
+  async updateSaleItemStatus(saleId: string, itemId: string, status: string) {
+    return this.request(`/admin/sales/${saleId}/items/${itemId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    })
+  }
+
+  async updateSaleItemQuantity(saleId: string, itemId: string, quantity: number) {
+    return this.request(`/admin/sales/${saleId}/items/${itemId}/quantity`, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity }),
+    })
+  }
+
+  async acceptAllSaleItems(saleId: string) {
+    return this.request(`/admin/sales/${saleId}/accept-all`, {
+      method: 'POST',
+    })
+  }
+
+  async respondToProposal(saleId: string, status: 'ACCEPTED' | 'REJECTED') {
+    return this.request(`/sales/${saleId}/respond-proposal`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
     })
   }
 

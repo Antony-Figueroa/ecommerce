@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Home,
   Plus,
-  ExternalLink
+  ExternalLink,
+  Menu
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,8 @@ import { useNavigate, useLocation, Link } from "react-router-dom"
 import { Separator } from "@/components/ui/separator"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
+import { useSocket } from "@/hooks/use-socket"
+import { toast } from "@/hooks/use-toast"
 
 interface AdminTopNavProps {
   onMenuClick?: () => void
@@ -53,6 +56,7 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   const [updatingBcv, setUpdatingBcv] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [loadingNotifications, setLoadingNotifications] = useState(false)
+  const { on, off } = useSocket()
 
   useEffect(() => {
     fetchBCVRate()
@@ -60,8 +64,29 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
     
     // Refresh notifications every 2 minutes
     const interval = setInterval(fetchNotifications, 2 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
+
+    // Listen for real-time notifications
+    const handleNewNotification = (notification: any) => {
+      console.log("New real-time notification received:", notification)
+      setNotifications(prev => [notification, ...prev])
+      
+      // Show toast for urgent notifications
+      if (notification.priority === 'URGENT') {
+        toast({
+          title: notification.title,
+          description: notification.message,
+          variant: "default",
+        })
+      }
+    }
+
+    on('notification', handleNewNotification)
+
+    return () => {
+      clearInterval(interval)
+      off('notification', handleNewNotification)
+    }
+  }, [on, off])
 
   useEffect(() => {
     const root = window.document.documentElement

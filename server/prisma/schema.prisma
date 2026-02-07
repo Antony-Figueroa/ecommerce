@@ -216,16 +216,18 @@ model Sale {
 }
 
 model SaleItem {
-  id            String   @id @default(uuid())
-  saleId        String
-  productId     String
-  name          String
-  quantity      Int
-  unitCost      Decimal
-  unitPrice     Decimal
+  id               String   @id @default(uuid())
+  saleId           String
+  productId        String
+  name             String
+  quantity         Int
+  originalQuantity Int?
+  unitCost         Decimal
+  unitPrice        Decimal
   total         Decimal
   profitPerUnit Decimal
   totalProfit   Decimal
+  status        String   @default("ACCEPTED")
   createdAt     DateTime @default(now())
   sale          Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product       Product  @relation(fields: [productId], references: [id])

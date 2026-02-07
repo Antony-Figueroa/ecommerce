@@ -98,6 +98,13 @@ export class PrismaSaleRepository implements SaleRepository {
     })
   }
 
+  async updateItem(itemId: string, data: any) {
+    return prisma.saleItem.update({
+      where: { id: itemId },
+      data,
+    })
+  }
+
   async createAuditLog(data: any) {
     return prisma.saleAuditLog.create({
       data,

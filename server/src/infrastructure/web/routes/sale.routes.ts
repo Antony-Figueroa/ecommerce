@@ -43,6 +43,49 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   }
 })
 
+// Responder a una propuesta de pedido
+router.post('/:id/respond-proposal', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id
+    const saleId = req.params.id as string
+    const { status } = req.body
+
+    if (!['ACCEPTED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ error: 'Estado de respuesta inválido' })
+    }
+
+    const updatedSale = await saleService.respondToProposal(saleId, status, userId)
+    res.json(updatedSale)
+  } catch (error: any) {
+    console.error('Error al responder a la propuesta:', error)
+    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
+    res.status(status).json({ error: error.message || 'Error al procesar respuesta' })
+  }
+})
+
+// Cancelar un pedido (por parte del cliente)
+router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id
+    const saleId = req.params.id as string
+    const { reason } = req.body
+
+    const sale = await saleService.getSaleById(saleId)
+    
+    // Verificar que el pedido pertenezca al usuario
+    if (sale.userId !== userId) {
+      return res.status(403).json({ error: 'No tienes permiso para cancelar este pedido' })
+    }
+
+    const updatedSale = await saleService.cancelSale(saleId, userId, reason || 'Cancelado por el cliente')
+    res.json(updatedSale)
+  } catch (error: any) {
+    console.error('Error al cancelar el pedido:', error)
+    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
+    res.status(status).json({ error: error.message || 'Error al cancelar el pedido' })
+  }
+})
+
 // Generar factura PDF
 router.get('/:id/invoice', async (req: AuthRequest, res: Response) => {
   try {

@@ -254,13 +254,16 @@ export class SaleService {
   }
 
   async updateSaleStatus(id: string, status: string, userId?: string, reason?: string) {
+    console.log(`Updating sale status for ${id} to ${status}...`)
     const sale = await this.saleRepo.findById(id)
     if (!sale) {
+      console.error(`Sale ${id} not found`)
       throw new NotFoundError('Venta')
     }
 
-    const validStatuses = ['PENDING', 'PROCESSING', 'ACCEPTED', 'REJECTED', 'COMPLETED', 'CANCELLED']
+    const validStatuses = ['PENDING', 'PROCESSING', 'ACCEPTED', 'REJECTED', 'COMPLETED', 'CANCELLED', 'PROPOSED']
     if (!validStatuses.includes(status)) {
+      console.error(`Invalid status: ${status}`)
       throw new ValidationError('Estado inválido')
     }
 
@@ -268,12 +271,15 @@ export class SaleService {
     
     // Validación: No permitir completar si no está pagado
     if (status === 'COMPLETED' && !sale.isPaid) {
+      console.warn(`Attempted to complete unpaid sale ${id}`)
       throw new ValidationError('No se puede marcar como completada una orden que no ha sido pagada. Por favor, confirma el pago primero.')
     }
 
+    console.log(`Updating database record for sale ${id}...`)
     const updatedSale = await this.saleRepo.update(id, { status })
 
     // Create audit log for status change
+    console.log(`Creating audit log for sale ${id}...`)
     await this.saleRepo.createAuditLog({
       saleId: id,
       action: 'STATUS_CHANGE',
@@ -286,11 +292,13 @@ export class SaleService {
     // Create in-app notification for Client
     if (updatedSale.userId) {
       try {
+        console.log(`Creating in-app notification for user ${updatedSale.userId}...`)
         const statusLabel = status === 'ACCEPTED' ? 'aceptado ✅' : 
                             status === 'REJECTED' ? 'rechazado ❌' : 
                             status === 'PROCESSING' ? 'en proceso ⏳' : 
                             status === 'COMPLETED' ? 'completado ✨' : 
-                            status === 'CANCELLED' ? 'cancelado 🚫' : status.toLowerCase()
+                            status === 'CANCELLED' ? 'cancelado 🚫' : 
+                            status === 'PROPOSED' ? 'modificado (propuesta del proveedor) 📝' : status.toLowerCase()
 
         await this.notificationService.createNotification({
           type: 'ORDER_STATUS',
@@ -313,7 +321,8 @@ export class SaleService {
         const statusLabel = status === 'ACCEPTED' ? 'ACEPTADO ✅' : 
                             status === 'REJECTED' ? 'RECHAZADO ❌' : 
                             status === 'PROCESSING' ? 'EN PROCESO ⏳' : 
-                            status === 'COMPLETED' ? 'COMPLETADO ✨' : status
+                            status === 'COMPLETED' ? 'COMPLETADO ✨' : 
+                            status === 'PROPOSED' ? 'MODIFICADO (PROPUESTA) 📝' : status
         
         let whatsappMessage = `*Actualización de tu pedido en Ana's Supplements* 🛍️\n\n` +
           `Hola *${updatedSale.customerName}*,\n\n` +
@@ -325,12 +334,14 @@ export class SaleService {
 
         if (status === 'ACCEPTED') {
           whatsappMessage += `\nEstamos preparando tus productos. Te avisaremos cuando estén listos para entrega/envío.`
+        } else if (status === 'PROPOSED') {
+          whatsappMessage += `\nEl proveedor ha modificado algunos productos de tu pedido. Por favor, revisa la propuesta en nuestra web y confírmanos si deseas continuar.`
+          whatsappMessage += `\nVer propuesta: ${process.env.FRONTEND_URL}/pedidos?id=${updatedSale.id}`
         }
 
         whatsappMessage += `\n\n¡Gracias por preferirnos!`
 
         console.log(`[WhatsApp Client Notification] To: ${updatedSale.customerPhone}, Message: ${whatsappMessage}`)
-        // In a real implementation, you would call a WhatsApp API provider here
       }
     } catch (error) {
       console.error('Error sending WhatsApp notification to client:', error)
@@ -339,21 +350,227 @@ export class SaleService {
     return updatedSale
   }
 
-  async updateDeliveryStatus(id: string, deliveryStatus: string, userId?: string, reason?: string) {
-    const sale = await this.saleRepo.findById(id)
+  async updateSaleItemQuantity(saleId: string, itemId: string, quantity: number, userId?: string) {
+    const sale = await this.saleRepo.findById(saleId)
     if (!sale) {
       throw new NotFoundError('Venta')
     }
 
-    const validStatuses = ['NOT_DELIVERED', 'IN_TRANSIT', 'DELIVERED']
+    const item = sale.items.find((i: any) => i.id === itemId)
+    if (!item) {
+      throw new NotFoundError('Item de venta')
+    }
+
+    if (quantity <= 0) {
+      throw new ValidationError('La cantidad debe ser mayor a 0')
+    }
+
+    if (quantity > (item.originalQuantity || item.quantity)) {
+      throw new ValidationError('No puedes aumentar la cantidad original solicitada')
+    }
+
+    const oldQuantity = item.quantity
+    if (oldQuantity === quantity) return item
+
+    // Si no tiene originalQuantity, la guardamos ahora
+    const updateData: any = { 
+      quantity,
+      total: quantity * Number(item.unitPrice),
+      totalProfit: quantity * Number(item.profitPerUnit)
+    }
+    
+    if (!item.originalQuantity) {
+      updateData.originalQuantity = oldQuantity
+    }
+
+    const updatedItem = await this.saleRepo.updateItem(itemId, updateData)
+
+    // Ajustar stock: devolvemos la diferencia al inventario
+    const diff = oldQuantity - quantity
+    if (diff !== 0) {
+      const product = await this.productRepo.findById(item.productId)
+      if (product) {
+        const previousStock = product.stock
+        const newStock = previousStock + diff
+
+        await this.productRepo.update(item.productId, {
+          stock: newStock,
+          inStock: newStock > 0,
+        })
+
+        await this.logRepo.create({
+          productId: item.productId,
+          changeType: 'SALE_ITEM_QTY_ADJUSTED',
+          previousStock,
+          newStock,
+          changeAmount: diff,
+          reason: `Cantidad de item en venta ${sale.saleNumber} ajustada de ${oldQuantity} a ${quantity}`,
+        })
+      }
+    }
+
+    // Recalcular totales de la venta
+    const allItems = await this.saleRepo.findById(saleId).then(s => s.items)
+    const activeItems = allItems.filter((i: any) => i.status === 'ACCEPTED')
+    
+    const subtotalUSD = activeItems.reduce((sum: number, i: any) => sum + Number(i.total), 0)
+    const totalUSD = subtotalUSD + Number(sale.shippingCostUSD)
+    const bcvRate = Number(sale.bcvRate)
+    const totalBS = totalUSD * bcvRate
+    const profitUSD = activeItems.reduce((sum: number, i: any) => sum + Number(i.totalProfit), 0)
+    const profitBS = profitUSD * bcvRate
+
+    await this.saleRepo.update(saleId, {
+      subtotalUSD,
+      totalUSD,
+      totalBS,
+      profitUSD,
+      profitBS
+    })
+
+    // Crear log de auditoría
+    await this.saleRepo.createAuditLog({
+      saleId,
+      action: 'ITEM_QTY_CHANGE',
+      userId,
+      reason: `Cantidad de "${item.name}" cambiada de ${oldQuantity} a ${quantity}`
+    })
+
+    return updatedItem
+  }
+
+  async updateSaleItemStatus(saleId: string, itemId: string, status: string, userId?: string) {
+    const sale = await this.saleRepo.findById(saleId)
+    if (!sale) {
+      throw new NotFoundError('Venta')
+    }
+
+    const item = sale.items.find((i: any) => i.id === itemId)
+    if (!item) {
+      throw new NotFoundError('Item de venta')
+    }
+
+    const validItemStatuses = ['ACCEPTED', 'REJECTED']
+    if (!validItemStatuses.includes(status)) {
+      throw new ValidationError('Estado de item inválido')
+    }
+
+    const oldStatus = item.status
+    if (oldStatus === status) return item
+
+    const updatedItem = await this.saleRepo.updateItem(itemId, { status })
+
+    // Si el item se rechaza, devolvemos el stock
+    if (status === 'REJECTED') {
+      const product = await this.productRepo.findById(item.productId)
+      if (product) {
+        const previousStock = product.stock
+        const newStock = previousStock + item.quantity
+
+        await this.productRepo.update(item.productId, {
+          stock: newStock,
+          inStock: true,
+        })
+
+        // Devolver a los batches (opcionalmente al último o proporcionalmente, 
+        // aquí simplificamos devolviendo al primer batch con stock o creando log)
+        await this.logRepo.create({
+          productId: item.productId,
+          changeType: 'CANCELLED_SALE_ITEM',
+          previousStock,
+          newStock,
+          changeAmount: item.quantity,
+          reason: `Item de venta ${sale.saleNumber} rechazado por el administrador`,
+        })
+      }
+    } else if (status === 'ACCEPTED' && oldStatus === 'REJECTED') {
+      // Si antes estaba rechazado y ahora se acepta, descontamos stock de nuevo
+      const product = await this.productRepo.findById(item.productId)
+      if (product) {
+        const previousStock = product.stock
+        const newStock = previousStock - item.quantity
+
+        await this.productRepo.update(item.productId, {
+          stock: newStock,
+          inStock: newStock > 0,
+        })
+
+        await this.logRepo.create({
+          productId: item.productId,
+          changeType: 'SALE_ITEM_RESTORED',
+          previousStock,
+          newStock,
+          changeAmount: -item.quantity,
+          reason: `Item de venta ${sale.saleNumber} aceptado nuevamente por el administrador`,
+        })
+      }
+    }
+
+    // Recalcular totales de la venta
+    const allItems = await this.saleRepo.findById(saleId).then(s => s.items)
+    const activeItems = allItems.filter((i: any) => i.status === 'ACCEPTED')
+    
+    const subtotalUSD = activeItems.reduce((sum: number, i: any) => sum + Number(i.total), 0)
+    const totalUSD = subtotalUSD + Number(sale.shippingCostUSD)
+    const bcvRate = Number(sale.bcvRate)
+    const totalBS = totalUSD * bcvRate
+    const profitUSD = activeItems.reduce((sum: number, i: any) => sum + Number(i.totalProfit), 0)
+    const profitBS = profitUSD * bcvRate
+
+    await this.saleRepo.update(saleId, {
+      subtotalUSD,
+      totalUSD,
+      totalBS,
+      profitUSD,
+      profitBS
+    })
+
+    // Crear log de auditoría
+    await this.saleRepo.createAuditLog({
+      saleId,
+      action: 'ITEM_STATUS_CHANGE',
+      userId,
+      reason: `Producto "${item.name}" cambiado a ${status === 'ACCEPTED' ? 'ACEPTADO' : 'RECHAZADO'}`
+    })
+
+    return updatedItem
+  }
+
+  async acceptAllItems(saleId: string, userId?: string) {
+    const sale = await this.saleRepo.findById(saleId)
+    if (!sale) {
+      throw new NotFoundError('Venta')
+    }
+
+    const itemsToUpdate = sale.items.filter((i: any) => i.status !== 'ACCEPTED')
+    
+    for (const item of itemsToUpdate) {
+      await this.updateSaleItemStatus(saleId, item.id, 'ACCEPTED', userId)
+    }
+
+    return this.saleRepo.findById(saleId)
+  }
+
+  async updateDeliveryStatus(id: string, deliveryStatus: string, userId?: string, reason?: string) {
+    console.log(`Updating delivery status for ${id} to ${deliveryStatus}...`)
+    const sale = await this.saleRepo.findById(id)
+    if (!sale) {
+      console.error(`Sale ${id} not found`)
+      throw new NotFoundError('Venta')
+    }
+
+    const validStatuses = ['NOT_DELIVERED', 'DELIVERED']
     if (!validStatuses.includes(deliveryStatus)) {
+      console.error(`Invalid delivery status: ${deliveryStatus}`)
       throw new ValidationError('Estado de entrega inválido')
     }
 
     const oldDeliveryStatus = sale.deliveryStatus
+    console.log(`Updating database record for sale ${id} delivery status...`)
     const updatedSale = await this.saleRepo.update(id, { deliveryStatus })
 
     // Create audit log for delivery status change
+    console.log(`Creating audit log for sale ${id} delivery status...`)
     await this.saleRepo.createAuditLog({
       saleId: id,
       action: 'DELIVERY_STATUS_CHANGE',
@@ -366,8 +583,7 @@ export class SaleService {
     // Notify Client via WhatsApp about delivery status change
     try {
       if (updatedSale.customerPhone) {
-        const statusLabel = deliveryStatus === 'IN_TRANSIT' ? 'EN TRÁNSITO 🚚' : 
-                            deliveryStatus === 'DELIVERED' ? 'ENTREGADO ✅' : 
+        const statusLabel = deliveryStatus === 'DELIVERED' ? 'ENTREGADO ✅' : 
                             deliveryStatus === 'NOT_DELIVERED' ? 'PENDIENTE DE ENTREGA 📦' : deliveryStatus
         
         let whatsappMessage = `*Actualización de entrega - Ana's Supplements* 🚚\n\n` +
@@ -378,9 +594,7 @@ export class SaleService {
           whatsappMessage += `\n*Nota:* ${reason}\n`
         }
 
-        if (deliveryStatus === 'IN_TRANSIT') {
-          whatsappMessage += `\nTu pedido ya va en camino. ¡Pronto lo tendrás contigo!`
-        } else if (deliveryStatus === 'DELIVERED') {
+        if (deliveryStatus === 'DELIVERED') {
           whatsappMessage += `\nEsperamos que disfrutes tus productos. ¡Gracias por confiar en nosotros!`
         }
 
@@ -450,7 +664,100 @@ export class SaleService {
     return updatedSale
   }
 
-  async cancelSale(id: string) {
+  async respondToProposal(id: string, status: 'ACCEPTED' | 'REJECTED', userId: string) {
+    const sale = await this.saleRepo.findById(id)
+    if (!sale) {
+      throw new NotFoundError('Venta')
+    }
+
+    if (sale.userId !== userId) {
+      throw new ValidationError('No tienes permiso para responder a esta propuesta')
+    }
+
+    if (sale.status !== 'PROPOSED') {
+      throw new ValidationError('Este pedido no tiene una propuesta pendiente')
+    }
+
+    if (status === 'ACCEPTED') {
+      // Si el cliente acepta, el pedido pasa a ser procesado
+      // Primero nos aseguramos de que el estado de los items sea definitivo
+      // Los items REJECTED ya devolvieron stock en updateSaleItemStatus
+      
+      await this.updateSaleStatus(id, 'PROCESSING', userId, 'Cliente aceptó la propuesta del proveedor')
+      
+      // Registrar en la auditoría que se aceptó la versión final de los productos
+      const acceptedItems = sale.items
+        .filter((item: any) => item.status === 'ACCEPTED')
+        .map((item: any) => `${item.name} (x${item.quantity})`)
+        .join(', ')
+
+      await this.saleRepo.createAuditLog({
+        saleId: id,
+        action: 'PROPOSAL_ACCEPTED',
+        userId,
+        reason: `Productos finales aceptados: ${acceptedItems}. Registro original preservado en originalQuantity.`
+      })
+    } else {
+      // Si el cliente rechaza, cancelamos todo el pedido
+      await this.updateSaleStatus(id, 'CANCELLED', userId, 'Cliente rechazó la propuesta del proveedor')
+      
+      // Devolver stock de los items que estaban aceptados (los rechazados ya se devolvieron)
+      for (const item of sale.items) {
+        if (item.status === 'ACCEPTED') {
+          const product = await this.productRepo.findById(item.productId)
+          if (product) {
+            const previousStock = product.stock
+            const newStock = previousStock + item.quantity
+
+            await this.productRepo.update(item.productId, {
+              stock: newStock,
+              inStock: true,
+            })
+
+            await this.logRepo.create({
+              productId: item.productId,
+              changeType: 'CANCELLED_SALE_ITEM',
+              previousStock,
+              newStock,
+              changeAmount: item.quantity,
+              reason: `Venta ${sale.saleNumber} cancelada por el cliente (rechazo de propuesta)`,
+            })
+          }
+        }
+      }
+    }
+
+    // Notificar al admin sobre la decisión del cliente
+    try {
+      // Notificación in-app para el administrador
+      await this.notificationService.createNotification({
+        type: 'ORDER_PROPOSAL_RESPONSE',
+        category: 'ORDERS',
+        priority: 'URGENT',
+        title: `Propuesta ${status === 'ACCEPTED' ? 'Aceptada' : 'Rechazada'}`,
+        message: `El cliente ${sale.customerName} ha ${status === 'ACCEPTED' ? 'aceptado' : 'rechazado'} la propuesta para el pedido #${sale.saleNumber}.`,
+        link: `/admin/orders?id=${sale.id}`,
+        metadata: JSON.stringify({ saleId: sale.id, status, saleNumber: sale.saleNumber })
+      })
+
+      const adminPhoneSetting = await this.settingsRepo.findByKey('whatsapp_number')
+      const adminPhone = adminPhoneSetting?.value
+
+      if (adminPhone) {
+        const whatsappMessage = `*Respuesta a Propuesta de Pedido* 📩\n\n` +
+          `El cliente *${sale.customerName}* ha *${status === 'ACCEPTED' ? 'ACEPTADO' : 'RECHAZADO'}* la propuesta del pedido *#${sale.saleNumber}*.\n\n` +
+          `Ver detalles: ${process.env.FRONTEND_URL}/admin/orders?id=${sale.id}`
+
+        console.log(`[WhatsApp Admin Notification] To: ${adminPhone}, Message: ${whatsappMessage}`)
+      }
+    } catch (error) {
+      console.error('Error sending notifications to admin about proposal response:', error)
+    }
+
+    return this.saleRepo.findById(id)
+  }
+
+  async cancelSale(id: string, userId?: string, reason?: string) {
     const sale = await this.getSaleById(id)
 
     if (sale.status === 'CANCELLED') {
@@ -458,6 +765,8 @@ export class SaleService {
     }
 
     for (const item of sale.items) {
+      if (item.status === 'REJECTED') continue // No devolver stock si ya fue rechazado
+
       const product = await this.productRepo.findById(item.productId)
       const previousStock = product?.stock || 0
       const newStock = previousStock + item.quantity
@@ -483,10 +792,41 @@ export class SaleService {
       action: 'CANCELLED',
       oldStatus: sale.status,
       newStatus: 'CANCELLED',
-      reason: 'Venta cancelada por el usuario o sistema'
+      userId,
+      reason: reason || 'Venta cancelada por el usuario o sistema'
     })
 
-    return this.saleRepo.update(id, { status: 'CANCELLED' })
+    const updatedSale = await this.saleRepo.update(id, { status: 'CANCELLED' })
+
+    // Notificar al admin sobre la cancelación si fue hecha por un cliente
+    if (userId && userId === sale.userId) {
+      try {
+        await this.notificationService.createNotification({
+          type: 'ORDER_CANCELLED',
+          category: 'ORDERS',
+          priority: 'URGENT',
+          title: 'Pedido Cancelado por el Cliente',
+          message: `El cliente ${sale.customerName} ha cancelado el pedido #${sale.saleNumber}.`,
+          link: `/admin/orders?id=${sale.id}`,
+          metadata: JSON.stringify({ saleId: sale.id, saleNumber: sale.saleNumber })
+        })
+
+        const adminPhoneSetting = await this.settingsRepo.findByKey('whatsapp_number')
+        const adminPhone = adminPhoneSetting?.value
+
+        if (adminPhone) {
+          const whatsappMessage = `*Pedido Cancelado* 🚫\n\n` +
+            `El cliente *${sale.customerName}* ha cancelado el pedido *#${sale.saleNumber}*.\n\n` +
+            `Ver detalles: ${process.env.FRONTEND_URL}/admin/orders?id=${sale.id}`
+
+          console.log(`[WhatsApp Admin Notification] To: ${adminPhone}, Message: ${whatsappMessage}`)
+        }
+      } catch (error) {
+        console.error('Error sending notifications to admin about order cancellation:', error)
+      }
+    }
+
+    return updatedSale
   }
 
   async getCurrentBCV(): Promise<number> {

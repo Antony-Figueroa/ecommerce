@@ -89,11 +89,13 @@ export interface SaleItem {
   productId: string
   name: string
   quantity: number
+  originalQuantity?: number | null
   unitCost: number
   unitPrice: number
   total: number
   profitPerUnit: number
   totalProfit: number
+  status?: string
   product?: Product
 }
 

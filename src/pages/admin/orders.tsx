@@ -10,6 +10,8 @@ import {
   Eye,
   MoreHorizontal,
   Truck,
+  User,
+  TrendingUp,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -44,11 +46,14 @@ import { useToast } from "@/hooks/use-toast"
 import { formatUSD } from "@/lib/utils"
 
 interface OrderItem {
+  id: string
   productId: string
   name: string
   quantity: number
+  originalQuantity?: number | null
   unitPrice: number
   total: number
+  status: string
 }
 
 interface Order {
@@ -97,6 +102,8 @@ export function AdminOrdersPage() {
   const [rejectionOrderId, setRejectionOrderId] = useState<string | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null)
+  const [editingQuantity, setEditingQuantity] = useState<{itemId: string, quantity: number} | null>(null)
 
   // Payment confirmation states
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
@@ -137,17 +144,17 @@ export function AdminOrdersPage() {
   const formatStatus = (status: string) => {
     const statusMap: Record<string, { label: string; class: string; color: string }> = {
       PENDING: { 
-        label: "Pendiente", 
+        label: "Pendiente (por revisión)", 
         class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800", 
         color: "yellow" 
       },
       PROCESSING: { 
-        label: "Procesando", 
+        label: "Procesando (pendiente por pedir)", 
         class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
         color: "blue" 
       },
       ACCEPTED: { 
-        label: "Aceptado", 
+        label: "Aceptado (ya viene en camino)", 
         class: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800", 
         color: "green" 
       },
@@ -160,6 +167,11 @@ export function AdminOrdersPage() {
         label: "Completado", 
         class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
         color: "emerald" 
+      },
+      PROPOSED: { 
+        label: "Propuesta Enviada", 
+        class: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800", 
+        color: "purple" 
       },
       CANCELLED: { 
         label: "Cancelado", 
@@ -182,6 +194,8 @@ export function AdminOrdersPage() {
         return <XCircle className="h-4 w-4 text-red-500" />
       case "COMPLETED":
         return <CheckCircle className="h-4 w-4 text-emerald-500" />
+      case "PROPOSED":
+        return <MessageCircle className="h-4 w-4 text-purple-500" />
       case "CANCELLED":
         return <XCircle className="h-4 w-4 text-gray-500" />
       default:
@@ -196,26 +210,19 @@ export function AdminOrdersPage() {
         class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700", 
         color: "gray" 
       },
-      IN_TRANSIT: { 
-        label: "En tránsito", 
-        class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
-        color: "blue" 
-      },
       DELIVERED: { 
         label: "Entregado", 
         class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
         color: "emerald" 
       },
     }
-    return statusMap[status] || { label: status || "Pendiente", class: "bg-gray-100 text-gray-800", color: "gray" }
+    return statusMap[status] || { label: status === "IN_TRANSIT" ? "En tránsito (obsoleto)" : (status || "Pendiente"), class: "bg-gray-100 text-gray-800", color: "gray" }
   }
 
   const getDeliveryStatusIcon = (status: string) => {
     switch (status) {
       case "NOT_DELIVERED":
         return <Package className="h-4 w-4 text-gray-500" />
-      case "IN_TRANSIT":
-        return <Package className="h-4 w-4 text-blue-500 animate-pulse" />
       case "DELIVERED":
         return <CheckCircle className="h-4 w-4 text-emerald-500" />
       default:
@@ -257,6 +264,88 @@ export function AdminOrdersPage() {
       toast({
         title: "Error",
         description: error.message || "No se pudo actualizar el estado",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const updateOrderItemStatus = async (orderId: string, itemId: string, status: string) => {
+    setUpdatingItemId(itemId)
+    try {
+      await api.updateSaleItemStatus(orderId, itemId, status)
+      toast({
+        title: "Item actualizado",
+        description: `El producto ha sido marcado como ${status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado'}`,
+      })
+      
+      // Refresh order data
+      await fetchOrders()
+      if (selectedOrder?.id === orderId) {
+        const updatedOrders = await api.getSales()
+        const updatedOrder = updatedOrders.sales.find((o: any) => o.id === orderId)
+        if (updatedOrder) setSelectedOrder(updatedOrder)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el item",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingItemId(null)
+    }
+  }
+
+  const updateOrderItemQuantity = async (orderId: string, itemId: string, quantity: number) => {
+    setUpdatingItemId(itemId)
+    try {
+      await api.updateSaleItemQuantity(orderId, itemId, quantity)
+      toast({
+        title: "Cantidad actualizada",
+        description: "La cantidad del producto ha sido ajustada correctamente",
+      })
+      
+      setEditingQuantity(null)
+      // Refresh order data
+      await fetchOrders()
+      if (selectedOrder?.id === orderId) {
+        const updatedOrders = await api.getSales()
+        const updatedOrder = updatedOrders.sales.find((o: any) => o.id === orderId)
+        if (updatedOrder) setSelectedOrder(updatedOrder)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar la cantidad",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingItemId(null)
+    }
+  }
+
+  const acceptAllOrderItems = async (orderId: string) => {
+    setUpdatingId(orderId)
+    try {
+      await api.acceptAllSaleItems(orderId)
+      toast({
+        title: "Items aceptados",
+        description: "Todos los productos han sido marcados como aceptados",
+      })
+      
+      // Refresh order data
+      await fetchOrders()
+      if (selectedOrder?.id === orderId) {
+        const updatedOrders = await api.getSales()
+        const updatedOrder = updatedOrders.sales.find((o: any) => o.id === orderId)
+        if (updatedOrder) setSelectedOrder(updatedOrder)
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudieron aceptar los items",
         variant: "destructive"
       })
     } finally {
@@ -322,6 +411,14 @@ export function AdminOrdersPage() {
   }
 
   const handlePaymentClick = (order: Order) => {
+    if (order.status !== 'ACCEPTED') {
+      toast({
+        title: "Acción no permitida",
+        description: "Solo se puede confirmar el pago de pedidos aceptados",
+        variant: "destructive"
+      })
+      return
+    }
     setPaymentOrderId(order.id)
     setPaymentAmount(order.totalUSD.toString())
     setPaymentReason("")
@@ -367,7 +464,17 @@ export function AdminOrdersPage() {
   }
 
   const sendWhatsAppReminder = async (order: Order) => {
-    const message = `Hola ${order.customerName}, te contactamos de Ana's Supplements sobre tu pedido ${order.saleNumber}. El estado actual es: ${formatStatus(order.status).label}.`
+    const statusLabels: Record<string, string> = {
+      PENDING: "Pendiente (por revisión)",
+      PROCESSING: "Procesando (pendiente por pedir)",
+      ACCEPTED: "Aceptado (ya viene en camino)",
+      REJECTED: "Rechazado",
+      COMPLETED: "Completado",
+      PROPOSED: "Propuesta Enviada",
+      CANCELLED: "Cancelado",
+    }
+    const label = statusLabels[order.status] || order.status
+    const message = `Hola ${order.customerName}, te contactamos de Ana's Supplements sobre tu pedido ${order.saleNumber}. El estado actual es: ${label}.`
     const phone = order.customerPhone?.replace(/\D/g, "")
     if (phone) {
       window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank")
@@ -522,6 +629,7 @@ export function AdminOrdersPage() {
     REJECTED: orders.filter(o => o.status === "REJECTED").length,
     COMPLETED: orders.filter(o => o.status === "COMPLETED").length,
     CANCELLED: orders.filter(o => o.status === "CANCELLED").length,
+    PROPOSED: orders.filter(o => o.status === "PROPOSED").length,
   }
 
   if (loading) {
@@ -578,11 +686,12 @@ export function AdminOrdersPage() {
 
         {/* Status Tabs */}
         <Tabs value={statusFilter} onValueChange={setStatusFilter}>
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="all">Todos ({statusCounts.all})</TabsTrigger>
             <TabsTrigger value="PENDING">Pendiente ({statusCounts.PENDING})</TabsTrigger>
             <TabsTrigger value="PROCESSING">Procesando ({statusCounts.PROCESSING})</TabsTrigger>
             <TabsTrigger value="ACCEPTED">Aceptado ({statusCounts.ACCEPTED})</TabsTrigger>
+            <TabsTrigger value="PROPOSED">Propuesta ({statusCounts.PROPOSED})</TabsTrigger>
             <TabsTrigger value="REJECTED">Rechazado ({statusCounts.REJECTED})</TabsTrigger>
             <TabsTrigger value="COMPLETED">Completado ({statusCounts.COMPLETED})</TabsTrigger>
             <TabsTrigger value="CANCELLED">Cancelado ({statusCounts.CANCELLED})</TabsTrigger>
@@ -622,7 +731,6 @@ export function AdminOrdersPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="NOT_DELIVERED">No entregado</SelectItem>
-                                      <SelectItem value="IN_TRANSIT">En tránsito</SelectItem>
                                       <SelectItem value="DELIVERED">Entregado</SelectItem>
                                     </SelectContent>
                                   </Select>
@@ -645,6 +753,9 @@ export function AdminOrdersPage() {
                                       <SelectItem value="PENDING">Pendiente</SelectItem>
                                       <SelectItem value="PROCESSING">Procesando</SelectItem>
                                       <SelectItem value="ACCEPTED">Aceptado</SelectItem>
+                                      {order.status === 'PROPOSED' && (
+                                        <SelectItem value="PROPOSED">Propuesta Enviada</SelectItem>
+                                      )}
                                       <SelectItem value="REJECTED">Rechazado</SelectItem>
                                       <SelectItem value="COMPLETED">Completado</SelectItem>
                                       <SelectItem value="CANCELLED">Cancelado</SelectItem>
@@ -723,22 +834,50 @@ export function AdminOrdersPage() {
                         </div>
 
                         <div className="px-6 pb-6">
-                          {/* Quick Actions for Pending */}
-                          {order.status === 'PENDING' && (
-                            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm mb-4">
+                          {/* Quick Actions for Pending & Accepted */}
+                          {(order.status === 'PENDING' || order.status === 'ACCEPTED' || order.status === 'PROPOSED') && (
+                            <div className={`p-4 border rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm mb-4 ${
+                              order.status === 'PENDING' 
+                                ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/50' 
+                                : order.status === 'ACCEPTED'
+                                  ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/50'
+                                  : 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-800/50'
+                            }`}>
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                                <Clock className="h-5 w-5" />
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                order.status === 'PENDING' 
+                                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                                  : order.status === 'ACCEPTED'
+                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                                    : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                              }`}>
+                                {order.status === 'PENDING' ? <Clock className="h-5 w-5" /> : order.status === 'ACCEPTED' ? <CheckCircle className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
                               </div>
                               <div>
-                                <span className="text-sm font-semibold text-blue-900 dark:text-blue-300 block">Nuevo pedido pendiente</span>
-                                <span className="text-xs text-blue-700/70 dark:text-blue-400/70">Revisa los detalles antes de aceptar</span>
+                                <span className={`text-sm font-semibold block ${
+                                  order.status === 'PENDING' 
+                                    ? 'text-blue-900 dark:text-blue-300' 
+                                    : order.status === 'ACCEPTED'
+                                      ? 'text-emerald-900 dark:text-emerald-300'
+                                      : 'text-purple-900 dark:text-purple-300'
+                                }`}>
+                                  {order.status === 'PENDING' ? 'Nuevo pedido pendiente' : order.status === 'ACCEPTED' ? 'Pedido aceptado' : 'Propuesta enviada'}
+                                </span>
+                                <span className={`text-xs ${
+                                  order.status === 'PENDING' 
+                                    ? 'text-blue-700/70 dark:text-blue-400/70' 
+                                    : order.status === 'ACCEPTED'
+                                      ? 'text-emerald-700/70 dark:text-emerald-400/70'
+                                      : 'text-purple-700/70 dark:text-purple-400/70'
+                                }`}>
+                                  {order.status === 'PENDING' ? 'Revisa los detalles antes de aceptar' : order.status === 'ACCEPTED' ? 'Esperando confirmación de pago' : 'Esperando respuesta del cliente'}
+                                </span>
                               </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
                               <Button 
                                 size="sm" 
-                                disabled={updatingId === order.id}
+                                disabled={updatingId === order.id || order.status !== 'ACCEPTED'}
                                 className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1 sm:flex-none h-10 px-4"
                                 onClick={() => handlePaymentClick(order)}
                               >
@@ -749,29 +888,45 @@ export function AdminOrdersPage() {
                                 )}
                                 Confirmar Pago
                               </Button>
-                              <Button 
-                                size="sm" 
-                                disabled={updatingId === order.id}
-                                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white flex-1 sm:flex-none h-10 px-4"
-                                onClick={() => updateOrderStatus(order.id, 'ACCEPTED')}
-                              >
-                                {updatingId === order.id ? (
-                                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                ) : (
-                                  <CheckCircle className="h-4 w-4 mr-2" />
-                                )}
-                                Aceptar
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive" 
-                                disabled={updatingId === order.id}
-                                className="flex-1 sm:flex-none h-10 px-4"
-                                onClick={() => handleRejectClick(order.id)}
-                              >
-                                <XCircle className="h-4 w-4 mr-2" />
-                                Rechazar
-                              </Button>
+                              
+                              {order.status === 'PENDING' && (
+                                <>
+                                  <Button 
+                                    size="sm" 
+                                    disabled={updatingId === order.id}
+                                    className={`${
+                                      order.items.some(item => item.status === 'REJECTED') 
+                                        ? 'bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800' 
+                                        : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800'
+                                    } text-white flex-1 sm:flex-none h-10 px-4`}
+                                    onClick={() => {
+                                      const hasRejected = order.items.some(item => item.status === 'REJECTED');
+                                      updateOrderStatus(order.id, hasRejected ? 'PROPOSED' : 'ACCEPTED');
+                                    }}
+                                  >
+                                    {updatingId === order.id ? (
+                                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                    ) : (
+                                      order.items.some(item => item.status === 'REJECTED') ? (
+                                        <MessageCircle className="h-4 w-4 mr-2" />
+                                      ) : (
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                      )
+                                    )}
+                                    {order.items.some(item => item.status === 'REJECTED') ? 'Enviar Propuesta' : 'Aceptar'}
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive" 
+                                    disabled={updatingId === order.id}
+                                    className="flex-1 sm:flex-none h-10 px-4"
+                                    onClick={() => handleRejectClick(order.id)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Rechazar
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
@@ -824,180 +979,407 @@ export function AdminOrdersPage() {
 
         {/* Order Detail Modal */}
         <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-          <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
             {selectedOrder && (
               <>
-                <DialogHeader className="flex flex-col pr-8">
-                  <DialogTitle className="text-2xl">Orden {selectedOrder.saleNumber}</DialogTitle>
-                  <DialogDescription>
-                    Detalles completos del pedido, historial de cambios y acciones de gestión.
-                  </DialogDescription>
-                </DialogHeader>
+                <div className="p-6 border-b bg-muted/30 dark:bg-muted/10 shrink-0">
+                  <DialogHeader className="flex flex-col pr-8">
+                    <div className="flex items-center justify-between">
+                      <DialogTitle className="text-2xl font-black">Orden {selectedOrder.saleNumber}</DialogTitle>
+                      <Badge className={`${formatStatus(selectedOrder.status).class} text-sm px-3 py-1`}>
+                        {formatStatus(selectedOrder.status).label}
+                      </Badge>
+                    </div>
+                    <DialogDescription className="mt-1">
+                      Gestiona los productos, revisa el historial y realiza acciones sobre el pedido.
+                    </DialogDescription>
+                  </DialogHeader>
+                </div>
                 
-                <div className="space-y-6 mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Cliente</h4>
-                        <p className="font-medium text-lg">{selectedOrder.customerName}</p>
-                        {selectedOrder.customerEmail && <p className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</p>}
-                        {selectedOrder.customerPhone && <p className="text-sm text-muted-foreground">{selectedOrder.customerPhone}</p>}
+                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Customer & Payment Info */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border bg-card dark:border-gray-800">
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+                              <User className="h-3 w-3" />
+                              Información del Cliente
+                            </h4>
+                            <p className="font-bold text-lg text-primary">{selectedOrder.customerName}</p>
+                            <div className="space-y-1 mt-2">
+                              {selectedOrder.customerEmail && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <Search className="h-3 w-3" /> {selectedOrder.customerEmail}
+                                </p>
+                              )}
+                              {selectedOrder.customerPhone && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                  <MessageCircle className="h-3 w-3" /> {selectedOrder.customerPhone}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              Detalles del Pedido
+                            </h4>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Fecha:</span>
+                                <span className="text-sm font-medium">{formatDate(selectedOrder.createdAt)}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Método:</span>
+                                <Badge variant="outline" className="text-xs">{selectedOrder.paymentMethod}</Badge>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Estado Entrega:</span>
+                                <Badge variant="outline" className={`${formatDeliveryStatus(selectedOrder.deliveryStatus).class} text-xs border-current/20`}>
+                                  {getDeliveryStatusIcon(selectedOrder.deliveryStatus)}
+                                  <span className="ml-1">{formatDeliveryStatus(selectedOrder.deliveryStatus).label}</span>
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      
-                      <div>
-                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Método de Pago</h4>
-                        <div className="flex flex-col gap-2">
-                          <Badge variant="outline" className="text-sm px-3 py-1 w-fit">
-                            {selectedOrder.paymentMethod}
-                          </Badge>
-                          {selectedOrder.isPaid ? (
-                            <div className="flex flex-col gap-1">
-                              <Badge className="bg-emerald-500 text-white dark:bg-emerald-600 border-none w-fit">
+
+                      {/* Delivery Address & Notes */}
+                      {(selectedOrder.deliveryAddress || selectedOrder.notes) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {selectedOrder.deliveryAddress && (
+                            <div className="p-4 bg-blue-50/30 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                              <h4 className="font-bold text-xs uppercase tracking-widest text-blue-800 dark:text-blue-400 mb-2">Dirección de Entrega</h4>
+                              <p className="text-sm text-blue-900 dark:text-blue-200/80">{selectedOrder.deliveryAddress}</p>
+                            </div>
+                          )}
+                          {selectedOrder.notes && (
+                            <div className="p-4 bg-amber-50/30 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/30">
+                              <h4 className="font-bold text-xs uppercase tracking-widest text-amber-800 dark:text-amber-400 mb-2">Notas del Cliente</h4>
+                              <p className="text-sm italic text-amber-900 dark:text-amber-200/80">{selectedOrder.notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Products Table */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <Package className="h-3 w-3" />
+                            Resumen de Productos ({Array.isArray(selectedOrder.items) ? selectedOrder.items.length : 0})
+                          </h4>
+                          {selectedOrder.status === 'PENDING' && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="h-8 text-xs border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                              onClick={() => acceptAllOrderItems(selectedOrder.id)}
+                              disabled={updatingId === selectedOrder.id}
+                            >
+                              {updatingId === selectedOrder.id ? (
+                                <div className="h-3 w-3 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-1" />
+                              ) : (
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                Pagado
-                              </Badge>
+                              )}
+                              Aceptar Todo
+                            </Button>
+                          )}
+                        </div>
+                        <div className="border dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted/50 dark:bg-muted/20">
+                              <tr>
+                                <th className="px-4 py-3 text-left font-bold">Producto</th>
+                                <th className="px-4 py-3 text-center font-bold">Cant.</th>
+                                <th className="px-4 py-3 text-right font-bold">Precio</th>
+                                <th className="px-4 py-3 text-right font-bold">Total</th>
+                                <th className="px-4 py-3 text-center font-bold">Acción</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y dark:divide-gray-800 bg-card">
+                              {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
+                                selectedOrder.items.map((item, idx) => (
+                                  <tr key={item.id || idx} className="hover:bg-muted/30 dark:hover:bg-muted/10 transition-colors">
+                                    <td className="px-4 py-4">
+                                      <p className="font-bold dark:text-gray-200">{item.name}</p>
+                                      {item.status === 'REJECTED' && (
+                                        <Badge variant="destructive" className="mt-1 h-5 text-[9px] px-1.5 uppercase font-black">Rechazado</Badge>
+                                      )}
+                                      {item.status === 'ACCEPTED' && (
+                                        <Badge variant="outline" className="mt-1 h-5 text-[9px] px-1.5 uppercase font-black bg-green-50 text-green-700 border-green-200">Aceptado</Badge>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-4 text-center dark:text-gray-300 font-medium">
+                                      {selectedOrder.status === 'PENDING' ? (
+                                        <div className="flex flex-col items-center gap-1">
+                                          {editingQuantity?.itemId === item.id ? (
+                                            <div className="flex items-center gap-1">
+                                              <Input
+                                                type="number"
+                                                value={editingQuantity.quantity}
+                                                onChange={(e) => setEditingQuantity({ ...editingQuantity, quantity: parseInt(e.target.value) || 0 })}
+                                                className="w-16 h-8 text-center px-1"
+                                                min={1}
+                                                max={item.originalQuantity || item.quantity}
+                                              />
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                className="h-8 w-8 text-green-600"
+                                                onClick={() => updateOrderItemQuantity(selectedOrder.id, item.id, editingQuantity.quantity)}
+                                                disabled={updatingItemId === item.id}
+                                              >
+                                                <CheckCircle className="h-4 w-4" />
+                                              </Button>
+                                              <Button 
+                                                size="icon" 
+                                                variant="ghost" 
+                                                className="h-8 w-8 text-red-600"
+                                                onClick={() => setEditingQuantity(null)}
+                                              >
+                                                <XCircle className="h-4 w-4" />
+                                              </Button>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center gap-2">
+                                              <span>{item.quantity}</span>
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="h-6 w-6 text-muted-foreground hover:text-primary"
+                                                onClick={() => setEditingQuantity({ itemId: item.id, quantity: item.quantity })}
+                                              >
+                                                <MoreHorizontal className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          )}
+                                          {item.originalQuantity && item.originalQuantity !== item.quantity && (
+                                            <span className="text-[10px] text-muted-foreground line-through">Orig: {item.originalQuantity}</span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <span>{item.quantity}</span>
+                                          {item.originalQuantity && item.originalQuantity !== item.quantity && (
+                                            <span className="text-[10px] text-muted-foreground line-through block">Orig: {item.originalQuantity}</span>
+                                          )}
+                                        </>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-4 text-right dark:text-gray-300 font-medium">{formatUSD(item.unitPrice)}</td>
+                                    <td className="px-4 py-4 text-right font-bold dark:text-white">{formatUSD(item.total)}</td>
+                                    <td className="px-4 py-4 text-center">
+                                      {selectedOrder.status === 'PENDING' ? (
+                                        <div className="flex items-center justify-center gap-1">
+                                          <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className={`h-8 w-8 rounded-full transition-all ${item.status === 'ACCEPTED' ? 'bg-green-600 text-white border-green-600 scale-110' : 'text-muted-foreground hover:text-green-600 hover:border-green-600'}`}
+                                            onClick={() => updateOrderItemStatus(selectedOrder.id, item.id, 'ACCEPTED')}
+                                            disabled={updatingItemId === item.id}
+                                          >
+                                            {updatingItemId === item.id && item.status !== 'ACCEPTED' ? (
+                                              <div className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                              <CheckCircle className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                          <Button
+                                            size="icon"
+                                            variant="outline"
+                                            className={`h-8 w-8 rounded-full transition-all ${item.status === 'REJECTED' ? 'bg-red-600 text-white border-red-600 scale-110' : 'text-muted-foreground hover:text-red-600 hover:border-red-600'}`}
+                                            onClick={() => updateOrderItemStatus(selectedOrder.id, item.id, 'REJECTED')}
+                                            disabled={updatingItemId === item.id}
+                                          >
+                                            {updatingItemId === item.id && item.status !== 'REJECTED' ? (
+                                              <div className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                              <XCircle className="h-4 w-4" />
+                                            )}
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <span className="text-xs text-muted-foreground">-</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground italic">
+                                    No hay productos registrados en esta orden
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                            <tfoot className="bg-muted/50 dark:bg-muted/20 font-black border-t dark:border-gray-800">
+                              <tr>
+                                <td colSpan={3} className="px-4 py-5 text-right text-sm tracking-widest text-muted-foreground">TOTAL DEL PEDIDO</td>
+                                <td className="px-4 py-5 text-right text-2xl text-primary font-black">{formatUSD(selectedOrder.totalUSD)}</td>
+                                <td></td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sidebar: Status & History */}
+                    <div className="space-y-6">
+                      {/* Payment Status Card */}
+                      <div className="p-4 rounded-xl border bg-card dark:border-gray-800 space-y-4">
+                        <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                          <TrendingUp className="h-3 w-3" />
+                          Estado de Pago
+                        </h4>
+                        <div className="space-y-3">
+                          {selectedOrder.isPaid ? (
+                            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/50 rounded-lg">
+                              <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold mb-1">
+                                <CheckCircle className="h-4 w-4" />
+                                PAGADO
+                              </div>
                               {selectedOrder.paidAmountUSD && (
-                                <p className="text-xs text-muted-foreground font-medium">
-                                  Monto: ${formatUSD(selectedOrder.paidAmountUSD)}
+                                <p className="text-sm font-black text-emerald-800 dark:text-emerald-300">
+                                  Recibido: ${formatUSD(selectedOrder.paidAmountUSD)}
                                 </p>
                               )}
                             </div>
                           ) : (
-                            <div className="flex flex-col gap-2">
-                              <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 dark:border-amber-800/50 w-fit">
-                                <Clock className="h-3 w-3 mr-1" />
-                                Pendiente
-                              </Badge>
+                            <div className="space-y-3">
+                              <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/50 rounded-lg">
+                                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold">
+                                  <Clock className="h-4 w-4" />
+                                  PENDIENTE
+                                </div>
+                              </div>
                               <Button 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-8 text-xs border-primary text-primary hover:bg-primary hover:text-white"
+                                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10"
                                 onClick={() => handlePaymentClick(selectedOrder)}
+                                disabled={selectedOrder.status !== 'ACCEPTED'}
                               >
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Confirmar Pago Ahora
+                                {selectedOrder.status !== 'ACCEPTED' ? 'Debe aceptar la orden' : 'Confirmar Pago'}
                               </Button>
+                              {selectedOrder.status !== 'ACCEPTED' && (
+                                <p className="text-[10px] text-center text-muted-foreground italic">
+                                  El pago solo se puede confirmar cuando la orden ha sido aceptada por el administrador.
+                                </p>
+                              )}
                             </div>
                           )}
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Estado Actual</h4>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className={`${formatStatus(selectedOrder.status).class} text-sm px-3 py-1`}>
-                            {formatStatus(selectedOrder.status).label}
-                          </Badge>
-                          <Badge variant="outline" className={`${formatDeliveryStatus(selectedOrder.deliveryStatus).class} text-sm px-3 py-1 border-current/20`}>
-                            {getDeliveryStatusIcon(selectedOrder.deliveryStatus)}
-                            <span className="ml-1">{formatDeliveryStatus(selectedOrder.deliveryStatus).label}</span>
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Fecha de Pedido</h4>
-                        <p className="text-sm font-medium">{formatDate(selectedOrder.createdAt)}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedOrder.deliveryAddress && (
-                    <div className="p-4 bg-muted/30 dark:bg-muted/10 rounded-lg border dark:border-gray-800">
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1">Dirección de Entrega</h4>
-                      <p className="text-sm dark:text-gray-300">{selectedOrder.deliveryAddress}</p>
-                    </div>
-                  )}
-
-                  {selectedOrder.notes && (
-                    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-1 text-yellow-800 dark:text-yellow-500">Notas del Cliente</h4>
-                      <p className="text-sm italic text-yellow-900 dark:text-yellow-200/80">{selectedOrder.notes}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Resumen de Productos</h4>
-                    <div className="border dark:border-gray-800 rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted/50 dark:bg-muted/20">
-                          <tr>
-                            <th className="px-4 py-3 text-left font-semibold">Producto</th>
-                            <th className="px-4 py-3 text-center font-semibold">Cant.</th>
-                            <th className="px-4 py-3 text-right font-semibold">Precio</th>
-                            <th className="px-4 py-3 text-right font-semibold">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y dark:divide-gray-800">
-                          {Array.isArray(selectedOrder.items) && selectedOrder.items.length > 0 ? (
-                            selectedOrder.items.map((item, idx) => (
-                              <tr key={idx} className="hover:bg-muted/30 dark:hover:bg-muted/10 transition-colors">
-                                <td className="px-4 py-3 font-medium dark:text-gray-200">{item.name}</td>
-                                <td className="px-4 py-3 text-center dark:text-gray-300">{item.quantity}</td>
-                                <td className="px-4 py-3 text-right dark:text-gray-300">{formatUSD(item.unitPrice)}</td>
-                                <td className="px-4 py-3 text-right font-semibold dark:text-white">{formatUSD(item.total)}</td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground italic">
-                                No hay productos registrados en esta orden
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                        <tfoot className="bg-muted/50 dark:bg-muted/20 font-bold border-t dark:border-gray-800">
-                          <tr>
-                            <td colSpan={3} className="px-4 py-4 text-right text-base">TOTAL</td>
-                            <td className="px-4 py-4 text-right text-xl text-primary">{formatUSD(selectedOrder.totalUSD)}</td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Audit Logs */}
-                  {selectedOrder.auditLogs && selectedOrder.auditLogs.length > 0 && (
-                    <div className="pt-4">
-                      <h4 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-4">Historial de la Orden</h4>
-                      <div className="space-y-4 border-l-2 border-muted dark:border-gray-800 ml-2 pl-6">
-                        {selectedOrder.auditLogs.map((log) => (
-                          <div key={log.id} className="relative">
-                            <div className="absolute -left-[31px] top-1.5 h-4 w-4 rounded-full bg-background border-2 border-primary" />
-                            <p className="text-sm font-semibold dark:text-gray-200">
-                              {log.action === 'STATUS_CHANGE' 
-                                ? `Estado cambiado de ${formatStatus(log.oldStatus || '').label} a ${formatStatus(log.newStatus || '').label}`
-                                : log.action === 'DELIVERY_STATUS_CHANGE'
-                                  ? `Entrega cambiada de ${formatDeliveryStatus(log.oldDeliveryStatus || '').label} a ${formatDeliveryStatus(log.newDeliveryStatus || '').label}`
-                                  : log.action === 'CREATED' 
-                                    ? 'Pedido recibido' 
-                                    : log.action}
-                            </p>
-                            <p className="text-xs text-muted-foreground font-medium">
-                              {formatDate(log.createdAt)} {log.user?.name ? `• por ${log.user.name}` : ''}
-                            </p>
-                            {log.reason && (
-                              <p className="text-xs mt-2 text-destructive dark:text-red-400 bg-destructive/10 dark:bg-red-900/20 px-2 py-1 rounded inline-block font-medium">
-                                Motivo: {log.reason}
-                              </p>
-                            )}
+                      {/* History Section */}
+                      <div className="p-4 rounded-xl border bg-card dark:border-gray-800">
+                        <h4 className="font-bold text-xs uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
+                          <Clock className="h-3 w-3" />
+                          Historial
+                        </h4>
+                        {selectedOrder.auditLogs && selectedOrder.auditLogs.length > 0 ? (
+                          <div className="space-y-6 border-l-2 border-muted dark:border-gray-800 ml-2 pl-4">
+                            {selectedOrder.auditLogs.map((log) => (
+                              <div key={log.id} className="relative">
+                                <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-background border-2 border-primary shadow-sm" />
+                                <p className="text-xs font-bold dark:text-gray-200 leading-tight">
+                                  {log.action === 'STATUS_CHANGE' 
+                                    ? `Estado: ${formatStatus(log.newStatus || '').label}`
+                                    : log.action === 'DELIVERY_STATUS_CHANGE'
+                                      ? `Entrega: ${formatDeliveryStatus(log.newDeliveryStatus || '').label}`
+                                      : log.action === 'CREATED' 
+                                        ? 'Pedido recibido' 
+                                        : log.action}
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                  {formatDate(log.createdAt)} {log.user?.name ? `• ${log.user.name}` : ''}
+                                </p>
+                                {log.reason && (
+                                  <div className="mt-1.5 p-1.5 bg-destructive/5 dark:bg-red-900/10 rounded text-[10px] text-destructive dark:text-red-400 border border-destructive/10">
+                                    <strong>Motivo:</strong> {log.reason}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic text-center py-4">Sin registros de actividad</p>
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
+                </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
-                    <Button className="flex-1 bg-green-600 hover:bg-green-700 h-11" onClick={() => sendWhatsAppReminder(selectedOrder)}>
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Enviar WhatsApp
-                    </Button>
-                    <Button variant="outline" className="flex-1 h-11" onClick={() => generateInvoicePDF(selectedOrder)}>
-                      <Download className="h-4 w-4 mr-2" />
-                      Descargar PDF
-                    </Button>
+                {/* Footer Actions */}
+                <div className="p-6 border-t bg-muted/30 dark:bg-muted/10 shrink-0">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {selectedOrder.status === 'PENDING' && (
+                      <div className="flex flex-1 gap-3">
+                        <Button 
+                          className={`flex-1 h-12 font-bold shadow-lg transition-all active:scale-95 ${
+                            selectedOrder.items.some(item => item.status === 'REJECTED') 
+                              ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                              : 'bg-green-600 hover:bg-green-700 text-white'
+                          }`}
+                          onClick={() => {
+                            const hasRejected = selectedOrder.items.some(item => item.status === 'REJECTED');
+                            updateOrderStatus(selectedOrder.id, hasRejected ? 'PROPOSED' : 'ACCEPTED');
+                          }}
+                          disabled={updatingId === selectedOrder.id}
+                        >
+                          {updatingId === selectedOrder.id ? (
+                            <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          ) : (
+                            selectedOrder.items.some(item => item.status === 'REJECTED') ? (
+                              <MessageCircle className="h-5 w-5 mr-2" />
+                            ) : (
+                              <CheckCircle className="h-5 w-5 mr-2" />
+                            )
+                          )}
+                          {selectedOrder.items.some(item => item.status === 'REJECTED') ? 'ENVIAR PROPUESTA' : 'ACEPTAR PEDIDO'}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          className="flex-1 h-12 font-bold shadow-lg transition-all active:scale-95" 
+                          onClick={() => handleRejectClick(selectedOrder.id)}
+                          disabled={updatingId === selectedOrder.id}
+                        >
+                          <XCircle className="h-5 w-5 mr-2" />
+                          RECHAZAR PEDIDO
+                        </Button>
+                      </div>
+                    )}
+                    <div className="flex gap-2 shrink-0">
+                      <Button 
+                        variant="outline"
+                        className="h-12 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-bold px-6" 
+                        onClick={() => sendWhatsAppReminder(selectedOrder)}
+                      >
+                        <MessageCircle className="h-5 w-5 sm:mr-2" />
+                        <span className="hidden sm:inline">WhatsApp</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="h-12 font-bold px-6" 
+                        onClick={() => generateInvoicePDF(selectedOrder)}
+                      >
+                        <Download className="h-5 w-5 sm:mr-2" />
+                        <span className="hidden sm:inline">Factura PDF</span>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="h-12 font-bold text-muted-foreground" 
+                        onClick={() => setSelectedOrder(null)}
+                      >
+                        Cerrar
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </>

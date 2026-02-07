@@ -7,6 +7,7 @@ export interface SaleRepository {
   getSummary(options: any): Promise<any>
   getStats(options: any): Promise<any>
   update(id: string, data: any): Promise<any>
+  updateItem(itemId: string, data: any): Promise<any>
   createAuditLog(data: {
     saleId: string
     action: string
