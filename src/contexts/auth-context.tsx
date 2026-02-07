@@ -10,6 +10,7 @@ interface User {
   isActive: boolean
   createdAt: string
   avatarUrl?: string | null
+  address?: string | null
 }
 
 interface GoogleData {

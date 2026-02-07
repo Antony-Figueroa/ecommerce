@@ -306,10 +306,16 @@ export function AdminDashboard() {
                       </div>
                       <Badge className={`rounded-lg font-black text-[10px] tracking-wider px-3 py-1 ${
                         order.status === "PENDING" ? "bg-amber-500/10 text-amber-500" :
-                        order.status === "CONFIRMED" ? "bg-primary/10 text-primary" :
+                        order.status === "ACCEPTED" || order.status === "CONFIRMED" || order.status === "COMPLETED" ? "bg-primary/10 text-primary" :
                         "bg-secondary/50 text-muted-foreground"
                       }`}>
-                        {order.status === "PENDING" ? "PENDIENTE" : "CONFIRMADA"}
+                        {order.status === "PENDING" ? "PENDIENTE" : 
+                         order.status === "PROCESSING" ? "PROCESANDO" :
+                         order.status === "ACCEPTED" ? "ACEPTADA" :
+                         order.status === "COMPLETED" ? "COMPLETADA" :
+                         order.status === "CANCELLED" ? "CANCELADA" :
+                         order.status === "REJECTED" ? "RECHAZADA" :
+                         order.status}
                       </Badge>
                     </div>
                   </div>

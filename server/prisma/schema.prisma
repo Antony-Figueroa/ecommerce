@@ -8,30 +8,31 @@ datasource db {
 }
 
 model User {
-  id                       String           @id @default(uuid())
-  email                    String           @unique
+  id                       String               @id @default(uuid())
+  email                    String               @unique
   passwordHash             String?
-  username                 String?          @unique
-  googleId                 String?          @unique
+  username                 String?              @unique
+  googleId                 String?              @unique
   avatarUrl                String?
-  role                     String           @default("CUSTOMER")
-  isActive                 Boolean          @default(true)
-  emailVerified            Boolean          @default(false)
-  verificationToken        String?          @unique
+  role                     String               @default("CUSTOMER")
+  isActive                 Boolean              @default(true)
+  emailVerified            Boolean              @default(false)
+  verificationToken        String?              @unique
   verificationTokenExpires DateTime?
-  resetPasswordToken       String?          @unique
+  resetPasswordToken       String?              @unique
   resetPasswordExpires     DateTime?
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
   name                     String?
   phone                    String?
+  address                  String?
+  cart                     Cart?
   favorites                Favorite[]
-  sales                    Sale[]
-  settingHistory           SettingHistory[]
-  auditLogs                SaleAuditLog[]
   notifications            Notification[]
   notificationSettings     NotificationSetting?
-  cart                     Cart?
+  sales                    Sale[]
+  auditLogs                SaleAuditLog[]
+  settingHistory           SettingHistory[]
 }
 
 model Favorite {
@@ -46,39 +47,39 @@ model Favorite {
 }
 
 model Product {
-  id               String            @id @default(uuid())
-  sku              String            @unique
+  id               String                @id @default(uuid())
+  sku              String                @unique
   name             String
-  slug             String            @unique
+  slug             String                @unique
   description      String
   price            Decimal
-  currency         String            @default("USD")
-  purchasePrice    Decimal           @default(0)
-  shippingCost     Decimal           @default(0)
-  profitMargin     Decimal           @default(1.5)
+  currency         String                @default("USD")
+  purchasePrice    Decimal               @default(0)
+  shippingCost     Decimal               @default(0)
+  profitMargin     Decimal               @default(1.5)
   image            String?
   brand            String
   format           String
   weight           String?
-  stock            Int               @default(0)
-  minStock         Int               @default(5)
-  inStock          Boolean           @default(true)
-  isActive         Boolean           @default(true)
-  isFeatured       Boolean           @default(false)
-  isOffer          Boolean           @default(false)
+  stock            Int                   @default(0)
+  minStock         Int                   @default(5)
+  inStock          Boolean               @default(true)
+  isActive         Boolean               @default(true)
+  isFeatured       Boolean               @default(false)
+  isOffer          Boolean               @default(false)
   originalPrice    Decimal?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
   brandId          String?
   batches          Batch[]
-  priceHistory     ProductPriceHistory[]
+  cartItems        CartItem[]
   favorites        Favorite[]
-  brandRelation    Brand?            @relation(fields: [brandId], references: [id])
-  categories       Category[]
+  brandRelation    Brand?                @relation(fields: [brandId], references: [id])
   images           ProductImage[]
+  priceHistory     ProductPriceHistory[]
   requirementItems RequirementItem[]
   saleItems        SaleItem[]
-  cartItems        CartItem[]
+  categories       Category[]            @relation("CategoryToProduct")
 }
 
 model Cart {
@@ -100,8 +101,8 @@ model CartItem {
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, productId])
 }
@@ -155,7 +156,7 @@ model Category {
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  products    Product[]
+  products    Product[] @relation("CategoryToProduct")
 }
 
 model Requirement {
@@ -205,7 +206,7 @@ model Sale {
   profitBS        Decimal        @default(0)
   isPaid          Boolean        @default(false)
   paidAmountUSD   Decimal?
-  deliveryStatus  String         @default("NOT_DELIVERED") // NOT_DELIVERED, IN_TRANSIT, DELIVERED
+  deliveryStatus  String         @default("NOT_DELIVERED")
   notes           String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -231,18 +232,18 @@ model SaleItem {
 }
 
 model SaleAuditLog {
-  id        String   @id @default(uuid())
-  saleId    String
-  action    String
+  id                String   @id @default(uuid())
+  saleId            String
+  action            String
   oldStatus         String?
   newStatus         String?
-  oldDeliveryStatus String?
-  newDeliveryStatus String?
   userId            String?
   reason            String?
-  createdAt DateTime @default(now())
-  sale      Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  user      User?    @relation(fields: [userId], references: [id])
+  createdAt         DateTime @default(now())
+  newDeliveryStatus String?
+  oldDeliveryStatus String?
+  user              User?    @relation(fields: [userId], references: [id])
+  sale              Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
 }
 
 model BCVRate {
@@ -304,15 +305,15 @@ model SettingHistory {
 
 model Notification {
   id        String   @id @default(uuid())
-  type      String   // 'ORDER_STATUS', 'FAVORITE_ALERT', 'PROMOTION', 'SYSTEM', 'CART_REMINDER'
-  priority  String   @default("NORMAL") // 'LOW', 'NORMAL', 'URGENT'
-  category  String   @default("SYSTEM") // 'ORDERS', 'FAVORITES', 'PROMOTIONS', 'SYSTEM'
+  type      String
+  priority  String   @default("NORMAL")
+  category  String   @default("SYSTEM")
   title     String
   message   String
   isRead    Boolean  @default(false)
-  userId    String?  // Si es null, es para administradores
-  link      String?  // URL para acción directa
-  metadata  String?  // JSON stringificado para datos adicionales (ej: id del pedido)
+  userId    String?
+  link      String?
+  metadata  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)

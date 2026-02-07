@@ -179,7 +179,7 @@ class ApiClient {
     }>('/auth/me')
   }
 
-  async updateProfile(data: { name?: string; phone?: string; avatarUrl?: string; password?: string }) {
+  async updateProfile(data: { name?: string; phone?: string; avatarUrl?: string; address?: string; password?: string; currentPassword?: string }) {
     return this.request<any>('/auth/me', {
       method: 'PATCH',
       body: JSON.stringify(data),

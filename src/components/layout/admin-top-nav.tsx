@@ -34,7 +34,11 @@ import { Separator } from "@/components/ui/separator"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 
-export function AdminTopNav() {
+interface AdminTopNavProps {
+  onMenuClick?: () => void
+}
+
+export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -162,10 +166,20 @@ export function AdminTopNav() {
   })
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/50 bg-card/80 px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/50 bg-card/80 px-4 md:px-6 backdrop-blur-md">
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onMenuClick}
+        className="md:hidden mr-2 text-muted-foreground hover:text-primary h-11 w-11"
+      >
+        <Menu className="h-6 w-6" />
+      </Button>
+
       {/* Left side: Breadcrumbs & Search */}
-      <div className="flex flex-1 items-center gap-6">
-        <nav className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground">
+      <div className="flex flex-1 items-center gap-6 overflow-hidden">
+        <nav className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground overflow-hidden whitespace-nowrap">
           <Link to="/admin" className="hover:text-primary transition-colors">
             <Home className="h-4 w-4" />
           </Link>

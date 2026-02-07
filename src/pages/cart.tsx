@@ -34,6 +34,7 @@ export function CartPage() {
         customerName: prev.customerName || user.name || "",
         customerPhone: prev.customerPhone || user.phone || "",
         customerEmail: prev.customerEmail || user.email || "",
+        deliveryAddress: prev.deliveryAddress || user.address || "",
       }))
     }
   }, [user, showCheckout])

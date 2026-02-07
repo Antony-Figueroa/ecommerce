@@ -35,7 +35,7 @@ export function Hero() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
-            Envío gratis en pedidos mayores a $500
+            Solo los mejores productos al mejor precio
           </div>
           
           <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-7xl max-w-4xl drop-shadow-md">

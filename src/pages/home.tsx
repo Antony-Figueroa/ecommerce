@@ -119,7 +119,7 @@ export function HomePage() {
           <div className="space-y-1">
             <h2 className="text-4xl font-black tracking-tight text-foreground uppercase italic">Productos <span className="text-primary">Destacados</span></h2>
             <p className="text-muted-foreground font-semibold text-lg">
-              Nuestros productos más recomendados por profesionales de la salud.
+              Nuestros productos más recomendados para su salud.
             </p>
           </div>
           <Button variant="ghost" className="rounded-full font-bold text-primary hover:bg-primary/10 w-fit h-12 px-6 border-2 border-primary/20" asChild>

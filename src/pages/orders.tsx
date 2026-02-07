@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
 import { ShoppingBag, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart } from "lucide-react"
+import { useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,8 @@ import { useCart } from "@/contexts/cart-context"
 import type { Sale as Order, SaleItem, SaleAuditLog } from "@/types"
 
 export function OrdersPage() {
+  const [searchParams] = useSearchParams()
+  const orderIdFromUrl = searchParams.get("id")
   const [orders, setOrders] = React.useState<Order[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [searchTerm, setSearchTerm] = React.useState("")
@@ -42,6 +45,12 @@ export function OrdersPage() {
     loadOrders()
     fetchBCVRate()
   }, [])
+
+  React.useEffect(() => {
+    if (orderIdFromUrl) {
+      handleViewDetails(orderIdFromUrl)
+    }
+  }, [orderIdFromUrl])
 
   const fetchBCVRate = async () => {
     try {
@@ -158,12 +167,13 @@ export function OrdersPage() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; class: string }> = {
       pending: { label: "Pendiente", class: "bg-amber-100 text-amber-900 border-amber-200" },
-      confirmed: { label: "Confirmado", class: "bg-sky-100 text-sky-900 border-sky-200" },
+      processing: { label: "Procesando", class: "bg-blue-100 text-blue-900 border-blue-200" },
+      accepted: { label: "Aceptado", class: "bg-emerald-100 text-emerald-900 border-emerald-200" },
       shipped: { label: "Enviado", class: "bg-indigo-100 text-indigo-900 border-indigo-200" },
       delivered: { label: "Entregado", class: "bg-emerald-100 text-emerald-900 border-emerald-200" },
-      cancelled: { label: "Cancelado", class: "bg-rose-100 text-rose-900 border-rose-200" },
-      accepted: { label: "Aceptado", class: "bg-blue-100 text-blue-900 border-blue-200" },
       completed: { label: "Completado", class: "bg-green-100 text-green-900 border-green-200" },
+      cancelled: { label: "Cancelado", class: "bg-rose-100 text-rose-900 border-rose-200" },
+      rejected: { label: "Rechazado", class: "bg-red-100 text-red-900 border-red-200" },
     }
     return statusMap[status.toLowerCase()] || { label: status, class: "bg-slate-100 text-slate-900 border-slate-200" }
   }
@@ -418,7 +428,7 @@ export function OrdersPage() {
                               <div>
                                 <p className="font-medium">
                                   {log.action === 'CREATED' ? 'Pedido realizado' : 
-                                   log.action === 'STATUS_CHANGE' ? `Estado actualizado a ${log.newStatus}` : 
+                                   log.action === 'STATUS_CHANGE' ? `Estado actualizado a ${getStatusBadge(log.newStatus || "").label}` : 
                                    log.action}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground">

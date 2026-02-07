@@ -299,7 +299,7 @@ export class SaleService {
           title: 'Actualización de Pedido',
           message: `Tu pedido #${updatedSale.saleNumber} ha sido ${statusLabel}.`,
           userId: updatedSale.userId,
-          link: `/profile/orders/${updatedSale.id}`,
+          link: `/pedidos?id=${updatedSale.id}`,
           metadata: JSON.stringify({ saleId: updatedSale.id, status })
         })
       } catch (error) {
@@ -604,17 +604,18 @@ export class SaleService {
       doc.text('Envío:', 350, doc.y, { width: 100, align: 'right' })
       doc.text(`$${(sale.shippingCostUSD || 0).toFixed(2)}`, 450, doc.y, { width: 100, align: 'right' })
       
-      doc.fontSize(12).text('TOTAL USD:', 350, doc.y, { width: 100, align: 'right', bold: true })
-      doc.text(`$${sale.totalUSD.toFixed(2)}`, 450, doc.y, { width: 100, align: 'right', bold: true })
+      doc.fontSize(12).font('Helvetica-Bold').text('TOTAL USD:', 350, doc.y, { width: 100, align: 'right' })
+      doc.text(`$${sale.totalUSD.toFixed(2)}`, 450, doc.y, { width: 100, align: 'right' })
       
-      doc.fontSize(10).moveDown()
+      doc.fontSize(10).font('Helvetica').moveDown()
       doc.text(`Tasa BCV: ${sale.bcvRate.toFixed(2)} Bs/$`, 350, doc.y, { width: 100, align: 'right' })
-      doc.text('TOTAL BS:', 350, doc.y, { width: 100, align: 'right', bold: true })
-      doc.text(`${sale.totalBS.toFixed(2)} Bs`, 450, doc.y, { width: 100, align: 'right', bold: true })
+      doc.font('Helvetica-Bold').text('TOTAL BS:', 350, doc.y, { width: 100, align: 'right' })
+      doc.text(`${sale.totalBS.toFixed(2)} Bs`, 450, doc.y, { width: 100, align: 'right' })
+      doc.font('Helvetica')
 
       // Footer
       doc.moveDown(2)
-      doc.fontSize(8).text('Gracias por su compra. Esta es una factura generada digitalmente.', { align: 'center', color: 'gray' })
+      doc.fontSize(8).fillColor('gray').text('Gracias por su compra. Esta es una factura generada digitalmente.', { align: 'center' })
 
       doc.end()
     })

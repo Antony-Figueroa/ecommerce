@@ -3,6 +3,7 @@ import { Package, ShoppingBag, User, Camera, Eye, EyeOff, Lock } from "lucide-re
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
@@ -28,11 +29,14 @@ export function AccountPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
   const [isUpdating, setIsUpdating] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = React.useState(false)
   const [editForm, setEditForm] = React.useState({
     name: "",
     phone: "",
     avatarUrl: "",
-    password: ""
+    address: "",
+    password: "",
+    currentPassword: ""
   })
   
   React.useEffect(() => {
@@ -42,7 +46,9 @@ export function AccountPage() {
         name: user.name || "",
         phone: user.phone || "",
         avatarUrl: user.avatarUrl || "",
-        password: ""
+        address: user.address || "",
+        password: "",
+        currentPassword: ""
       })
     }
   }, [user])
@@ -69,7 +75,7 @@ export function AccountPage() {
       }
       await api.updateProfile(updateData)
       await refreshUser()
-      setEditForm(prev => ({ ...prev, password: "" }))
+      setEditForm(prev => ({ ...prev, password: "", currentPassword: "" }))
       setIsEditDialogOpen(false)
       toast({
         title: "Perfil actualizado",
@@ -178,30 +184,36 @@ export function AccountPage() {
                   <span className="text-muted-foreground">Teléfono</span>
                   <span className="font-medium">{user.phone || "No especificado"}</span>
                 </div>
+                <div className="flex flex-col gap-1 pt-2">
+                  <span className="text-muted-foreground text-sm">Dirección de Entrega</span>
+                  <span className="font-medium text-sm">{user.address || "No especificada"}</span>
+                </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="w-full mt-4"
                   onClick={() => setIsEditDialogOpen(true)}
                 >
-                  Editar Perfil
+                  Editar Perfil y Dirección
                 </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Direcciones Guardadas</CardTitle>
+                <CardTitle className="text-lg">Acciones Rápidas</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="p-3 border rounded-lg">
-                    <p className="font-medium">Casa</p>
-                    <p className="text-sm text-muted-foreground">Av. Principal #123, Col. Centro</p>
-                    <p className="text-sm text-muted-foreground">Ciudad de Mexico, CP 12345</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full">Agregar Dirección</Button>
-                </div>
+              <CardContent className="space-y-3">
+                <Button variant="outline" size="sm" className="w-full justify-start gap-2" asChild>
+                  <Link to="/pedidos">
+                    <Package className="h-4 w-4" />
+                    Ver mis pedidos
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start gap-2" onClick={() => setIsEditDialogOpen(true)}>
+                  <Lock className="h-4 w-4" />
+                  Cambiar contraseña
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -280,6 +292,47 @@ export function AccountPage() {
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="address">Dirección de Entrega</Label>
+              <Input 
+                id="address" 
+                value={editForm.address} 
+                onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                placeholder="Calle, Edificio, Ciudad, Estado"
+              />
+            </div>
+
+            <Separator className="my-2" />
+            <p className="text-sm font-semibold text-muted-foreground">Seguridad</p>
+
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="currentPassword">Contraseña Actual</Label>
+                <span className="text-[10px] text-muted-foreground">Requerida para cambiar contraseña</span>
+              </div>
+              <div className="relative">
+                <Input 
+                  id="currentPassword" 
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={editForm.currentPassword} 
+                  onChange={(e) => setEditForm({...editForm, currentPassword: e.target.value})}
+                  placeholder="Tu contraseña actual"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Nueva Contraseña</Label>
                 <span className="text-[10px] text-muted-foreground">Opcional</span>
@@ -290,7 +343,7 @@ export function AccountPage() {
                   type={showPassword ? "text" : "password"}
                   value={editForm.password} 
                   onChange={(e) => setEditForm({...editForm, password: e.target.value})}
-                  placeholder="********"
+                  placeholder="Nueva contraseña"
                   className="pr-10"
                 />
                 <button
@@ -306,7 +359,7 @@ export function AccountPage() {
                 </button>
               </div>
               <p className="text-[10px] text-muted-foreground">
-                Deja en blanco para mantener la actual. Mínimo 8 caracteres, una mayúscula y un número.
+                Mínimo 8 caracteres, una mayúscula y un número.
               </p>
             </div>
 

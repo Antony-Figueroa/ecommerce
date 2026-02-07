@@ -11,6 +11,7 @@ import {
   History,
   Settings,
   RefreshCw,
+  X,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -260,24 +261,23 @@ export function FinancialDashboard() {
 
   return (
     <AdminLayout title="Gestión Financiera">
-      <div className="space-y-6">
+      <div className="space-y-6 pb-20 md:pb-0">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <p className="text-muted-foreground">Gestion de inventario, ventas y ganancias</p>
+            <p className="text-muted-foreground">Gestión de inventario, ventas y ganancias</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-              <DollarSign className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-xs text-green-600 font-medium">TASA BCV</p>
-                <div className="flex flex-col">
-                  <p className="text-lg font-bold text-green-700 leading-none">Bs {formatBS(bcvRate?.rate || 0)}</p>
-                  <p className="text-[10px] text-green-600 mt-1">
-                    Act: {bcvRate?.timestamp ? new Date(bcvRate.timestamp).toLocaleString('es-VE', { 
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="flex items-center gap-3 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+              <DollarSign className="h-6 w-6 text-green-600 shrink-0" />
+              <div className="flex-1">
+                <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Tasa BCV</p>
+                <div className="flex flex-row sm:flex-col items-baseline sm:items-start justify-between">
+                  <p className="text-xl font-black text-green-700 leading-none">Bs {formatBS(bcvRate?.rate || 0)}</p>
+                  <p className="text-[10px] text-green-600 mt-0 sm:mt-1 font-medium">
+                    {bcvRate?.timestamp ? new Date(bcvRate.timestamp).toLocaleString('es-VE', { 
                       day: '2-digit', 
                       month: '2-digit', 
-                      year: '2-digit', 
                       hour: '2-digit', 
                       minute: '2-digit',
                       hour12: true 
@@ -292,16 +292,17 @@ export function FinancialDashboard() {
                 <Button 
                   variant="outline" 
                   disabled={isUpdatingBcv}
+                  className="h-11 md:h-10 px-4 font-semibold"
                 >
                   {isUpdatingBcv ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   ) : (
-                    <Settings className="h-4 w-4 mr-2" />
+                    <Settings className="h-5 w-5 mr-2" />
                   )}
                   Gestionar Tasa
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80">
+              <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
                 <div className="grid gap-4">
                   <div className="space-y-2">
                     <h4 className="font-medium leading-none">Tasa de Cambio (BCV)</h4>
@@ -360,134 +361,157 @@ export function FinancialDashboard() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Resumen
-            </TabsTrigger>
-            <TabsTrigger value="pos" className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              Punto de Venta
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              Inventario
-            </TabsTrigger>
-            <TabsTrigger value="sales" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Ventas
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              Reportes
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
+            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 min-w-full">
+              <TabsTrigger value="overview" className="flex items-center gap-2 px-4 py-2 text-sm">
+                <TrendingUp className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">Resumen</span>
+              </TabsTrigger>
+              <TabsTrigger value="pos" className="flex items-center gap-2 px-4 py-2 text-sm">
+                <Calculator className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">Punto de Venta</span>
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="flex items-center gap-2 px-4 py-2 text-sm">
+                <Package className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">Inventario</span>
+              </TabsTrigger>
+              <TabsTrigger value="sales" className="flex items-center gap-2 px-4 py-2 text-sm">
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">Ventas</span>
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="flex items-center gap-2 px-4 py-2 text-sm">
+                <History className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">Reportes</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card>
-                <CardContent className="p-6">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <Card className="overflow-hidden">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-blue-100">
-                      <DollarSign className="h-5 w-5 text-blue-600" />
+                    <div className="p-3 rounded-full bg-blue-100 shrink-0">
+                      <DollarSign className="h-6 w-6 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Ventas (Bs)</p>
-                      <p className="text-2xl font-bold">Bs {formatBS(totals.totalBs)}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Total Ventas (Bs)</p>
+                      <p className="text-xl sm:text-2xl font-bold truncate">Bs {formatBS(totals.totalBs)}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-green-100">
-                      <TrendingUp className="h-5 w-5 text-green-600" />
+                    <div className="p-3 rounded-full bg-green-100 shrink-0">
+                      <TrendingUp className="h-6 w-6 text-green-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Ganancia (Bs)</p>
-                      <p className="text-2xl font-bold text-green-600">Bs {formatBS(totals.profitBs)}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Ganancia (Bs)</p>
+                      <p className="text-xl sm:text-2xl font-bold text-green-600 truncate">Bs {formatBS(totals.profitBs)}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-purple-100">
-                      <Package className="h-5 w-5 text-purple-600" />
+                    <div className="p-3 rounded-full bg-purple-100 shrink-0">
+                      <Package className="h-6 w-6 text-purple-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Productos</p>
-                      <p className="text-2xl font-bold">{products.length}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Productos</p>
+                      <p className="text-xl sm:text-2xl font-bold truncate">{products.length}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardContent className="p-6">
+              <Card className="overflow-hidden">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-yellow-100">
-                      <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <div className="p-3 rounded-full bg-yellow-100 shrink-0">
+                      <AlertTriangle className="h-6 w-6 text-yellow-600" />
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Stock Bajo</p>
-                      <p className="text-2xl font-bold">{products.filter(p => p.stock < 10).length}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Stock Bajo</p>
+                      <p className="text-xl sm:text-2xl font-bold truncate">{products.filter(p => p.stock < 10).length}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
               <Card>
-                <CardHeader>
-                  <CardTitle>Resumen de Venta Actual</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Calculator className="h-5 w-5 text-primary" />
+                    Resumen de Venta Actual
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Inversión Total (USD):</span>
-                      <span className="font-medium">${formatUSD(totals.totalCostUSD)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Ventas Totales (USD):</span>
-                      <span className="font-medium">${formatUSD(totals.totalUSD)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm pt-2 border-t">
-                      <span className="text-muted-foreground font-semibold">Total en Bolívares:</span>
-                      <span className="font-bold text-lg">Bs {formatBS(totals.totalBs)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground font-semibold">Ganancia en Bolívares:</span>
-                      <span className="font-bold">Bs {formatBS(totals.profitBs)}</span>
-                    </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-muted-foreground font-semibold">Margen de Utilidad Promedio:</span>
-                        <span>{totals.totalCostUSD > 0 ? formatUSD((totals.profitUSD / totals.totalCostUSD) * 100).replace(/\.00$/, '') : 0}%</span>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Inversión (USD)</span>
+                        <p className="text-lg font-semibold">${formatUSD(totals.totalCostUSD)}</p>
                       </div>
+                      <div className="space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Ventas (USD)</span>
+                        <p className="text-lg font-semibold">${formatUSD(totals.totalUSD)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-4 border-t space-y-3">
+                      <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg">
+                        <span className="text-sm font-bold text-muted-foreground uppercase">Total Bolívares</span>
+                        <span className="font-black text-xl text-primary">Bs {formatBS(totals.totalBs)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 px-3">
+                        <span className="text-sm font-bold text-muted-foreground uppercase">Ganancia Bs</span>
+                        <span className="font-bold text-green-600">Bs {formatBS(totals.profitBs)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 px-3">
+                        <span className="text-sm font-bold text-muted-foreground uppercase">Margen Promedio</span>
+                        <Badge variant="outline" className="font-bold border-primary/20 text-primary">
+                          {totals.totalCostUSD > 0 ? formatUSD((totals.profitUSD / totals.totalCostUSD) * 100).replace(/\.00$/, '') : 0}%
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Estado del Inventario</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Package className="h-5 w-5 text-primary" />
+                    Estado del Inventario
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {products.slice(0, 5).map(product => (
-                      <div key={product.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{product.name}</span>
+                      <div key={product.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                        <div className="flex flex-col min-w-0 pr-2">
+                          <span className="text-sm font-bold truncate">{product.name}</span>
+                          <span className="text-[10px] text-muted-foreground font-medium">SKU: {product.sku}</span>
                         </div>
-                        <Badge variant={product.stock < 10 ? "destructive" : product.stock < 20 ? "secondary" : "default"}>
-                          {product.stock} uds
+                        <Badge 
+                          className="shrink-0 h-8 flex items-center justify-center min-w-[90px] font-bold"
+                          variant={product.stock < 10 ? "destructive" : product.stock < 20 ? "secondary" : "default"}
+                        >
+                          {product.stock} und
                         </Badge>
                       </div>
                     ))}
+                    {products.length > 5 && (
+                      <Button variant="ghost" className="w-full text-xs font-bold text-primary hover:text-primary/80" onClick={() => setActiveTab("inventory")}>
+                        Ver todo el inventario
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -495,39 +519,48 @@ export function FinancialDashboard() {
           </TabsContent>
 
           <TabsContent value="pos" className="space-y-6 mt-6">
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+              <div className="lg:col-span-2 space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Productos Disponibles</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg font-bold">Productos Disponibles</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                       {products.map(product => (
-                        <div key={product.id} className="p-4 border rounded-lg hover:bg-gray-50">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                              <p className="text-sm text-muted-foreground">SKU: {product.sku}</p>
+                        <div key={product.id} className="p-4 border rounded-xl hover:border-primary/50 transition-all bg-card shadow-sm flex flex-col justify-between">
+                          <div>
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="min-w-0">
+                                <p className="font-bold text-base truncate">{product.name}</p>
+                                <p className="text-[10px] text-muted-foreground font-medium tracking-tight">SKU: {product.sku}</p>
+                              </div>
+                              <Badge 
+                                className="shrink-0 text-[10px] font-bold"
+                                variant={product.stock < 10 ? "destructive" : "secondary"}
+                              >
+                                {product.stock} und
+                              </Badge>
                             </div>
-                            <Badge variant={product.stock < 10 ? "destructive" : "default"}>
-                              Stock: {product.stock}
-                            </Badge>
-                          </div>
-                          <div className="mt-3 flex justify-between items-center">
-                            <div className="text-sm">
-                              <p className="text-muted-foreground">Costo: ${formatUSD(product.purchasePrice + product.shippingCost)}</p>
-                              <p className="font-semibold text-green-600">Venta: ${formatUSD(product.price)}</p>
+                            <div className="mt-4 p-3 bg-muted/20 rounded-lg flex justify-between items-center">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Precio Venta</p>
+                                <div className="flex items-baseline gap-1">
+                                  <p className="font-black text-lg text-green-600">${formatUSD(product.price)}</p>
+                                  <p className="text-[10px] text-muted-foreground font-medium">≈ Bs {formatBS(product.price * bcvRate.rate)}</p>
+                                </div>
+                              </div>
                             </div>
-                            <Button
-                              size="sm"
-                              onClick={() => addToCart(product)}
-                              disabled={product.stock === 0}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Agregar
-                            </Button>
                           </div>
+                          <Button
+                            className="w-full mt-4 h-11 md:h-10 font-bold gap-2 shadow-sm"
+                            size="default"
+                            onClick={() => addToCart(product)}
+                            disabled={product.stock === 0}
+                          >
+                            <Plus className="h-5 w-5" />
+                            Agregar
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -535,70 +568,90 @@ export function FinancialDashboard() {
                 </Card>
               </div>
 
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Carrito de Venta</CardTitle>
+              <div className="space-y-4">
+                <Card className="sticky top-4">
+                  <CardHeader className="pb-2 border-b">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-lg font-bold">Carrito de Venta</CardTitle>
+                      <Badge variant="secondary" className="font-bold">{cart.length}</Badge>
+                    </div>
                   </CardHeader>
-                  <CardContent>
-                    {cart.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">Carrito vacio</p>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {cart.map(item => (
-                            <div key={item.product.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div className="flex-1">
-                                <p className="text-sm font-medium truncate">{item.product.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  ${formatUSD(item.product.price)} x {item.quantity}
+                  <CardContent className="p-0">
+                    <div className="max-h-[50vh] overflow-y-auto p-4 space-y-4">
+                      {cart.length === 0 ? (
+                        <div className="text-center py-10 space-y-2">
+                          <Package className="h-10 w-10 mx-auto text-muted-foreground/30" />
+                          <p className="text-sm text-muted-foreground font-medium">No hay productos en el carrito</p>
+                        </div>
+                      ) : (
+                        cart.map(item => (
+                          <div key={item.product.id} className="flex flex-col gap-3 pb-4 border-b last:border-0">
+                            <div className="flex justify-between items-start gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold truncate leading-tight">{item.product.name}</p>
+                                <p className="text-[11px] font-black text-green-600 mt-1">
+                                  ${formatUSD(item.product.price * item.quantity)} 
+                                  <span className="text-muted-foreground font-medium ml-1">
+                                    (Bs {formatBS(item.product.price * item.quantity * bcvRate.rate)})
+                                  </span>
                                 </p>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="w-8 text-center">{item.quantity}</span>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                                onClick={() => removeFromCart(item.product.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
-                          ))}
-                        </div>
-
-                        <div className="border-t pt-4 space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Total (USD)</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 md:h-8 md:w-8 shrink-0 border-primary/20"
+                                onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateCartQuantity(item.product.id, parseInt(e.target.value))}
+                                className="h-9 md:h-8 text-center font-bold text-sm w-full"
+                              />
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 md:h-8 md:w-8 shrink-0 border-primary/20"
+                                onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    {cart.length > 0 && (
+                      <div className="p-4 bg-muted/30 space-y-4 rounded-b-xl border-t">
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                            <span>Subtotal USD</span>
                             <span>${formatUSD(totals.totalUSD)}</span>
                           </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Costo (USD)</span>
-                            <span>${formatUSD(totals.totalCostUSD)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm font-bold pt-2 border-t">
-                            <span>Total (Bs)</span>
-                            <span>Bs {formatBS(totals.totalBs)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-green-600 font-bold">
-                            <span>Ganancia (Bs)</span>
-                            <span>Bs {formatBS(totals.profitBs)}</span>
+                          <div className="flex justify-between items-center pt-2 border-t border-muted-foreground/10">
+                            <span className="text-sm font-black text-primary uppercase">Total Bolívares</span>
+                            <span className="text-xl font-black text-primary">Bs {formatBS(totals.totalBs)}</span>
                           </div>
                         </div>
-
-                        <Button className="w-full" size="lg" onClick={processSale}>
-                          <DollarSign className="h-4 w-4 mr-2" />
-                          Procesar Venta
+                        <Button 
+                          className="w-full h-12 md:h-11 font-black text-base shadow-lg shadow-primary/20 gap-2"
+                          onClick={processSale}
+                        >
+                          <DollarSign className="h-5 w-5" />
+                          PROCESAR VENTA
                         </Button>
                       </div>
                     )}
@@ -610,76 +663,111 @@ export function FinancialDashboard() {
 
           <TabsContent value="inventory" className="space-y-6 mt-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Inventario con Costos</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" />
+                  Inventario con Costos
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4">Producto</th>
-                      <th className="text-left p-4">SKU</th>
-                      <th className="text-right p-4">Stock</th>
-                      <th className="text-right p-4">Costo Compra</th>
-                      <th className="text-right p-4">Envio</th>
-                      <th className="text-right p-4">Costo Total</th>
-                      <th className="text-right p-4">Precio Venta</th>
-                      <th className="text-right p-4">Margen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map(product => (
-                      <tr key={product.id} className="border-b">
-                        <td className="p-4 font-medium">{product.name}</td>
-                        <td className="p-4 text-muted-foreground">{product.sku}</td>
-                        <td className="p-4 text-right">
-                          <Badge variant={product.stock < 10 ? "destructive" : "secondary"}>
-                            {product.stock}
-                          </Badge>
-                        </td>
-                        <td className="p-4 text-right">${formatUSD(product.purchasePrice)}</td>
-                        <td className="p-4 text-right">${formatUSD(product.shippingCost)}</td>
-                        <td className="p-4 text-right">
-                          ${formatUSD(product.purchasePrice + product.shippingCost)}
-                        </td>
-                        <td className="p-4 text-right">
-                          ${formatUSD(product.price)}
-                        </td>
-                        <td className="p-4 text-center">
-                          <Badge variant="outline">{Number(product.profitMargin * 100).toFixed(0)}%</Badge>
-                        </td>
+              <CardContent className="px-0 sm:px-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/30">
+                        <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Producto</th>
+                        <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden lg:table-cell">SKU</th>
+                        <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:table-cell">Stock</th>
+                        <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden xl:table-cell">Costo Compra</th>
+                        <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden xl:table-cell">Envio</th>
+                        <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Costo Total</th>
+                        <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Precio Venta</th>
+                        <th className="text-center p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden md:table-cell">Margen</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {products.map(product => (
+                        <tr key={product.id} className="border-b hover:bg-muted/30 transition-colors">
+                          <td className="p-4">
+                            <div className="flex flex-col min-w-[120px]">
+                              <span className="font-bold text-sm leading-tight">{product.name}</span>
+                              <span className="text-[10px] text-muted-foreground lg:hidden mt-1 font-medium">SKU: {product.sku}</span>
+                              <div className="flex items-center gap-2 sm:hidden mt-2">
+                                <Badge variant={product.stock < 10 ? "destructive" : "secondary"} className="text-[9px] h-5 px-1.5 font-bold">
+                                  Stock: {product.stock}
+                                </Badge>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4 text-muted-foreground hidden lg:table-cell font-medium text-sm">{product.sku}</td>
+                          <td className="p-4 text-right hidden sm:table-cell">
+                            <Badge variant={product.stock < 10 ? "destructive" : "secondary"} className="font-bold">
+                              {product.stock}
+                            </Badge>
+                          </td>
+                          <td className="p-4 text-right hidden xl:table-cell font-medium text-sm">${formatUSD(product.purchasePrice)}</td>
+                          <td className="p-4 text-right hidden xl:table-cell font-medium text-sm">${formatUSD(product.shippingCost)}</td>
+                          <td className="p-4 text-right hidden lg:table-cell font-bold text-sm">
+                            ${formatUSD(product.purchasePrice + product.shippingCost)}
+                          </td>
+                          <td className="p-4 text-right">
+                            <div className="flex flex-col items-end">
+                              <span className="font-black text-primary text-base">${formatUSD(product.price)}</span>
+                              <span className="text-[9px] text-green-600 font-bold md:hidden mt-1 uppercase tracking-tighter">
+                                {Number(product.profitMargin * 100).toFixed(0)}% ganancia
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-center hidden md:table-cell">
+                            <Badge variant="outline" className="font-black border-primary/20 text-primary bg-primary/5">
+                              {Number(product.profitMargin * 100).toFixed(0)}%
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="sales" className="space-y-6 mt-6">
             <Card>
-              <CardHeader>
-                <CardTitle>Historial de Ventas</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold">Historial de Ventas</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="space-y-4">
                   {sales.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">No hay ventas registradas</p>
+                    <div className="text-center py-12">
+                      <FileText className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground font-medium">No hay ventas registradas</p>
+                    </div>
                   ) : (
                     sales.map(sale => (
-                      <div key={sale.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{sale.saleNumber}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(sale.createdAt).toLocaleString()}
+                      <div key={sale.id} className="p-4 border rounded-xl hover:bg-muted/30 transition-colors shadow-sm bg-card">
+                        <div className="flex justify-between items-start gap-3">
+                          <div className="min-w-0">
+                            <p className="font-black text-sm uppercase tracking-tight truncate">{sale.saleNumber}</p>
+                            <p className="text-[10px] text-muted-foreground font-medium mt-1">
+                              {new Date(sale.createdAt).toLocaleString('es-VE', { 
+                                day: '2-digit', 
+                                month: '2-digit', 
+                                year: '2-digit', 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: true 
+                              })}
                             </p>
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold text-lg">Bs {formatBS(sale.totalBs)}</p>
-                            <p className="text-xs text-green-600 font-medium">
-                              Ganancia: Bs {formatBS(sale.realProfit)}
-                            </p>
+                          <div className="text-right shrink-0">
+                            <p className="font-black text-lg text-primary leading-tight">Bs {formatBS(sale.totalBs)}</p>
+                            <div className="flex items-center justify-end gap-1 mt-1">
+                              <TrendingUp className="h-3 w-3 text-green-600" />
+                              <p className="text-[10px] text-green-600 font-black uppercase">
+                                +Bs {formatBS(sale.realProfit)}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -691,52 +779,58 @@ export function FinancialDashboard() {
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-6 mt-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+              <Card className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-blue-500 group">
                 <CardContent className="p-6 text-center">
-                  <FileText className="h-12 w-12 mx-auto text-blue-500 mb-4" />
-                  <h3 className="font-semibold mb-2">Reporte de Ventas</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Genera un reporte detallado de todas las ventas con ganancias por producto
+                  <div className="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <FileText className="h-6 w-6 text-blue-500" />
+                  </div>
+                  <h3 className="font-bold text-sm mb-2">Ventas</h3>
+                  <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                    Detalle de ventas y ganancias por producto
                   </p>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+              <Card className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-green-500 group">
                 <CardContent className="p-6 text-center">
-                  <Package className="h-12 w-12 mx-auto text-green-500 mb-4" />
-                  <h3 className="font-semibold mb-2">Reporte de Inventario</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Estado actual del inventario con valores y alertas de stock
+                  <div className="bg-green-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Package className="h-6 w-6 text-green-500" />
+                  </div>
+                  <h3 className="font-bold text-sm mb-2">Inventario</h3>
+                  <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                    Estado actual, valores y alertas de stock
                   </p>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+              <Card className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-purple-500 group">
                 <CardContent className="p-6 text-center">
-                  <TrendingUp className="h-12 w-12 mx-auto text-purple-500 mb-4" />
-                  <h3 className="font-semibold mb-2">Reporte Financiero</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Resumen de ingresos, ganancias y metricas financieras
+                  <div className="bg-purple-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <TrendingUp className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <h3 className="font-bold text-sm mb-2">Financiero</h3>
+                  <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
+                    Resumen de ingresos y métricas globales
                   </p>
                 </CardContent>
               </Card>
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Generar Reporte</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold">Generar Reporte Personalizado</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <label className="text-sm font-medium">Fecha Inicio</label>
-                    <Input type="date" />
+              <CardContent className="p-4 sm:p-6 space-y-6">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Fecha Inicio</label>
+                    <Input type="date" className="h-11 font-medium" />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Fecha Fin</label>
-                    <Input type="date" />
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Fecha Fin</label>
+                    <Input type="date" className="h-11 font-medium" />
                   </div>
                   <div className="flex items-end">
-                    <Button className="w-full">Generar Reporte</Button>
+                    <Button className="w-full h-11 font-black text-sm shadow-lg shadow-primary/20">GENERAR REPORTE</Button>
                   </div>
                 </div>
               </CardContent>

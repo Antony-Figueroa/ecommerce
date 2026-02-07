@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminTopNav } from "./admin-top-nav"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -26,18 +27,19 @@ interface AdminLayoutProps {
 const menuItems = [
   { path: "/admin", label: "Inicio", icon: LayoutDashboard },
   { path: "/admin/financial", label: "Financiero", icon: DollarSign },
-  { path: "/admin/orders", label: "Ordenes", icon: ShoppingCart, badge: 5 },
+  { path: "/admin/orders", label: "Pedidos", icon: ShoppingCart, badge: 5 },
   { path: "/admin/products", label: "Productos", icon: Package },
-  { path: "/admin/categories", label: "Categorias", icon: Tag },
+  { path: "/admin/categories", label: "Categorías", icon: Tag },
   { path: "/admin/customers", label: "Clientes", icon: Users },
   { path: "/admin/inventory", label: "Inventario", icon: Box, alert: true },
   { path: "/admin/analytics", label: "Reportes", icon: BarChart3 },
   { path: "/admin/notifications", label: "Notificaciones", icon: Bell },
-  { path: "/admin/settings", label: "Configuracion", icon: Settings },
+  { path: "/admin/settings", label: "Configuración", icon: Settings },
 ]
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const location = useLocation()
 
   useEffect(() => {
@@ -46,24 +48,19 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     }
   }, [title])
 
-  return (
-    <div className="min-h-screen bg-secondary/30">
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 ${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-card border-r border-border/50`}
-      >
-        {/* Logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-border/50">
-          {sidebarOpen && (
-            <Link to="/admin" className="flex items-center gap-2 group">
-              <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
-                <Leaf className="h-5 w-5" />
-              </div>
-              <span className="font-extrabold text-lg tracking-tight text-foreground">Dashboard</span>
-            </Link>
-          )}
+  const SidebarContent = ({ isMobile = false }) => (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex h-16 items-center justify-between px-4 border-b border-border/50 bg-card">
+        {(sidebarOpen || isMobile) && (
+          <Link to="/admin" className="flex items-center gap-2 group">
+            <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+              <Leaf className="h-5 w-5" />
+            </div>
+            <span className="font-extrabold text-lg tracking-tight text-foreground">Admin</span>
+          </Link>
+        )}
+        {!isMobile && (
           <Button
             variant="ghost"
             size="icon"
@@ -72,42 +69,65 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           >
             {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-        </div>
+        )}
+      </div>
 
-        {/* Navigation */}
-        <nav className="mt-6 px-3 space-y-1">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== "/admin" && location.pathname.startsWith(item.path))
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${
-                  isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02]"
-                    : "text-muted-foreground hover:bg-secondary hover:text-primary hover:pl-5"
-                }`}
-              >
-                <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-primary-foreground" : "text-muted-foreground/70"}`} />
-                {sidebarOpen && (
-                  <span className="flex-1">{item.label}</span>
-                )}
-              </Link>
-            )
-          })}
-        </nav>
+      {/* Navigation */}
+      <nav className="mt-6 px-3 space-y-1 flex-1 overflow-y-auto">
+        {menuItems.map((item) => {
+          const isActive = location.pathname === item.path || (item.path !== "/admin" && location.pathname.startsWith(item.path))
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => isMobile && setIsMobileMenuOpen(false)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm ${
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02]"
+                  : "text-muted-foreground hover:bg-secondary hover:text-primary hover:pl-5"
+              }`}
+            >
+              <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-primary-foreground" : "text-muted-foreground/70"}`} />
+              {(sidebarOpen || isMobile) && (
+                <span className="flex-1">{item.label}</span>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-secondary/30">
+      {/* Desktop Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 z-40 h-screen transition-all duration-300 hidden md:block ${
+          sidebarOpen ? "w-64" : "w-20"
+        } bg-card border-r border-border/50`}
+      >
+        <SidebarContent />
       </aside>
 
-      <div className={`transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
-        <AdminTopNav />
-        <main className="p-6">
+      {/* Mobile Sidebar (Sheet) */}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetContent side="left" className="p-0 w-64 border-none">
+          <SidebarContent isMobile />
+        </SheetContent>
+      </Sheet>
+
+      <div className={`transition-all duration-300 ${sidebarOpen ? "md:ml-64" : "md:ml-20"}`}>
+        <AdminTopNav onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <main className="p-4 md:p-6">
           {title && (
             <div className="mb-6">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
             </div>
           )}
-          {children}
+          <div className="w-full overflow-hidden">
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -141,6 +141,7 @@ export interface User {
   isActive: boolean
   avatarUrl?: string | null
   phone?: string | null
+  address?: string | null
 }
 
 export interface AuthResponse {

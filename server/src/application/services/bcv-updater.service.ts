@@ -21,7 +21,7 @@ export class BCVUpdaterService {
       const previousRate = await this.bcvRepo.getCurrentRate()
       
       let newRate: number | null = null
-      const source = 'auto-ve-dolarapi-bcv'
+      let source = 'auto-ve-dolarapi-bcv'
 
       try {
         // 2. Consultar API (DolarApi.com - BCV Oficial)
@@ -40,14 +40,29 @@ export class BCVUpdaterService {
       } catch (apiError) {
         console.error('Error consultando DolarApi BCV:', apiError)
         
-        // Mecanismo de respaldo final: Tasa fija desde configuración
-        const fallbackSetting = await this.settingsRepo.findByKey('FIXED_BCV_RATE')
-        
-        if (fallbackSetting && fallbackSetting.value) {
-          newRate = parseFloat(fallbackSetting.value)
-          console.log(`Usando tasa de respaldo fija: ${newRate}`)
+        // 1. Intentar usar la tasa previa de la BD (último registro obtenido de la API exitosamente)
+        if (previousRate > 0) {
+          newRate = previousRate
+          source = 'auto-fallback-db'
+          console.log(`API falló. Usando última tasa conocida de la BD como respaldo: ${newRate}`)
+          
+          // Notificar advertencia para que el administrador sepa que la API falló pero el sistema continúa
+          await this.notificationService.createNotification({
+            type: 'SYSTEM',
+            title: 'Advertencia Actualización BCV',
+            message: 'La API de DolarApi falló. Se está utilizando el último monto registrado en la base de datos como respaldo.'
+          })
         } else {
-          throw new Error('La API falló y no hay una tasa de respaldo configurada')
+          // 2. Mecanismo de respaldo final: Tasa fija desde configuración
+          const fallbackSetting = await this.settingsRepo.findByKey('FIXED_BCV_RATE')
+          
+          if (fallbackSetting && fallbackSetting.value) {
+            newRate = parseFloat(fallbackSetting.value)
+            source = 'auto-fallback-fixed'
+            console.log(`API falló y no hay historial. Usando tasa de respaldo fija configurada: ${newRate}`)
+          } else {
+            throw new Error('La API falló, no hay historial en la BD y no hay una tasa de respaldo fija configurada')
+          }
         }
       }
 

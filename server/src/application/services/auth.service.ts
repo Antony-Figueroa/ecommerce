@@ -191,11 +191,25 @@ export class AuthService {
   }
 
   async updateProfile(userId: string, data: any) {
-    const { name, phone, avatarUrl, password } = data
+    const { name, phone, avatarUrl, address, password, currentPassword } = data
     
-    const updateData: any = { name, phone, avatarUrl }
+    const updateData: any = { name, phone, avatarUrl, address }
     
     if (password) {
+      if (!currentPassword) {
+        throw new ValidationError('La contraseña actual es requerida para cambiar la contraseña')
+      }
+      
+      const user = await this.userRepo.findById(userId)
+      if (!user || !user.passwordHash) {
+        throw new ValidationError('Usuario no encontrado')
+      }
+      
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash)
+      if (!isMatch) {
+        throw new ValidationError('La contraseña actual es incorrecta')
+      }
+      
       updateData.passwordHash = await bcrypt.hash(password, 12)
     }
     

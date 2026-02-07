@@ -91,7 +91,7 @@ export function CartDrawer() {
                 </div>
                 {totalPrice < 500 && (
                   <p className="text-xs text-muted-foreground">
-                    Envío gratis en pedidos mayores a $500
+                    Solo los mejores productos al mejor precio
                   </p>
                 )}
               </div>
