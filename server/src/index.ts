@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from 'express'
 import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -36,49 +37,76 @@ import { socketService } from './infrastructure/socket.service.js'
 const app = express()
 const httpServer = createServer(app)
 
+app.use(cors({
+  origin: (origin, callback) => {
+    console.log(`[CORS_CHECK] Origin: ${origin}`);
+    callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}))
+
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+app.use((req, res, next) => {
+  console.log(`[TOP_DEBUG] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+  next();
+});
+
 // Initialize Socket.io
 socketService.init(httpServer)
 
-app.use(helmet({
-  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}))
-app.use(cors({
-  origin: [config.frontendUrl, 'http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}))
 app.use((_req, res, next) => {
   // Permitir comunicación con popups para Google Auth
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+  // Eliminado Cross-Origin-Embedder-Policy que puede causar bloqueos de red local
   next();
 });
 app.use((req, _res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
-const limiter = rateLimit({
-  windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMax,
-  handler: rateLimitHandler,
-  skip: (req) => {
-    // No aplicar rate limit en desarrollo si es localhost
-    if (process.env.NODE_ENV !== 'production') return true;
-    return false;
+app.use((req, res, next) => {
+  console.log(`[ROUTE_CHECK] ${req.method} ${req.url} - RawPath: ${req.path}`);
+  next();
+});
+
+app.get('/api/health', (_req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/ping', (_req: Request, res: Response) => {
+  res.send('pong');
+});
+
+app.post('/api/auth/callback/g', async (req: Request, res: Response) => {
+  console.log('[DEBUG_DIRECT] Petición recibida en /api/auth/callback/g DIRECTO');
+  console.log('[DEBUG_DIRECT] Body:', JSON.stringify(req.body));
+  const { authService } = await import('./shared/container.js');
+  try {
+    const { credential } = req.body
+    if (!credential) {
+      console.warn('[DEBUG_DIRECT] No se recibió credencial');
+      return res.status(400).json({ error: 'No se recibió la credencial de Google' });
+    }
+    const result = await authService.googleAuth(credential)
+    console.log('[DEBUG_DIRECT] Autenticación exitosa');
+    res.json({ success: true, ...result })
+  } catch (error: any) {
+    console.error('[DEBUG_DIRECT] Error:', error);
+    res.status(400).json({ error: error.message })
   }
-})
-app.use('/api/', limiter)
-
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-})
-
+});
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productRoutes)
 app.use('/api/sales', saleRoutes)
@@ -101,6 +129,29 @@ app.use('/api/admin/notifications', adminNotificationRoutes)
 app.use('/api/admin/upload', adminUploadRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
+
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+
+const limiter = rateLimit({
+  windowMs: config.rateLimitWindowMs,
+  max: config.rateLimitMax,
+  handler: rateLimitHandler,
+  skip: (req) => {
+    // No aplicar rate limit en desarrollo si es localhost
+    if (process.env.NODE_ENV !== 'production') return true;
+    return false;
+  }
+})
+app.use('/api/', limiter)
+
+// HEALTH CHECK EN LA RAÍZ PARA EVITAR CONFLICTOS CON /api
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV })
+})
+
+app.get('/', (_req, res) => {
+  res.json({ message: "Ana's Supplements API is running" })
+})
 
 app.use(notFoundHandler)
 app.use(ErrorHandler.handle)

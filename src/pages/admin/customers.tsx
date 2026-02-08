@@ -157,6 +157,7 @@ export function AdminCustomersPage() {
   const totalCustomers = customers.length
   const activeCustomersCount = customers.filter(c => c.isActive).length
   const inactiveCustomersCount = customers.filter(c => !c.isActive).length
+  console.log({ totalCustomers, activeCustomersCount, inactiveCustomersCount })
 
   if (loading) {
     return (
@@ -369,6 +370,7 @@ export function AdminCustomersPage() {
                         <div>
                           <p className="font-bold">{customer.name || 'Sin nombre'}</p>
                           <p className="text-xs text-muted-foreground">@{customer.username || 'usuario'}</p>
+                          <p className="text-[10px] text-muted-foreground/60">{formatDate(customer.createdAt)}</p>
                         </div>
                       </div>
                     </td>

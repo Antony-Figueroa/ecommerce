@@ -138,7 +138,7 @@ export function LoginPage() {
   }
 
   const handleGoogleError = () => {
-    setError("Error en la autenticación con Google")
+    setError("Error en la autenticación con Google. Por favor, asegúrate de que las cookies de terceros estén permitidas o intenta con otro navegador.")
   }
 
   return (
@@ -282,14 +282,15 @@ export function LoginPage() {
           </div>
 
           <div className="flex justify-center">
-            <div className="w-full transform transition-transform hover:scale-[1.02]">
+            <div className="w-full flex justify-center min-h-[44px]">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                useOneTap
+                useOneTap={false}
+                use_fedcm_for_prompt={true}
                 theme="outline"
                 size="large"
-                width="100%"
+                width="250"
                 shape="pill"
                 text="continue_with"
               />

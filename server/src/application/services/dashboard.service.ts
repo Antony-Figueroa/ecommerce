@@ -85,9 +85,9 @@ export class DashboardService {
       })
 
       // Total Revenue (only from COMPLETED sales)
-    const totalRevenue = salesData
-      .filter((s: any) => s.status === 'COMPLETED')
-      .reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0)
+      const totalRevenue = allSalesForChart
+        .filter((s: any) => s.status === 'COMPLETED')
+        .reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0)
 
       return {
         totalOrders,

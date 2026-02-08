@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Facebook, Instagram, Twitter, Phone, Mail, MapPin, Clock, LogOut } from "lucide-react"
+import { Phone, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"

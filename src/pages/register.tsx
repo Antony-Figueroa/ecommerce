@@ -316,17 +316,20 @@ export function RegisterPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <div className="flex justify-center w-full overflow-hidden">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap={false}
-                use_fedcm_for_prompt={true}
-                theme="outline"
-                size="large"
-                text="signup_with"
-                shape="rectangular"
-              />
+            <div className="flex justify-center w-full overflow-hidden min-h-[44px]">
+              <div className="w-full flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap={false}
+                  use_fedcm_for_prompt={true}
+                  theme="outline"
+                  size="large"
+                  width="250"
+                  text="signup_with"
+                  shape="rectangular"
+                />
+              </div>
             </div>
           </div>
         </CardContent>

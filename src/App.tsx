@@ -1,16 +1,12 @@
 import { Routes, Route, useLocation } from "react-router-dom"
-import { useEffect, lazy, Suspense } from "react"
+import { useEffect, lazy } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { CartProvider } from "@/contexts/cart-context"
 import { FavoritesProvider } from "@/contexts/favorites-context"
-import { Navbar } from "@/components/layout/navbar"
-import { Footer } from "@/components/layout/footer"
-import { WhatsAppButton } from "@/components/shared/whatsapp-button"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { UserAccountLayout } from "@/components/layout/user-account-layout"
 import { AdminLayout } from "@/components/layout/admin-layout"
 import { Toaster } from "@/components/ui/toaster"
-import { PageLoader } from "@/components/shared/page-loader"
 import { RootLayout } from "@/components/layout/root-layout"
 
 // Optimizando tamaño del bundle mediante importaciones dinámicas (bundle-dynamic-imports)

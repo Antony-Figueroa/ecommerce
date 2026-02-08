@@ -30,9 +30,15 @@ class ApiClient {
       ...options.headers,
     }
 
+    const method = options.method || 'GET';
+    console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
+      method,
       headers,
+    }).catch(err => {
+      console.error(`[DEBUG] Fetch error for ${endpoint}:`, err);
+      throw err;
     })
 
     if (!response.ok) {
@@ -212,7 +218,7 @@ class ApiClient {
       user?: any;
       requiresRegistration?: boolean;
       googleData?: any;
-    }>('/auth/google', {
+    }>('/auth/callback/g', {
       method: 'POST',
       body: JSON.stringify({ credential }),
     })

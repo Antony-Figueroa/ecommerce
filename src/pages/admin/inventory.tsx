@@ -218,7 +218,8 @@ export function AdminInventoryPage() {
   }
 
   return (
-    <div className="space-y-8 p-6 font-sans selection:bg-primary/20 selection:text-primary">
+    <AdminLayout>
+      <div className="space-y-8 p-6 font-sans selection:bg-primary/20 selection:text-primary">
         {/* Header - Warm & Professional */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">

@@ -1,6 +1,5 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AdminLayout } from '@/components/layout/admin-layout';
 import { api } from '@/lib/api';
 import { formatUSD as formatUSDUtil } from '@/lib/utils';
 import { 
@@ -11,7 +10,6 @@ import {
   ArrowUpRight, 
   ArrowDownRight,
   Activity,
-  Calendar,
   ChevronRight,
   Plus,
   Loader2,
@@ -116,7 +114,7 @@ export function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">Sincronizando Vitalidad...</p>
@@ -127,7 +125,7 @@ export function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center p-8 bg-card rounded-2xl border border-border shadow-xl max-w-md">
           <Activity className="h-12 w-12 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground mb-2">Error de Sincronización</h2>
@@ -145,16 +143,10 @@ export function AdminDashboard() {
     );
   }
 
-  if (!stats) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-10 w-10 text-primary animate-spin" />
-      </div>
-    );
-  }
+  if (!stats) return null;
 
   return (
-    <div className="p-4 lg:p-8 bg-background min-h-screen selection:bg-primary/20 selection:text-primary">
+    <div className="bg-background selection:bg-primary/20 selection:text-primary">
         {/* Header Section with Vitality Zen Style */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -172,22 +164,6 @@ export function AdminDashboard() {
                 <span className="h-px w-8 bg-slate-200 dark:bg-border" />
                 Gestión profesional de rendimiento y salud
               </p>
-            </div>
-            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Periodo:</span>
-              <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
-                <button
-                  className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group bg-white dark:bg-card text-primary shadow-md scale-[1.02]"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                  30 días
-                </button>
-                <button
-                  className="flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
-                >
-                  90 días
-                </button>
-              </div>
             </div>
             <Button 
               onClick={() => navigate('/admin/products')}

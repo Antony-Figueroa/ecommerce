@@ -4,9 +4,6 @@ import {
   Search,
   Edit,
   Trash2,
-  X,
-  Package,
-  Smile,
   Loader2,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -21,7 +18,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { AdminLayout } from "@/components/layout/admin-layout"
 import { api } from "@/lib/api"
 import { EmojiPicker } from "@/components/shared/emoji-picker"
 import { useToast } from "@/hooks/use-toast"

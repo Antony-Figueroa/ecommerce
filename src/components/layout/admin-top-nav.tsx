@@ -32,7 +32,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
@@ -63,6 +62,27 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   const [notifications, setNotifications] = useState<any[]>([])
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const { on, off } = useSocket()
+
+  // Breadcrumb mapping
+  const pathnames = location.pathname.split("/").filter((x) => x)
+  const breadcrumbs = pathnames.map((name, index) => {
+    const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`
+    const isLast = index === pathnames.length - 1
+    
+    // Format label
+    let label = name.charAt(0).toUpperCase() + name.slice(1)
+    if (name === "admin") label = "Inicio"
+    if (name === "financial") label = "Financiero"
+    if (name === "orders") label = "Órdenes"
+    if (name === "products") label = "Productos"
+    if (name === "categories") label = "Categorías"
+    if (name === "customers") label = "Clientes"
+    if (name === "inventory") label = "Inventario"
+    if (name === "analytics") label = "Reportes"
+    if (name === "settings") label = "Configuración"
+
+    return { label, routeTo, isLast }
+  })
 
   useEffect(() => {
     fetchBCVRate()
@@ -175,73 +195,55 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
-  // Breadcrumb logic
-  const pathnames = location.pathname.split("/").filter((x) => x)
-  const breadcrumbs = pathnames.map((name, index) => {
-    const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`
-    const isLast = index === pathnames.length - 1
-    
-    // Format label
-    let label = name.charAt(0).toUpperCase() + name.slice(1)
-    if (name === "admin") label = "Inicio"
-    if (name === "financial") label = "Financiero"
-    if (name === "orders") label = "Órdenes"
-    if (name === "products") label = "Productos"
-    if (name === "categories") label = "Categorías"
-    if (name === "customers") label = "Clientes"
-    if (name === "inventory") label = "Inventario"
-    if (name === "analytics") label = "Reportes"
-    if (name === "settings") label = "Configuración"
-
-    return { label, routeTo, isLast }
-  })
-
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/50 bg-card/80 px-4 md:px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/40 bg-card/60 px-4 md:px-8 backdrop-blur-xl">
       <TooltipProvider>
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onMenuClick}
-          className="md:hidden mr-2 text-muted-foreground hover:text-primary h-11 w-11"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
+        <div className="flex items-center gap-4 flex-1">
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onMenuClick}
+            className="md:hidden text-muted-foreground hover:text-primary h-10 w-10 rounded-xl hover:bg-primary/5"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-        {/* Left side: Breadcrumbs & Search */}
-        <div className="flex flex-1 items-center gap-6 overflow-hidden">
-          <nav className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground overflow-hidden whitespace-nowrap">
-            <Link to="/admin" className="hover:text-primary transition-colors">
+          {/* Breadcrumbs */}
+          <nav className="hidden md:flex items-center gap-2.5 text-sm font-bold text-muted-foreground/60">
+            <Link to="/admin" className="hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-primary/5">
               <Home className="h-4 w-4" />
             </Link>
             {breadcrumbs.map((breadcrumb) => (
               breadcrumb.routeTo !== "/admin" && (
-                <div key={breadcrumb.routeTo} className="flex items-center gap-2">
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                  {breadcrumb.isLast ? (
-                    <span className="text-foreground font-bold">{breadcrumb.label}</span>
-                  ) : (
-                    <Link to={breadcrumb.routeTo} className="hover:text-primary transition-colors">
-                      {breadcrumb.label}
-                    </Link>
-                  )}
+                <div key={breadcrumb.routeTo} className="flex items-center gap-2.5">
+                  <ChevronRight size={12} className="text-muted-foreground/30" strokeWidth={3} />
+                  <Link 
+                    to={breadcrumb.routeTo} 
+                    className={cn(
+                      "transition-colors hover:text-primary px-2 py-1 rounded-md hover:bg-primary/5",
+                      breadcrumb.isLast && "text-foreground font-extrabold"
+                    )}
+                  >
+                    {breadcrumb.label}
+                  </Link>
                 </div>
               )
             ))}
           </nav>
-
-          <div className="relative w-full max-w-xs hidden lg:block">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input 
-              placeholder="Buscar productos, órdenes, clientes..." 
-              className="pl-10 bg-secondary/50 border-none focus-visible:ring-primary/20"
-            />
-          </div>
         </div>
 
         {/* Right side: Actions */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="hidden lg:flex items-center gap-3 mr-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+              <Input 
+                placeholder="Buscar..." 
+                className="w-64 pl-10 h-10 bg-secondary/30 border-none focus-visible:ring-primary/20 rounded-xl font-medium transition-all focus:w-80"
+              />
+            </div>
+          </div>
           {/* View Shop */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -318,12 +320,12 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsDark(!isDark)}
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors h-10 w-10 rounded-xl hover:bg-primary/5"
               >
                 {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Cambiar a modo {isDark ? "claro" : "oscuro"}</TooltipContent>
+            <TooltipContent>Modo {isDark ? "claro" : "oscuro"}</TooltipContent>
           </Tooltip>
 
           {/* Notifications */}
@@ -331,12 +333,10 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary transition-colors">
+                  <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary transition-colors h-10 w-10 rounded-xl hover:bg-primary/5">
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                      <Badge className="absolute -right-1 -top-1 h-4 w-4 justify-center bg-destructive p-0 text-[10px] text-destructive-foreground hover:bg-destructive">
-                        {unreadCount}
-                      </Badge>
+                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive animate-pulse" />
                     )}
                   </Button>
                 </DropdownMenuTrigger>

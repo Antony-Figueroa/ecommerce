@@ -10,14 +10,28 @@ const filter = new Filter()
 // Palabras ofensivas adicionales en español
 filter.addWords('pendejo', 'puto', 'puta', 'mierda', 'carajo', 'culero', 'cabron', 'chingar', 'pajuo', 'mamaguevo')
 
-router.post('/google', async (req: Request, res: Response) => {
+router.post('/callback/g', async (req: Request, res: Response) => {
+  console.log('[DEBUG] Petición recibida en /api/auth/callback/g');
+  console.log('[DEBUG] Body:', JSON.stringify(req.body));
+  console.log('[DEBUG] Headers:', JSON.stringify(req.headers));
   try {
     const { credential } = req.body
+    if (!credential) {
+      console.warn('[DEBUG] No se recibió credencial en el body');
+      return res.status(400).json({ error: 'No se recibió la credencial de Google' });
+    }
+    console.log('[DEBUG] Intentando autenticación con Google...');
     const result = await authService.googleAuth(credential)
+    console.log('[DEBUG] Autenticación exitosa:', result.requiresRegistration ? 'Requiere registro' : 'Login directo');
     res.json({ success: true, ...result })
   } catch (error: any) {
-    console.error('Error en Google Auth:', error)
-    res.status(error.status || 400).json({ error: error.message || 'Error en autenticación con Google' })
+    console.error('[DEBUG] Error en Google Auth:', error)
+    // Asegurarse de que el error tenga un status válido para Express
+    const statusCode = error.statusCode || error.status || 400;
+    res.status(statusCode).json({ 
+      error: error.message || 'Error en autenticación con Google',
+      code: error.code || 'GOOGLE_AUTH_ERROR'
+    })
   }
 })
 

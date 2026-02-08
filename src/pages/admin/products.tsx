@@ -24,14 +24,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { AdminLayout } from "@/components/layout/admin-layout"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload } from "@/components/admin/image-upload"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { api } from "@/lib/api"
