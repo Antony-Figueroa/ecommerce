@@ -43,9 +43,15 @@ export function CartPage() {
   const [whatsappNumber, setWhatsappNumber] = useState("584123456789") // Default fallback (Venezuela)
 
   useEffect(() => {
-    setSavedItems(getSavedItems())
-    fetchPublicSettings()
-    fetchBCVRate()
+    async function loadData() {
+      // Optimizando carga paralela para eliminar waterfalls (async-parallel)
+      await Promise.all([
+        fetchPublicSettings(),
+        fetchBCVRate()
+      ])
+      setSavedItems(getSavedItems())
+    }
+    loadData()
   }, [getSavedItems])
 
   const fetchBCVRate = async () => {

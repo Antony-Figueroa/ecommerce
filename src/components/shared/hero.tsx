@@ -1,3 +1,4 @@
+import { motion } from "framer-motion"
 import { Shield, Truck, Clock, Search } from "lucide-react"
 
 export function Hero() {
@@ -17,37 +18,55 @@ export function Hero() {
             src="https://player.vimeo.com/external/494252666.hd.mp4?s=2f8398f6358c2f168f615392e272e50570f7f3a8&profile_id=175" 
             type="video/mp4" 
           />
-          {/* Fallback image if video fails to load or is not supported */}
           <img
             src="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?q=80&w=2000&auto=format&fit=crop"
             alt="Supplements Background"
             className="h-full w-full object-cover"
           />
         </video>
-        {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
       </div>
 
       <div className="container relative z-10 mx-auto px-4">
         <div className="flex flex-col items-center text-center space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground shadow-lg">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-primary-foreground shadow-lg"
+          >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
             Solo los mejores productos al mejor precio
-          </div>
+          </motion.div>
           
-          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-7xl max-w-4xl drop-shadow-md">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-7xl max-w-4xl drop-shadow-md"
+          >
             Catálogo de <span className="text-primary underline decoration-primary underline-offset-8">Salud y Bienestar</span>
-          </h1>
+          </motion.h1>
           
-          <p className="max-w-2xl text-lg text-white/90 font-medium drop-shadow-sm">
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="max-w-2xl text-lg text-white/90 font-medium drop-shadow-sm"
+          >
             Encuentra nuestra selección completa de suplementos y medicamentos de grado profesional.
             Calidad garantizada para tu cuidado diario.
-          </p>
+          </motion.p>
 
-          <div className="w-full max-w-2xl relative group">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="w-full max-w-2xl relative group"
+          >
             <div className="flex w-full items-stretch rounded-2xl h-16 shadow-2xl bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden focus-within:ring-2 focus-within:ring-primary transition-all">
               <div className="flex items-center justify-center px-5 text-white">
                 <Search className="h-6 w-6" />
@@ -61,7 +80,7 @@ export function Hero() {
                 Buscar
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -90,22 +109,30 @@ export function FeatureBanner() {
   return (
     <section className="border-y bg-muted/30">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          {features.map((feature) => (
-            <div
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="grid grid-cols-1 gap-6 sm:grid-cols-3"
+        >
+          {features.map((feature, i) => (
+            <motion.div
               key={feature.title}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
               className="flex flex-col items-center text-center"
             >
               <div className="mb-3 rounded-full bg-primary/10 p-3 text-primary">
                 {feature.icon}
               </div>
               <h3 className="font-semibold">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {feature.description}
-              </p>
-            </div>
+              <p className="text-sm text-muted-foreground">{feature.description}</p>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )

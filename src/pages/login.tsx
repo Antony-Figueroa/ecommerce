@@ -142,76 +142,89 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 relative overflow-hidden">
+      {/* Background Decorative Element (Signature: Zen Flow) */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4 z-0" />
+      <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-emerald-500/5 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4 z-0" />
+      
+      <Card className="w-full max-w-md border-border shadow-sm relative z-10 overflow-hidden bg-white/80 backdrop-blur-sm">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" /> {/* Top Signature Accent */}
+        <CardHeader className="space-y-1 text-center pb-8">
+          <div className="flex justify-center mb-6">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-                <span className="text-xl font-bold text-white">+</span>
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-xl shadow-primary/20 transform hover:scale-105 transition-transform">
+                <span className="text-3xl font-bold text-white">A+</span>
               </div>
             </Link>
           </div>
-          <CardTitle className="text-2xl font-bold">Bienvenido de nuevo</CardTitle>
-          <CardDescription>
-            Inicia sesión para acceder a tu cuenta
+          <CardTitle className="text-3xl font-bold tracking-tight text-slate-800">
+            Portal de Bienestar
+          </CardTitle>
+          <CardDescription className="text-slate-500 font-medium">
+            ¡Hola! Accede a tu cuenta para continuar tu camino.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {successMessage && (
-            <div className="p-3 bg-green-50 text-green-600 text-sm rounded-lg border border-green-200">
+            <div className="p-4 bg-primary/10 text-primary text-sm font-semibold rounded-xl border border-primary/20">
               {successMessage}
             </div>
           )}
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">
+            <div className="p-4 bg-rose-50 text-rose-700 text-sm font-semibold rounded-xl border border-rose-100">
               {error}
               {showResend && (
                 <button
                   type="button"
                   onClick={handleResendVerification}
                   disabled={resending}
-                  className="block mt-2 font-medium underline hover:text-red-800 disabled:opacity-50"
+                  className="block mt-2 font-bold underline hover:text-rose-900 disabled:opacity-50"
                 >
-                  {resending ? "Enviando..." : "¿Reenviar correo de verificación?"}
+                  {resending ? "Enviando..." : "¿Reenviar código de verificación?"}
                 </button>
               )}
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">Correo Electrónico</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="tu@email.com"
-                  className={cn("pl-10", errors.email && "border-red-500")}
+                  placeholder="ejemplo@correo.com"
+                  className={cn(
+                    "pl-10 h-12 bg-white border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
+                    errors.email && "border-rose-500 bg-rose-50"
+                  )}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
-              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+              {errors.email && <p className="text-xs font-medium text-rose-500">{errors.email}</p>}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500">Contraseña</Label>
                 <Link
-                  to="/forgot-password"
-                  className="text-sm font-medium text-primary hover:underline"
+                  to="/recuperar-contrasena"
+                  className="text-xs font-semibold text-primary hover:underline transition-all"
                 >
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className={cn("pl-10 pr-10", errors.password && "border-red-500")}
+                  className={cn(
+                    "pl-10 pr-10 h-12 bg-white border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
+                    errors.password && "border-rose-500 bg-rose-50"
+                  )}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -220,7 +233,7 @@ export function LoginPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-slate-400 hover:text-slate-600"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -230,57 +243,65 @@ export function LoginPage() {
                   )}
                 </Button>
               </div>
-              {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+              {errors.password && <p className="text-xs font-medium text-rose-500">{errors.password}</p>}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 pb-2">
               <Checkbox
                 id="remember"
                 checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked === true)}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                className="rounded-md border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <label
-                htmlFor="remember"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Recordarme
-              </label>
+              <Label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">
+                Mantener sesión iniciada
+              </Label>
             </div>
-            <Button type="submit" className="w-full" disabled={loading || !isFormValid}>
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+            <Button
+              type="submit"
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+              disabled={loading || !isFormValid}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Iniciando sesión...</span>
+                </div>
+              ) : (
+                "Entrar ahora"
+              )}
             </Button>
           </form>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator />
+              <Separator className="w-full border-slate-100" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                O continúa con
-              </span>
+              <span className="bg-white px-4 text-slate-400 font-bold tracking-widest">O continúa con</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <div className="flex justify-center w-full overflow-hidden">
+          <div className="flex justify-center">
+            <div className="w-full transform transition-transform hover:scale-[1.02]">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                useOneTap={false}
-                use_fedcm_for_prompt={true}
+                useOneTap
                 theme="outline"
                 size="large"
-                text="signin_with"
-                shape="rectangular"
+                width="100%"
+                shape="pill"
+                text="continue_with"
+                locale="es"
               />
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <p className="text-center text-sm text-muted-foreground">
-            ¿No tienes cuenta?{" "}
-            <Link to="/registro" className="text-primary font-medium hover:underline">
-              Regístrate
+        <CardFooter className="flex flex-col space-y-4 pt-2 pb-8">
+          <p className="text-center text-sm font-medium text-slate-500">
+            ¿Aún no tienes una cuenta?{" "}
+            <Link to="/registro" className="text-primary font-bold hover:underline transition-all">
+              Regístrate aquí
             </Link>
           </p>
         </CardFooter>

@@ -72,25 +72,27 @@ export function AdminCategoriesPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true)
-      const data = await api.getAdminCategories()
-      setCategories(data.categories || [])
-    } catch (error) {
-      console.error("Error fetching categories:", error)
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las categorías",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
+    async function loadData() {
+      try {
+        setLoading(true)
+        // Optimizando carga paralela para eliminar waterfalls (async-parallel)
+        const [categoriesRes] = await Promise.all([
+          api.getAdminCategories()
+        ])
+        setCategories(categoriesRes.categories || [])
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las categorías",
+          variant: "destructive"
+        })
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+    loadData()
+  }, [])
 
   const resetForm = () => {
     setFormData({
@@ -145,7 +147,9 @@ export function AdminCategoriesPage() {
       }
       setShowAddDialog(false)
       resetForm()
-      fetchCategories()
+      // Recargar datos usando el mismo patrón optimizado
+      const data = await api.getAdminCategories()
+      setCategories(data.categories || [])
     } catch (error: any) {
       toast({
         title: "Error",
@@ -179,7 +183,8 @@ export function AdminCategoriesPage() {
         title: "Éxito",
         description: "Categoría eliminada correctamente",
       })
-      fetchCategories()
+      const data = await api.getAdminCategories()
+      setCategories(data.categories || [])
     } catch (error: any) {
       toast({
         title: "Error",
@@ -196,7 +201,8 @@ export function AdminCategoriesPage() {
         title: "Éxito",
         description: `Categoría ${!currentStatus ? 'activada' : 'desactivada'} correctamente`,
       })
-      fetchCategories()
+      const data = await api.getAdminCategories()
+      setCategories(data.categories || [])
     } catch (error: any) {
       toast({
         title: "Error",

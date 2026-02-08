@@ -107,17 +107,43 @@ Siga este orden para mantener la consistencia:
 
 ## 🧠 Uso Obligatorio de Skills (Agentes AI)
 
-Para mantener la coherencia y calidad técnica, los agentes deben invocar y seguir las skills ubicadas en `.agents/skills/`:
+Para mantener la coherencia y calidad técnica, los agentes deben invocar y seguir las skills ubicadas en `.agents/skills/`. Se priorizan las siguientes 4 skills para cada interacción:
 
-### 🎨 Interface Design
+### 🎨 Interface Design (PRIORIDAD ALTA)
 - **Uso**: Cualquier modificación de UI, componentes o flujos de usuario.
-- **Mandato**: Aplicar 'Intent First' (evitar plantillas genéricas) y 'Subtle Layering'.
-- **Validación**: Realizar el 'Squint Test' y 'Signature Test' antes de entregar cambios.
+- **Mandato**: Aplicar 'Intent First' y 'Subtle Layering'. Realizar 'Squint Test' y 'Signature Test'.
 
-### ⚡ Vercel React Best Practices
+### ⚡ Vercel React Best Practices (PRIORIDAD ALTA)
 - **Uso**: Refactorización, creación de componentes o lógica de fetching.
-- **Mandato**: Eliminar waterfalls con `Promise.all()`, optimizar re-renders (`memo`, `useMemo`) y reducir bundle size.
-- **Prioridad**: Seguir estrictamente el orden de impacto (Critical -> High -> Medium).
+- **Mandato**: Eliminar waterfalls con `Promise.all()`, optimizar re-renders y reducir bundle size.
+
+### 💡 Brainstorming (PRIORIDAD ALTA)
+- **Uso**: Antes de cualquier trabajo creativo, creación de features o cambios de comportamiento.
+- **Mandato**: Explorar la intención del usuario y requerimientos antes de implementar.
+
+### 🛡️ Error Handling Patterns (PRIORIDAD ALTA)
+- **Uso**: Al diseñar APIs o implementar robustez en el código.
+- **Mandato**: Usar patrones de Result, Graceful degradation y validación estricta con Zod.
+
+---
+
+### Otras Skills Disponibles:
+
+### 🔍 Systematic Debugging
+- **Uso**: Ante cualquier error, bug o comportamiento inesperado.
+- **Mandato**: Seguir el proceso de diagnóstico raíz antes de proponer soluciones.
+
+### 📝 Changelog Generator
+- **Uso**: Al finalizar tareas significativas para documentar cambios.
+- **Mandato**: Transformar commits técnicos en notas de lanzamiento amigables.
+
+### 🛠️ API Design Principles
+- **Uso**: Al diseñar APIs o recursos del servidor.
+- **Mandato**: Usar principios REST/GraphQL y consistencia en endpoints.
+
+### 🌐 Agent Browser
+- **Uso**: Automatización web, scraping, testing y navegación.
+- **Mandato**: Usar el sistema de refs `@e` y seguir el flujo Open-Interact-Snapshot-Close.
 
 ---
 

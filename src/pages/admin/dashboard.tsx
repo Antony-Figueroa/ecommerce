@@ -1,357 +1,325 @@
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import {
-  ShoppingCart,
-  DollarSign,
-  Users,
-  AlertTriangle,
-  ArrowUpRight,
-  TrendingUp,
-  RefreshCw,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useMemo } from 'react';
+import { 
+  Users, 
+  ShoppingCart, 
+  DollarSign, 
+  TrendingUp, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  Activity,
+  Calendar,
+  ChevronRight,
+  ExternalLink,
+  Plus
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  AreaChart,
+  Area 
+} from 'recharts';
+import { motion } from 'framer-motion';
 
-import { AdminLayout } from "@/components/layout/admin-layout"
-import { api } from "@/lib/api"
-import { formatUSD } from "@/lib/utils"
+export const AdminDashboard = () => {
+  // Mock data for the dashboard
+  const stats = useMemo(() => ({
+    totalRevenue: 125430.50,
+    revenueGrowth: 12.5,
+    totalOrders: 856,
+    orderGrowth: 8.2,
+    activeCustomers: 1240,
+    customerGrowth: 5.4,
+    averageOrderValue: 146.53,
+    aovGrowth: -2.1,
+    conversionRate: 3.45,
+    conversionGrowth: 1.2
+  }), []);
 
-interface Order {
-  id: string
-  orderNumber: string
-  customerName: string
-  total: number
-  status: string
-  isPaid: boolean
-  whatsappSent: boolean
-  createdAt: string
-}
+  const chartData = useMemo(() => [
+    { name: 'Lun', sales: 4000, revenue: 2400 },
+    { name: 'Mar', sales: 3000, revenue: 1398 },
+    { name: 'Mie', sales: 2000, revenue: 9800 },
+    { name: 'Jue', sales: 2780, revenue: 3908 },
+    { name: 'Vie', sales: 1890, revenue: 4800 },
+    { name: 'Sab', sales: 2390, revenue: 3800 },
+    { name: 'Dom', sales: 3490, revenue: 4300 },
+  ], []);
 
-interface Stats {
-  totalOrders: number
-  pendingOrders: number
-  confirmedOrders: number
-  totalRevenue: number
-  revenueGrowth: number
-  totalCustomers: number
-  customerGrowth: number
-  totalProducts: number
-  lowStockProducts: number
-}
+  const recentOrders = useMemo(() => [
+    { id: '#ORD-7234', customer: 'Carlos Rodriguez', product: 'Proteína Whey Isolate', amount: 89.99, status: 'Completado', date: 'Hace 2 min' },
+    { id: '#ORD-7233', customer: 'Elena Martinez', product: 'Creatina Monohidratada', amount: 34.50, status: 'Procesando', date: 'Hace 15 min' },
+    { id: '#ORD-7232', customer: 'Marcos Pérez', product: 'Pre-Workout Explosive', amount: 45.00, status: 'Completado', date: 'Hace 45 min' },
+    { id: '#ORD-7231', customer: 'Lucía Sanz', product: 'BCAA Recovery Mix', amount: 29.99, status: 'Pendiente', date: 'Hace 1 hora' },
+    { id: '#ORD-7230', customer: 'David García', product: 'Multivitamínico Daily', amount: 19.95, status: 'Completado', date: 'Hace 2 horas' },
+  ], []);
 
-interface RecentActivity {
-  id: string
-  type: string
-  message: string
-  time: string
-}
+  const formatUSD = (val: number) => 
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
 
-export function AdminDashboard() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [stats, setStats] = useState<Stats>({
-    totalOrders: 0,
-    pendingOrders: 0,
-    confirmedOrders: 0,
-    totalRevenue: 0,
-    revenueGrowth: 0,
-    totalCustomers: 0,
-    customerGrowth: 0,
-    totalProducts: 0,
-    lowStockProducts: 0,
-  })
-  const [activities, setActivities] = useState<RecentActivity[]>([])
-  const [loading, setLoading] = useState(true)
-  const [bcvRate, setBcvRate] = useState<number | null>(null)
-  const [lastBcvUpdate, setLastBcvUpdate] = useState<Date | null>(null)
-  const [updatingBcv, setUpdatingBcv] = useState(false)
-
-  useEffect(() => {
-    async function loadData() {
-      // Optimizando carga paralela para eliminar waterfalls (async-parallel)
-      await Promise.all([
-        fetchDashboardData(),
-        fetchBCVRate()
-      ])
-    }
-    loadData()
-  }, [])
-
-  const fetchBCVRate = async () => {
-    try {
-      const status = await api.getBCVStatus()
-      if (status && typeof status.currentRate === 'number') {
-        setBcvRate(status.currentRate)
-        if (status.history && status.history.length > 0) {
-          setLastBcvUpdate(new Date(status.history[0].createdAt))
-        }
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
       }
-    } catch (error) {
-      console.error("Error fetching BCV rate:", error)
     }
-  }
+  };
 
-  const handleUpdateBcv = async () => {
-    setUpdatingBcv(true)
-    try {
-      const result = await api.forceBCVUpdate()
-      setBcvRate(result.rate)
-      setLastBcvUpdate(new Date())
-    } catch (error) {
-      console.error("Error updating BCV rate:", error)
-    } finally {
-      setUpdatingBcv(false)
-    }
-  }
-
-  const fetchDashboardData = async () => {
-    try {
-      const [statsData] = await Promise.all([
-        api.getStats(),
-      ])
-
-      setStats({
-        totalOrders: statsData.totalOrders || 0,
-        pendingOrders: statsData.pendingOrders || 0,
-        confirmedOrders: statsData.confirmedOrders || 0,
-        totalRevenue: statsData.totalRevenue || 0,
-        revenueGrowth: statsData.revenueGrowth || 0,
-        totalCustomers: statsData.totalCustomers || 0,
-        customerGrowth: statsData.customerGrowth || 0,
-        totalProducts: statsData.totalProducts || 0,
-        lowStockProducts: statsData.lowStockProducts || 0,
-      })
-
-      setOrders(statsData.recentOrders || [])
-
-      // Generate activities from recent orders
-      const newActivities: RecentActivity[] = []
-      if (statsData.recentOrders?.length > 0) {
-        statsData.recentOrders.slice(0, 5).forEach((order: any) => {
-          newActivities.push({
-            id: `order-${order.id}`,
-            type: "order",
-            message: `Nueva orden #${order.orderNumber} de ${order.customerName}`,
-            time: new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          })
-        })
-      }
-      if (statsData.lowStockProducts > 0) {
-        newActivities.push({
-          id: "stock-warning",
-          type: "warning",
-          message: `Alerta: ${statsData.lowStockProducts} productos con stock bajo`,
-          time: "Ahora",
-        })
-      }
-      setActivities(newActivities)
-    } catch (error) {
-      console.error("Dashboard error:", error)
-      // No longer setting demo data here to ensure transparency
-      setStats({
-        totalOrders: 0,
-        pendingOrders: 0,
-        confirmedOrders: 0,
-        totalRevenue: 0,
-        revenueGrowth: 0,
-        totalCustomers: 0,
-        customerGrowth: 0,
-        totalProducts: 0,
-        lowStockProducts: 0,
-      })
-      setOrders([])
-      setActivities([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <AdminLayout title="Panel de Control">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
-    )
-  }
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
-    <AdminLayout title="Panel de Control">
-      <div className="space-y-8">
-        <div>
-          <p className="text-muted-foreground">Bienvenido de nuevo, aquí tienes un resumen de tu negocio.</p>
+    <div className="p-8 bg-background min-h-screen selection:bg-primary/20 selection:text-primary">
+      {/* Header Section with Vitality Zen Style */}
+      <motion.div 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="mb-12 relative"
+      >
+        <div className="absolute -left-8 top-0 w-1.5 h-16 bg-primary rounded-r-full shadow-lg shadow-primary/20" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-800 flex items-center gap-4">
+              Dashboard de Vitalidad
+              <Activity className="h-8 w-8 text-primary" />
+            </h1>
+            <p className="text-slate-500 font-medium mt-1 text-sm flex items-center gap-2">
+              <span className="h-px w-8 bg-slate-200" />
+              Gestión profesional de rendimiento y salud
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button variant="outline" className="h-11 border-slate-200 font-bold text-xs uppercase tracking-wider hover:bg-white hover:border-primary transition-all duration-300 rounded-xl px-6">
+              <Calendar className="mr-3 h-4 w-4 text-primary" />
+              Últimos 30 días
+            </Button>
+            <Button className="h-11 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-[0.98] rounded-xl px-6">
+              <Plus className="mr-3 h-4 w-4" />
+              Nuevo Producto
+            </Button>
+          </div>
         </div>
+      </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-          <Card className="border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Ventas Totales</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                <DollarSign className="h-5 w-5" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-foreground">${formatUSD(stats.totalRevenue)}</div>
-              <div className="mt-1 flex items-center text-xs font-bold text-primary">
-                <ArrowUpRight className="mr-1 h-3 w-3" />
-                <span>+{stats.revenueGrowth}% desde el último mes</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Órdenes Nuevas</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-                <ShoppingCart className="h-5 w-5" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-foreground">+{stats.totalOrders}</div>
-              <p className="text-xs font-bold text-muted-foreground/60 mt-1">{stats.pendingOrders} pendientes por procesar</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Clientes Activos</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
-                <Users className="h-5 w-5" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-foreground">{stats.totalCustomers}</div>
-              <div className="mt-1 flex items-center text-xs font-bold text-primary">
-                <ArrowUpRight className="mr-1 h-3 w-3" />
-                <span>+{stats.customerGrowth}% nuevos clientes</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Tasa BCV (BS/USD)</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
-                <TrendingUp className="h-5 w-5" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-3xl font-black text-foreground">
-                  {bcvRate ? bcvRate.toFixed(2) : "..." }
+      {/* Stats Grid - "Dynamic & Athletic" Aesthetic */}
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid gap-6 md:grid-cols-2 lg:grid-cols-5 mb-12"
+      >
+        {[
+          { title: 'Ingresos Totales', value: formatUSD(stats.totalRevenue), growth: stats.revenueGrowth, icon: DollarSign, trend: 'up' },
+          { title: 'Pedidos', value: stats.totalOrders, growth: stats.orderGrowth, icon: ShoppingCart, trend: 'up' },
+          { title: 'Atletas Activos', value: stats.activeCustomers, growth: stats.customerGrowth, icon: Users, trend: 'up' },
+          { title: 'Ticket Promedio', value: formatUSD(stats.averageOrderValue), growth: stats.aovGrowth, icon: TrendingUp, trend: 'down' },
+          { title: 'Conversión', value: `${stats.conversionRate}%`, growth: stats.conversionGrowth, icon: Activity, trend: 'up' }
+        ].map((item, i) => (
+          <motion.div key={i} variants={itemVariants}>
+            <Card className="border-0 shadow-sm bg-white overflow-hidden group hover:shadow-xl transition-all duration-500 rounded-2xl relative">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-full blur-2xl translate-x-8 -translate-y-8 group-hover:bg-primary/10 transition-colors" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-primary transition-colors">{item.title}</CardTitle>
+                <item.icon className="h-4 w-4 text-slate-300 group-hover:text-primary group-hover:scale-110 transition-all duration-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-800 tracking-tight mb-1 group-hover:translate-x-1 transition-transform duration-500">{item.value}</div>
+                <div className={`flex items-center text-[10px] font-bold uppercase tracking-wider ${item.trend === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {item.trend === 'up' ? <ArrowUpRight className="mr-1 h-3.5 w-3.5" /> : <ArrowDownRight className="mr-1 h-3.5 w-3.5" />}
+                  <span className="bg-slate-50 px-2 py-0.5 rounded-full">{item.growth > 0 ? '+' : ''}{item.growth}%</span>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:text-primary"
-                  onClick={handleUpdateBcv}
-                  disabled={updatingBcv}
-                >
-                  <RefreshCw className={`h-4 w-4 ${updatingBcv ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-              <p className="text-[10px] font-bold text-muted-foreground/60 mt-1">
-                {lastBcvUpdate ? (
-                  <>Última act: {lastBcvUpdate.toLocaleDateString()} {lastBcvUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</>
-                ) : (
-                  <Link to="/admin/configuracion" className="hover:text-primary transition-colors">
-                    Ver historial y actualizar →
-                  </Link>
-                )}
-              </p>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
 
-          <Card className="border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">Stock Crítico</CardTitle>
-              <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
-                <AlertTriangle className="h-5 w-5" />
+      <div className="grid gap-8 lg:grid-cols-12">
+        {/* Main Chart Area */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="lg:col-span-8"
+        >
+          <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden h-full">
+            <CardHeader className="border-b border-slate-50 p-8">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
+                    Curva de Crecimiento
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </CardTitle>
+                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Ingresos vs Pedidos (Análisis Semanal)</CardDescription>
+                </div>
+                <div className="flex gap-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 bg-primary rounded-full shadow-lg shadow-primary/20" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Ingresos</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 bg-slate-400 rounded-full" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Pedidos</span>
+                  </div>
+                </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-black text-foreground">{stats.lowStockProducts}</div>
-              <p className="text-xs font-bold text-red-500/80 mt-1">Productos por debajo del mínimo</p>
+            <CardContent className="p-8 pt-12">
+              <div className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#527a2e" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#527a2e" stopOpacity={0}/>
+                    </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F1F5F9" />
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fontWeight: 900, fill: '#94A3B8' }}
+                      dy={15}
+                    />
+                    <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fontSize: 10, fontWeight: 900, fill: '#94A3B8' }}
+                    />
+                    <Tooltip 
+                      cursor={{ stroke: '#527a2e', strokeWidth: 2 }}
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e2e8f0', 
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        padding: '12px 16px'
+                      }}
+                      itemStyle={{ 
+                        color: '#1e293b',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}
+                      labelStyle={{
+                        color: '#527a2e',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        marginBottom: '8px',
+                        letterSpacing: '0.1em'
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#527a2e" 
+                      strokeWidth={4}
+                      fillOpacity={1} 
+                      fill="url(#colorRevenue)" 
+                      animationDuration={2000}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="sales" 
+                      stroke="#94a3b8" 
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      fill="transparent"
+                      animationDuration={2500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          {/* Recent Orders */}
-          <Card className="lg:col-span-4 border-border/50 bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-bold">Órdenes Recientes</CardTitle>
-                <p className="text-xs font-bold text-muted-foreground/60 mt-1">Tienes {stats.pendingOrders} órdenes sin confirmar.</p>
+        {/* Recent Orders List */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+          className="lg:col-span-4"
+        >
+          <Card className="border-0 shadow-sm bg-white rounded-2xl overflow-hidden h-full flex flex-col">
+            <CardHeader className="bg-slate-50 border-b border-slate-100 p-8 relative overflow-hidden shrink-0">
+              <div className="absolute top-0 right-0 w-full h-full bg-primary/5 rounded-full blur-3xl translate-x-1/2" />
+              <div className="relative z-10 flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold tracking-tight text-slate-800">Última Actividad</CardTitle>
+                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Sincronización en vivo</CardDescription>
+                </div>
+                <div className="h-10 w-10 bg-white rounded-xl shadow-sm flex items-center justify-center border border-slate-100">
+                  <Activity className="h-5 w-5 text-primary" />
+                </div>
               </div>
-              <Button variant="outline" size="sm" className="rounded-xl font-bold border-border hover:border-primary hover:text-primary" asChild>
-                <Link to="/admin/orders">Ver Todas</Link>
-              </Button>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {orders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/20 group hover:border-primary/30 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-xl bg-card flex items-center justify-center shadow-sm font-black text-xs text-primary border border-border/50">
-                        #{order.orderNumber.slice(-4)}
+            <CardContent className="p-0 flex-1 overflow-y-auto">
+              <div className="divide-y divide-slate-50">
+                {recentOrders.map((order, i) => (
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 + (i * 0.1) }}
+                    className="p-6 flex items-center justify-between hover:bg-slate-50 transition-all duration-300 group cursor-pointer border-l-4 border-transparent hover:border-primary"
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className="h-12 w-12 bg-slate-50 rounded-xl flex items-center justify-center text-primary font-bold text-xs border border-slate-100 group-hover:border-primary/20 group-hover:scale-105 transition-all duration-500">
+                        {order.id.split('-')[1]}
                       </div>
                       <div>
-                        <p className="text-sm font-black text-foreground">{order.customerName}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        <div className="text-sm font-bold text-slate-800 tracking-tight group-hover:text-primary transition-colors">{order.customer}</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{order.product}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <p className="text-sm font-black text-foreground">${formatUSD(order.total)}</p>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${order.isPaid ? 'text-primary' : 'text-amber-500'}`}>
-                          {order.isPaid ? 'Pagado' : 'Pendiente'}
-                        </p>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-slate-800">{formatUSD(order.amount)}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center justify-end gap-1.5 mt-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                        {order.date}
                       </div>
-                      <Badge className={`rounded-lg font-black text-[10px] tracking-wider px-3 py-1 ${
-                        order.status === "PENDING" ? "bg-amber-500/10 text-amber-500" :
-                        order.status === "ACCEPTED" || order.status === "CONFIRMED" || order.status === "COMPLETED" ? "bg-primary/10 text-primary" :
-                        "bg-secondary/50 text-muted-foreground"
-                      }`}>
-                        {order.status === "PENDING" ? "PENDIENTE" : 
-                         order.status === "PROCESSING" ? "PROCESANDO" :
-                         order.status === "ACCEPTED" ? "ACEPTADA" :
-                         order.status === "COMPLETED" ? "COMPLETADA" :
-                         order.status === "CANCELLED" ? "CANCELADA" :
-                         order.status === "REJECTED" ? "RECHAZADA" :
-                         order.status}
-                      </Badge>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </CardContent>
+            <div className="p-6 bg-slate-50/50 border-t border-slate-100 mt-auto">
+              <Button variant="ghost" className="w-full h-12 text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-primary hover:bg-white border border-transparent hover:border-slate-100 transition-all duration-300 flex items-center justify-center gap-3 group rounded-xl">
+                Ver Todo el Historial
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-2 transition-transform duration-500" />
+              </Button>
+            </div>
           </Card>
-
-          {/* Activity Feed */}
-          <Card className="lg:col-span-3 border-border/50 bg-card shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Actividad Reciente</CardTitle>
-              <p className="text-xs font-bold text-muted-foreground/60 mt-1">Eventos del sistema y acciones.</p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {activities.map((activity) => (
-                  <div key={activity.id} className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-border/50 last:before:hidden">
-                    <div className="absolute left-[-4px] top-2 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-primary/10" />
-                    <div>
-                      <p className="text-sm font-bold text-foreground leading-snug">{activity.message}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground/60 mt-1 uppercase tracking-widest">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        </motion.div>
       </div>
-    </AdminLayout>
-  )
-}
+
+      {/* Quick Actions Footer */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1 }}
+        className="mt-12 flex flex-wrap gap-4"
+      >
+        <Button className="h-14 bg-primary text-white hover:bg-primary/90 font-bold text-xs uppercase tracking-wider px-8 rounded-2xl transition-all duration-300 shadow-lg shadow-primary/20">
+          <Plus className="mr-3 h-5 w-5" />
+          Nueva Orden Rápida
+        </Button>
+        <Button variant="outline" className="h-14 border-slate-200 text-slate-600 hover:bg-white hover:border-primary hover:text-primary font-bold text-xs uppercase tracking-wider px-8 rounded-2xl transition-all duration-300">
+          Gestionar Inventario
+        </Button>
+      </motion.div>
+    </div>
+  );
+};

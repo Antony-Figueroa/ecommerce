@@ -6,15 +6,15 @@ import { FavoritesProvider } from "@/contexts/favorites-context"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { WhatsAppButton } from "@/components/shared/whatsapp-button"
-import { HomePage } from "@/pages/home"
-import { CatalogPage } from "@/pages/catalog"
-import { ProductPage } from "@/pages/product"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { UserAccountLayout } from "@/components/layout/user-account-layout"
 import { Toaster } from "@/components/ui/toaster"
 import { Loader2 } from "lucide-react"
 
 // Optimizando tamaño del bundle mediante importaciones dinámicas (bundle-dynamic-imports)
+const HomePage = lazy(() => import("@/pages/home").then(m => ({ default: m.HomePage })))
+const CatalogPage = lazy(() => import("@/pages/catalog").then(m => ({ default: m.CatalogPage })))
+const ProductPage = lazy(() => import("@/pages/product").then(m => ({ default: m.ProductPage })))
 const CartPage = lazy(() => import("@/pages/cart").then(m => ({ default: m.CartPage })))
 const LoginPage = lazy(() => import("@/pages/login").then(m => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import("@/pages/register").then(m => ({ default: m.RegisterPage })))
