@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react"
 import type { Product, CartItem } from "@/types"
 import { useAuth } from "./auth-context"
 
@@ -146,27 +146,47 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const getSavedItems = useCallback(() => savedItems, [savedItems])
 
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
-  const totalPrice = items.reduce(
-    (sum, item) => sum + Number(item.product.price) * item.quantity,
-    0
+  // Optimizando estados derivados (rerender-derived-state-no-effect)
+  const totalItems = useMemo(() => 
+    items.reduce((sum, item) => sum + item.quantity, 0),
+    [items]
   )
 
+  const totalPrice = useMemo(() => 
+    items.reduce(
+      (sum, item) => sum + Number(item.product.price) * item.quantity,
+      0
+    ),
+    [items]
+  )
+
+  // Memoizando el valor del contexto para evitar re-renders innecesarios en consumidores (rerender-memo)
+  const value = useMemo(() => ({
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    saveForLater,
+    moveToCart,
+    getSavedItems,
+    totalItems,
+    totalPrice,
+  }), [
+    items,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    saveForLater,
+    moveToCart,
+    getSavedItems,
+    totalItems,
+    totalPrice,
+  ])
+
   return (
-    <CartContext.Provider
-      value={{
-        items,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        saveForLater,
-        moveToCart,
-        getSavedItems,
-        totalItems,
-        totalPrice,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   )

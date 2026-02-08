@@ -67,8 +67,14 @@ export function AdminDashboard() {
   const [updatingBcv, setUpdatingBcv] = useState(false)
 
   useEffect(() => {
-    fetchDashboardData()
-    fetchBCVRate()
+    async function loadData() {
+      // Optimizando carga paralela para eliminar waterfalls (async-parallel)
+      await Promise.all([
+        fetchDashboardData(),
+        fetchBCVRate()
+      ])
+    }
+    loadData()
   }, [])
 
   const fetchBCVRate = async () => {

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, memo } from "react"
 import { X, SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -18,7 +18,8 @@ interface ProductFiltersProps {
   onClearAll: () => void
 }
 
-export function ProductFilters({
+// Optimizando re-renders con memo (rerender-memo)
+export const ProductFilters = memo(function ProductFilters({
   categories,
   brands,
   selectedCategory,
@@ -197,4 +198,4 @@ export function ProductFilters({
       </div>
     </>
   )
-}
+})

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Link, useParams, useNavigate } from "react-router-dom"
 import { ChevronRight, Grid, List, Search, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -50,6 +50,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     async function loadData() {
       try {
         setLoading(true)
+        // Optimizando carga paralela para eliminar waterfalls (async-parallel)
         const [productsRes, categoriesRes, bcvRes] = await Promise.all([
           api.getPublicProducts(),
           api.getCategories(),
@@ -73,6 +74,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   const { slug } = useParams<{ slug?: string }>()
   const navigate = useNavigate()
 
+  // Evitar efectos innecesarios para estados derivados (rerender-derived-state-no-effect)
   useEffect(() => {
     if (slug) {
       setSelectedCategory(slug)
@@ -82,13 +84,28 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     }
   }, [slug])
 
-  const handleCategoryChange = (categorySlug: string | null) => {
+  const handleCategoryChange = useCallback((categorySlug: string | null) => {
     if (categorySlug) {
       navigate(`/productos/${categorySlug}`)
     } else {
       navigate('/productos')
     }
-  }
+  }, [navigate])
+
+  const handleBrandsChange = useCallback((brands: string[]) => {
+    setSelectedBrands(brands)
+  }, [])
+
+  const handlePriceRangeChange = useCallback((range: [number, number] | null) => {
+    setPriceRange(range)
+  }, [])
+
+  const handleClearFilters = useCallback(() => {
+    handleCategoryChange(null)
+    setSelectedBrands([])
+    setPriceRange(null)
+    setCurrentPage(1)
+  }, [handleCategoryChange])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -188,13 +205,6 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     const prices = products.map(p => p.price)
     return { min: Math.min(...prices), max: Math.max(...prices) }
   }, [products])
-
-  const handleClearFilters = () => {
-    handleCategoryChange(null)
-    setSelectedBrands([])
-    setPriceRange(null)
-    setCurrentPage(1)
-  }
 
   const activeFiltersCount =
     (selectedCategory ? 1 : 0) +

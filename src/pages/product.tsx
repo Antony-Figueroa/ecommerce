@@ -22,10 +22,14 @@ export function ProductPage() {
 
       try {
         setLoading(true)
-        const productRes = await api.getProduct(id)
+        // Optimizando waterfalls mediante ejecución paralela (async-parallel)
+        const [productRes, productsRes] = await Promise.all([
+          api.getProduct(id),
+          api.getPublicProducts()
+        ])
+
         setProduct(productRes.product)
 
-        const productsRes = await api.getPublicProducts()
         const allProducts = productsRes.products || []
         const related = allProducts.filter(
           (p: Product) => {

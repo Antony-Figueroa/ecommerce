@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, memo } from "react"
 import { Heart, ShoppingCart, Star, Plus, Minus, Eye, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +17,8 @@ interface ProductCardProps {
   variant?: "default" | "list"
 }
 
-export function ProductCard({ product, bcvRate, variant = "default" }: ProductCardProps) {
+// Optimizando re-renders con memo (rerender-memo)
+export const ProductCard = memo(function ProductCard({ product, bcvRate, variant = "default" }: ProductCardProps) {
   const { items, addItem, updateQuantity, removeItem } = useCart()
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
@@ -416,7 +417,7 @@ export function ProductCard({ product, bcvRate, variant = "default" }: ProductCa
       />
     </>
   )
-}
+})
 
 export function ProductCardSkeleton() {
   return (

@@ -3,12 +3,14 @@ import { ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import type { Category } from "@/types"
+import { memo } from "react"
 
 interface CategoryCardProps {
   category: Category
 }
 
-export function CategoryCard({ category }: CategoryCardProps) {
+// Optimizando re-renders con memo (rerender-memo)
+export const CategoryCard = memo(function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer">
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -43,13 +45,14 @@ export function CategoryCard({ category }: CategoryCardProps) {
       </div>
     </Card>
   )
-}
+})
 
 interface CategoryIconCardProps {
   category: Category
 }
 
-export function CategoryIconCard({ category }: CategoryIconCardProps) {
+// Optimizando re-renders con memo (rerender-memo)
+export const CategoryIconCard = memo(function CategoryIconCard({ category }: CategoryIconCardProps) {
   const icons: Record<string, React.ReactNode> = {
     pill: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,4 +106,4 @@ export function CategoryIconCard({ category }: CategoryIconCardProps) {
       </Card>
     </Link>
   )
-}
+})

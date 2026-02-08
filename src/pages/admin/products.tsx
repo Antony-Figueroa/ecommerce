@@ -36,6 +36,7 @@ import { ImageUpload } from "@/components/admin/image-upload"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { api } from "@/lib/api"
 import { formatUSD, cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 import type { ProductImage } from "@/types"
 
 interface Product {
@@ -111,6 +112,7 @@ interface ProductErrors {
 }
 
 export function AdminProductsPage() {
+  const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -176,9 +178,15 @@ export function AdminProductsPage() {
   }, [viewMode])
 
   useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-    fetchBrands()
+    async function loadData() {
+      // Optimizando carga paralela para eliminar waterfalls (async-parallel)
+      await Promise.all([
+        fetchProducts(),
+        fetchCategories(),
+        fetchBrands()
+      ])
+    }
+    loadData()
   }, [])
 
   const fetchBrands = async () => {
@@ -216,7 +224,7 @@ export function AdminProductsPage() {
         name,
         isActive: true,
         sortOrder: 0
-      })
+      }) as any
       
       // Actualizar la lista de categorías localmente
       await fetchCategories()
@@ -362,8 +370,8 @@ export function AdminProductsPage() {
       catIds = [(product as any).categoryId]
     } else if (Array.isArray(product.categories)) {
       catIds = product.categories.map(c => c.id)
-    } else if (product.category?.id) {
-      catIds = [product.category.id]
+    } else if ((product as any).category?.id) {
+      catIds = [(product as any).category.id]
     }
 
     const brandValue = typeof product.brand === 'string' 
@@ -652,7 +660,7 @@ export function AdminProductsPage() {
                     <Badge variant="outline">
                       {product.categories && product.categories.length > 0 
                         ? product.categories.map(c => c.name).join(", ") 
-                        : product.category?.name || "Sin categoría"}
+                        : (product as any).category?.name || "Sin categoría"}
                     </Badge>
                     <Badge variant={product.inStock ? "secondary" : "destructive"}>
                       Stock: {Number(product.stock)}
@@ -777,7 +785,7 @@ export function AdminProductsPage() {
                           <span className="text-xs text-slate-400">
                             {product.categories && product.categories.length > 0 
                               ? product.categories.map(c => c.name).join(", ") 
-                              : product.category?.name || "Sin categoría"}
+                              : (product as any).category?.name || "Sin categoría"}
                           </span>
                         </div>
                       </td>
@@ -1380,7 +1388,7 @@ export function AdminProductsPage() {
                   <p className="font-medium">
                     {viewingProduct.categories && viewingProduct.categories.length > 0 
                       ? viewingProduct.categories.map(c => c.name).join(", ") 
-                      : viewingProduct.categoryName || viewingProduct.category?.name || "Sin categoría"}
+                      : (viewingProduct as any).categoryName || (viewingProduct as any).category?.name || "Sin categoría"}
                   </p>
                 </div>
                 <div>

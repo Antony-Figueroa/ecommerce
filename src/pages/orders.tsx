@@ -42,8 +42,19 @@ export function OrdersPage() {
   const { addItem } = useCart()
 
   React.useEffect(() => {
-    loadOrders()
-    fetchBCVRate()
+    async function loadInitialData() {
+      try {
+        setIsLoading(true)
+        // Optimizando waterfalls mediante ejecución paralela (async-parallel)
+        await Promise.all([
+          loadOrders(),
+          fetchBCVRate()
+        ])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadInitialData()
   }, [])
 
   React.useEffect(() => {
