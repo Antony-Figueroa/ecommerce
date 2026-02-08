@@ -52,7 +52,16 @@ export class PrismaSaleRepository implements SaleRepository {
   }
 
   async findAll(options: any) {
-    const { include, ...rest } = options || {}
+    const { include, select, ...rest } = options || {}
+    
+    // Prisma does not allow both select and include
+    if (select) {
+      return prisma.sale.findMany({
+        ...rest,
+        select
+      })
+    }
+
     return prisma.sale.findMany({
       ...rest,
       include: { 

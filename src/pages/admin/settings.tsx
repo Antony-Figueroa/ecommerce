@@ -194,14 +194,14 @@ export function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue={groups[0]} className="w-full">
-          <TabsList className="bg-muted p-1 rounded-xl w-full md:w-auto mb-6">
+          <TabsList className="inline-flex w-max md:w-auto bg-slate-100/50 dark:bg-muted/20 p-1.5 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm mb-6">
             {groups.map(group => (
               <TabsTrigger 
                 key={group} 
                 value={group}
-                className="rounded-lg px-6 font-bold data-[state=active]:bg-background data-[state=active]:text-primary transition-all"
+                className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
               >
-                {group.charAt(0).toUpperCase() + group.slice(1)}
+                <span className="whitespace-nowrap">{group.charAt(0).toUpperCase() + group.slice(1)}</span>
               </TabsTrigger>
             ))}
           </TabsList>

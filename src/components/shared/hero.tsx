@@ -14,10 +14,10 @@ export function Hero() {
           className="h-full w-full object-cover"
           poster="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?q=80&w=2000&auto=format&fit=crop"
         >
-          <source 
+          {/* <source 
             src="https://player.vimeo.com/external/494252666.hd.mp4?s=2f8398f6358c2f168f615392e272e50570f7f3a8&profile_id=175" 
             type="video/mp4" 
-          />
+          /> */}
           <img
             src="https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?q=80&w=2000&auto=format&fit=crop"
             alt="Supplements Background"
@@ -128,8 +128,8 @@ export function FeatureBanner() {
               <div className="mb-3 rounded-full bg-primary/10 p-3 text-primary">
                 {feature.icon}
               </div>
-              <h3 className="font-semibold">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">{feature.description}</p>
+              <h3 className="font-semibold text-slate-800 dark:text-foreground">{feature.title}</h3>
+              <p className="text-sm text-muted-foreground font-medium">{feature.description}</p>
             </motion.div>
           ))}
         </motion.div>

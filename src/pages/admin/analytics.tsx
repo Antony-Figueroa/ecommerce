@@ -148,18 +148,53 @@ export function AdminAnalyticsPage() {
           <div>
             <p className="text-muted-foreground">Visualiza el rendimiento real de tu negocio</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="px-3 py-2 border rounded-xl bg-card focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-            >
-              <option value="7d">Últimos 7 días</option>
-              <option value="30d">Últimos 30 días</option>
-              <option value="90d">Últimos 3 meses</option>
-              <option value="1y">Último año</option>
-            </select>
-            <Button variant="outline" onClick={handleExport} className="rounded-xl">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Periodo:</span>
+              <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
+                <button
+                  onClick={() => setPeriod("7d")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    period === "7d" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  7 Días
+                </button>
+                <button
+                  onClick={() => setPeriod("30d")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    period === "30d" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  30 Días
+                </button>
+                <button
+                  onClick={() => setPeriod("90d")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    period === "90d" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  3 Meses
+                </button>
+                <button
+                  onClick={() => setPeriod("1y")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    period === "1y" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  1 Año
+                </button>
+              </div>
+            </div>
+            <Button variant="outline" onClick={handleExport} className="h-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white/50 dark:bg-muted/10 font-bold text-xs uppercase tracking-wider">
               <Download className="h-4 w-4 mr-2" />
               Exportar CSV
             </Button>

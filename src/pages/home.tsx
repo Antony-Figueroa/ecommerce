@@ -49,15 +49,15 @@ const SectionHeader = memo(({ title, subtitle, highlight, badge, action }: {
           {badge}
         </Badge>
       )}
-      <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 leading-tight">
+      <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground leading-tight">
         {title} <span className="text-primary font-serif italic">{highlight}</span>
       </h2>
-      <p className="text-slate-500 font-medium text-lg max-w-2xl leading-relaxed">
+      <p className="text-slate-500 dark:text-muted-foreground font-medium text-lg max-w-2xl leading-relaxed">
         {subtitle}
       </p>
     </div>
     {action && (
-      <Button variant="outline" className="rounded-2xl border-slate-200 bg-white text-slate-600 font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all group h-14 px-8 self-start md:self-end shadow-sm" asChild>
+      <Button variant="outline" className="rounded-2xl border-slate-200 dark:border-border bg-white dark:bg-card text-slate-600 dark:text-muted-foreground font-bold uppercase tracking-wider hover:border-primary hover:text-primary transition-all group h-14 px-8 self-start md:self-end shadow-sm" asChild>
         <Link to={action.href}>
           {action.label}
           <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -115,7 +115,7 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbfaf8] selection:bg-primary/20 selection:text-primary overflow-x-hidden">
+    <div className="min-h-screen bg-background selection:bg-primary/20 selection:text-primary overflow-x-hidden">
       {/* Hero Section */}
       <Hero />
 
@@ -160,7 +160,7 @@ export function HomePage() {
       <AnimatePresence>
         {offerProducts.length > 0 && (
           <motion.section 
-            className="bg-slate-900 py-24 relative overflow-hidden rounded-[3rem] mx-4 my-12"
+            className="bg-slate-900 dark:bg-card py-24 relative overflow-hidden rounded-[3rem] mx-4 my-12"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
@@ -234,7 +234,7 @@ export function HomePage() {
 
       {/* Trust Badges Section - Zen Style */}
       <motion.section 
-        className="bg-[#f3f0e8]/50 py-32 relative overflow-hidden"
+        className="bg-[#f3f0e8]/50 dark:bg-muted/10 py-32 relative overflow-hidden"
         initial="initial"
         whileInView="animate"
         viewport={{ once: true, margin: "-100px" }}
@@ -242,7 +242,7 @@ export function HomePage() {
       >
         <div className="container mx-auto px-4">
           <motion.div variants={fadeInUp} className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 mb-6">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground mb-6">
               Nuestro <span className="text-primary font-serif italic">Compromiso</span> contigo
             </h2>
             <div className="w-20 h-1 bg-primary/30 mx-auto rounded-full" />
@@ -257,29 +257,29 @@ export function HomePage() {
                 icon: Shield, 
                 title: "Calidad Garantizada", 
                 desc: "Productos originales certificados para asegurar tu salud y tranquilidad.",
-                color: "bg-blue-50 text-blue-500"
+                color: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400"
               },
               { 
                 icon: Zap, 
                 title: "Entrega Ágil", 
                 desc: "Recibe tus suplementos rápidamente para no interrumpir tu rutina de cuidado.",
-                color: "bg-amber-50 text-amber-500"
+                color: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400"
               },
               { 
                 icon: Award, 
                 title: "Asesoría Experta", 
                 desc: "Nuestro equipo está listo para guiarte en tu elección según tus metas personales.",
-                color: "bg-emerald-50 text-emerald-500"
+                color: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400"
               }
             ].map((feature, i) => (
               <motion.div key={i} variants={fadeInUp}>
-                <Card className="h-full border-0 bg-white shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2rem] p-4 group">
+                <Card className="h-full border-0 bg-white dark:bg-card shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2rem] p-4 group">
                   <CardContent className="p-8 text-center flex flex-col items-center">
                     <div className={`mb-8 flex h-20 w-20 items-center justify-center rounded-3xl ${feature.color} transform group-hover:scale-110 transition-transform duration-500 shadow-sm`}>
                       <feature.icon className="h-10 w-10" />
                     </div>
-                    <h3 className="text-xl font-bold tracking-tight text-slate-800 mb-4 uppercase">{feature.title}</h3>
-                    <p className="text-slate-500 font-medium leading-relaxed">{feature.desc}</p>
+                    <h3 className="text-xl font-bold tracking-tight text-slate-800 dark:text-foreground mb-4 uppercase">{feature.title}</h3>
+                    <p className="text-slate-500 dark:text-muted-foreground font-medium leading-relaxed">{feature.desc}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -289,7 +289,7 @@ export function HomePage() {
       </motion.section>
 
       {/* CTA Directo - Friendly & Close */}
-      <section className="bg-primary/10 py-24 relative overflow-hidden">
+      <section className="bg-primary/10 dark:bg-primary/5 py-24 relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-center gap-16 text-center md:text-left">
             <motion.div 
@@ -303,11 +303,11 @@ export function HomePage() {
               </div>
               <div>
                 <p className="text-primary font-bold uppercase tracking-widest text-[10px] mb-2">Atención Cercana</p>
-                <p className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800">800-BIENESTAR</p>
+                <p className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground">800-BIENESTAR</p>
               </div>
             </motion.div>
             
-            <div className="h-16 w-px bg-slate-200 hidden md:block" />
+            <div className="h-16 w-px bg-slate-200 dark:bg-border hidden md:block" />
             
             <motion.div
               initial={{ opacity: 0, x: 30 }}
@@ -317,11 +317,11 @@ export function HomePage() {
             >
               <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
                 <CheckCircle2 className="text-primary h-6 w-6" />
-                <p className="text-2xl font-bold italic text-slate-800 tracking-tight leading-none font-serif">
+                <p className="text-2xl font-bold italic text-slate-800 dark:text-foreground tracking-tight leading-none font-serif">
                   Tu bienestar es nuestro motor.
                 </p>
               </div>
-              <p className="text-slate-500 font-medium text-lg leading-relaxed">
+              <p className="text-slate-500 dark:text-muted-foreground font-medium text-lg leading-relaxed">
                 Estamos aquí para acompañarte en cada paso hacia una vida más saludable y plena.
               </p>
             </motion.div>

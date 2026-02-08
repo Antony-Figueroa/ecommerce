@@ -39,9 +39,9 @@ export const ProductFilters = memo(function ProductFilters({
   const filters = (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Filtros</h3>
+        <h3 className="font-semibold dark:text-foreground">Filtros</h3>
         {hasFilters && (
-          <Button variant="ghost" size="sm" onClick={onClearAll}>
+          <Button variant="ghost" size="sm" onClick={onClearAll} className="dark:text-muted-foreground hover:dark:text-primary">
             Limpiar todo
           </Button>
         )}
@@ -59,7 +59,7 @@ export const ProductFilters = memo(function ProductFilters({
                     onCategoryChange(checked ? null : selectedCategory)
                   }
                 />
-                <span className="text-sm">Todas las categorías</span>
+                <span className="text-sm dark:text-muted-foreground">Todas las categorías</span>
               </label>
               {categories.map((category) => (
                 <label
@@ -74,7 +74,7 @@ export const ProductFilters = memo(function ProductFilters({
                       )
                     }
                   />
-                  <span className="text-sm">{category.name}</span>
+                  <span className="text-sm dark:text-muted-foreground">{category.name}</span>
                 </label>
               ))}
             </div>
@@ -102,7 +102,7 @@ export const ProductFilters = memo(function ProductFilters({
                       }
                     }}
                   />
-                  <span className="text-sm">{brand}</span>
+                  <span className="text-sm dark:text-muted-foreground">{brand}</span>
                 </label>
               ))}
             </div>
@@ -118,7 +118,7 @@ export const ProductFilters = memo(function ProductFilters({
                   checked={priceRange === null}
                   onCheckedChange={() => onPriceRangeChange(null)}
                 />
-                <span className="text-sm">Todos los precios</span>
+                <span className="text-sm dark:text-muted-foreground">Todos los precios</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
@@ -127,7 +127,7 @@ export const ProductFilters = memo(function ProductFilters({
                     onPriceRangeChange(checked ? [0, 10] : null)
                   }
                 />
-                <span className="text-sm">Menos de $10</span>
+                <span className="text-sm dark:text-muted-foreground">Menos de $10</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
@@ -136,7 +136,7 @@ export const ProductFilters = memo(function ProductFilters({
                     onPriceRangeChange(checked ? [10, 25] : null)
                   }
                 />
-                <span className="text-sm">$10 - $25</span>
+                <span className="text-sm dark:text-muted-foreground">$10 - $25</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
@@ -145,7 +145,7 @@ export const ProductFilters = memo(function ProductFilters({
                     onPriceRangeChange(checked ? [25, 50] : null)
                   }
                 />
-                <span className="text-sm">$25 - $50</span>
+                <span className="text-sm dark:text-muted-foreground">$25 - $50</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <Checkbox
@@ -154,7 +154,7 @@ export const ProductFilters = memo(function ProductFilters({
                     onPriceRangeChange(checked ? [50, priceStats.max * 2] : null)
                   }
                 />
-                <span className="text-sm">Más de $50</span>
+                <span className="text-sm dark:text-muted-foreground">Más de $50</span>
               </label>
             </div>
           </AccordionContent>
@@ -184,13 +184,13 @@ export const ProductFilters = memo(function ProductFilters({
       />
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-80 bg-white p-6 shadow-xl transition-transform lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-card p-6 shadow-xl transition-transform lg:hidden ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold">Filtros</h2>
-          <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)}>
+          <h2 className="text-lg font-semibold dark:text-foreground">Filtros</h2>
+          <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)} className="dark:text-muted-foreground">
             <X className="h-4 w-4" />
           </Button>
         </div>

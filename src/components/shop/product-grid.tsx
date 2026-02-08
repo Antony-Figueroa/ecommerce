@@ -24,7 +24,7 @@ export const ProductGrid = memo(function ProductGrid({ products, bcvRate, isLoad
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <div className="mb-4 rounded-full bg-muted p-4">
+        <div className="mb-4 rounded-full bg-muted dark:bg-muted/10 p-4">
           <svg
             className="h-8 w-8 text-muted-foreground"
             fill="none"
@@ -39,7 +39,7 @@ export const ProductGrid = memo(function ProductGrid({ products, bcvRate, isLoad
             />
           </svg>
         </div>
-        <h3 className="mb-2 text-lg font-semibold">No se encontraron productos</h3>
+        <h3 className="mb-2 text-lg font-semibold dark:text-foreground">No se encontraron productos</h3>
         <p className="text-sm text-muted-foreground">
           Intenta con otros filtros o categorías
         </p>

@@ -362,27 +362,43 @@ export function FinancialDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
-            <TabsList className="inline-flex w-max md:w-full md:grid md:grid-cols-5 min-w-full">
-              <TabsTrigger value="overview" className="flex items-center gap-2 px-4 py-2 text-sm">
-                <TrendingUp className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap">Resumen</span>
+          <div className="flex items-center gap-4 w-full overflow-x-auto scrollbar-hide pb-1 mb-6">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Vista:</span>
+            <TabsList className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1 shrink-0">
+              <TabsTrigger 
+                value="overview" 
+                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
+              >
+                <TrendingUp className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
+                Resumen
               </TabsTrigger>
-              <TabsTrigger value="pos" className="flex items-center gap-2 px-4 py-2 text-sm">
-                <Calculator className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap">Punto de Venta</span>
+              <TabsTrigger 
+                value="pos" 
+                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
+              >
+                <Calculator className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
+                Punto de Venta
               </TabsTrigger>
-              <TabsTrigger value="inventory" className="flex items-center gap-2 px-4 py-2 text-sm">
-                <Package className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap">Inventario</span>
+              <TabsTrigger 
+                value="inventory" 
+                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
+              >
+                <Package className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
+                Inventario
               </TabsTrigger>
-              <TabsTrigger value="sales" className="flex items-center gap-2 px-4 py-2 text-sm">
-                <FileText className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap">Ventas</span>
+              <TabsTrigger 
+                value="sales" 
+                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
+              >
+                <FileText className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
+                Ventas
               </TabsTrigger>
-              <TabsTrigger value="reports" className="flex items-center gap-2 px-4 py-2 text-sm">
-                <History className="h-4 w-4 shrink-0" />
-                <span className="whitespace-nowrap">Reportes</span>
+              <TabsTrigger 
+                value="reports" 
+                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
+              >
+                <History className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
+                Reportes
               </TabsTrigger>
             </TabsList>
           </div>

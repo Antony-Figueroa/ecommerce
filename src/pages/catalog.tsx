@@ -211,32 +211,32 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Dynamic Header - Vitality Zen Style */}
-      <div className="bg-white border-b border-slate-100 py-16 relative overflow-hidden">
+      <div className="bg-white dark:bg-card border-b border-slate-100 dark:border-border py-16 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.nav 
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-6"
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-muted-foreground mb-6"
           >
             <Link to="/" className="hover:text-primary transition-colors">Inicio</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-slate-600">Productos</span>
+            <span className="text-slate-600 dark:text-foreground">Productos</span>
           </motion.nav>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-5xl font-bold tracking-tight text-slate-800 mb-4"
+            className="text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground mb-4"
           >
-            {offersOnly ? "Ofertas Vitales" : "Catálogo Puro"}
+            {offersOnly ? "Ofertas" : "Catálogo"}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-slate-500 max-w-md font-medium text-lg"
+            className="text-slate-500 dark:text-muted-foreground max-w-md font-medium text-lg"
           >
             Encuentra el equilibrio perfecto con nuestra selección premium de suplementos.
           </motion.p>
@@ -253,7 +253,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
             className="hidden lg:block lg:w-72 flex-shrink-0"
           >
             <div className="sticky top-24 space-y-8">
-              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="bg-white dark:bg-card p-6 rounded-2xl border border-slate-100 dark:border-border shadow-sm">
                 <ProductFilters
                   categories={categories}
                   brands={brands}
@@ -278,13 +278,13 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
               transition={{ delay: 0.6 }}
               className="mb-8 space-y-6"
             >
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between bg-white dark:bg-card p-4 rounded-2xl border border-slate-100 dark:border-border shadow-sm">
                 <div className="flex-1 relative max-w-md" ref={searchRef}>
                   <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Input
                     type="search"
                     placeholder="Buscar productos..."
-                    className="pl-11 h-12 bg-white border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium text-sm"
+                    className="pl-11 h-12 bg-white dark:bg-background border-slate-200 dark:border-border focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium text-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
@@ -295,16 +295,16 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute z-50 w-full mt-2 bg-white border border-slate-100 rounded-xl shadow-2xl overflow-hidden"
+                        className="absolute z-50 w-full mt-2 bg-white dark:bg-card border border-slate-100 dark:border-border rounded-xl shadow-2xl overflow-hidden"
                       >
                         {searchSuggestions.map((product) => (
                           <Link
                             key={product.id}
                             to={`/producto/${product.id}`}
-                            className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-none"
+                            className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-muted transition-colors border-b border-slate-50 dark:border-border last:border-none"
                             onClick={() => setShowSuggestions(false)}
                           >
-                            <div className="h-12 w-12 rounded-lg bg-slate-100 p-1">
+                            <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-muted p-1">
                               <img 
                                 src={product.image || "/placeholder.png"} 
                                 alt={product.name} 
@@ -317,7 +317,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-black uppercase truncate text-slate-900">{product.name}</p>
+                              <p className="text-xs font-black uppercase truncate text-slate-900 dark:text-foreground">{product.name}</p>
                               <p className="text-[10px] font-bold text-primary">${formatUSD(product.price)}</p>
                             </div>
                           </Link>
@@ -328,11 +328,11 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-muted p-1 rounded-xl">
                     <Button
                       variant={viewMode === "default" ? "secondary" : "ghost"}
                       size="icon"
-                      className={cn("h-10 w-10 rounded-lg shadow-none", viewMode === "default" && "bg-white shadow-sm")}
+                      className={cn("h-10 w-10 rounded-lg shadow-none text-slate-500 dark:text-muted-foreground", viewMode === "default" && "bg-white dark:bg-card text-primary shadow-sm")}
                       onClick={() => setViewMode("default")}
                     >
                       <Grid className="h-4 w-4" />
@@ -340,19 +340,19 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                     <Button
                       variant={viewMode === "list" ? "secondary" : "ghost"}
                       size="icon"
-                      className={cn("h-10 w-10 rounded-lg shadow-none", viewMode === "list" && "bg-white shadow-sm")}
+                      className={cn("h-10 w-10 rounded-lg shadow-none text-slate-500 dark:text-muted-foreground", viewMode === "list" && "bg-white dark:bg-card text-primary shadow-sm")}
                       onClick={() => setViewMode("list")}
                     >
                       <List className="h-4 w-4" />
                     </Button>
                   </div>
 
-                  <div className="h-8 w-[1px] bg-slate-200 hidden sm:block" />
+                  <div className="h-8 w-[1px] bg-slate-200 dark:bg-border hidden sm:block" />
 
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ordenar:</span>
                     <select
-                      className="bg-transparent text-xs font-bold uppercase tracking-wider text-slate-700 focus:outline-none cursor-pointer"
+                      className="bg-transparent text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-foreground focus:outline-none cursor-pointer"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
                     >
@@ -371,7 +371,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                   <AnimatePresence>
                     {selectedCategory && (
                       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
-                        <Badge className="h-8 bg-white border border-slate-200 text-slate-900 px-3 rounded-lg gap-2 shadow-sm">
+                        <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
                           <span className="text-[10px] font-black uppercase tracking-widest">Cat: {categories.find((c) => c.slug === selectedCategory)?.name}</span>
                           <button className="hover:text-primary transition-colors" onClick={() => handleCategoryChange(null)}>×</button>
                         </Badge>
@@ -379,7 +379,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                     )}
                     {selectedBrands.map((brand) => (
                       <motion.div key={brand} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
-                        <Badge className="h-8 bg-white border border-slate-200 text-slate-900 px-3 rounded-lg gap-2 shadow-sm">
+                        <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
                           <span className="text-[10px] font-black uppercase tracking-widest">{brand}</span>
                           <button className="hover:text-primary transition-colors" onClick={() => setSelectedBrands(selectedBrands.filter((b) => b !== brand))}>×</button>
                         </Badge>
@@ -422,48 +422,50 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
                   {totalPages > 1 && (
                     <motion.div variants={fadeInUp} className="flex items-center justify-center gap-2 mt-16">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[10px] font-black uppercase tracking-widest h-10 px-4"
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        Prev
-                      </Button>
-                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-100">
-                        {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                          let pageNum: number
-                          if (totalPages <= 5) pageNum = i + 1
-                          else if (currentPage <= 3) pageNum = i + 1
-                          else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i
-                          else pageNum = currentPage - 2 + i
-                          
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={currentPage === pageNum ? "default" : "ghost"}
-                              size="sm"
-                              className={cn(
-                                "h-8 w-8 rounded-lg text-[10px] font-black uppercase tracking-widest",
-                                currentPage === pageNum ? "bg-slate-950 text-white shadow-lg shadow-slate-950/20" : "text-slate-400"
-                              )}
-                              onClick={() => setCurrentPage(pageNum)}
-                            >
-                              {pageNum}
-                            </Button>
-                          )
-                        })}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[10px] font-black uppercase tracking-widest h-10 px-4"
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                        Next
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[10px] font-black uppercase tracking-widest h-10 px-4 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted"
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Anterior
+                        </Button>
+                        <div className="flex items-center gap-1 bg-white dark:bg-card p-1 rounded-xl border border-slate-100 dark:border-border shadow-sm">
+                          {[...Array(Math.min(5, totalPages))].map((_, i) => {
+                            let pageNum: number
+                            if (totalPages <= 5) pageNum = i + 1
+                            else if (currentPage <= 3) pageNum = i + 1
+                            else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i
+                            else pageNum = currentPage - 2 + i
+                            
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={currentPage === pageNum ? "default" : "ghost"}
+                                size="sm"
+                                className={cn(
+                                  "h-8 w-8 rounded-lg text-[10px] font-black uppercase tracking-widest",
+                                  currentPage === pageNum 
+                                    ? "bg-slate-950 dark:bg-primary text-white shadow-lg shadow-slate-950/20 dark:shadow-primary/20" 
+                                    : "text-slate-400 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted"
+                                )}
+                                onClick={() => setCurrentPage(pageNum)}
+                              >
+                                {pageNum}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[10px] font-black uppercase tracking-widest h-10 px-4 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted"
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                        >
+                          Siguiente
+                        </Button>
                     </motion.div>
                   )}
                 </motion.div>
@@ -471,10 +473,10 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="py-24 text-center bg-white rounded-2xl border border-slate-100"
+                  className="py-24 text-center bg-white dark:bg-card rounded-2xl border border-slate-100 dark:border-border shadow-sm"
                 >
-                  <Search className="h-12 w-12 text-slate-200 mx-auto mb-4" />
-                  <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">No products found</p>
+                  <Search className="h-12 w-12 text-slate-200 dark:text-muted/30 mx-auto mb-4" />
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-slate-400 dark:text-muted-foreground">No products found</p>
                   <Button variant="link" className="text-primary font-black uppercase tracking-widest text-[10px] mt-2" onClick={handleClearFilters}>
                     Clear all filters
                   </Button>

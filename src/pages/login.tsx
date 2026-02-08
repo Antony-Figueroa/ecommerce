@@ -147,7 +147,7 @@ export function LoginPage() {
       <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4 z-0" />
       <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-emerald-500/5 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4 z-0" />
       
-      <Card className="w-full max-w-md border-border shadow-sm relative z-10 overflow-hidden bg-white/80 backdrop-blur-sm">
+      <Card className="w-full max-w-md border-border shadow-sm relative z-10 overflow-hidden bg-white/80 dark:bg-card/80 backdrop-blur-sm">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" /> {/* Top Signature Accent */}
         <CardHeader className="space-y-1 text-center pb-8">
           <div className="flex justify-center mb-6">
@@ -157,10 +157,10 @@ export function LoginPage() {
               </div>
             </Link>
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-800">
+          <CardTitle className="text-3xl font-bold tracking-tight text-slate-800 dark:text-foreground">
             Portal de Bienestar
           </CardTitle>
-          <CardDescription className="text-slate-500 font-medium">
+          <CardDescription className="text-slate-500 dark:text-muted-foreground font-medium">
             ¡Hola! Accede a tu cuenta para continuar tu camino.
           </CardDescription>
         </CardHeader>
@@ -171,14 +171,14 @@ export function LoginPage() {
             </div>
           )}
           {error && (
-            <div className="p-4 bg-rose-50 text-rose-700 text-sm font-semibold rounded-xl border border-rose-100">
+            <div className="p-4 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-sm font-semibold rounded-xl border border-rose-100 dark:border-rose-900/50">
               {error}
               {showResend && (
                 <button
                   type="button"
                   onClick={handleResendVerification}
                   disabled={resending}
-                  className="block mt-2 font-bold underline hover:text-rose-900 disabled:opacity-50"
+                  className="block mt-2 font-bold underline hover:text-rose-900 dark:hover:text-rose-200 disabled:opacity-50"
                 >
                   {resending ? "Enviando..." : "¿Reenviar código de verificación?"}
                 </button>
@@ -187,7 +187,7 @@ export function LoginPage() {
           )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">Correo Electrónico</Label>
+              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-muted-foreground">Correo Electrónico</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
@@ -195,8 +195,8 @@ export function LoginPage() {
                   type="email"
                   placeholder="ejemplo@correo.com"
                   className={cn(
-                    "pl-10 h-12 bg-white border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
-                    errors.email && "border-rose-500 bg-rose-50"
+                    "pl-10 h-12 bg-white dark:bg-background border-slate-200 dark:border-border focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
+                    errors.email && "border-rose-500 bg-rose-50 dark:bg-rose-950/20"
                   )}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -207,7 +207,7 @@ export function LoginPage() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500">Contraseña</Label>
+                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-muted-foreground">Contraseña</Label>
                 <Link
                   to="/recuperar-contrasena"
                   className="text-xs font-semibold text-primary hover:underline transition-all"
@@ -222,8 +222,8 @@ export function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className={cn(
-                    "pl-10 pr-10 h-12 bg-white border-slate-200 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
-                    errors.password && "border-rose-500 bg-rose-50"
+                    "pl-10 pr-10 h-12 bg-white dark:bg-background border-slate-200 dark:border-border focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
+                    errors.password && "border-rose-500 bg-rose-50 dark:bg-rose-950/20"
                   )}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -233,7 +233,7 @@ export function LoginPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-slate-400 hover:text-slate-600"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-slate-400 dark:text-muted-foreground hover:text-slate-600 dark:hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -250,9 +250,9 @@ export function LoginPage() {
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                className="rounded-md border-slate-300 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                className="rounded-md border-slate-300 dark:border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <Label htmlFor="remember" className="text-sm font-medium text-slate-600 cursor-pointer">
+              <Label htmlFor="remember" className="text-sm font-medium text-slate-600 dark:text-muted-foreground cursor-pointer">
                 Mantener sesión iniciada
               </Label>
             </div>
@@ -274,10 +274,10 @@ export function LoginPage() {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full border-slate-100" />
+              <Separator className="w-full border-slate-100 dark:border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-4 text-slate-400 font-bold tracking-widest">O continúa con</span>
+              <span className="bg-white dark:bg-card px-4 text-slate-400 dark:text-muted-foreground font-bold tracking-widest">O continúa con</span>
             </div>
           </div>
 
@@ -292,13 +292,12 @@ export function LoginPage() {
                 width="100%"
                 shape="pill"
                 text="continue_with"
-                locale="es"
               />
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 pt-2 pb-8">
-          <p className="text-center text-sm font-medium text-slate-500">
+          <p className="text-center text-sm font-medium text-slate-500 dark:text-muted-foreground">
             ¿Aún no tienes una cuenta?{" "}
             <Link to="/registro" className="text-primary font-bold hover:underline transition-all">
               Regístrate aquí

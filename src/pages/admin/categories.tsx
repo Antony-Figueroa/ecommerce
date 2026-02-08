@@ -223,254 +223,202 @@ export function AdminCategoriesPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Categorías">
-        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
-          <p className="text-muted-foreground font-medium">Cargando categorías...</p>
-        </div>
-      </AdminLayout>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <p className="text-muted-foreground font-medium">Cargando categorías...</p>
+      </div>
     )
   }
 
   return (
-    <AdminLayout title="Categorías">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground">
-              {categories.length} categorias en tu tienda
-            </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-muted-foreground">
+            {categories.length} categorias en tu tienda
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              resetForm()
+              setShowAddDialog(true)
+            }}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Nueva categoria
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4 flex flex-wrap gap-4 items-center justify-between">
+          <div className="relative flex-1 min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar categoria..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => {
-                resetForm()
-                setShowAddDialog(true)
-              }}
+              variant={statusFilter === "all" ? "default" : "outline"}
+              onClick={() => setStatusFilter("all")}
+              size="sm"
             >
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar Categoria
+              Todos
+            </Button>
+            <Button
+              variant={statusFilter === "active" ? "default" : "outline"}
+              onClick={() => setStatusFilter("active")}
+              size="sm"
+            >
+              Activos
+            </Button>
+            <Button
+              variant={statusFilter === "inactive" ? "default" : "outline"}
+              onClick={() => setStatusFilter("inactive")}
+              size="sm"
+            >
+              Inactivos
             </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Filters */}
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar categorias..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Mostrar:</span>
-            <div className="flex bg-muted p-1 rounded-md">
-              <Button
-                variant={statusFilter === "all" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setStatusFilter("all")}
-              >
-                Todas
-              </Button>
-              <Button
-                variant={statusFilter === "active" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setStatusFilter("active")}
-              >
-                Activas
-              </Button>
-              <Button
-                variant={statusFilter === "inactive" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setStatusFilter("inactive")}
-              >
-                Eliminadas
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Categories Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCategories.map((category) => (
-            <Card key={category.id} className="overflow-hidden">
-              <div className="aspect-[2/1] relative bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                {category.image ? (
-                  <img 
-                    src={category.image} 
-                    alt={category.name} 
-                    className="w-full h-full object-cover" 
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "https://placehold.co/600x300/f1f5f9/64748b?text=Categoría";
-                      target.onerror = null;
-                    }}
-                  />
-                ) : (
-                  <span className="text-6xl">{category.icon || "📁"}</span>
-                )}
-                <Badge className="absolute top-2 right-2" variant={category.isActive ? "default" : "secondary"}>
+      {/* List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredCategories.map((category) => (
+          <Card key={category.id} className={!category.isActive ? "opacity-60" : ""}>
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-2xl">
+                    {category.icon || "📦"}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">{category.name}</h3>
+                    <p className="text-sm text-muted-foreground">{category.productCount} productos</p>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => deleteCategory(category.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">
+                {category.description || "Sin descripción"}
+              </p>
+              <div className="flex items-center justify-between">
+                <Badge variant={category.isActive ? "default" : "secondary"}>
                   {category.isActive ? "Activa" : "Inactiva"}
                 </Badge>
-              </div>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{category.name}</h3>
-                    <p className="text-sm text-muted-foreground">{category.slug}</p>
-                  </div>
-                  <Badge variant="outline">
-                    <Package className="h-3 w-3 mr-1" />
-                    {category.productCount} productos
-                  </Badge>
-                </div>
-                
-                {category.description && (
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {category.description}
-                  </p>
-                )}
-
-                <div className="flex gap-2 mt-4">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEdit(category)}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    Editar
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => toggleCategoryStatus(category.id, category.isActive)}>
-                    {category.isActive ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                  </Button>
+                <div className="flex items-center gap-2">
                   <Button 
                     variant="outline" 
-                    size="sm" 
-                    onClick={() => deleteCategory(category.id)}
-                    disabled={category.productCount > 0}
-                    title={category.productCount > 0 ? "No se puede eliminar una categoría con productos asociados" : "Eliminar categoría"}
+                    size="sm"
+                    onClick={() => toggleCategoryStatus(category.id, category.isActive)}
                   >
-                    <Trash2 className={`h-4 w-4 ${category.productCount > 0 ? 'text-muted-foreground' : 'text-red-500'}`} />
+                    {category.isActive ? "Desactivar" : "Activar"}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredCategories.length === 0 && (
-          <Card>
-            <CardContent className="py-16 text-center">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No hay categorias</h3>
-              <p className="text-muted-foreground mb-4">Agrega tu primera categoria para organizar productos.</p>
-              <Button onClick={() => { resetForm(); setShowAddDialog(true) }}>
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Categoria
-              </Button>
+              </div>
             </CardContent>
           </Card>
-        )}
+        ))}
+      </div>
 
-        {/* Add/Edit Dialog */}
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingCategory ? "Editar Categoria" : "Agregar Nueva Categoria"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingCategory
-                  ? "Modifica los datos de la categoria existente."
-                  : "Completa los datos para crear una nueva categoria."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div>
-                <label className="text-sm font-medium">Nombre *</label>
+      {/* Add/Edit Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? "Editar categoria" : "Nueva categoria"}</DialogTitle>
+            <DialogDescription>
+              Completa los datos de la categoria para organizar tus productos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-4 gap-4 items-center">
+              <div className="col-span-1">
+                <label className="text-sm font-medium mb-1 block">Icono</label>
+                <EmojiPicker 
+                  onSelect={(icon) => setFormData({ ...formData, icon })} 
+                >
+                  <Button variant="outline" className="w-full text-2xl p-0 h-12">
+                    {formData.icon || "📦"}
+                  </Button>
+                </EmojiPicker>
+              </div>
+              <div className="col-span-3">
+                <label className="text-sm font-medium">Nombre</label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => {
-                    setFormData({ ...formData, name: e.target.value })
-                    if (errors.name) setErrors({ ...errors, name: undefined })
-                  }}
-                  placeholder="Nombre de la categoria"
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ej: Suplementos"
                   className={errors.name ? "border-red-500" : ""}
                 />
                 {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
               </div>
-              <div>
-                <label className="text-sm font-medium">Descripcion</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Descripcion de la categoria"
-                  className="w-full px-3 py-2 border rounded-md min-h-[80px]"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Icono (emoji)</label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={formData.icon}
-                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      placeholder="💊"
-                      className="flex-1"
-                    />
-                    <EmojiPicker onSelect={(emoji) => setFormData({ ...formData, icon: emoji })}>
-                      <Button variant="outline" size="icon" type="button" className="shrink-0">
-                        <Smile className="h-4 w-4" />
-                      </Button>
-                    </EmojiPicker>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Orden</label>
-                  <Input
-                    type="number"
-                    value={formData.sortOrder || ""}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value)
-                      setFormData({ ...formData, sortOrder: isNaN(val) ? 0 : val })
-                      if (errors.sortOrder) setErrors({ ...errors, sortOrder: undefined })
-                    }}
-                    placeholder="0"
-                    className={errors.sortOrder ? "border-red-500" : ""}
-                  />
-                  {errors.sortOrder && <p className="text-xs text-red-500 mt-1">{errors.sortOrder}</p>}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">URL de imagen</label>
-                <Input
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="rounded"
-                />
-                <span className="text-sm">Categoria activa</span>
-              </label>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Guardando..." : editingCategory ? "Guardar cambios" : "Crear categoria"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </AdminLayout>
+            <div>
+              <label className="text-sm font-medium">Descripción</label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Breve descripción..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Orden</label>
+                <Input
+                  type="number"
+                  value={formData.sortOrder}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0
+                    setFormData({ ...formData, sortOrder: val })
+                  }}
+                  placeholder="0"
+                  className={errors.sortOrder ? "border-red-500" : ""}
+                />
+                {errors.sortOrder && <p className="text-xs text-red-500 mt-1">{errors.sortOrder}</p>}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">URL de imagen</label>
+              <Input
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                placeholder="https://..."
+              />
+            </div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="rounded"
+              />
+              <span className="text-sm">Categoria activa</span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Guardando..." : editingCategory ? "Guardar cambios" : "Crear categoria"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

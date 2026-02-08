@@ -185,40 +185,58 @@ export function AdminNotificationsPage() {
     <AdminLayout title="Historial de Notificaciones">
       <div className="space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-center gap-4 flex-1">
             <div className="relative w-full md:w-80">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar notificaciones..."
-                className="pl-9"
+                className="pl-10 h-11 bg-white/50 dark:bg-muted/10 border-slate-200/50 dark:border-border/50"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setFilter("all")}>
+            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Estado:</span>
+              <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
+                <button
+                  onClick={() => setFilter("all")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    filter === "all" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
                   Todas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter("unread")}>
+                </button>
+                <button
+                  onClick={() => setFilter("unread")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    filter === "unread" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
                   No leídas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFilter("read")}>
+                </button>
+                <button
+                  onClick={() => setFilter("read")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    filter === "read" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
                   Leídas
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto">
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 md:flex-none h-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white/50 dark:bg-muted/10 font-bold text-xs uppercase tracking-wider"
               onClick={handleMarkAllRead}
               disabled={!notifications.some(n => !n.isRead)}
             >
@@ -228,6 +246,7 @@ export function AdminNotificationsPage() {
             <Button
               variant="outline"
               size="icon"
+              className="h-11 w-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white/50 dark:bg-muted/10"
               onClick={fetchNotifications}
               disabled={loading}
             >

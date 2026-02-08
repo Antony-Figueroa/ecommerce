@@ -421,14 +421,14 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
 
 export function ProductCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
-      <div className="aspect-square bg-muted animate-pulse" />
+    <Card className="overflow-hidden dark:bg-card dark:border-border">
+      <div className="aspect-square bg-muted dark:bg-muted/10 animate-pulse" />
       <CardContent className="p-4 space-y-3">
-        <div className="h-3 bg-muted rounded animate-pulse w-1/3" />
-        <div className="h-4 bg-muted rounded animate-pulse" />
-        <div className="h-3 bg-muted rounded animate-pulse w-1/4" />
-        <div className="h-5 bg-muted rounded animate-pulse w-1/2" />
-        <div className="h-8 bg-muted rounded animate-pulse" />
+        <div className="h-3 bg-muted dark:bg-muted/10 rounded animate-pulse w-1/3" />
+        <div className="h-4 bg-muted dark:bg-muted/10 rounded animate-pulse" />
+        <div className="h-3 bg-muted dark:bg-muted/10 rounded animate-pulse w-1/4" />
+        <div className="h-5 bg-muted dark:bg-muted/10 rounded animate-pulse w-1/2" />
+        <div className="h-8 bg-muted dark:bg-muted/10 rounded animate-pulse" />
       </CardContent>
     </Card>
   )

@@ -13,7 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +29,7 @@ import { AdminLayout } from "@/components/layout/admin-layout"
 import { formatUSD } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 interface InventoryItem {
   id: string
@@ -218,8 +218,7 @@ export function AdminInventoryPage() {
   }
 
   return (
-    <AdminLayout title="Control de Almacén">
-      <div className="space-y-8 p-6 font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="space-y-8 p-6 font-sans selection:bg-primary/20 selection:text-primary">
         {/* Header - Warm & Professional */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
@@ -272,24 +271,64 @@ export function AdminInventoryPage() {
         </div>
 
         {/* Search & Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="relative flex-1 w-full max-w-md">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               placeholder="Buscar por nombre, SKU o categoría..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-12 pl-12 bg-white border-slate-200 focus:border-primary focus:ring-primary/10 rounded-2xl text-sm transition-all"
+              className="h-11 pl-12 bg-white/50 dark:bg-muted/10 border-slate-200 dark:border-border/50 rounded-xl shadow-sm focus:ring-primary/20 transition-all text-sm"
             />
           </div>
-          <Button 
-            variant="outline" 
-            className="h-12 border-slate-200 text-slate-600 hover:border-primary hover:text-primary font-bold text-xs uppercase tracking-wider px-8 rounded-2xl transition-all shadow-sm"
-            onClick={() => { setSortBy("stock"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
-          >
-            <ArrowUpDown className="h-4 w-4 mr-3" />
-            Ordenar por Stock
-          </Button>
+          
+          <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Ordenar:</span>
+            <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1 shrink-0">
+              <button
+                onClick={() => { setSortBy("stock"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                  sortBy === "stock" 
+                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                    : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                }`}
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                Stock
+                {sortBy === "stock" && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 bg-slate-200 dark:bg-muted text-[10px]">{sortOrder === "asc" ? "↑" : "↓"}</Badge>
+                )}
+              </button>
+              <button
+                onClick={() => { setSortBy("name"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                  sortBy === "name" 
+                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                    : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                }`}
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                Nombre
+                {sortBy === "name" && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 bg-slate-200 dark:bg-muted text-[10px]">{sortOrder === "asc" ? "↑" : "↓"}</Badge>
+                )}
+              </button>
+              <button
+                onClick={() => { setSortBy("category"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                  sortBy === "category" 
+                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                    : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                }`}
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                Categoría
+                {sortBy === "category" && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 bg-slate-200 dark:bg-muted text-[10px]">{sortOrder === "asc" ? "↑" : "↓"}</Badge>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Inventory Table */}
@@ -481,7 +520,7 @@ export function AdminInventoryPage() {
             
             <div className="max-h-[500px] overflow-y-auto p-6 space-y-4">
               {adjustments.length > 0 ? (
-                adjustments.map((adj, i) => (
+                adjustments.map((adj) => (
                   <div key={adj.id} className="flex items-start gap-4 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50/50 transition-colors group">
                     <div className={`p-2 rounded-xl ${
                       adj.type === 'entry' ? 'bg-emerald-50 text-emerald-500' : 

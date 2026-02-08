@@ -49,7 +49,7 @@ export function Newsletter({ title, description }: NewsletterProps) {
       <section className="bg-primary/5 py-16">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-3xl font-extrabold tracking-tight">
+            <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-slate-800 dark:text-foreground">
               {title || "¿Quieres recibir nuestro catálogo en PDF?"}
             </h2>
             <p className="mb-8 text-lg text-muted-foreground font-medium">

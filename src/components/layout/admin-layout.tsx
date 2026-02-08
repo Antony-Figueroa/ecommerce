@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { useState, useEffect, Suspense } from "react"
+import { Link, useLocation, Outlet } from "react-router-dom"
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -18,9 +18,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { AdminTopNav } from "./admin-top-nav"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { PageLoader } from "@/components/shared/page-loader"
 
 interface AdminLayoutProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   title?: string
 }
 
@@ -120,13 +121,10 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
       <div className={`transition-all duration-300 ${sidebarOpen ? "md:ml-64" : "md:ml-20"}`}>
         <AdminTopNav onMenuClick={() => setIsMobileMenuOpen(true)} />
         <main className="p-4 md:p-6">
-          {title && (
-            <div className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-            </div>
-          )}
           <div className="w-full overflow-hidden">
-            {children}
+            <Suspense fallback={<PageLoader />}>
+              {children || <Outlet />}
+            </Suspense>
           </div>
         </main>
       </div>

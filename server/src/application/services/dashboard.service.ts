@@ -32,20 +32,57 @@ export class DashboardService {
         totalProducts,
         lowStockCount,
         recentOrders,
+        allSalesForChart,
       ] = await Promise.all([
-        this.saleRepo.count(where),
-        this.saleRepo.count({ ...where, status: 'PENDING' }),
-        this.saleRepo.count({ ...where, status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } }),
-        this.saleRepo.getSummary({ startDate, endDate }),
-        this.userRepo.count({ role: 'CUSTOMER' }),
-        this.productRepo.count({ isActive: true }),
-        this.productRepo.count({ isActive: true, stock: { lt: 10 } }),
+        this.saleRepo.count(where).catch(e => { console.error('Error in totalOrders:', e); return 0; }),
+        this.saleRepo.count({ ...where, status: 'PENDING' }).catch(e => { console.error('Error in pendingOrders:', e); return 0; }),
+        this.saleRepo.count({ ...where, status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } }).catch(e => { console.error('Error in confirmedOrders:', e); return 0; }),
+        this.saleRepo.getSummary({ startDate, endDate }).catch(e => { console.error('Error in salesData:', e); return []; }),
+        this.userRepo.count({ role: 'CUSTOMER' }).catch(e => { console.error('Error in totalCustomers:', e); return 0; }),
+        this.productRepo.count({ isActive: true }).catch(e => { console.error('Error in totalProducts:', e); return 0; }),
+        this.productRepo.count({ isActive: true, stock: { lt: 10 } }).catch(e => { console.error('Error in lowStockCount:', e); return 0; }),
         this.saleRepo.findAll({
           where,
           take: 10,
           orderBy: { createdAt: 'desc' },
-        }),
+        }).catch(e => { console.error('Error in recentOrders:', e); return []; }),
+        this.saleRepo.findAll({
+          where: {
+            createdAt: {
+              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            }
+          },
+        }).catch(e => { console.error('Error in allSalesForChart:', e); return []; })
       ])
+
+      // Process chart data (last 7 days)
+      const last7Days = [...Array(7)].map((_, i) => {
+        const d = new Date()
+        d.setDate(d.getDate() - i)
+        return d.toISOString().split('T')[0]
+      }).reverse()
+
+      const dailyDataMap = new Map(last7Days.map(date => [date, { sales: 0, revenue: 0 }]))
+      
+      allSalesForChart.forEach((sale: any) => {
+        const date = new Date(sale.createdAt).toISOString().split('T')[0]
+        if (dailyDataMap.has(date)) {
+          const current = dailyDataMap.get(date)!
+          current.sales += 1
+          if (sale.status === 'COMPLETED') {
+            current.revenue += Number(sale.totalUSD || 0)
+          }
+        }
+      })
+
+      const chartData = Array.from(dailyDataMap.entries()).map(([date, data]) => {
+        const dayName = new Date(date).toLocaleDateString('es-ES', { weekday: 'short' })
+        return {
+          name: dayName.charAt(0).toUpperCase() + dayName.slice(1),
+          sales: data.sales,
+          revenue: Math.round(data.revenue * 100) / 100
+        }
+      })
 
       // Total Revenue (only from COMPLETED sales)
     const totalRevenue = salesData
@@ -60,6 +97,7 @@ export class DashboardService {
         totalCustomers,
         totalProducts,
         lowStockProducts: lowStockCount,
+        chartData,
         recentOrders: recentOrders.map((order: any) => ({
           id: order.id,
           orderNumber: order.saleNumber,

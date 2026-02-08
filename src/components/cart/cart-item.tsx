@@ -111,7 +111,7 @@ export function CartSummary({
   itemCount,
 }: CartSummaryProps) {
   return (
-    <div className="rounded-lg border bg-card p-6">
+    <div className="rounded-lg border bg-card p-2">
       <h2 className="text-lg font-semibold mb-4">Resumen del pedido</h2>
 
       <div className="space-y-3">

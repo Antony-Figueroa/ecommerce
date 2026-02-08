@@ -1,71 +1,102 @@
 # 📋 Referencia API - Ana's Supplements
 
-Documentación de los endpoints principales del sistema. Todas las rutas administrativas requieren autenticación `Bearer <token>`.
+Documentación técnica de los endpoints del sistema. Todas las rutas administrativas requieren autenticación mediante el encabezado `Authorization: Bearer <token>`.
 
 ---
 
 ## 🔐 Autenticación
 
 ### Login Tradicional
-- **POST** `/api/auth/login`
-- **Body**: `{ email, password }`
+- **Endpoint**: `POST /api/auth/login`
+- **Body**: 
+  ```json
+  {
+    "email": "admin@example.com",
+    "password": "password123"
+  }
+  ```
+- **Respuesta**: `200 OK` con token JWT y datos del usuario.
 
 ### Google OAuth
-- **POST** `/api/auth/google`
-- **Body**: `{ credential }` (Google ID Token)
-
-### Perfil de Usuario
-- **GET** `/api/auth/me`
-- **PUT** `/api/auth/profile`
+- **Endpoint**: `POST /api/auth/google`
+- **Body**: `{ "credential": "JWT_FROM_GOOGLE" }`
 
 ---
 
-## 🛒 Catálogo (Público)
+## ⚙️ Administración (Rutas Protegidas)
 
-### Productos
-- **GET** `/api/products` (Listado general)
-- **GET** `/api/products/:id` (Detalle)
-- **GET** `/api/products/search?q=...` (Búsqueda)
+### Dashboard y Estadísticas
+- **Endpoint**: `GET /api/admin/stats`
+- **Descripción**: Obtiene métricas clave para el panel principal.
+- **Respuesta (Ejemplo)**:
+  ```json
+  {
+    "totalOrders": 150,
+    "pendingOrders": 5,
+    "confirmedOrders": 140,
+    "totalRevenue": 4500.50,
+    "totalCustomers": 85,
+    "totalProducts": 42,
+    "lowStockProducts": 3,
+    "chartData": [
+      { "name": "01 Feb", "sales": 10, "revenue": 300 },
+      { "name": "02 Feb", "sales": 12, "revenue": 350 }
+    ],
+    "recentOrders": [...]
+  }
+  ```
 
-### Categorías
-- **GET** `/api/categories` (Listado activo)
+### Gestión de Pedidos (Sales)
+- **Listar**: `GET /api/admin/sales?status=PENDING&startDate=2024-02-01`
+- **Cambiar Estado**: `PATCH /api/admin/sales/:id/status`
+- **Body**: `{ "status": "PROCESSING", "reason": "Pago verificado" }`
+
+### Gestión de Productos e Inventario
+- **Crear Producto**: `POST /api/admin/products`
+- **Body**:
+  ```json
+  {
+    "name": "Proteína Whey 2kg",
+    "description": "Proteína de alta calidad",
+    "priceUSD": 55.00,
+    "stock": 20,
+    "categoryId": "uuid-categoria",
+    "isActive": true
+  }
+  ```
+- **Auditoría de Inventario**: `GET /api/admin/inventory/logs`
 
 ---
 
-## ⚙️ Administración (Privado)
+## 🔔 Notificaciones y Tiempo Real
 
-### Gestión de Productos
-- **POST** `/api/admin/products` (Crear)
-- **PUT** `/api/admin/products/:id` (Actualizar)
-- **DELETE** `/api/admin/products/:id` (Eliminar/Desactivar)
+### Notificaciones del Sistema
+- **Endpoint**: `GET /api/admin/notifications/unread`
+- **Descripción**: Obtiene alertas no leídas (bajo stock, nuevos pedidos).
 
-### Gestión de Ventas
-- **GET** `/api/admin/sales` (Historial)
-- **POST** `/api/admin/sales` (Registrar venta manual)
-- **PATCH** `/api/admin/sales/:id/status` (Cambiar estado)
-
-### Inventario y Requerimientos
-- **GET** `/api/admin/inventory` (Estado actual)
-- **POST** `/api/admin/requirements` (Nuevo pedido a proveedor)
-- **POST** `/api/admin/requirements/:id/receive` (Recibir mercancía)
-
-### Tasa BCV
-- **GET** `/api/admin/sales/bcv/current` (Tasa activa)
-- **POST** `/api/admin/sales/bcv` (Actualizar tasa)
+### WebSockets (Socket.io)
+- **URL**: `ws://localhost:3001`
+- **Eventos Emitidos**:
+  - `new_order`: Notifica al admin sobre un nuevo pedido.
+  - `stock_alert`: Notifica cuando un producto llega al nivel mínimo.
+- **Configuración CORS**: Obligatorio permitir el origen del frontend para establecer la conexión.
 
 ---
 
-## 📊 Reportes y Analíticas
-- **GET** `/api/admin/reports/dashboard` (Métricas generales)
-- **GET** `/api/admin/reports/profitability` (Margen y ganancias)
-- **GET** `/api/admin/reports/sales` (Ventas por período)
+## 🛠️ Códigos de Error Comunes
+
+| Código | Mensaje | Descripción |
+| :--- | :--- | :--- |
+| `401` | Unauthorized | Token faltante o expirado. |
+| `403` | Forbidden | El usuario no tiene rol de ADMINISTRADOR. |
+| `404` | Not Found | El recurso solicitado no existe. |
+| `500` | Internal Server Error | Error inesperado en el servidor o base de datos. |
 
 ---
 
 ## 🔗 Enlaces Rápidos
-- [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
+- [Arquitectura Técnica](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/ARQUITECTURA.md)
 - [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
-- [Arquitectura Técnica](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/arquitectura.md)
-- [Guía de Desarrollo](file:///c:/Users/Server%20Admin/Desktop/ecommerce/AGENTS.md)
+- [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
 
-*Última actualización: 2026-02-05*
+*Última actualización: 2026-02-08 (v1.1)*

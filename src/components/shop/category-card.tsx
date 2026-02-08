@@ -89,14 +89,14 @@ export const CategoryIconCard = memo(function CategoryIconCard({ category }: Cat
 
   return (
     <Link to={`/productos/${category.slug}`}>
-      <Card className="group h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50">
+      <Card className="group h-full transition-all duration-300 hover:shadow-lg hover:border-primary/50 dark:bg-card dark:border-border">
         <CardContent className="p-6 flex flex-col items-center text-center">
           <div className="mb-3 p-3 rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white min-w-[3.5rem] min-h-[3.5rem] flex items-center justify-center">
             {icons[category.icon || "pill"] || (
               <span className="text-3xl leading-none">{category.icon || "💊"}</span>
             )}
           </div>
-          <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors text-slate-800 dark:text-foreground">
             {category.name}
           </h3>
           <p className="text-xs text-muted-foreground line-clamp-2">

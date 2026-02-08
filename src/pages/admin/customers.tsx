@@ -161,12 +161,9 @@ export function AdminCustomersPage() {
   if (loading) {
     return (
       <AdminLayout title="Clientes">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="grid gap-4 md:grid-cols-4">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted rounded"></div>)}
-          </div>
-          <div className="h-64 bg-muted rounded"></div>
+        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+          <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          <p className="text-muted-foreground font-medium">Cargando usuarios...</p>
         </div>
       </AdminLayout>
     )
@@ -176,134 +173,133 @@ export function AdminCustomersPage() {
     <AdminLayout title="Clientes">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-muted-foreground">
-              {totalCustomers} usuarios registrados ({activeCustomersCount} activos)
+              {customers.length} usuarios registrados en total
             </p>
           </div>
-          
-          <Dialog open={isAddingAdmin} onOpenChange={setIsAddingAdmin}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Nuevo Administrador
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Crear Nuevo Administrador</DialogTitle>
-                <DialogDescription>
-                  Completa los datos para registrar un nuevo usuario con rol de administrador.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateAdmin} className="space-y-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Nombre</Label>
-                  <Input
-                    id="name"
-                    className="col-span-3"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">Usuario</Label>
-                  <Input
-                    id="username"
-                    className="col-span-3"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    placeholder="opcional"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    className="col-span-3"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right">Teléfono</Label>
-                  <Input
-                    id="phone"
-                    className="col-span-3"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="password" className="text-right">Contraseña</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    className="col-span-3"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    minLength={8}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={newAdminLoading}>
-                    {newAdminLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creando...
-                      </>
-                    ) : (
-                      "Crear Administrador"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-3">
+            <Dialog open={isAddingAdmin} onOpenChange={setIsAddingAdmin}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Nuevo Administrador
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Crear Administrador</DialogTitle>
+                  <DialogDescription>
+                    Los administradores tienen acceso total al panel de control.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateAdmin} className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nombre Completo</Label>
+                    <Input 
+                      id="name" 
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ej: Ana Pérez" 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Nombre de Usuario</Label>
+                    <Input 
+                      id="username" 
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      placeholder="ej: ana_admin" 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Correo Electrónico</Label>
+                    <Input 
+                      id="email" 
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="admin@vitality.com" 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input 
+                      id="phone" 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="0412..." 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Contraseña</Label>
+                    <Input 
+                      id="password" 
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="••••••••" 
+                      required 
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsAddingAdmin(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={newAdminLoading}>
+                      {newAdminLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Crear Admin
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-blue-100">
-                  <Users className="h-5 w-5 text-blue-600" />
+        {/* Stats Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/10 dark:to-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                  <Users className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Clientes</p>
-                  <p className="text-2xl font-bold">{totalCustomers}</p>
+                  <p className="text-sm text-muted-foreground font-medium">Total Clientes</p>
+                  <h3 className="text-2xl font-bold">{customers.filter(c => c.role === 'USER').length}</h3>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-green-100">
-                  <Users className="h-5 w-5 text-green-600" />
+
+          <Card className="bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/10 dark:to-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
+                  <Shield className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Activos</p>
-                  <p className="text-2xl font-bold">{activeCustomersCount}</p>
+                  <p className="text-sm text-muted-foreground font-medium">Administradores</p>
+                  <h3 className="text-2xl font-bold">{customers.filter(c => c.role === 'ADMIN').length}</h3>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-full bg-red-100">
-                  <Users className="h-5 w-5 text-red-600" />
+
+          <Card className="bg-gradient-to-br from-green-50 to-white dark:from-green-900/10 dark:to-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600">
+                  <Check className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Desactivados</p>
-                  <p className="text-2xl font-bold">{inactiveCustomersCount}</p>
+                  <p className="text-sm text-muted-foreground font-medium">Usuarios Activos</p>
+                  <h3 className="text-2xl font-bold">{customers.filter(c => c.isActive).length}</h3>
                 </div>
               </div>
             </CardContent>
@@ -311,145 +307,126 @@ export function AdminCustomersPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 items-center">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar clientes por nombre, email o telefono..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Estado:</span>
-            <div className="flex bg-muted p-1 rounded-md">
+        <Card>
+          <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nombre, email o teléfono..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2 w-full md:w-auto overflow-x-auto scrollbar-hide">
               <Button
-                variant={statusFilter === "all" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs"
+                variant={statusFilter === "all" ? "default" : "outline"}
                 onClick={() => setStatusFilter("all")}
+                size="sm"
               >
                 Todos
               </Button>
               <Button
-                variant={statusFilter === "active" ? "secondary" : "ghost"}
+                variant={statusFilter === "customer" ? "default" : "outline"}
+                onClick={() => setStatusFilter("customer")}
                 size="sm"
-                className="h-8 text-xs"
-                onClick={() => setStatusFilter("active")}
               >
-                Activos
+                Clientes
               </Button>
               <Button
-                variant={statusFilter === "inactive" ? "secondary" : "ghost"}
+                variant={statusFilter === "admin" ? "default" : "outline"}
+                onClick={() => setStatusFilter("admin")}
                 size="sm"
-                className="h-8 text-xs"
-                onClick={() => setStatusFilter("inactive")}
               >
-                Desactivados
+                Admins
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Customers Table */}
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="text-left p-4 font-medium">Usuario</th>
-                    <th className="text-left p-4 font-medium">Contacto</th>
-                    <th className="text-left p-4 font-medium">Rol</th>
-                    <th className="text-left p-4 font-medium">Estado</th>
-                    <th className="text-left p-4 font-medium">Pedidos</th>
-                    <th className="text-left p-4 font-medium">Registro</th>
-                    <th className="text-right p-4 font-medium">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium">{customer.name || "Sin nombre"}</div>
-                          {customer.role === 'ADMIN' && (
-                            <Shield className="h-3 w-3 text-blue-500" />
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {customer.username ? `@${customer.username}` : customer.id}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <Mail className="h-3 w-3" />
-                            {customer.email}
-                          </div>
-                          {customer.phone && (
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <Phone className="h-3 w-3" />
-                              {customer.phone}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant={customer.role === 'ADMIN' ? 'default' : 'secondary'} className={customer.role === 'ADMIN' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300' : ''}>
-                          {customer.role === 'ADMIN' ? 'Administrador' : customer.role === 'USER' ? 'Cliente' : customer.role}
-                        </Badge>
-                      </td>
-                      <td className="p-4">
-                        <Badge 
-                          variant={customer.isActive ? "outline" : "secondary"} 
-                          className={customer.isActive 
-                            ? "border-green-500 text-green-700 dark:border-green-400 dark:text-green-400" 
-                            : "dark:bg-slate-800 dark:text-slate-400"
-                          }
-                        >
-                          {customer.isActive ? "Activo" : "Desactivado"}
-                        </Badge>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-1">
-                          <ShoppingCart className="h-3 w-3" />
-                          {customer._count?.sales || 0}
-                        </div>
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {formatDate(customer.createdAt)}
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            title={customer.isActive ? "Desactivar" : "Activar"}
-                            onClick={() => toggleCustomerStatus(customer.id, customer.isActive)}
-                          >
-                            {customer.isActive ? (
-                              <X className="h-4 w-4 text-red-500" />
-                            ) : (
-                              <Check className="h-4 w-4 text-green-500" />
-                            )}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredCustomers.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        No se encontraron clientes
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </CardContent>
+        </Card>
+
+        {/* Table */}
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="px-4 py-3 text-left font-medium">Usuario</th>
+                  <th className="px-4 py-3 text-left font-medium">Contacto</th>
+                  <th className="px-4 py-3 text-left font-medium">Rol</th>
+                  <th className="px-4 py-3 text-left font-medium">Estado</th>
+                  <th className="px-4 py-3 text-left font-medium">Pedidos</th>
+                  <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {filteredCustomers.map((customer) => (
+                  <tr key={customer.id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
+                          {customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold">{customer.name || 'Sin nombre'}</p>
+                          <p className="text-xs text-muted-foreground">@{customer.username || 'usuario'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-3 w-3" />
+                          <span className="text-xs">{customer.email}</span>
+                        </div>
+                        {customer.phone && (
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Phone className="h-3 w-3" />
+                            <span className="text-xs">{customer.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge variant={customer.role === 'ADMIN' ? 'default' : 'secondary'}>
+                        {customer.role}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4">
+                      <Badge variant={customer.isActive ? 'outline' : 'secondary'} className={customer.isActive ? "border-green-500 text-green-700 dark:border-green-400 dark:text-green-400" : ""}>
+                        {customer.isActive ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex flex-col items-center">
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground mb-1" />
+                        <span className="font-bold">{customer._count?.sales || 0}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleCustomerStatus(customer.id, customer.isActive)}
+                      >
+                        {customer.isActive ? (
+                          <X className="h-4 w-4 text-red-500" />
+                        ) : (
+                          <Check className="h-4 w-4 text-green-500" />
+                        )}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredCustomers.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      No se encontraron usuarios que coincidan con la búsqueda.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </div>
     </AdminLayout>

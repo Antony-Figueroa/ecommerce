@@ -8,8 +8,10 @@ import { Footer } from "@/components/layout/footer"
 import { WhatsAppButton } from "@/components/shared/whatsapp-button"
 import { ProtectedRoute } from "@/components/shared/protected-route"
 import { UserAccountLayout } from "@/components/layout/user-account-layout"
+import { AdminLayout } from "@/components/layout/admin-layout"
 import { Toaster } from "@/components/ui/toaster"
-import { Loader2 } from "lucide-react"
+import { PageLoader } from "@/components/shared/page-loader"
+import { RootLayout } from "@/components/layout/root-layout"
 
 // Optimizando tamaño del bundle mediante importaciones dinámicas (bundle-dynamic-imports)
 const HomePage = lazy(() => import("@/pages/home").then(m => ({ default: m.HomePage })))
@@ -39,14 +41,6 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings").then(m => 
 const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m => ({ default: m.FinancialDashboard })))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
 
-function PageLoader() {
-  return (
-    <div className="flex h-[60vh] w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  )
-}
-
 function App() {
   const location = useLocation()
 
@@ -54,63 +48,53 @@ function App() {
     window.scrollTo(0, 0)
   }, [location.pathname])
 
-  const isAdminPath = location.pathname.startsWith("/admin")
-  const isAuthPath = [
-    "/login", 
-    "/registro", 
-    "/registro/confirmacion",
-    "/verify-email",
-    "/forgot-password",
-    "/reset-password"
-  ].includes(location.pathname)
-  const hideLayout = isAdminPath || isAuthPath
-
   return (
     <AuthProvider>
       <FavoritesProvider>
         <CartProvider>
           <div className="flex min-h-screen flex-col">
-            {!hideLayout && <Navbar />}
-            <main className="flex-1">
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/productos" element={<CatalogPage />} />
-                  <Route path="/productos/:slug" element={<CatalogPage />} />
-                  <Route path="/ofertas" element={<CatalogPage offersOnly={true} />} />
-                  <Route path="/producto/:id" element={<ProductPage />} />
-                  <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/registro" element={<RegisterPage />} />
-                  <Route path="/registro/confirmacion" element={<GoogleConfirmPage />} />
-                  <Route path="/verify-email" element={<VerifyEmailPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-                  
-                  {/* Rutas de Usuario Protegidas con Layout de Cuenta */}
-                  <Route element={<ProtectedRoute><UserAccountLayout /></ProtectedRoute>}>
-                    <Route path="/perfil" element={<AccountPage />} />
-                    <Route path="/pedidos" element={<OrdersPage />} />
-                    <Route path="/favoritos" element={<FavoritesPage />} />
-                    <Route path="/notificaciones" element={<NotificationsPage />} />
-                  </Route>
-                  
-                  {/* Admin Routes Protegidas */}
-                  <Route path="/admin" element={<ProtectedRoute adminOnly={true}><AdminDashboard /></ProtectedRoute>} />
-                  <Route path="/admin/orders" element={<ProtectedRoute adminOnly={true}><AdminOrdersPage /></ProtectedRoute>} />
-                  <Route path="/admin/products" element={<ProtectedRoute adminOnly={true}><AdminProductsPage /></ProtectedRoute>} />
-                  <Route path="/admin/categories" element={<ProtectedRoute adminOnly={true}><AdminCategoriesPage /></ProtectedRoute>} />
-                  <Route path="/admin/customers" element={<ProtectedRoute adminOnly={true}><AdminCustomersPage /></ProtectedRoute>} />
-                  <Route path="/admin/inventory" element={<ProtectedRoute adminOnly={true}><AdminInventoryPage /></ProtectedRoute>} />
-                  <Route path="/admin/analytics" element={<ProtectedRoute adminOnly={true}><AdminAnalyticsPage /></ProtectedRoute>} />
-                  <Route path="/admin/settings" element={<ProtectedRoute adminOnly={true}><AdminSettingsPage /></ProtectedRoute>} />
-                  <Route path="/admin/financial" element={<ProtectedRoute adminOnly={true}><FinancialDashboard /></ProtectedRoute>} />
-                  <Route path="/admin/notifications" element={<ProtectedRoute adminOnly={true}><AdminNotificationsPage /></ProtectedRoute>} />
-                </Routes>
-              </Suspense>
-            </main>
-            {!hideLayout && <Footer />}
-            {!hideLayout && <WhatsAppButton />}
+            <Routes>
+              {/* Rutas de Administrador - Usan su propio Layout persistente */}
+              <Route element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/orders" element={<AdminOrdersPage />} />
+                <Route path="/admin/products" element={<AdminProductsPage />} />
+                <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+                <Route path="/admin/customers" element={<AdminCustomersPage />} />
+                <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+                <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+                <Route path="/admin/settings" element={<AdminSettingsPage />} />
+                <Route path="/admin/financial" element={<FinancialDashboard />} />
+                <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+              </Route>
+
+              {/* Rutas Públicas y de Usuario - Usan RootLayout para Navbar/Footer persistente */}
+              <Route element={<RootLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/productos" element={<CatalogPage />} />
+                <Route path="/productos/:slug" element={<CatalogPage />} />
+                <Route path="/ofertas" element={<CatalogPage offersOnly={true} />} />
+                <Route path="/producto/:id" element={<ProductPage />} />
+                <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/registro" element={<RegisterPage />} />
+                <Route path="/registro/confirmacion" element={<GoogleConfirmPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                
+                {/* Rutas de Usuario Protegidas con Layout de Cuenta anidado */}
+                <Route element={<ProtectedRoute><UserAccountLayout /></ProtectedRoute>}>
+                  <Route path="/perfil" element={<AccountPage />} />
+                  <Route path="/pedidos" element={<OrdersPage />} />
+                  <Route path="/favoritos" element={<FavoritesPage />} />
+                  <Route path="/notificaciones" element={<NotificationsPage />} />
+                </Route>
+                
+                {/* Catch-all route to redirect to home */}
+                <Route path="*" element={<HomePage />} />
+              </Route>
+            </Routes>
             <Toaster />
           </div>
         </CartProvider>

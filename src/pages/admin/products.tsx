@@ -521,18 +521,15 @@ export function AdminProductsPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Productos">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="h-64 bg-muted rounded"></div>
-        </div>
-      </AdminLayout>
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-muted rounded w-1/4"></div>
+        <div className="h-64 bg-muted rounded"></div>
+      </div>
     )
   }
 
   return (
-    <AdminLayout title="Productos">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -557,66 +554,82 @@ export function AdminProductsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar productos por nombre, SKU o marca..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 h-11 bg-white/50 dark:bg-muted/10 border-slate-200/50 dark:border-border/50"
             />
           </div>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas las categorias</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id}>{String(cat.name || "")}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="active">Activos</SelectItem>
-              <SelectItem value="inactive">Eliminados</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={stockFilter} onValueChange={setStockFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Stock" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todo el stock</SelectItem>
-              <SelectItem value="in">En stock</SelectItem>
-              <SelectItem value="low">Stock bajo</SelectItem>
-              <SelectItem value="out">Agotado</SelectItem>
-            </SelectContent>
-          </Select>
 
-          <div className="flex items-center border rounded-md h-10">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="icon"
-              className="rounded-r-none h-full"
-              onClick={() => setViewMode("grid")}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="rounded-l-none h-full"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="h-4 w-4" />
-            </Button>
+          <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Filtrar:</span>
+            <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-40 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las categorias</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{String(cat.name || "")}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <div className="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1" />
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="active">Activos</SelectItem>
+                  <SelectItem value="inactive">Eliminados</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1" />
+
+              <Select value={stockFilter} onValueChange={setStockFilter}>
+                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider">
+                  <SelectValue placeholder="Stock" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todo el stock</SelectItem>
+                  <SelectItem value="in">En stock</SelectItem>
+                  <SelectItem value="low">Stock bajo</SelectItem>
+                  <SelectItem value="out">Agotado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 px-1.5 shrink-0">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 transition-all duration-300 rounded-lg ${
+                  viewMode === "grid" 
+                    ? "bg-white dark:bg-card text-primary shadow-sm scale-[1.05]" 
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                <Grid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 transition-all duration-300 rounded-lg ${
+                  viewMode === "list" 
+                    ? "bg-white dark:bg-card text-primary shadow-sm scale-[1.05]" 
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1490,6 +1503,5 @@ export function AdminProductsPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
   )
 }

@@ -2,6 +2,8 @@ import { Link, useLocation, Outlet } from "react-router-dom"
 import { ChevronRight, User, ShoppingBag, LogOut, Heart, Bell } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { useAuth } from "@/contexts/auth-context"
+import { Suspense } from "react"
+import { PageLoader } from "@/components/shared/page-loader"
 
 const menuItems = [
   { path: "/pedidos", label: "Mis Pedidos", icon: ShoppingBag },
@@ -83,7 +85,9 @@ export function UserAccountLayout() {
         </aside>
 
         <main className="lg:col-span-3">
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>
