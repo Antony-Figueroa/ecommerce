@@ -105,6 +105,22 @@ Siga este orden para mantener la consistencia:
 
 ---
 
+## 🧠 Uso Obligatorio de Skills (Agentes AI)
+
+Para mantener la coherencia y calidad técnica, los agentes deben invocar y seguir las skills ubicadas en `.agents/skills/`:
+
+### 🎨 Interface Design
+- **Uso**: Cualquier modificación de UI, componentes o flujos de usuario.
+- **Mandato**: Aplicar 'Intent First' (evitar plantillas genéricas) y 'Subtle Layering'.
+- **Validación**: Realizar el 'Squint Test' y 'Signature Test' antes de entregar cambios.
+
+### ⚡ Vercel React Best Practices
+- **Uso**: Refactorización, creación de componentes o lógica de fetching.
+- **Mandato**: Eliminar waterfalls con `Promise.all()`, optimizar re-renders (`memo`, `useMemo`) y reducir bundle size.
+- **Prioridad**: Seguir estrictamente el orden de impacto (Critical -> High -> Medium).
+
+---
+
 ## 🔗 Documentación Relacionada
 - [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
 - [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
