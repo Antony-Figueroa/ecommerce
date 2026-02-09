@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,7 +26,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { AdminLayout } from "@/components/layout/admin-layout"
+ 
 import { formatUSD } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -73,6 +74,10 @@ export function AdminInventoryPage() {
 
   useEffect(() => {
     fetchInventory()
+  }, [])
+
+  useEffect(() => {
+    document.title = "Inventario | Ana's Supplements Admin"
   }, [])
 
   const fetchInventory = async () => {
@@ -218,33 +223,17 @@ export function AdminInventoryPage() {
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-8 p-6 font-sans selection:bg-primary/20 selection:text-primary">
-        {/* Header - Warm & Professional */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
-              Gestión de Inventario
-              <Package className="h-7 w-7 text-primary" />
-            </h1>
-            <p className="text-slate-500 font-medium text-sm flex items-center gap-2">
-              Supervisa y optimiza el stock de tus productos de bienestar.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              className="h-11 border-slate-200 text-slate-600 hover:bg-white hover:border-primary hover:text-primary font-bold text-xs uppercase tracking-wider px-6 rounded-2xl transition-all shadow-sm"
-              onClick={() => setShowHistoryDialog(true)}
-            >
-              <History className="mr-2 h-4 w-4" />
-              Historial de Ajustes
-            </Button>
-            <Button className="h-11 bg-primary text-white hover:bg-primary/90 font-bold text-xs uppercase tracking-wider px-8 rounded-2xl transition-all shadow-lg shadow-primary/20">
-              Exportar Reporte
-            </Button>
-          </div>
-        </div>
+    <div className="space-y-8 p-6 font-sans selection:bg-primary/20 selection:text-primary">
+        <AdminPageHeader 
+          title="Gestión de Inventario"
+          subtitle="Supervisa y optimiza el stock de tus productos de bienestar"
+          icon={Package}
+          action={{
+            label: "Historial de Ajustes",
+            onClick: () => setShowHistoryDialog(true),
+            icon: History
+          }}
+        />
 
         {/* Stats Grid - Nature Serena Palette */}
         <div className="grid gap-4 grid-cols-2 md:grid-cols-5">
@@ -573,6 +562,5 @@ export function AdminInventoryPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
   )
 }

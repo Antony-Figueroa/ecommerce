@@ -46,6 +46,8 @@ export function RegisterPage() {
   const [isFormValid, setIsFormValid] = useState(false)
   const { loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const [googleReady, setGoogleReady] = useState(false)
+  const [isBrave, setIsBrave] = useState(false)
 
   // Validación en tiempo real
   useEffect(() => {
@@ -71,6 +73,16 @@ export function RegisterPage() {
 
     validate()
   }, [formData, acceptTerms])
+
+  useEffect(() => {
+    setGoogleReady(true)
+    ;(async () => {
+      const anyNav = navigator as any
+      const braveFlag = anyNav.brave && anyNav.brave.isBrave ? await anyNav.brave.isBrave() : false
+      const uaFlag = /Brave/i.test(navigator.userAgent)
+      setIsBrave(Boolean(braveFlag || uaFlag))
+    })()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -146,7 +158,7 @@ export function RegisterPage() {
   }
 
   const handleGoogleError = () => {
-    setError("Error en la autenticación con Google")
+    setError("Error en la autenticación con Google. Revisa cookies de terceros o desactiva Shields en Brave.")
   }
 
   return (
@@ -179,7 +191,7 @@ export function RegisterPage() {
                 <Input
                   id="name"
                   name="name"
-                  placeholder="Juan Pérez"
+                  placeholder="Ingresa tu nombre completo"
                   className={cn("pl-10", errors.name && "border-red-500 focus-visible:ring-red-500")}
                   value={formData.name}
                   onChange={handleChange}
@@ -196,7 +208,7 @@ export function RegisterPage() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="tu@email.com"
+                  placeholder="correo@email.com"
                   className={cn("pl-10", errors.email && "border-red-500 focus-visible:ring-red-500")}
                   value={formData.email}
                   onChange={handleChange}
@@ -213,10 +225,11 @@ export function RegisterPage() {
                   id="phone"
                   name="phone"
                   type="tel"
-                  placeholder="5512345678"
+                  placeholder="0123456789"
                   className={cn("pl-10", errors.phone && "border-red-500 focus-visible:ring-red-500")}
                   value={formData.phone}
                   onChange={handleChange}
+                  maxLength={11}
                 />
               </div>
               {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
@@ -318,17 +331,27 @@ export function RegisterPage() {
           <div className="grid grid-cols-1 gap-4">
             <div className="flex justify-center w-full overflow-hidden min-h-[44px]">
               <div className="w-full flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  useOneTap={false}
-                  use_fedcm_for_prompt={true}
-                  theme="outline"
-                  size="large"
-                  width="250"
-                  text="signup_with"
-                  shape="rectangular"
-                />
+                {isBrave && (
+                  <div className="mb-2 w-[250px] p-2 text-xs rounded-lg border border-amber-200 bg-amber-50 text-amber-700">
+                    Si usas Brave, desactiva Shields o permite cookies de terceros para usar Google.
+                  </div>
+                )}
+                {googleReady ? (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap={false}
+                    use_fedcm_for_prompt={false}
+                    theme="outline"
+                    size="large"
+                    width="250"
+                    text="signup_with"
+                    shape="rectangular"
+                    logo_alignment="left"
+                  />
+                ) : (
+                  <div className="h-11 w-[250px] rounded-md bg-slate-100 dark:bg-muted animate-pulse" />
+                )}
               </div>
             </div>
           </div>

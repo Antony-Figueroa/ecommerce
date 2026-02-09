@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import {
   AreaChart,
   Area,
@@ -25,7 +26,7 @@ import {
 } from "recharts"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { AdminLayout } from "@/components/layout/admin-layout"
+ 
 import { formatUSD } from "@/lib/utils"
 import { api } from "@/lib/api"
 
@@ -41,6 +42,10 @@ export function AdminAnalyticsPage() {
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 100)
     return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    document.title = "Reportes | Ana's Supplements Admin"
   }, [])
 
   useEffect(() => {
@@ -83,11 +88,9 @@ export function AdminAnalyticsPage() {
 
   if (loading || !stats) {
     return (
-      <AdminLayout title="Reportes">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     )
   }
 
@@ -141,13 +144,15 @@ export function AdminAnalyticsPage() {
   }
 
   return (
-    <AdminLayout title="Reportes">
-      <div className="space-y-6 pb-10">
-        {/* Header */}
+    <div className="space-y-6 pb-10">
+        <AdminPageHeader 
+          title="Reportes y Analíticas"
+          subtitle="Visualiza el rendimiento real de tu negocio"
+          icon={BarChart3}
+        />
+
+        {/* Filters and Header Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-muted-foreground">Visualiza el rendimiento real de tu negocio</p>
-          </div>
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Periodo:</span>
@@ -384,7 +389,6 @@ export function AdminAnalyticsPage() {
           </Card>
         </div>
       </div>
-    </AdminLayout>
   )
 }
 

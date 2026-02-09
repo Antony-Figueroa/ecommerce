@@ -45,7 +45,11 @@ export class EmailService {
       console.log(`[Email Service] Correo de verificación enviado a: ${email}`)
     } catch (error) {
       console.error('[Email Service] Error al enviar correo:', error)
-      throw new Error('No se pudo enviar el correo de verificación')
+      // En desarrollo, no bloqueamos el flujo por error de envío de correo
+      if (config.nodeEnv === 'production') {
+        throw new Error('No se pudo enviar el correo de verificación')
+      }
+      console.warn('[Email Service] Desarrollo: No se pudo enviar el correo, pero continuamos el flujo.')
     }
   }
 
@@ -80,7 +84,10 @@ export class EmailService {
       console.log(`[Email Service] Correo de restablecimiento enviado a: ${email}`)
     } catch (error) {
       console.error('[Email Service] Error al enviar correo:', error)
-      throw new Error('No se pudo enviar el correo de restablecimiento')
+      if (config.nodeEnv === 'production') {
+        throw new Error('No se pudo enviar el correo de restablecimiento')
+      }
+      console.warn('[Email Service] Desarrollo: No se pudo enviar el correo de restablecimiento, pero continuamos el flujo.')
     }
   }
 

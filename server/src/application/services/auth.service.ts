@@ -28,10 +28,6 @@ export class AuthService {
       throw new AuthenticationError('Credenciales inválidas')
     }
 
-    if (!user.emailVerified) {
-      throw new AuthenticationError('Por favor verifica tu correo electrónico para continuar')
-    }
-
     const token = this.generateToken(user)
     return { user: this.sanitizeUser(user), token }
   }
@@ -52,31 +48,33 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
-    const verificationToken = crypto.randomBytes(32).toString('hex')
 
     const user = await this.userRepo.create({
       email,
       passwordHash: hashedPassword,
       name,
       username,
-      verificationToken,
+      emailVerified: true,
       role: 'USER'
     })
-
-    await this.emailService.sendVerificationEmail(email, verificationToken, name)
 
     return this.sanitizeUser(user)
   }
 
   async verifyEmail(token: string) {
-    const user = await this.userRepo.findByVerificationToken(token)
+    const user = await this.userRepo.findFirst({
+      verificationToken: token,
+      verificationTokenExpires: { gt: new Date() }
+    })
+
     if (!user) {
       throw new ValidationError('Token de verificación inválido o expirado')
     }
 
     await this.userRepo.update(user.id, {
       emailVerified: true,
-      verificationToken: null
+      verificationToken: null,
+      verificationTokenExpires: null
     })
 
     return true
@@ -178,7 +176,12 @@ export class AuthService {
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex')
-    await this.userRepo.update(user.id, { verificationToken })
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 horas
+
+    await this.userRepo.update(user.id, { 
+      verificationToken,
+      verificationTokenExpires 
+    })
     await this.emailService.sendVerificationEmail(email, verificationToken, user.name || '')
   }
 
@@ -262,7 +265,14 @@ export class AuthService {
   }
 
   private sanitizeUser(user: any) {
-    const { passwordHash, verificationToken, resetPasswordToken, resetPasswordExpires, ...sanitized } = user
+    const { 
+      passwordHash, 
+      verificationToken, 
+      verificationTokenExpires,
+      resetPasswordToken, 
+      resetPasswordExpires, 
+      ...sanitized 
+    } = user
     return sanitized
   }
 }

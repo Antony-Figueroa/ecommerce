@@ -5,7 +5,9 @@ import {
   Edit,
   Trash2,
   Loader2,
+  LayoutGrid,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -228,26 +230,19 @@ export function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground">
-            {categories.length} categorias en tu tienda
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              resetForm()
-              setShowAddDialog(true)
-            }}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Nueva categoria
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader 
+        title="Categorías"
+        subtitle={`${categories.length} categorías configuradas en tu tienda`}
+        icon={LayoutGrid}
+        action={{
+          label: "Nueva Categoría",
+          onClick: () => {
+            resetForm()
+            setShowAddDialog(true)
+          },
+          icon: Plus
+        }}
+      />
 
       {/* Filters */}
       <Card>

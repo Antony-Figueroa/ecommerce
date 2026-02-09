@@ -15,6 +15,7 @@ import {
   Loader2,
   Package
 } from 'lucide-react';
+import { AdminPageHeader } from '@/components/admin/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -147,33 +148,16 @@ export function AdminDashboard() {
 
   return (
     <div className="bg-background selection:bg-primary/20 selection:text-primary">
-        {/* Header Section with Vitality Zen Style */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="mb-12 relative"
-        >
-          <div className="absolute -left-4 lg:-left-8 top-0 w-1.5 h-16 bg-primary rounded-r-full shadow-lg shadow-primary/20" />
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-800 dark:text-foreground flex items-center gap-4">
-                Dashboard de Vitalidad
-                <Activity className="h-8 w-8 text-primary" />
-              </h1>
-              <p className="text-slate-500 dark:text-muted-foreground font-medium mt-1 text-sm flex items-center gap-2">
-                <span className="h-px w-8 bg-slate-200 dark:bg-border" />
-                Gestión profesional de rendimiento y salud
-              </p>
-            </div>
-            <Button 
-              onClick={() => navigate('/admin/products')}
-              className="h-11 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-[0.98] rounded-xl px-6"
-            >
-              <Plus className="mr-3 h-4 w-4" />
-              Nuevo Producto
-            </Button>
-          </div>
-        </motion.div>
+        <AdminPageHeader 
+          title="Dashboard de Vitalidad"
+          subtitle="Gestión profesional de rendimiento y salud"
+          icon={Activity}
+          action={{
+            label: "Nuevo Producto",
+            onClick: () => navigate('/admin/products'),
+            icon: Plus
+          }}
+        />
 
         {/* Stats Grid - "Dynamic & Athletic" Aesthetic */}
         <motion.div 
@@ -185,7 +169,7 @@ export function AdminDashboard() {
           {[
             { title: 'Ingresos Totales', value: formatUSD(stats.totalRevenue), growth: mockGrowth.revenueGrowth, icon: DollarSign, trend: 'up' },
             { title: 'Pedidos', value: stats.totalOrders, growth: mockGrowth.orderGrowth, icon: ShoppingCart, trend: 'up' },
-            { title: 'Atletas Activos', value: stats.totalCustomers, growth: mockGrowth.customerGrowth, icon: Users, trend: 'up' },
+            { title: 'Usuarios Activos', value: stats.totalCustomers, growth: mockGrowth.customerGrowth, icon: Users, trend: 'up' },
             { title: 'Ticket Promedio', value: formatUSD(mockGrowth.averageOrderValue), growth: mockGrowth.aovGrowth, icon: TrendingUp, trend: 'down' },
             { title: 'Conversión', value: `${mockGrowth.conversionRate}%`, growth: mockGrowth.conversionGrowth, icon: Activity, trend: 'up' }
           ].map((item, i) => (

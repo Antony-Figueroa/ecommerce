@@ -4,8 +4,10 @@ import {
   History, 
   AlertTriangle, 
   RotateCcw,
-  Loader2
+  Loader2,
+  Settings
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,7 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { AdminLayout } from "@/components/layout/admin-layout"
+ 
 
 interface Setting {
   id: string
@@ -55,6 +57,10 @@ export function AdminSettingsPage() {
 
   useEffect(() => {
     fetchSettings()
+  }, [])
+
+  useEffect(() => {
+    document.title = "Configuración | Ana's Supplements Admin"
   }, [])
 
   const fetchSettings = async () => {
@@ -153,45 +159,27 @@ export function AdminSettingsPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Configuración">
-        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
-          <p className="text-muted-foreground font-medium">Cargando configuración...</p>
-        </div>
-      </AdminLayout>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <p className="text-muted-foreground font-medium">Cargando configuración...</p>
+      </div>
     )
   }
 
   const groups = Object.keys(settingsGrouped)
 
   return (
-    <AdminLayout title="Configuración">
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-muted-foreground">
-              Gestiona los parámetros globales del sistema.
-            </p>
-          </div>
-          
-          <Button 
-            onClick={handleSaveClick} 
-            disabled={Object.keys(modifiedSettings).length === 0 || saving}
-            className="gap-2 font-bold"
-          >
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Guardar Cambios
-            {Object.keys(modifiedSettings).length > 0 && (
-              <Badge variant="secondary" className="ml-1 bg-primary-foreground/20 hover:bg-primary-foreground/20 border-none">
-                {Object.keys(modifiedSettings).length}
-              </Badge>
-            )}
-          </Button>
-        </div>
+    <div className="space-y-6">
+        <AdminPageHeader 
+          title="Configuración"
+          subtitle="Gestiona los parámetros globales del sistema"
+          icon={Settings}
+          action={{
+            label: "Guardar Cambios",
+            onClick: handleSaveClick,
+            icon: Save
+          }}
+        />
 
         <Tabs defaultValue={groups[0]} className="w-full">
           <TabsList className="inline-flex w-max md:w-auto bg-slate-100/50 dark:bg-muted/20 p-1.5 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm mb-6">
@@ -427,6 +415,5 @@ export function AdminSettingsPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
   )
 }

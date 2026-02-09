@@ -22,7 +22,7 @@ export const validationRules = {
 
   phone: z
     .string()
-    .min(10, "El teléfono debe tener al menos 10 dígitos")
+    .min(11, "El teléfono debe tener 11 dígitos")
     .max(15, "El teléfono no puede exceder los 15 dígitos")
     .regex(/^\d+$/, "Solo se permiten números"),
 

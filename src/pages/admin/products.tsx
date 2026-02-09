@@ -11,7 +11,9 @@ import {
   AlertTriangle,
   Grid,
   List,
+  Box,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -328,15 +330,21 @@ export function AdminProductsPage() {
 
     setSaving(true)
     try {
+      const { batchNumber, expirationDate, ...rest } = formData
       const productData = {
-        ...formData,
+        ...rest,
         slug: formData.name.toLowerCase().replace(/\s+/g, "-"),
       }
 
       if (editingProduct) {
         await api.updateProduct(editingProduct.id, productData)
       } else {
-        await api.createProduct(productData)
+        const createData = {
+          ...productData,
+          batchNumber: formData.batchNumber,
+          expirationDate: formData.expirationDate,
+        }
+        await api.createProduct(createData)
       }
 
       setShowAddDialog(false)
@@ -345,7 +353,14 @@ export function AdminProductsPage() {
       fetchBrands()
     } catch (error: any) {
       console.error("Error saving product:", error)
-      alert(error.message || "Error al guardar el producto")
+      const details = error.data?.error?.details
+      let errorMessage = error.message || "Error al guardar el producto"
+      
+      if (Array.isArray(details)) {
+        errorMessage = `Error de validación: ${details.map((d: any) => d.message).join(", ")}`
+      }
+      
+      alert(errorMessage)
     } finally {
       setSaving(false)
     }
@@ -523,28 +538,19 @@ export function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground">
-              {products.length} productos en tu catalogo
-              {lowStockCount > 0 && (
-                <span className="text-yellow-600 ml-2">
-                  ({lowStockCount} con stock bajo, {outOfStockCount} agotados)
-                </span>
-              )}
-            </p>
-          </div>
-          <Button
-            onClick={() => {
+        <AdminPageHeader 
+          title="Catálogo de Productos"
+          subtitle={`${products.length} productos en total ${lowStockCount > 0 ? `(${lowStockCount} con stock bajo, ${outOfStockCount} agotados)` : ''}`}
+          icon={Box}
+          action={{
+            label: "Agregar Producto",
+            onClick: () => {
               resetForm()
               setShowAddDialog(true)
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar Producto
-          </Button>
-        </div>
+            },
+            icon: Plus
+          }}
+        />
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 items-center">

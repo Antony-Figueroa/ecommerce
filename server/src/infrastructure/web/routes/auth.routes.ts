@@ -80,7 +80,7 @@ router.post('/register', validate(registerSchema), async (req: Request, res: Res
     const user = await authService.register(req.body)
     res.status(201).json({
       success: true,
-      message: 'Usuario registrado exitosamente. Por favor, verifica tu correo electrónico.',
+        message: 'Usuario registrado exitosamente.',
       user
     })
   } catch (error: any) {

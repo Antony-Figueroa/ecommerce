@@ -26,9 +26,11 @@ export function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("")
   const [showResend, setShowResend] = useState(false)
   const [resending, setResending] = useState(false)
+  const [googleReady, setGoogleReady] = useState(false)
   const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [isBrave, setIsBrave] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -36,6 +38,16 @@ export function LoginPage() {
       setSuccessMessage("¡Registro exitoso! Por favor, revisa tu correo electrónico para verificar tu cuenta.")
     }
   }, [location])
+
+  useEffect(() => {
+    setGoogleReady(true)
+    ;(async () => {
+      const anyNav = navigator as any
+      const braveFlag = anyNav.brave && anyNav.brave.isBrave ? await anyNav.brave.isBrave() : false
+      const uaFlag = /Brave/i.test(navigator.userAgent)
+      setIsBrave(Boolean(braveFlag || uaFlag))
+    })()
+  }, [])
 
   // Validación en tiempo real
   useEffect(() => {
@@ -158,7 +170,7 @@ export function LoginPage() {
             </Link>
           </div>
           <CardTitle className="text-3xl font-bold tracking-tight text-slate-800 dark:text-foreground">
-            Portal de Bienestar
+            Inicio de Sesión
           </CardTitle>
           <CardDescription className="text-slate-500 dark:text-muted-foreground font-medium">
             ¡Hola! Accede a tu cuenta para continuar tu camino.
@@ -283,17 +295,27 @@ export function LoginPage() {
 
           <div className="flex justify-center">
             <div className="w-full flex justify-center min-h-[44px]">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                useOneTap={false}
-                use_fedcm_for_prompt={true}
-                theme="outline"
-                size="large"
-                width="250"
-                shape="pill"
-                text="continue_with"
-              />
+              {isBrave && (
+                <div className="mb-2 w-[250px] p-2 text-xs rounded-lg border border-amber-200 bg-amber-50 text-amber-700">
+                  Si usas Brave, desactiva Shields o permite cookies de terceros para usar Google.
+                </div>
+              )}
+              {googleReady ? (
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap={false}
+                  use_fedcm_for_prompt={false}
+                  theme="outline"
+                  size="large"
+                  width="250"
+                  shape="pill"
+                  text="continue_with"
+                  logo_alignment="left"
+                />
+              ) : (
+                <div className="h-11 w-[250px] rounded-full bg-slate-100 dark:bg-muted animate-pulse" />
+              )}
             </div>
           </div>
         </CardContent>

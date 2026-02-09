@@ -21,7 +21,7 @@ export function validate(schema: z.ZodSchema) {
 
 export const authRules = {
   name: z
-    .string()
+    .string()    
     .min(2, "El nombre debe tener al menos 2 caracteres")
     .max(50, "El nombre no puede exceder los 50 caracteres"),
   
@@ -32,7 +32,7 @@ export const authRules = {
 
   phone: z
     .string()
-    .min(10, "El teléfono debe tener al menos 10 dígitos")
+    .min(11, "El teléfono debe tener 11 dígitos")
     .max(15, "El teléfono no puede exceder los 15 dígitos")
     .regex(/^\d+$/, "Solo se permiten números"),
 

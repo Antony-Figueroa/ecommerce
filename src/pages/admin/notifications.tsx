@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   User,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,7 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { AdminLayout } from "@/components/layout/admin-layout"
+ 
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
@@ -64,6 +65,10 @@ export function AdminNotificationsPage() {
   useEffect(() => {
     fetchNotifications()
   }, [pagination?.page, filter])
+
+  useEffect(() => {
+    document.title = "Notificaciones | Ana's Supplements Admin"
+  }, [])
 
   const fetchNotifications = async () => {
     try {
@@ -181,8 +186,18 @@ export function AdminNotificationsPage() {
   )
 
   return (
-    <AdminLayout title="Historial de Notificaciones">
-      <div className="space-y-6">
+    <div className="space-y-6">
+        <AdminPageHeader 
+          title="Centro de Notificaciones"
+          subtitle="Mantente al día con la actividad de tu plataforma"
+          icon={Bell}
+          action={{
+            label: "Marcar todas como leídas",
+            onClick: handleMarkAllRead,
+            icon: Check
+          }}
+        />
+
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col md:flex-row items-center gap-4 flex-1">
             <div className="relative w-full md:w-80">
@@ -230,18 +245,7 @@ export function AdminNotificationsPage() {
               </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 md:flex-none h-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white/50 dark:bg-muted/10 font-bold text-xs uppercase tracking-wider"
-              onClick={handleMarkAllRead}
-              disabled={!notifications.some(n => !n.isRead)}
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Marcar todas como leídas
-            </Button>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -368,6 +372,5 @@ export function AdminNotificationsPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
   )
 }

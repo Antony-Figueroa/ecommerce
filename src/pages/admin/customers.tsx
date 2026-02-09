@@ -11,11 +11,12 @@ import {
   Shield,
   Loader2,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { AdminLayout } from "@/components/layout/admin-layout"
+ 
 import { api } from "@/lib/api"
 import {
   Dialog,
@@ -24,7 +25,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
@@ -65,6 +65,10 @@ export function AdminCustomersPage() {
 
   useEffect(() => {
     fetchCustomers()
+  }, [])
+
+  useEffect(() => {
+    document.title = "Clientes | Ana's Supplements Admin"
   }, [])
 
   const fetchCustomers = async () => {
@@ -161,106 +165,98 @@ export function AdminCustomersPage() {
 
   if (loading) {
     return (
-      <AdminLayout title="Clientes">
-        <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-          <Loader2 className="h-8 w-8 text-primary animate-spin" />
-          <p className="text-muted-foreground font-medium">Cargando usuarios...</p>
-        </div>
-      </AdminLayout>
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        <p className="text-muted-foreground font-medium">Cargando usuarios...</p>
+      </div>
     )
   }
 
   return (
-    <AdminLayout title="Clientes">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-muted-foreground">
-              {customers.length} usuarios registrados en total
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Dialog open={isAddingAdmin} onOpenChange={setIsAddingAdmin}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Nuevo Administrador
+    <div className="space-y-6">
+        <AdminPageHeader 
+          title="Gestión de Usuarios"
+          subtitle="Administra los usuarios y niveles de acceso de la plataforma"
+          icon={Users}
+          action={{
+            label: "Nuevo Administrador",
+            onClick: () => setIsAddingAdmin(true),
+            icon: UserPlus
+          }}
+        />
+
+        <Dialog open={isAddingAdmin} onOpenChange={setIsAddingAdmin}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Crear Administrador</DialogTitle>
+              <DialogDescription>
+                Los administradores tienen acceso total al panel de control.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateAdmin} className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre Completo</Label>
+                <Input 
+                  id="name" 
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ej: Ana Pérez" 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Nombre de Usuario</Label>
+                <Input 
+                  id="username" 
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  placeholder="ej: ana_admin" 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <Input 
+                  id="email" 
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="admin@vitality.com" 
+                  required 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Teléfono</Label>
+                <Input 
+                  id="phone" 
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="0412..." 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <Input 
+                  id="password" 
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••" 
+                  required 
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsAddingAdmin(false)}>
+                  Cancelar
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Crear Administrador</DialogTitle>
-                  <DialogDescription>
-                    Los administradores tienen acceso total al panel de control.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleCreateAdmin} className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nombre Completo</Label>
-                    <Input 
-                      id="name" 
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ej: Ana Pérez" 
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="username">Nombre de Usuario</Label>
-                    <Input 
-                      id="username" 
-                      value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      placeholder="ej: ana_admin" 
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Correo Electrónico</Label>
-                    <Input 
-                      id="email" 
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="admin@vitality.com" 
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
-                    <Input 
-                      id="phone" 
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="0412..." 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Contraseña</Label>
-                    <Input 
-                      id="password" 
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="••••••••" 
-                      required 
-                    />
-                  </div>
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsAddingAdmin(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={newAdminLoading}>
-                      {newAdminLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Crear Admin
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+                <Button type="submit" disabled={newAdminLoading}>
+                  {newAdminLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Crear Admin
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
 
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -431,6 +427,5 @@ export function AdminCustomersPage() {
           </div>
         </Card>
       </div>
-    </AdminLayout>
   )
 }

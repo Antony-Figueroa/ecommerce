@@ -218,7 +218,23 @@ export class InventoryService {
         }
       }
 
-      if (images) {
+      if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive
+    }
+
+    if (data.isFeatured !== undefined) {
+      updateData.isFeatured = data.isFeatured
+    }
+
+    if (data.isOffer !== undefined) {
+      updateData.isOffer = data.isOffer
+    }
+
+    if (data.originalPrice !== undefined) {
+      updateData.originalPrice = data.originalPrice
+    }
+
+    if (images) {
         await this.handleImagesUpdate(id, images, updateData)
       }
 
@@ -241,7 +257,7 @@ export class InventoryService {
       stockChange = stock - product.stock
     }
 
-    const { categoryIds, ...restUpdate } = rest
+    const { categoryIds, purchasePrice: purchasePriceIn, profitMargin: profitMarginIn, ...restUpdate } = rest
     const updateData: any = { ...restUpdate }
 
     if (categoryIds) {
@@ -250,8 +266,30 @@ export class InventoryService {
       }
     }
 
+    if (data.name !== undefined) {
+      updateData.name = data.name
+      updateData.slug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    }
+
+    if (data.description !== undefined) {
+      updateData.description = data.description
+    }
+
     if (data.brand) {
+      updateData.brand = data.brand
       updateData.brandId = await this.getOrCreateBrand(data.brand)
+    }
+
+    if (data.format) {
+      updateData.format = data.format
+    }
+
+    if (data.weight !== undefined) {
+      updateData.weight = data.weight
+    }
+
+    if (data.sku !== undefined) {
+      updateData.sku = data.sku
     }
 
     if (stock !== undefined) {
@@ -259,13 +297,22 @@ export class InventoryService {
       updateData.inStock = stock > 0
     }
 
+    if (purchasePriceIn !== undefined) {
+      updateData.purchasePrice = purchasePriceIn
+    }
+
+    if (profitMarginIn !== undefined) {
+      updateData.profitMargin = profitMarginIn
+    }
+
     if (price !== undefined) {
       updateData.price = price
       // Recalcular margen si el precio de venta cambia manualmente
-      updateData.profitMargin = this.calculateMargin(Number(product.purchasePrice), Number(price))
-    } else if (data.purchasePrice !== undefined || data.profitMargin !== undefined) {
-      const purchasePrice = data.purchasePrice ?? Number(product.purchasePrice)
-      const profitMargin = data.profitMargin ?? Number(product.profitMargin)
+      const currentPurchasePrice = purchasePriceIn ?? Number(product.purchasePrice)
+      updateData.profitMargin = this.calculateMargin(currentPurchasePrice, Number(price))
+    } else if (purchasePriceIn !== undefined || profitMarginIn !== undefined) {
+      const purchasePrice = purchasePriceIn ?? Number(product.purchasePrice)
+      const profitMargin = profitMarginIn ?? Number(product.profitMargin)
       updateData.price = this.calculatePrice(purchasePrice, profitMargin)
     }
 

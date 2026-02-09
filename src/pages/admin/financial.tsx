@@ -11,16 +11,18 @@ import {
   History,
   Settings,
   RefreshCw,
-  X,
+  X
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
+import { BusinessEventsCalendar, type BusinessEvent } from "@/components/admin/business-events-calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { AdminLayout } from "@/components/layout/admin-layout"
-import { formatUSD, formatBS, cn } from "@/lib/utils"
+ 
+import { formatUSD, formatBS } from "@/lib/utils"
 import { api, API_BASE } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
@@ -54,6 +56,8 @@ export function FinancialDashboard() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [sales, setSales] = useState<any[]>([])
   const [isUpdatingBcv, setIsUpdatingBcv] = useState(false)
+  const [businessEvents, setBusinessEvents] = useState<BusinessEvent[]>([])
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false)
 
   // Memoize totals to avoid recalculation on every render
   const totals = useMemo(() => {
@@ -86,8 +90,13 @@ export function FinancialDashboard() {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    document.title = "Gestión Financiera | Ana's Supplements Admin"
+  }, [])
+
   const fetchData = async () => {
     try {
+      fetchEvents()
       // Usar la API real para el BCV
       const rateData = await api.getBCVStatus()
       if (rateData && rateData.currentRate) {
@@ -120,6 +129,68 @@ export function FinancialDashboard() {
           { id: "4", name: "Vitamina C 1000mg", sku: "VIT-004", stock: 120, purchasePrice: 15.00, shippingCost: 1.50, profitMargin: 1.4, price: 23.10 },
         ])
       }
+    }
+  }
+
+  const fetchEvents = async () => {
+    setIsLoadingEvents(true)
+    try {
+      const [salesData, reqData, invData] = await Promise.all([
+        api.getSalesReport(),
+        api.getRequirementsReport(),
+        api.getInventoryReportAdmin(),
+      ])
+
+      const events: BusinessEvent[] = []
+
+      // Map sales
+      if (Array.isArray(salesData)) {
+        salesData.forEach((sale: any) => {
+          events.push({
+            id: `sale-${sale.id}`,
+            type: 'SALE',
+            title: `Venta #${sale.saleNumber}`,
+            description: `${sale.customerName} - ${formatUSD(sale.totalUSD)}`,
+            date: sale.date || sale.createdAt,
+            amount: Number(sale.totalUSD),
+            status: 'completed'
+          })
+        })
+      }
+
+      // Map requirements
+      if (reqData && Array.isArray(reqData.items)) {
+        reqData.items.forEach((req: any) => {
+          events.push({
+            id: `req-${req.id}`,
+            type: 'REQUIREMENT',
+            title: `Requerimiento ${req.code}`,
+            description: `${req.supplier} - ${formatUSD(req.totalUSD)}`,
+            date: req.date || req.createdAt,
+            amount: Number(req.totalUSD),
+            status: req.status.toLowerCase()
+          })
+        })
+      }
+
+      // Map low stock from inventory report alerts
+      if (invData && invData.alerts && Array.isArray(invData.alerts.lowStock)) {
+        invData.alerts.lowStock.forEach((prod: any) => {
+          events.push({
+            id: `lowstock-${prod.id}`,
+            type: 'LOW_STOCK',
+            title: `Stock Bajo: ${prod.name}`,
+            description: `Quedan ${prod.stock} unidades (Mín: ${prod.minStock})`,
+            date: new Date().toISOString(), // Inventory alerts are current
+          })
+        })
+      }
+
+      setBusinessEvents(events)
+    } catch (error) {
+      console.error("Error fetching business events:", error)
+    } finally {
+      setIsLoadingEvents(false)
     }
   }
 
@@ -260,106 +331,111 @@ export function FinancialDashboard() {
 
 
   return (
-    <AdminLayout title="Gestión Financiera">
-      <div className="space-y-6 pb-20 md:pb-0">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-muted-foreground">Gestión de inventario, ventas y ganancias</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-            <div className="flex items-center gap-3 bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-              <DollarSign className="h-6 w-6 text-green-600 shrink-0" />
-              <div className="flex-1">
-                <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Tasa BCV</p>
-                <div className="flex flex-row sm:flex-col items-baseline sm:items-start justify-between">
-                  <p className="text-xl font-black text-green-700 leading-none">Bs {formatBS(bcvRate?.rate || 0)}</p>
-                  <p className="text-[10px] text-green-600 mt-0 sm:mt-1 font-medium">
-                    {bcvRate?.timestamp ? new Date(bcvRate.timestamp).toLocaleString('es-VE', { 
-                      day: '2-digit', 
-                      month: '2-digit', 
-                      hour: '2-digit', 
-                      minute: '2-digit',
-                      hour12: true 
-                    }) : 'Cargando...'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  disabled={isUpdatingBcv}
-                  className="h-11 md:h-10 px-4 font-semibold"
-                >
-                  {isUpdatingBcv ? (
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  ) : (
-                    <Settings className="h-5 w-5 mr-2" />
-                  )}
-                  Gestionar Tasa
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Tasa de Cambio (BCV)</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Actualiza la tasa para cálculos en Bolívares.
+    <div className="space-y-6 pb-20 md:pb-0">
+        <AdminPageHeader 
+          title="Gestión Financiera"
+          subtitle="Inventario, ventas y análisis de rentabilidad"
+          icon={Calculator}
+          rightContent={
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/20 px-4 py-2 rounded-xl border border-green-200 dark:border-green-900/30 shadow-sm">
+                <DollarSign className="h-6 w-6 text-green-600 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Tasa BCV</p>
+                  <div className="flex flex-row sm:flex-col items-baseline sm:items-start justify-between gap-2 sm:gap-0">
+                    <p className="text-xl font-black text-green-700 dark:text-green-400 leading-none">Bs {formatBS(bcvRate?.rate || 0)}</p>
+                    <p className="text-[10px] text-green-600/70 mt-0 sm:mt-1 font-medium">
+                      {bcvRate?.timestamp ? new Date(bcvRate.timestamp).toLocaleString('es-VE', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        hour: '2-digit', 
+                        minute: '2-digit', 
+                        hour12: true 
+                      }) : 'Cargando...'}
                     </p>
                   </div>
-                  <div className="grid gap-4">
-                    <div className="flex flex-col gap-2">
-                      <label htmlFor="manual-rate" className="text-sm font-medium">Establecer manualmente</label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="manual-rate"
-                          type="number"
-                          step="0.01"
-                          placeholder={bcvRate?.rate?.toString() || "0.00"}
-                          className="h-9"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleManualBcvUpdate(parseFloat(e.currentTarget.value))
-                            }
-                          }}
-                        />
-                        <Button 
-                          size="sm" 
-                          onClick={(e) => {
-                            const input = e.currentTarget.previousElementSibling as HTMLInputElement
-                            handleManualBcvUpdate(parseFloat(input.value))
-                          }}
-                        >
-                          OK
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">o</span>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="secondary" 
-                      className="w-full"
-                      onClick={handleUpdateBcv}
-                      disabled={isUpdatingBcv}
-                    >
-                      <RefreshCw className={cn("h-4 w-4 mr-2", isUpdatingBcv && "animate-spin")} />
-                      Actualizar desde API
-                    </Button>
-                  </div>
                 </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
+              </div>
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    disabled={isUpdatingBcv}
+                    className="h-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white dark:bg-card font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow-md transition-all"
+                  >
+                    {isUpdatingBcv ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Settings className="h-4 w-4 mr-2" />
+                    )}
+                    Gestionar Tasa
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium leading-none">Tasa de Cambio (BCV)</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Actualiza la tasa para cálculos en Bolívares.
+                      </p>
+                    </div>
+                    <div className="grid gap-4">
+                      <div className="flex flex-col gap-2">
+                        <label htmlFor="manual-rate" className="text-sm font-medium">Establecer manualmente</label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="manual-rate"
+                            type="number"
+                            step="0.01"
+                            placeholder={bcvRate?.rate?.toString() || "0.00"}
+                            className="h-9"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleManualBcvUpdate(parseFloat(e.currentTarget.value))
+                              }
+                            }}
+                          />
+                          <Button 
+                            size="sm" 
+                            onClick={(e) => {
+                              const input = e.currentTarget.previousElementSibling as HTMLInputElement
+                              handleManualBcvUpdate(parseFloat(input.value))
+                            }}
+                          >
+                            OK
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">O también</span>
+                        </div>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        onClick={handleUpdateBcv}
+                        disabled={isUpdatingBcv}
+                      >
+                        {isUpdatingBcv ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                        )}
+                        Actualizar desde BCV
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          }
+        />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex items-center gap-4 w-full overflow-x-auto scrollbar-hide pb-1 mb-6">
@@ -404,6 +480,11 @@ export function FinancialDashboard() {
           </div>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
+            <BusinessEventsCalendar 
+              events={businessEvents} 
+              isLoading={isLoadingEvents}
+            />
+
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="overflow-hidden">
                 <CardContent className="p-4 sm:p-6">
@@ -854,6 +935,5 @@ export function FinancialDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>
   )
 }

@@ -1,4 +1,5 @@
 export interface User {
+  verificationTokenExpires(verificationTokenExpires: any): unknown
   id: string
   email: string
   username: string | null

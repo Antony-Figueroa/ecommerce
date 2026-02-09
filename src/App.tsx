@@ -41,7 +41,10 @@ function App() {
   const location = useLocation()
 
   useEffect(() => {
-    window.scrollTo(0, 0)
+    // Only scroll to top if not in admin area, or add specific logic for admin
+    if (!location.pathname.startsWith('/admin')) {
+      window.scrollTo(0, 0)
+    }
   }, [location.pathname])
 
   return (

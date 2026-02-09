@@ -12,7 +12,9 @@ import {
   Truck,
   User,
   TrendingUp,
+  ShoppingBag,
 } from "lucide-react"
+import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -642,16 +644,16 @@ export function AdminOrdersPage() {
 
   return (
     <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground">Administra y da seguimiento a todos los pedidos</p>
-          </div>
-          <Button onClick={exportOrders}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar CSV
-          </Button>
-        </div>
+        <AdminPageHeader 
+          title="Gestión de Pedidos"
+          subtitle="Administra y da seguimiento a todos los pedidos de tu tienda"
+          icon={ShoppingBag}
+          action={{
+            label: "Exportar CSV",
+            onClick: exportOrders,
+            icon: Download
+          }}
+        />
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 items-center">
