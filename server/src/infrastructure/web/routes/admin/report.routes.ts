@@ -94,7 +94,6 @@ router.get('/inventory', async (req: Request, res: Response) => {
       minStock: product.minStock,
       status: product.stock === 0 ? 'AGOTADO' : product.stock <= product.minStock ? 'BAJO STOCK' : 'NORMAL',
       purchasePriceUSD: product.purchasePrice,
-      shippingCostUSD: product.shippingCost,
       totalCostUSD: product.totalCost,
       salePriceUSD: product.price,
       salePriceBS: Math.round(product.price * bcvRate * 100) / 100,

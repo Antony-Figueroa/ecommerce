@@ -88,8 +88,8 @@ export class InventoryService {
     }
     const provider = await this.providerRepo.create({
       name: data.name,
-      phone: data.phone || null,
-      email: data.email || null,
+      country: data.country || null,
+      address: data.address || null,
     })
 
     await this.auditService.logAction({
@@ -103,6 +103,52 @@ export class InventoryService {
     })
 
     return provider
+  }
+
+  async updateProvider(id: string, data: any, userId?: string, ipAddress?: string, userAgent?: string) {
+    const provider = await this.providerRepo.findById(id)
+    if (!provider) {
+      throw new NotFoundError('Proveedor')
+    }
+
+    const updated = await this.providerRepo.update(id, {
+      name: data.name,
+      country: data.country || null,
+      address: data.address || null,
+    })
+
+    await this.auditService.logAction({
+      entityType: 'PROVIDER',
+      entityId: id,
+      action: 'UPDATE',
+      userId,
+      details: { name: updated.name, previousName: provider.name },
+      ipAddress,
+      userAgent
+    })
+
+    return updated
+  }
+
+  async deleteProvider(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    const provider = await this.providerRepo.findById(id)
+    if (!provider) {
+      throw new NotFoundError('Proveedor')
+    }
+
+    await this.providerRepo.delete(id)
+
+    await this.auditService.logAction({
+      entityType: 'PROVIDER',
+      entityId: id,
+      action: 'DELETE',
+      userId,
+      details: { name: provider.name },
+      ipAddress,
+      userAgent
+    })
+
+    return { success: true }
   }
 
   async getBatches(options?: { search?: string; limit?: number }) {
@@ -138,8 +184,24 @@ export class InventoryService {
   }
 
   async getPublicProducts(options?: any) {
-    const { categoryId = null, categoryIds = null, search = '' } = options || {}
-    const { products } = await this.productRepo.findAll({ categoryId, categoryIds, search, onlyActive: true, limit: 1000 })
+    const { 
+      categoryId = null, 
+      categoryIds = null, 
+      search = '', 
+      isFeatured = undefined,
+      isOffer = undefined,
+      limit = 1000 
+    } = options || {}
+    
+    const { products } = await this.productRepo.findAll({ 
+      categoryId, 
+      categoryIds, 
+      search, 
+      onlyActive: true, 
+      isFeatured: isFeatured === 'true' || isFeatured === true ? true : (isFeatured === 'false' || isFeatured === false ? false : undefined),
+      isOffer: isOffer === 'true' || isOffer === true ? true : (isOffer === 'false' || isOffer === false ? false : undefined),
+      limit 
+    })
     return products
   }
 

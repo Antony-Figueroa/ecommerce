@@ -120,9 +120,23 @@ export class PrismaProviderRepository implements ProviderRepository {
     return provider as unknown as Provider | null
   }
 
+  async findById(id: string): Promise<Provider | null> {
+    const provider = await prisma.provider.findUnique({ where: { id } })
+    return provider as unknown as Provider | null
+  }
+
   async create(data: any): Promise<Provider> {
     const provider = await prisma.provider.create({ data })
     return provider as unknown as Provider
+  }
+
+  async update(id: string, data: any): Promise<Provider> {
+    const provider = await prisma.provider.update({ where: { id }, data })
+    return provider as unknown as Provider
+  }
+
+  async delete(id: string): Promise<void> {
+    await prisma.provider.delete({ where: { id } })
   }
 }
 

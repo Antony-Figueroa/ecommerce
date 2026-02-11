@@ -75,7 +75,6 @@ model Product {
   price            Decimal
   currency         String                @default("USD")
   purchasePrice    Decimal               @default(0)
-  shippingCost     Decimal               @default(0)
   profitMargin     Decimal               @default(1.5)
   image            String?
   brand            String
@@ -106,8 +105,8 @@ model Product {
 model Provider {
   id        String           @id @default(uuid())
   name      String           @unique
-  phone     String?
-  email     String?
+  country   String?
+  address   String?
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   batches   InventoryBatch[]
@@ -132,7 +131,6 @@ model InventoryBatchItem {
   soldQuantity    Int            @default(0)
   unitCostUSD     Decimal
   unitSaleUSD     Decimal
-  shippingCostUSD Decimal        @default(0)
   entryDate       DateTime
   discounted      Boolean        @default(false)
   discountPercent Decimal        @default(0)

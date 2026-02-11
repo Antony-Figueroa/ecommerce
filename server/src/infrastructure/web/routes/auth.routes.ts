@@ -75,21 +75,20 @@ router.get('/check-username/:username', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/register', validate(registerSchema), async (req: Request, res: Response) => {
+router.post('/register', validate(registerSchema), async (req: Request, res: Response, next) => {
   try {
     const user = await authService.register(req.body, req.ip, req.get('User-Agent'))
     res.status(201).json({
       success: true,
-        message: 'Usuario registrado exitosamente.',
+      message: 'Usuario registrado exitosamente.',
       user
     })
-  } catch (error: any) {
-    console.error('Error en registro:', error)
-    res.status(error.status || 500).json({ error: error.message || 'Error al registrar usuario' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.post('/verify-email', async (req: Request, res: Response) => {
+router.post('/verify-email', async (req: Request, res: Response, next) => {
   try {
     const { token } = req.body
     await authService.verifyEmail(token)
@@ -97,13 +96,12 @@ router.post('/verify-email', async (req: Request, res: Response) => {
       success: true,
       message: 'Correo electrónico verificado exitosamente'
     })
-  } catch (error: any) {
-    console.error('Error en verificación de email:', error)
-    res.status(error.status || 400).json({ error: error.message || 'Error al verificar el correo' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.post('/resend-verification', async (req: Request, res: Response) => {
+router.post('/resend-verification', async (req: Request, res: Response, next) => {
   try {
     const { email } = req.body
     await authService.resendVerificationEmail(email)
@@ -111,13 +109,12 @@ router.post('/resend-verification', async (req: Request, res: Response) => {
       success: true,
       message: 'Correo de verificación reenviado'
     })
-  } catch (error: any) {
-    console.error('Error al reenviar verificación:', error)
-    res.status(error.status || 400).json({ error: error.message || 'Error al reenviar el correo de verificación' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.post('/forgot-password', async (req: Request, res: Response) => {
+router.post('/forgot-password', async (req: Request, res: Response, next) => {
   try {
     const { email } = req.body
     await authService.requestPasswordReset(email)
@@ -125,13 +122,12 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
       success: true, 
       message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' 
     })
-  } catch (error: any) {
-    console.error('Error en forgot-password:', error)
-    res.status(500).json({ error: 'Error al procesar la solicitud' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.post('/reset-password', async (req: Request, res: Response) => {
+router.post('/reset-password', async (req: Request, res: Response, next) => {
   try {
     const { token, password } = req.body
     await authService.resetPassword(token, password)
@@ -139,13 +135,12 @@ router.post('/reset-password', async (req: Request, res: Response) => {
       success: true,
       message: 'Contraseña restablecida exitosamente'
     })
-  } catch (error: any) {
-    console.error('Error en reset-password:', error)
-    res.status(error.status || 400).json({ error: error.message || 'Error al restablecer la contraseña' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
+router.post('/login', validate(loginSchema), async (req: Request, res: Response, next) => {
   try {
     const result = await authService.login(
       req.body.email, 
@@ -154,35 +149,32 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
       req.get('User-Agent')
     )
     res.json(result)
-  } catch (error: any) {
-    console.error('Error en login:', error)
-    res.status(error.status || 401).json({ error: error.message || 'Error al iniciar sesión' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/me', authenticate, async (req: AuthRequest, res: Response, next) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'No autorizado' })
     }
     const user = await authService.getCurrentUser(req.user.id)
     res.json(user)
-  } catch (error: any) {
-    console.error('Error en /me:', error)
-    res.status(401).json({ error: error.message || 'Error al obtener datos del usuario' })
+  } catch (error) {
+    next(error)
   }
 })
 
-router.patch('/me', authenticate, async (req: AuthRequest, res: Response) => {
+router.patch('/me', authenticate, async (req: AuthRequest, res: Response, next) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: 'No autorizado' })
     }
     const user = await authService.updateProfile(req.user.id, req.body)
     res.json(user)
-  } catch (error: any) {
-    console.error('Error al actualizar perfil:', error)
-    res.status(error.status || 500).json({ error: error.message || 'Error al actualizar el perfil' })
+  } catch (error) {
+    next(error)
   }
 })
 

@@ -116,36 +116,19 @@ export class PaymentService {
     return result.payment
   }
 
-  async createInstallmentPlan(saleId: string, installments: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string) {
+  async createInstallmentPlan(saleId: string, plan: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(saleId)
     if (!sale) throw new NotFoundError('Venta')
 
-    const totalInstallments = installments.reduce((sum, inst) => sum + inst.amountUSD, 0)
-    const pendingBalance = Number(sale.totalUSD) - Number(sale.paidAmountUSD || 0)
+    // Point 4: Validate installment plan totals
+    const totalInstallmentsUSD = plan.reduce((sum, i) => sum + Number(i.amountUSD), 0)
+    const remainingToPlanUSD = Number(sale.totalUSD) - Number(sale.paidAmountUSD || 0)
 
-    if (Math.abs(totalInstallments - pendingBalance) > 0.01) {
-      throw new ValidationError(`El total de las cuotas ($${totalInstallments}) debe ser igual al saldo pendiente ($${pendingBalance})`)
+    if (Math.abs(totalInstallmentsUSD - remainingToPlanUSD) > 0.01) {
+      throw new ValidationError(`El total de las cuotas ($${totalInstallmentsUSD.toFixed(2)}) debe ser igual al saldo pendiente de la venta ($${remainingToPlanUSD.toFixed(2)})`)
     }
 
-    const created = await this.installmentRepo.createMany(
-      installments.map(inst => ({
-        saleId,
-        amountUSD: inst.amountUSD,
-        dueDate: inst.dueDate,
-        status: 'PENDING'
-      }))
-    )
-
-    await this.auditService.logAction({
-      entityType: 'INSTALLMENT_PLAN',
-      action: 'CREATE',
-      userId,
-      details: { saleId, count: installments.length, total: totalInstallments },
-      ipAddress,
-      userAgent
-    })
-
-    return created
+    return this.paymentManager.createInstallmentPlan(saleId, plan, userId, ipAddress, userAgent)
   }
 
   async getPaymentStatus(saleId: string, userId?: string, ipAddress?: string, userAgent?: string) {

@@ -37,8 +37,8 @@ export interface InventoryLog {
 export interface Provider {
   id: string
   name: string
-  phone?: string | null
-  email?: string | null
+  country?: string | null
+  address?: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -60,7 +60,6 @@ export interface InventoryBatchItem {
   soldQuantity: number
   unitCostUSD: number
   unitSaleUSD: number
-  shippingCostUSD: number
   entryDate: Date
   discounted: boolean
   discountPercent: number
@@ -92,8 +91,11 @@ export interface InventoryLogRepository {
 
 export interface ProviderRepository {
   findAll(): Promise<Provider[]>
+  findById(id: string): Promise<Provider | null>
   findByName(name: string): Promise<Provider | null>
   create(data: any): Promise<Provider>
+  update(id: string, data: any): Promise<Provider>
+  delete(id: string): Promise<void>
 }
 
 export interface InventoryBatchRepository {

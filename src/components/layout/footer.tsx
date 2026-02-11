@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import { Phone, LogOut } from "lucide-react"
+import { Phone, LogOut, Leaf } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { api } from "@/lib/api"
@@ -47,11 +47,13 @@ export function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-                <span className="text-xl font-bold text-white">+</span>
+            <Link to="/" className="flex items-center gap-3 mb-4 group">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg transition-transform group-hover:scale-105">
+                <Leaf className="h-6 w-6" />
               </div>
-              <span className="text-xl font-bold text-primary">Ana's Supplements</span>
+              <span className="text-2xl font-black tracking-tighter text-foreground italic">
+                Ana's <span className="text-primary not-italic">Supplements</span>
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               Tu salud en primer lugar. Encuentra los mejores productos

@@ -9,8 +9,19 @@ export class PrismaProductRepository implements ProductRepository {
     page?: number
     limit?: number
     onlyActive?: boolean
+    isFeatured?: boolean
+    isOffer?: boolean
   }) {
-    const { categoryId = null, categoryIds = null, search = '', page = 1, limit = 20, onlyActive = false } = options
+    const { 
+      categoryId = null, 
+      categoryIds = null, 
+      search = '', 
+      page = 1, 
+      limit = 20, 
+      onlyActive = false,
+      isFeatured = undefined,
+      isOffer = undefined
+    } = options
 
     const where: any = {}
     
@@ -26,6 +37,8 @@ export class PrismaProductRepository implements ProductRepository {
       }
     }
     if (onlyActive) where.isActive = true
+    if (isFeatured !== undefined) where.isFeatured = isFeatured
+    if (isOffer !== undefined) where.isOffer = isOffer
     if (search) {
       where.OR = [
         { name: { contains: search } },

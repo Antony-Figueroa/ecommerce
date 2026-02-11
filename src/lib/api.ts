@@ -2,9 +2,13 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/a
 
 class ApiClient {
   private token: string | null = null
+  private inFlightRequests = new Map<string, Promise<any>>()
+  private cache = new Map<string, { data: any; timestamp: number }>()
+  private CACHE_DURATION = 5000 // 5 segundos para datos que cambian poco (categorías, settings)
 
   setToken(token: string | null) {
     this.token = token
+    this.cache.clear() // Limpiar caché al cambiar de usuario
     if (token) {
       localStorage.setItem('token', token)
     } else {
@@ -23,50 +27,83 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = this.getToken()
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    }
-
     const method = options.method || 'GET';
-    console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      method,
-      headers,
-    }).catch(err => {
-      console.error(`[DEBUG] Fetch error for ${endpoint}:`, err);
-      throw err;
-    })
+    const isCacheable = method === 'GET' && !endpoint.includes('/auth/') && !endpoint.includes('/admin/');
+    const cacheKey = `${method}:${endpoint}`;
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }))
-      
-      let errorMessage = 'Error desconocido'
-      if (typeof errorData.error === 'string') {
-        errorMessage = errorData.error
-      } else if (errorData.error && typeof errorData.error.message === 'string') {
-        errorMessage = errorData.error.message
-      } else if (typeof errorData.message === 'string') {
-        errorMessage = errorData.message
-      } else {
-        errorMessage = JSON.stringify(errorData)
+    // 1. Verificar si hay una petición idéntica en curso (Deduplicación)
+    if (method === 'GET' && this.inFlightRequests.has(cacheKey)) {
+      return this.inFlightRequests.get(cacheKey)
+    }
+
+    // 2. Verificar caché para endpoints específicos que no cambian seguido
+    if (isCacheable) {
+      const cached = this.cache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+        return cached.data;
       }
-      
-      const error = new Error(errorMessage || `HTTP ${response.status}`) as any
-      error.status = response.status
-      error.data = errorData
-      throw error
     }
 
-    if (response.status === 204) {
-      return {} as T
+    const fetchPromise = (async () => {
+      try {
+        const token = this.getToken()
+        const headers: HeadersInit = {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...options.headers,
+        }
+
+        console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
+        const response = await fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          method,
+          headers,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }))
+          
+          let errorMessage = 'Error desconocido'
+          if (typeof errorData.error === 'string') {
+            errorMessage = errorData.error
+          } else if (errorData.error && typeof errorData.error.message === 'string') {
+            errorMessage = errorData.error.message
+          } else if (typeof errorData.message === 'string') {
+            errorMessage = errorData.message
+          } else {
+            errorMessage = JSON.stringify(errorData)
+          }
+          
+          const error = new Error(errorMessage || `HTTP ${response.status}`) as any
+          error.status = response.status
+          error.data = errorData
+          throw error
+        }
+
+        if (response.status === 204) {
+          return {} as T
+        }
+
+        const text = await response.text()
+        const data = text ? JSON.parse(text) : {} as T
+
+        // Guardar en caché si es elegible
+        if (isCacheable) {
+          this.cache.set(cacheKey, { data, timestamp: Date.now() });
+        }
+
+        return data;
+      } finally {
+        // Limpiar de peticiones en curso al terminar
+        this.inFlightRequests.delete(cacheKey);
+      }
+    })();
+
+    if (method === 'GET') {
+      this.inFlightRequests.set(cacheKey, fetchPromise);
     }
 
-    const text = await response.text()
-    return text ? JSON.parse(text) : {} as T
+    return fetchPromise;
   }
 
   // Métodos genéricos
@@ -306,13 +343,24 @@ class ApiClient {
     return this.request<string[]>('/admin/products/brands')
   }
 
-  async getPublicProducts(params: { categoryId?: string; categoryIds?: string[]; search?: string } = {}) {
+  async getPublicProducts(params: { 
+    categoryId?: string; 
+    categoryIds?: string[]; 
+    search?: string;
+    isFeatured?: boolean;
+    isOffer?: boolean;
+    limit?: number;
+  } = {}) {
     const searchParams = new URLSearchParams()
     if (params?.categoryId) searchParams.set('categoryId', params.categoryId)
     if (params?.categoryIds && params.categoryIds.length > 0) {
       params.categoryIds.forEach(id => searchParams.append('categoryIds[]', id))
     }
     if (params?.search) searchParams.set('search', params.search)
+    if (params?.isFeatured !== undefined) searchParams.set('isFeatured', params.isFeatured.toString())
+    if (params?.isOffer !== undefined) searchParams.set('isOffer', params.isOffer.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
+    
     const query = searchParams.toString()
     return this.request<{ products: any[] }>(`/products/public${query ? `?${query}` : ''}`)
   }
@@ -426,10 +474,23 @@ class ApiClient {
     return this.request<{ providers: any[] }>('/admin/providers')
   }
 
-  async createProvider(data: any) {
+  async createProvider(data: { name: string; country: string; address: string }) {
     return this.request('/admin/providers', {
       method: 'POST',
       body: JSON.stringify(data),
+    })
+  }
+
+  async updateProvider(id: string, data: Partial<{ name: string; country: string; address: string }>) {
+    return this.request(`/admin/providers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteProvider(id: string) {
+    return this.request(`/admin/providers/${id}`, {
+      method: 'DELETE',
     })
   }
 

@@ -5,9 +5,7 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
 import { loginSchema } from "@/lib/validation"
@@ -147,180 +145,230 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 relative overflow-hidden">
-      {/* Background Decorative Element (Signature: Zen Flow) */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-primary/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4 z-0" />
-      <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-emerald-500/5 rounded-full blur-3xl -translate-x-1/4 translate-y-1/4 z-0" />
-      
-      <Card className="w-full max-w-md border-border shadow-sm relative z-10 overflow-hidden bg-white/80 dark:bg-card/80 backdrop-blur-sm">
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" /> {/* Top Signature Accent */}
-        <CardHeader className="space-y-1 text-center pb-8">
-          <div className="flex justify-center mb-6">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-xl shadow-primary/20 transform hover:scale-105 transition-transform">
-                <span className="text-3xl font-bold text-white">A+</span>
-              </div>
-            </Link>
-          </div>
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-800 dark:text-foreground">
-            Inicio de Sesión
-          </CardTitle>
-          <CardDescription className="text-slate-500 dark:text-muted-foreground font-medium">
-            ¡Hola! Accede a tu cuenta para continuar tu camino.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {successMessage && (
-            <div className="p-4 bg-primary/10 text-primary text-sm font-semibold rounded-xl border border-primary/20">
-              {successMessage}
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white dark:bg-[#0A0A0A] font-sans">
+      {/* Lado Izquierdo: Formulario */}
+      <div className="flex flex-col justify-center px-8 sm:px-12 lg:px-24 py-12 relative overflow-hidden">
+        {/* Logo Top Left */}
+        <div className="absolute top-8 left-8 lg:left-12">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white shadow-lg transition-transform group-hover:scale-105">
+              <span className="text-xl font-black italic">A+</span>
             </div>
-          )}
-          {error && (
-            <div className="p-4 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 text-sm font-semibold rounded-xl border border-rose-100 dark:border-rose-900/50">
-              {error}
-              {showResend && (
-                <button
-                  type="button"
-                  onClick={handleResendVerification}
-                  disabled={resending}
-                  className="block mt-2 font-bold underline hover:text-rose-900 dark:hover:text-rose-200 disabled:opacity-50"
-                >
-                  {resending ? "Enviando..." : "¿Reenviar código de verificación?"}
-                </button>
+            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Ana's</span>
+          </Link>
+        </div>
+
+        <div className="max-w-[400px] w-full mx-auto space-y-8">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Bienvenido
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 font-medium">
+              Ingresa tus credenciales para continuar con tu bienestar.
+            </p>
+          </div>
+
+          {/* Google Login Section */}
+          <div className="space-y-4">
+            {googleReady && (
+              <div className="flex justify-center w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  useOneTap
+                  theme="outline"
+                  size="large"
+                  width="100%"
+                  text="signin_with"
+                  shape="pill"
+                />
+              </div>
+            )}
+            
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-100 dark:border-white/5"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white dark:bg-[#0A0A0A] px-4 text-slate-400 font-bold tracking-widest">o</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Feedback Messages */}
+          {(successMessage || error) && (
+            <div className="space-y-3">
+              {successMessage && (
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-semibold rounded-2xl border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {successMessage}
+                </div>
+              )}
+              {error && (
+                <div className="p-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-sm font-semibold rounded-2xl border border-rose-100 dark:border-rose-500/20">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-2 rounded-full bg-rose-500" />
+                      {error}
+                    </div>
+                    {showResend && (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resending}
+                        className="ml-5 text-[11px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                      >
+                        {resending ? "Enviando..." : "Reenviar verificación"}
+                      </button>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-muted-foreground">Correo Electrónico</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="ejemplo@correo.com"
-                  className={cn(
-                    "pl-10 h-12 bg-white dark:bg-background border-slate-200 dark:border-border focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
-                    errors.email && "border-rose-500 bg-rose-50 dark:bg-rose-950/20"
-                  )}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Email</Label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="tu@email.com"
+                    className={cn(
+                      "pl-12 h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus:ring-4 focus:ring-primary/10 transition-all rounded-2xl font-medium",
+                      errors.email && "border-rose-200 bg-rose-50 dark:bg-rose-500/5 focus:ring-rose-500/10"
+                    )}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                {errors.email && <p className="text-xs font-bold text-rose-500 ml-1">{errors.email}</p>}
               </div>
-              {errors.email && <p className="text-xs font-medium text-rose-500">{errors.email}</p>}
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <Label htmlFor="password" className="text-sm font-bold text-slate-700 dark:text-slate-300">Contraseña</Label>
+                  <Link
+                    to="/recuperar-contrasena"
+                    className="text-xs font-bold text-primary hover:text-primary/80 transition-colors"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className={cn(
+                      "pl-12 pr-12 h-14 bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus:ring-4 focus:ring-primary/10 transition-all rounded-2xl font-medium",
+                      errors.password && "border-rose-200 bg-rose-50 dark:bg-rose-500/5 focus:ring-rose-500/10"
+                    )}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-xs font-bold text-rose-500 ml-1">{errors.password}</p>}
+              </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-muted-foreground">Contraseña</Label>
-                <Link
-                  to="/recuperar-contrasena"
-                  className="text-xs font-semibold text-primary hover:underline transition-all"
-                >
-                  ¿Olvidaste tu contraseña?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  className={cn(
-                    "pl-10 pr-10 h-12 bg-white dark:bg-background border-slate-200 dark:border-border focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium",
-                    errors.password && "border-rose-500 bg-rose-50 dark:bg-rose-950/20"
-                  )}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent text-slate-400 dark:text-muted-foreground hover:text-slate-600 dark:hover:text-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              {errors.password && <p className="text-xs font-medium text-rose-500">{errors.password}</p>}
-            </div>
-            <div className="flex items-center space-x-2 pb-2">
+
+            <div className="flex items-center space-x-2 px-1">
               <Checkbox
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                className="rounded-md border-slate-300 dark:border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                className="rounded-md border-slate-300 dark:border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
-              <Label htmlFor="remember" className="text-sm font-medium text-slate-600 dark:text-muted-foreground cursor-pointer">
+              <label
+                htmlFor="remember"
+                className="text-sm font-medium text-slate-600 dark:text-slate-400 cursor-pointer select-none"
+              >
                 Mantener sesión iniciada
-              </Label>
+              </label>
             </div>
+
             <Button
               type="submit"
-              className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold text-sm uppercase tracking-wider rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+              className="w-full h-14 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 text-base font-bold rounded-2xl transition-all shadow-xl shadow-slate-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || !isFormValid}
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  <span>Iniciando sesión...</span>
+                  <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Iniciando...</span>
                 </div>
               ) : (
-                "Entrar ahora"
+                "Iniciar Sesión"
               )}
             </Button>
           </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full border-slate-100 dark:border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white dark:bg-card px-4 text-slate-400 dark:text-muted-foreground font-bold tracking-widest">O continúa con</span>
+          <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+            ¿No tienes una cuenta?{" "}
+            <Link to="/registro" className="text-primary font-bold hover:underline underline-offset-4">
+              Regístrate ahora
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Lado Derecho: Imagen y Branding */}
+      <div className="hidden lg:block relative p-8">
+        <div className="relative h-full w-full rounded-[48px] overflow-hidden group">
+          <img
+            src="https://images.pexels.com/photos/29107589/pexels-photo-29107589.jpeg"
+            alt="Ana's Supplements"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          
+          {/* Logo overlay */}
+          <div className="absolute top-12 left-12">
+            <div className="flex items-center gap-3 text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md border border-white/30">
+                <span className="text-2xl font-black italic">A+</span>
+              </div>
+              <span className="text-2xl font-black tracking-tighter">ANA'S SUPPLEMENTS</span>
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <div className="w-full flex justify-center min-h-[44px]">
-              {/* {isBrave && (
-                <div className="mb-2 w-[250px] p-2 text-xs rounded-lg border border-amber-200 bg-amber-50 text-amber-700">
-                  Si usas Brave, desactiva Shields o permite cookies de terceros para usar Google.
-                </div>
-              )} */}
-              {googleReady ? (
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  useOneTap={false}
-                  use_fedcm_for_prompt={false}
-                  theme="outline"
-                  size="large"
-                  width="250"
-                  shape="pill"
-                  text="continue_with"
-                  logo_alignment="left"
-                />
-              ) : (
-                <div className="h-11 w-[250px] rounded-full bg-slate-100 dark:bg-muted animate-pulse" />
-              )}
+          {/* Content overlay */}
+          <div className="absolute bottom-16 left-16 right-16 space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-5xl font-extrabold text-white leading-[1.1] tracking-tight">
+                Tu Bienestar,<br />Nuestra Prioridad
+              </h2>
+              <p className="text-lg text-slate-200 font-medium max-w-md">
+                Descubre una nueva forma de cuidar tu cuerpo con suplementos de alta calidad diseñados para tu estilo de vida.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-4 pt-4">
+              <div className="px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-bold flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.8)]" />
+                100% Garantía
+              </div>
+              <div className="px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-bold flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.8)]" />
+                Envío Gratis
+              </div>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4 pt-2 pb-8">
-          <p className="text-center text-sm font-medium text-slate-500 dark:text-muted-foreground">
-            ¿Aún no tienes una cuenta?{" "}
-            <Link to="/registro" className="text-primary font-bold hover:underline transition-all">
-              Regístrate aquí
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

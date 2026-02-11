@@ -16,7 +16,6 @@ export interface Product {
   description: string
   price: number
   purchasePrice?: number
-  shippingCost?: number
   profitMargin?: number
   image?: string | null
   images?: ProductImage[]

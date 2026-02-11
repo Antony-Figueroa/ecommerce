@@ -61,7 +61,7 @@ El esquema de la base de datos está diseñado para garantizar la integridad ref
 - **Payment**: Registros de pagos confirmados (totales o parciales).
 - **PaymentProof**: Comprobantes cargados por usuarios pendientes de validación administrativa.
 - **InventoryBatch**: Agrupación de productos por lotes de entrada con costos específicos.
-- **Provider**: Proveedores de suplementos vinculados a los lotes de inventario.
+- **Provider**: Módulo de gestión de proveedores vinculados a los lotes de inventario para trazabilidad de costos.
 - **Requirement**: Órdenes de compra a proveedores.
 - **BCVRate**: Historial de tasas de cambio USD/VES.
 - **InventoryLog**: Auditoría detallada de cada movimiento de mercancía.

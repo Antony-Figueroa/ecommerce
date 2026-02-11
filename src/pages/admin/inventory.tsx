@@ -82,7 +82,6 @@ interface BatchProductItem {
   soldQuantity: number
   unitCostUSD: number
   unitSaleUSD: number
-  shippingCostUSD: number
   entryDate: string
   discounted?: boolean
   discountPercent?: number
@@ -127,7 +126,6 @@ export function AdminInventoryPage() {
       soldQuantity: 0,
       unitCostUSD: 0,
       unitSaleUSD: 0,
-      shippingCostUSD: 0,
       entryDate: new Date().toISOString().split("T")[0],
     }
   ])
@@ -291,7 +289,6 @@ export function AdminInventoryPage() {
         quantity: Number(item.quantity) || 0,
         unitCostUSD: Number(item.unitCostUSD) || 0,
         unitSaleUSD: Number(item.unitSaleUSD) || 0,
-        shippingCostUSD: Number(item.shippingCostUSD) || 0,
         entryDate: item.entryDate,
       }))
     }
@@ -315,7 +312,6 @@ export function AdminInventoryPage() {
           soldQuantity: Number(item.soldQuantity) || 0,
           unitCostUSD: Number(item.unitCostUSD) || 0,
           unitSaleUSD: Number(item.unitSaleUSD) || 0,
-          shippingCostUSD: Number(item.shippingCostUSD) || 0,
           entryDate: item.entryDate,
         }))
       }
@@ -334,7 +330,6 @@ export function AdminInventoryPage() {
         soldQuantity: 0,
         unitCostUSD: 0,
         unitSaleUSD: 0,
-        shippingCostUSD: 0,
         entryDate: new Date().toISOString().split("T")[0],
       }
     ])
@@ -356,7 +351,6 @@ export function AdminInventoryPage() {
         soldQuantity: 0,
         unitCostUSD: 0,
         unitSaleUSD: 0,
-        shippingCostUSD: 0,
         entryDate: new Date().toISOString().split("T")[0],
       }
     ])
@@ -398,7 +392,7 @@ export function AdminInventoryPage() {
     let totalRevenue = 0
     let totalProfit = 0
     selectedBatch.products.forEach(item => {
-      const unitCost = (Number(item.unitCostUSD) || 0) + (Number(item.shippingCostUSD) || 0)
+      const unitCost = (Number(item.unitCostUSD) || 0)
       const sold = Number(item.soldQuantity) || 0
       const discount = item.discounted ? (Number(item.discountPercent) || 0) / 100 : 0
       const saleUnit = (Number(item.unitSaleUSD) || 0) * (1 - discount)
@@ -849,7 +843,7 @@ export function AdminInventoryPage() {
                         const entry = item.entryDate ? new Date(item.entryDate).getTime() : Date.now()
                         const ageDays = Math.max(0, Math.floor((Date.now() - entry) / (1000 * 60 * 60 * 24)))
                         const discount = item.discounted ? (Number(item.discountPercent) || 0) : 0
-                        const unitCost = (Number(item.unitCostUSD) || 0) + (Number(item.shippingCostUSD) || 0)
+                        const unitCost = (Number(item.unitCostUSD) || 0)
                         const saleUnit = (Number(item.unitSaleUSD) || 0) * (1 - discount / 100)
                         const soldUnits = Number(item.soldQuantity) || 0
                         const revenue = saleUnit * soldUnits
@@ -874,7 +868,6 @@ export function AdminInventoryPage() {
                               <div>Antigüedad: <span className={`${ageDays > 90 ? "text-amber-600 font-bold" : "text-slate-700 font-bold"}`}>{ageDays} días</span></div>
                               <div>Costo U: <span className="font-bold text-slate-700">{formatUSD(item.unitCostUSD)}</span></div>
                               <div>Precio U: <span className="font-bold text-slate-700">{formatUSD(item.unitSaleUSD)}</span></div>
-                              <div>Envío U: <span className="font-bold text-slate-700">{formatUSD(item.shippingCostUSD)}</span></div>
                               <div>Ingreso: <span className="font-bold text-slate-700">{item.entryDate}</span></div>
                               <div>Venta USD: <span className="font-bold text-slate-700">{formatUSD(revenue)}</span></div>
                               <div>Venta Bs: <span className="font-bold text-slate-700">{formatBS(revenue * (Number(bcvRate) || 0))}</span></div>
@@ -1108,7 +1101,7 @@ export function AdminInventoryPage() {
                   </Button>
                 </div>
                 {batchItems.map((item, index) => (
-                  <div key={`${item.productId}-${index}`} className="grid grid-cols-7 gap-3 p-3 border rounded-xl" role="group" aria-label={`Producto ${index + 1} del lote`}>
+                  <div key={`${item.productId}-${index}`} className="grid grid-cols-6 gap-3 p-3 border rounded-xl" role="group" aria-label={`Producto ${index + 1} del lote`}>
                     <div className="col-span-2">
                       <label htmlFor={`product-${index}`} className="text-xs font-medium">Producto</label>
                       <Select
@@ -1119,7 +1112,6 @@ export function AdminInventoryPage() {
                             productId: val,
                             productName: product?.name || "",
                             productCode: product?.productCode || product?.code || product?.sku || "",
-                            shippingCostUSD: Number(product?.shippingCost) || 0
                           })
                         }}
                       >
@@ -1165,17 +1157,6 @@ export function AdminInventoryPage() {
                         value={item.unitSaleUSD}
                         onChange={(e) => updateBatchItem(index, { unitSaleUSD: parseFloat(e.target.value) || 0 })}
                         aria-label={`Precio de venta unitario del producto ${index + 1}`}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`shipping-${index}`} className="text-xs font-medium">Envío U</label>
-                      <Input
-                        id={`shipping-${index}`}
-                        type="number"
-                        step="0.01"
-                        value={item.shippingCostUSD}
-                        onChange={(e) => updateBatchItem(index, { shippingCostUSD: parseFloat(e.target.value) || 0 })}
-                        aria-label={`Costo de envío unitario del producto ${index + 1}`}
                       />
                     </div>
                     <div>

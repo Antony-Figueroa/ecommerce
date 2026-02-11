@@ -65,7 +65,9 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   useEffect(() => {
     async function loadData() {
       try {
-        setLoading(true)
+        if (products.length === 0) {
+          setLoading(true)
+        }
         // Optimizando carga paralela para eliminar waterfalls (async-parallel)
         const [productsRes, categoriesRes, bcvRes] = await Promise.all([
           api.getPublicProducts(),
@@ -94,7 +96,6 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   useEffect(() => {
     if (slug) {
       setSelectedCategory(slug)
-      window.scrollTo(0, 0)
     } else {
       setSelectedCategory(null)
     }

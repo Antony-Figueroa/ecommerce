@@ -46,7 +46,7 @@ export function FavoritesPage() {
             </div>
             <h2 className="mb-2 text-2xl font-bold">Tu lista de favoritos está vacía</h2>
             <p className="mb-8 max-w-md text-muted-foreground">
-              Guarda los productos que más te gusten para tenerlos siempre a mano y no perderte sus ofertas.
+              Guarda los productos que más te gusten para tenerlos siempre a mano.
             </p>
             <Button asChild>
               <Link to="/productos" className="gap-2">

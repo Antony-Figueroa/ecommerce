@@ -52,7 +52,6 @@ interface Product {
   format: string
   isFeatured: boolean
   isActive: boolean
-  shippingCost: number
   image: string
   images?: ProductImage[]
   categories?: { id: string; name: string }[]
@@ -90,7 +89,6 @@ interface ProductFormData {
   format: string
   isFeatured: boolean
   isActive: boolean
-  shippingCost: number
   image: string
   images: Partial<ProductImage>[]
   batchNumber?: string
@@ -101,7 +99,6 @@ interface ProductErrors {
   name?: string
   productCode?: string
   sku?: string
-  shippingCost?: string
   categoryIds?: string
   brand?: string
   format?: string
@@ -135,6 +132,13 @@ export function AdminProductsPage() {
   const [showCustomBrand, setShowCustomBrand] = useState(false)
   const [brands, setBrands] = useState<string[]>([])
   
+  const generateProductCode = () => {
+    const prefix = "ANA"
+    const timestamp = Date.now().toString().slice(-6)
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+    return `${prefix}-${timestamp}-${random}`
+  }
+
   const FORMAT_OPTIONS = [
     "Tabletas",
     "Capsulas",
@@ -166,7 +170,6 @@ export function AdminProductsPage() {
     format: "",
     isFeatured: false,
     isActive: true,
-    shippingCost: 0,
     image: "/placeholder.jpg",
     images: [],
     batchNumber: "",
@@ -247,7 +250,7 @@ export function AdminProductsPage() {
   const resetForm = () => {
     setFormData({
       name: "",
-      productCode: "",
+      productCode: generateProductCode(),
       sku: "",
       description: "",
       price: 0,
@@ -260,7 +263,6 @@ export function AdminProductsPage() {
       format: "",
       isFeatured: false,
       isActive: true,
-      shippingCost: 0,
       image: "/placeholder.jpg",
       images: [],
       batchNumber: "",
@@ -287,11 +289,6 @@ export function AdminProductsPage() {
 
     if (!formData.productCode.trim()) {
       newErrors.productCode = "El código de producto es obligatorio"
-      isValid = false
-    }
-
-    if (formData.shippingCost < 0) {
-      newErrors.shippingCost = "El costo de envío no puede ser negativo"
       isValid = false
     }
 
@@ -333,14 +330,23 @@ export function AdminProductsPage() {
     setSaving(true)
     try {
       const { batchNumber, expirationDate, ...rest } = formData
+      
+      // Clean up the data before sending
       const productData = {
         ...rest,
-        slug: formData.name.toLowerCase().replace(/\s+/g, "-"),
+        // Ensure price is a number
+        price: Number(formData.price),
+        purchasePrice: Number(formData.purchasePrice),
+        profitMargin: Number(formData.profitMargin),
+        stock: Number(formData.stock),
+        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
       }
 
       if (editingProduct) {
+        // Update existing product
         await api.updateProduct(editingProduct.id, productData)
       } else {
+        // Create new product
         const createData = {
           ...productData,
           ...(formData.batchNumber ? { batchNumber: formData.batchNumber } : {}),
@@ -392,7 +398,7 @@ export function AdminProductsPage() {
 
     const newFormData: ProductFormData = {
       name: String(product.name || ""),
-      productCode: String((product as any).productCode || (product as any).code || ""),
+      productCode: String((product as any).productCode || (product as any).code || generateProductCode()),
       sku: String(product.sku || ""),
       description: String(product.description || ""),
       price: Number(product.price) || 0,
@@ -405,7 +411,6 @@ export function AdminProductsPage() {
       format: String(formatValue || ""), // Asegurar que sea string
       isFeatured: !!product.isFeatured,
       isActive: !!product.isActive,
-      shippingCost: Number((product as any).shippingCost) || 0,
       image: String(product.image || "/placeholder.jpg"),
       images: Array.isArray(product.images) 
         ? product.images.map(img => ({
@@ -1024,12 +1029,9 @@ export function AdminProductsPage() {
                   <label className="text-sm font-medium">Código de producto *</label>
                   <Input
                     value={formData.productCode}
-                    onChange={(e) => {
-                      setFormData({ ...formData, productCode: e.target.value })
-                      if (errors.productCode) setErrors({ ...errors, productCode: undefined })
-                    }}
-                    placeholder="Ej: PROD-001"
-                    className={errors.productCode ? "border-red-500" : ""}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                    placeholder="Auto-generado"
                   />
                   {errors.productCode && <p className="text-xs text-red-500 mt-1">{errors.productCode}</p>}
                 </div>
@@ -1045,21 +1047,6 @@ export function AdminProductsPage() {
                     className={errors.sku ? "border-red-500" : ""}
                   />
                   {errors.sku && <p className="text-xs text-red-500 mt-1">{errors.sku}</p>}
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Costo envío por unidad (USD)</label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.shippingCost || ""}
-                    onChange={(e) => {
-                      setFormData({ ...formData, shippingCost: parseFloat(e.target.value) || 0 })
-                      if (errors.shippingCost) setErrors({ ...errors, shippingCost: undefined })
-                    }}
-                    placeholder="0.00"
-                    className={errors.shippingCost ? "border-red-500" : ""}
-                  />
-                  {errors.shippingCost && <p className="text-xs text-red-500 mt-1">{errors.shippingCost}</p>}
                 </div>
               </div>
 
@@ -1354,10 +1341,6 @@ export function AdminProductsPage() {
                   <div>
                     <p className="text-sm text-muted-foreground">Formato</p>
                     <p className="font-medium">{String(viewingProduct.format || "N/A")}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Costo envío por unidad</p>
-                    <p className="font-medium">{formatUSD((viewingProduct as any).shippingCost || 0)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Precio</p>

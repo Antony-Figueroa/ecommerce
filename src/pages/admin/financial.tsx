@@ -33,7 +33,6 @@ interface Product {
   sku: string
   stock: number
   purchasePrice: number
-  shippingCost: number
   profitMargin: number
   price: number
 }
@@ -63,8 +62,7 @@ export function FinancialDashboard() {
   const totals = useMemo(() => {
     const totalCostUSD = cart.reduce((sum, item) => {
       const purchasePrice = Number(item.product?.purchasePrice) || 0
-      const shippingCost = Number(item.product?.shippingCost) || 0
-      return sum + (purchasePrice + shippingCost) * (item.quantity || 0)
+      return sum + (purchasePrice) * (item.quantity || 0)
     }, 0)
 
     const totalUSD = cart.reduce((sum, item) => {
@@ -123,10 +121,10 @@ export function FinancialDashboard() {
       // Demo data if API fails
       if (products.length === 0) {
         setProducts([
-          { id: "1", name: "Paracetamol 500mg", sku: "PAR-001", stock: 45, purchasePrice: 5.50, shippingCost: 2.00, profitMargin: 1.5, price: 11.25 },
-          { id: "2", name: "Ibuprofeno 400mg", sku: "IBU-002", stock: 8, purchasePrice: 8.75, shippingCost: 2.00, profitMargin: 1.5, price: 16.13 },
-          { id: "3", name: "Amoxicilina 500mg", sku: "AMO-003", stock: 3, purchasePrice: 12.00, shippingCost: 2.50, profitMargin: 1.6, price: 23.20 },
-          { id: "4", name: "Vitamina C 1000mg", sku: "VIT-004", stock: 120, purchasePrice: 15.00, shippingCost: 1.50, profitMargin: 1.4, price: 23.10 },
+          { id: "1", name: "Paracetamol 500mg", sku: "PAR-001", stock: 45, purchasePrice: 5.50, profitMargin: 1.5, price: 11.25 },
+          { id: "2", name: "Ibuprofeno 400mg", sku: "IBU-002", stock: 8, purchasePrice: 8.75, profitMargin: 1.5, price: 16.13 },
+          { id: "3", name: "Amoxicilina 500mg", sku: "AMO-003", stock: 3, purchasePrice: 12.00, profitMargin: 1.6, price: 23.20 },
+          { id: "4", name: "Vitamina C 1000mg", sku: "VIT-004", stock: 120, purchasePrice: 15.00, profitMargin: 1.4, price: 23.10 },
         ])
       }
     }
@@ -775,7 +773,6 @@ export function FinancialDashboard() {
                         <th className="text-left p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden lg:table-cell">SKU</th>
                         <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:table-cell">Stock</th>
                         <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden xl:table-cell">Costo Compra</th>
-                        <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden xl:table-cell">Envio</th>
                         <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden lg:table-cell">Costo Total</th>
                         <th className="text-right p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Precio Venta</th>
                         <th className="text-center p-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden md:table-cell">Margen</th>
@@ -802,9 +799,8 @@ export function FinancialDashboard() {
                             </Badge>
                           </td>
                           <td className="p-4 text-right hidden xl:table-cell font-medium text-sm">${formatUSD(product.purchasePrice)}</td>
-                          <td className="p-4 text-right hidden xl:table-cell font-medium text-sm">${formatUSD(product.shippingCost)}</td>
                           <td className="p-4 text-right hidden lg:table-cell font-bold text-sm">
-                            ${formatUSD(product.purchasePrice + product.shippingCost)}
+                            ${formatUSD(product.purchasePrice)}
                           </td>
                           <td className="p-4 text-right">
                             <div className="flex flex-col items-end">

@@ -1,5 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom"
-import { useEffect, lazy } from "react"
+import { useEffect, lazy, useRef } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { CartProvider } from "@/contexts/cart-context"
 import { FavoritesProvider } from "@/contexts/favorites-context"
@@ -34,17 +34,25 @@ const AdminCustomersPage = lazy(() => import("@/pages/admin/customers").then(m =
 const AdminInventoryPage = lazy(() => import("@/pages/admin/inventory").then(m => ({ default: m.AdminInventoryPage })))
 const AdminAnalyticsPage = lazy(() => import("@/pages/admin/analytics").then(m => ({ default: m.AdminAnalyticsPage })))
 const AdminSettingsPage = lazy(() => import("@/pages/admin/settings").then(m => ({ default: m.AdminSettingsPage })))
+const AdminProvidersPage = lazy(() => import("@/pages/admin/providers").then(m => ({ default: m.AdminProvidersPage })))
 const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m => ({ default: m.FinancialDashboard })))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
 
 function App() {
   const location = useLocation()
+  const prevPathname = useRef(location.pathname)
 
   useEffect(() => {
-    // Only scroll to top if not in admin area, or add specific logic for admin
-    if (!location.pathname.startsWith('/admin')) {
+    // Only scroll to top if not in admin area
+    // AND not when just switching categories in products page
+    const isProductTransition = 
+      (location.pathname.startsWith('/productos') || location.pathname.startsWith('/catalogo')) && 
+      (prevPathname.current.startsWith('/productos') || prevPathname.current.startsWith('/catalogo'))
+
+    if (!location.pathname.startsWith('/admin') && !isProductTransition) {
       window.scrollTo(0, 0)
     }
+    prevPathname.current = location.pathname
   }, [location.pathname])
 
   return (
@@ -61,6 +69,7 @@ function App() {
                 <Route path="/admin/categories" element={<AdminCategoriesPage />} />
                 <Route path="/admin/customers" element={<AdminCustomersPage />} />
                 <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+                <Route path="/admin/providers" element={<AdminProvidersPage />} />
                 <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="/admin/financial" element={<FinancialDashboard />} />
@@ -72,7 +81,6 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/productos" element={<CatalogPage />} />
                 <Route path="/productos/:slug" element={<CatalogPage />} />
-                <Route path="/ofertas" element={<CatalogPage offersOnly={true} />} />
                 <Route path="/producto/:id" element={<ProductPage />} />
                 <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
                 <Route path="/login" element={<LoginPage />} />

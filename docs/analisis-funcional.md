@@ -38,7 +38,7 @@ Ana's Supplements es un e-commerce diseñado para optimizar la venta de suplemen
 ## 3. Funcionalidades Principales
 
 ### 👤 Para el Cliente (Frontend)
-- **Catálogo Inteligente**: Búsqueda por voz/texto y filtrado por categorías.
+- **Catálogo Inteligente**: Búsqueda por texto y filtrado por categorías.
 - **Precios Multimoneda**: Visualización automática en USD y BS (Tasa BCV).
 - **Carrito Persistente**: Los productos se mantienen aunque se recargue la página.
 
@@ -48,6 +48,7 @@ Ana's Supplements es un e-commerce diseñado para optimizar la venta de suplemen
 - **Sistema de Cuotas**: Creación y seguimiento de planes de pago fraccionados para ventas internas.
 - **Verificación de Pagos**: Módulo para validar comprobantes de transferencia y depósitos cargados por el cliente o admin.
 - **Control de Inventario**: Gestión por lotes (Batches) con trazabilidad de fechas de vencimiento y costos de adquisición.
+- **Gestión de Proveedores**: Módulo dedicado para administrar la información de proveedores, permitiendo vincular lotes de inventario a su origen para análisis de costos y calidad.
 - **Auditoría**: Registro detallado de movimientos de stock y cambios en la configuración del sistema.
 - **Configuración Global**: Ajuste de tasa BCV y parámetros del sistema.
 

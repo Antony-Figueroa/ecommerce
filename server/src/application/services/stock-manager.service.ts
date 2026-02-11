@@ -13,12 +13,23 @@ export class StockManager {
     if (!product) return
 
     const previousStock = product.stock
-    const newStock = previousStock - quantity
+    if (previousStock < quantity) {
+      // In strict mode we should throw, but here we just ensure it doesn't go below zero if not intended
+      // although createSale already checks this.
+      console.warn(`Negative stock prevention: Product ${productId} has ${previousStock}, requested ${quantity}`)
+    }
+    const newStock = Math.max(0, previousStock - quantity)
 
     await this.productRepo.update(productId, {
       stock: newStock,
       inStock: newStock > 0,
     })
+
+    // Point 5: Low stock alert
+    if (newStock <= (product.minStock || 5)) {
+      // Notification logic (could call notificationService)
+      console.log(`Low stock alert: ${product.name} is at ${newStock}`)
+    }
 
     // FEFO (First Expired First Out) or FIFO (First In First Out) depending on implementation
     // The current system uses inventory batches

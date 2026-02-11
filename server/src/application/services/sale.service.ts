@@ -42,7 +42,23 @@ export class SaleService {
     if (ipAddress) data.ipAddress = ipAddress;
     if (userAgent) data.userAgent = userAgent;
 
-    // 1. Check for duplicates
+    // 1. Check for stock availability
+    for (const item of data.items) {
+      const product = await this.productRepo.findById(item.productId)
+      if (!product) {
+        throw new NotFoundError(`Producto ${item.productId}`)
+      }
+      if (product.stock < item.quantity) {
+        throw new ValidationError(`Stock insuficiente para el producto ${product.name}. Disponible: ${product.stock}`)
+      }
+      
+      // Point 2: Ensure prices are consistent with catalog
+      if (Math.abs(product.price - item.unitPrice) > 0.01) {
+        throw new ValidationError(`El precio del producto ${product.name} ha cambiado. Por favor actualiza tu carrito.`)
+      }
+    }
+
+    // 2. Check for duplicates
     if (data.customerPhone) {
       const duplicate = await this.saleRepo.findDuplicate({
         customerPhone: data.customerPhone,
@@ -267,6 +283,21 @@ export class SaleService {
     }
 
     const oldStatus = sale.status
+    
+    // Point 3: Logical status transitions
+    const statusOrder: Record<string, string[]> = {
+      'PENDING': ['PROCESSING', 'ACCEPTED', 'REJECTED', 'CANCELLED'],
+      'PROCESSING': ['ACCEPTED', 'REJECTED', 'CANCELLED'],
+      'ACCEPTED': ['PROCESSING', 'COMPLETED', 'CANCELLED'],
+      'PROPOSED': ['ACCEPTED', 'REJECTED', 'CANCELLED'],
+      'REJECTED': ['PENDING'],
+      'CANCELLED': [],
+      'COMPLETED': []
+    }
+
+    if (oldStatus !== status && !statusOrder[oldStatus]?.includes(status)) {
+      throw new ValidationError(`Transición de estado inválida de ${oldStatus} a ${status}`)
+    }
     
     // Validación: No permitir completar si no está pagado
     if (status === 'COMPLETED' && !sale.isPaid) {

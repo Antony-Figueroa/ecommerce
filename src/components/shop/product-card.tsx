@@ -76,6 +76,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
               src={mainImage}
               alt={product.name}
               className="h-full w-full object-contain transition-transform duration-500 group-hover/image:scale-110"
+              loading="lazy"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
@@ -106,11 +107,6 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                 {product.isFeatured && (
                   <Badge className="bg-amber-500 text-white border-none text-[10px] font-bold px-2 py-0.5">
                     DESTACADO
-                  </Badge>
-                )}
-                {product.isOffer && (
-                  <Badge variant="destructive" className="border-none text-[10px] font-bold px-2 py-0.5">
-                    OFERTA
                   </Badge>
                 )}
               </div>
@@ -159,11 +155,6 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                     <span className="text-2xl font-black text-primary">
                       ${formatUSD(product.price)}
                     </span>
-                    {product.isOffer && product.originalPrice && (
-                      <span className="text-sm font-bold text-muted-foreground line-through decoration-destructive/50">
-                        ${formatUSD(product.originalPrice)}
-                      </span>
-                    )}
                   </div>
                   <p className="text-xs font-bold text-muted-foreground/60">
                     Bs {formatBS(priceBS)}
@@ -278,11 +269,6 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                 DESTACADO
               </Badge>
             )}
-            {product.isOffer && (
-              <Badge variant="destructive" className="border-none text-[10px] font-black px-2 py-0.5 tracking-wider">
-                OFERTA
-              </Badge>
-            )}
           </div>
 
           {!product.inStock && (
@@ -351,11 +337,6 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                 <span className="text-xl font-black text-primary">
                   ${formatUSD(product.price)}
                 </span>
-                {product.isOffer && product.originalPrice && (
-                  <span className="text-xs font-bold text-muted-foreground line-through decoration-destructive/50">
-                    ${formatUSD(product.originalPrice)}
-                  </span>
-                )}
               </div>
               <p className="text-[10px] font-bold text-muted-foreground/60">
                 Bs {formatBS(priceBS)}

@@ -39,7 +39,7 @@ router.get('/inventory-logs', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/', validate(productCreateSchema), async (req: Request, res: Response) => {
+router.post('/', validate(productCreateSchema), async (req: Request, res: Response, next) => {
   try {
     const userId = (req as any).user?.id
     const ipAddress = req.ip
@@ -47,14 +47,11 @@ router.post('/', validate(productCreateSchema), async (req: Request, res: Respon
     const product = await inventoryService.createProduct(req.body, userId, ipAddress, userAgent)
     res.status(201).json(product)
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Ya existe')) {
-      return res.status(409).json({ error: error.message })
-    }
-    res.status(500).json({ error: 'Error al crear producto' })
+    next(error)
   }
 })
 
-router.put('/:id', validate(productUpdateSchema), async (req: Request, res: Response) => {
+router.put('/:id', validate(productUpdateSchema), async (req: Request, res: Response, next) => {
   try {
     const userId = (req as any).user?.id
     const ipAddress = req.ip
@@ -62,14 +59,11 @@ router.put('/:id', validate(productUpdateSchema), async (req: Request, res: Resp
     const product = await inventoryService.updateProduct(req.params.id as string, req.body, userId, ipAddress, userAgent)
     res.json(product)
   } catch (error) {
-    if (error instanceof Error && error.message.includes('no encontrado')) {
-      return res.status(404).json({ error: error.message })
-    }
-    res.status(500).json({ error: 'Error al actualizar producto' })
+    next(error)
   }
 })
 
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request, res: Response, next) => {
   try {
     const userId = (req as any).user?.id
     const ipAddress = req.ip
@@ -77,10 +71,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     await inventoryService.deleteProduct(req.params.id as string, userId, ipAddress, userAgent)
     res.json({ success: true })
   } catch (error) {
-    if (error instanceof Error && error.message.includes('no encontrado')) {
-      return res.status(404).json({ error: error.message })
-    }
-    res.status(500).json({ error: 'Error al eliminar producto' })
+    next(error)
   }
 })
 

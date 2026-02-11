@@ -38,10 +38,11 @@ Para ventas con planes de pago:
 5. **Cierre Automático**: Cuando el saldo llega a cero, el plan y la venta se marcan como **COMPLETADO**.
 
 ### Ciclo de Inventario y Alertas
-1. **Recepción de Mercancía**: El administrador registra la entrada de nuevos productos mediante **Lotes (Batches)**, especificando proveedor, costo y fecha de vencimiento.
-2. **Monitoreo**: El Dashboard muestra productos con "Bajo Stock" y alertas de vencimiento próximo.
-3. **Reposición**: El admin crea un requerimiento de compra basado en las necesidades de stock.
-4. **Auditoría**: Cada cambio en el inventario genera un registro en el historial de movimientos (`InventoryLog`).
+1. **Gestión de Proveedores**: El administrador mantiene actualizada la base de datos de proveedores para facilitar la trazabilidad de las compras.
+2. **Recepción de Mercancía**: El administrador registra la entrada de nuevos productos mediante **Lotes (Batches)**, vinculándolos a un proveedor específico y detallando costo, precio de venta sugerido y fecha de entrada.
+3. **Monitoreo**: El Dashboard muestra productos con "Bajo Stock" y alertas de vencimiento próximo.
+4. **Reposición**: El admin crea un requerimiento de compra basado en las necesidades de stock.
+5. **Auditoría**: Cada cambio en el inventario genera un registro en el historial de movimientos (`InventoryLog`).
 
 ---
 

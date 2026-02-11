@@ -80,6 +80,14 @@ export class PaymentManager {
     if (!sale) throw new NotFoundError('Venta')
 
     // 1. Crear el registro del pago
+    const totalToPayUSD = Number(sale.totalUSD)
+    const currentPaidUSD = Number(sale.paidAmountUSD || 0)
+    const remainingUSD = totalToPayUSD - currentPaidUSD
+
+    if (data.amountUSD > remainingUSD + 0.01) { // 0.01 for floating point margin
+      throw new ValidationError(`El monto del pago ($${data.amountUSD}) excede el saldo pendiente ($${remainingUSD.toFixed(2)})`)
+    }
+
     const payment = await this.paymentRepo.create(data)
 
     // 2. Actualizar el monto pagado en la venta
@@ -144,5 +152,29 @@ export class PaymentManager {
     }
 
     return updatedIds
+  }
+
+  async createInstallmentPlan(saleId: string, plan: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string) {
+    const created = await this.installmentRepo.createMany(
+      plan.map(inst => ({
+        saleId,
+        amountUSD: inst.amountUSD,
+        dueDate: inst.dueDate,
+        status: 'PENDING'
+      }))
+    )
+
+    const totalUSD = plan.reduce((sum, i) => sum + i.amountUSD, 0)
+
+    await this.auditService.logAction({
+      entityType: 'INSTALLMENT_PLAN',
+      action: 'CREATE',
+      userId,
+      details: { saleId, count: plan.length, totalUSD },
+      ipAddress,
+      userAgent
+    })
+
+    return created
   }
 }

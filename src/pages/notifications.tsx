@@ -21,7 +21,6 @@ export default function NotificationsPage() {
   const [muteSettings, setMuteSettings] = useState({
     ORDERS: true,
     FAVORITES: true,
-    PROMOTIONS: true,
     SYSTEM: true
   })
 
@@ -33,7 +32,6 @@ export default function NotificationsPage() {
         setMuteSettings({
           ORDERS: settings.orders,
           FAVORITES: settings.favorites,
-          PROMOTIONS: settings.promotions,
           SYSTEM: settings.system
         })
       } catch (error) {
@@ -55,7 +53,6 @@ export default function NotificationsPage() {
       await api.updateNotificationSettings({
         orders: category === 'ORDERS' ? newValue : muteSettings.ORDERS,
         favorites: category === 'FAVORITES' ? newValue : muteSettings.FAVORITES,
-        promotions: category === 'PROMOTIONS' ? newValue : muteSettings.PROMOTIONS,
         system: category === 'SYSTEM' ? newValue : muteSettings.SYSTEM
       })
       
@@ -123,17 +120,6 @@ export default function NotificationsPage() {
                 <Switch 
                   checked={muteSettings.FAVORITES} 
                   onCheckedChange={() => handleToggleMute('FAVORITES')}
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Promociones</Label>
-                  <p className="text-xs text-muted-foreground">Nuevas ofertas y descuentos.</p>
-                </div>
-                <Switch 
-                  checked={muteSettings.PROMOTIONS} 
-                  onCheckedChange={() => handleToggleMute('PROMOTIONS')}
                   disabled={isLoading}
                 />
               </div>

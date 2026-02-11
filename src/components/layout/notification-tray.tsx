@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { Bell, Check, ShoppingCart, Star, Tag, Info, X } from "lucide-react"
+import { Bell, Check, ShoppingCart, Star, Info, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
 
-type NotificationCategory = 'ORDERS' | 'FAVORITES' | 'PROMOTIONS' | 'SYSTEM' | 'ALL'
+type NotificationCategory = 'ORDERS' | 'FAVORITES' | 'SYSTEM' | 'ALL'
 
 interface Notification {
   id: string
@@ -108,7 +108,6 @@ export function NotificationTray({ onClose }: NotificationTrayProps) {
     switch (category) {
       case 'ORDERS': return <ShoppingCart className="h-4 w-4" />
       case 'FAVORITES': return <Star className="h-4 w-4" />
-      case 'PROMOTIONS': return <Tag className="h-4 w-4" />
       default: return <Info className="h-4 w-4" />
     }
   }
@@ -158,7 +157,6 @@ export function NotificationTray({ onClose }: NotificationTrayProps) {
             <TabsTrigger value="ALL" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Todo</TabsTrigger>
             <TabsTrigger value="ORDERS" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Pedidos</TabsTrigger>
             <TabsTrigger value="FAVORITES" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Favoritos</TabsTrigger>
-            <TabsTrigger value="PROMOTIONS" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Ofertas</TabsTrigger>
           </TabsList>
         </div>
 

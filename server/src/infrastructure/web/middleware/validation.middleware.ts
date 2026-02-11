@@ -32,9 +32,10 @@ export const authRules = {
 
   phone: z
     .string()
-    .min(11, "El teléfono debe tener 11 dígitos")
+    .min(11, "El teléfono debe tener al menos 11 dígitos")
     .max(15, "El teléfono no puede exceder los 15 dígitos")
-    .regex(/^\d+$/, "Solo se permiten números"),
+    .regex(/^\+?58\d+$/, "Debe comenzar con el código de país de Venezuela (+58 o 58)")
+    .or(z.string().regex(/^0\d{10}$/, "Formato local inválido (ej: 04121234567)")),
 
   password: z
     .string()
@@ -101,7 +102,6 @@ export const productCreateSchema = z.object({
   brand: z.string().min(1).max(100),
   format: z.string().min(1).max(50),
   weight: z.string().optional().nullable().or(z.literal('')),
-  shippingCost: z.number().nonnegative().optional().default(0),
   stock: z.number().int().nonnegative().optional().default(0),
   minStock: z.number().int().nonnegative().optional().default(5),
   inStock: z.boolean().optional().default(true),
@@ -156,10 +156,12 @@ export const requirementCreateSchema = z.object({
 })
 
 export const providerCreateSchema = z.object({
-  name: z.string().min(2).max(150),
-  phone: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable(),
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(150),
+  country: z.string().min(2, "El país debe tener al menos 2 caracteres").max(100),
+  address: z.string().min(5, "La dirección debe tener al menos 5 caracteres").max(500),
 })
+
+export const providerUpdateSchema = providerCreateSchema.partial()
 
 export const batchCreateSchema = z.object({
   code: z.string().min(1).max(100),

@@ -1,4 +1,5 @@
-import { InventoryBatchRepository, ProductRepository, InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
+import { InventoryBatchRepository, InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
+import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { ValidationError } from '../../shared/errors/app.errors.js'
 import { AuditService } from './audit.service.js'
 
@@ -27,7 +28,6 @@ export class BatchManager {
           soldQuantity: Number(item.soldQuantity) || 0,
           unitCostUSD: Number(item.unitCostUSD) || 0,
           unitSaleUSD: Number(item.unitSaleUSD) || 0,
-          shippingCostUSD: Number(item.shippingCostUSD) || 0,
           entryDate: new Date(item.entryDate),
           discounted: !!item.discounted,
           discountPercent: Number(item.discountPercent) || 0,

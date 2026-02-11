@@ -44,7 +44,6 @@ export class ProductManager {
       slug: data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
       description: data.description,
       price: salePrice,
-      shippingCost: data.shippingCost || 0,
       image: mainImageUrl,
       categories: {
         connect: data.categoryIds.map((id: string) => ({ id }))

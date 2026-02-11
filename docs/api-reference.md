@@ -60,9 +60,15 @@ Documentación técnica de los endpoints del sistema. Todas las rutas administra
 - **Body (Verificación)**: `{ "status": "APPROVED", "notes": "Referencia válida" }`
 
 ### Gestión de Productos e Inventario
+- **Listar Productos**: `GET /api/admin/products`
 - **Crear Producto**: `POST /api/admin/products`
 - **Gestión de Lotes**: `POST /api/admin/batches` (Registrar entrada de stock)
 - **Listar Lotes**: `GET /api/admin/batches?search=Proteina`
+- **Gestión de Proveedores**:
+  - `GET /api/admin/providers`: Lista todos los proveedores.
+  - `POST /api/admin/providers`: Crea un nuevo proveedor.
+  - `PUT /api/admin/providers/:id`: Actualiza datos del proveedor.
+  - `DELETE /api/admin/providers/:id`: Elimina un proveedor.
 - **Auditoría de Inventario**: `GET /api/admin/inventory/logs`
 
 ---

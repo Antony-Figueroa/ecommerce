@@ -22,11 +22,14 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.get('/public', async (req: Request, res: Response) => {
   try {
-    const { categoryId, categoryIds, search } = req.query
+    const { categoryId, categoryIds, search, isFeatured, isOffer, limit } = req.query
     const products = await inventoryService.getPublicProducts({
       categoryId: categoryId as string | null,
       categoryIds: categoryIds as string[] | null,
       search: search as string,
+      isFeatured,
+      isOffer,
+      limit: limit ? parseInt(limit as string) : undefined
     })
     res.json({ products })
   } catch (error) {
