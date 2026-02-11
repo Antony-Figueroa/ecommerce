@@ -1,9 +1,13 @@
 import { NotFoundError, ValidationError } from '../../shared/errors/app.errors.js'
-import { SaleRepository, BatchRepository, NotificationRepository } from '../../domain/repositories/business.repository.js'
+import { SaleRepository, NotificationRepository } from '../../domain/repositories/business.repository.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
-import { InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
 import { BCVRepository, SettingsRepository } from '../../domain/repositories/settings.repository.js'
+import { InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
 import { NotificationService } from './notification.service.js'
+import { PaymentService } from './payment.service.js'
+import { AuditService } from './audit.service.js'
+import { StockManager } from './stock-manager.service.js'
+import { SaleCalculator } from './sale-calculator.service.js'
 import PDFDocument from 'pdfkit'
 
 function generateSaleNumber(): string {
@@ -19,54 +23,51 @@ export class SaleService {
   constructor(
     private saleRepo: SaleRepository,
     private productRepo: ProductRepository,
-    private logRepo: InventoryLogRepository,
     private bcvRepo: BCVRepository,
-    private batchRepo: BatchRepository,
     private notificationRepo: NotificationRepository,
     private settingsRepo: SettingsRepository,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private paymentService: PaymentService,
+    private auditService: AuditService,
+    private stockManager: StockManager,
+    private saleCalculator: SaleCalculator,
+    private logRepo: InventoryLogRepository
   ) {}
 
-  async createSale(data: any) {
+  async createSale(data: any, userId?: string, ipAddress?: string, userAgent?: string) {
     const bcvRate = data.bcvRate || await this.getCurrentBCV()
 
-    // 1. Check for duplicates (same customer phone and total in the last 5 minutes)
+    // Ensure audit info is merged if passed separately
+    if (userId) data.userId = userId;
+    if (ipAddress) data.ipAddress = ipAddress;
+    if (userAgent) data.userAgent = userAgent;
+
+    // 1. Check for duplicates
     if (data.customerPhone) {
       const duplicate = await this.saleRepo.findDuplicate({
         customerPhone: data.customerPhone,
-        totalUSD: data.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0) + (data.shippingCost || 0),
+        totalUSD: data.items.reduce((sum: number, item: any) => sum + (item.quantity * (item.unitPrice || 0)), 0) + (data.shippingCost || 0),
         minutesAgo: 5
       })
 
       if (duplicate) {
-        throw new ValidationError('Ya existe un pedido similar reciente. Por favor espera unos minutos o contacta a soporte.')
+        throw new ValidationError('Ya existe un pedido similar reciente. Por favor espera unos minutos.')
       }
     }
 
+    // 2. Calculate items and totals using SaleCalculator
     const itemsWithTotals = await Promise.all(data.items.map(async (item: any) => {
       const product = await this.productRepo.findById(item.productId)
-      const unitCost = Number(product?.purchasePrice || 0)
-      const unitPrice = Number(item.unitPrice || product?.price || 0)
-      const profitPerUnit = unitPrice - unitCost
-      
-      return {
-        ...item,
-        name: product?.name || item.name || 'Producto desconocido',
-        unitCost,
-        unitPrice,
-        total: item.quantity * unitPrice,
-        profitPerUnit,
-        totalProfit: profitPerUnit * item.quantity,
-      }
+      return this.saleCalculator.calculateItemTotals(item, product)
     }))
 
-    const subtotalUSD = itemsWithTotals.reduce((sum, item) => sum + item.total, 0)
-    const shippingCostUSD = data.shippingCost || 0
-    const totalUSD = subtotalUSD + shippingCostUSD
-    const totalBS = totalUSD * bcvRate
-    const profitUSD = itemsWithTotals.reduce((sum, item) => sum + item.totalProfit, 0)
-    const profitBS = profitUSD * bcvRate
+    const totals = this.saleCalculator.calculateSaleTotals(
+      itemsWithTotals, 
+      data.shippingCost || 0, 
+      bcvRate
+    )
 
+    // 3. Generate unique sale number
     let saleNumber = generateSaleNumber()
     let attempts = 0
     while (attempts < 10) {
@@ -76,6 +77,7 @@ export class SaleService {
       attempts++
     }
 
+    // 4. Create Sale
     const sale = await this.saleRepo.create({
       saleNumber,
       userId: data.userId,
@@ -85,13 +87,13 @@ export class SaleService {
       deliveryAddress: data.deliveryAddress,
       paymentMethod: data.paymentMethod || 'WHATSAPP',
       notes: data.notes,
-      subtotalUSD,
-      shippingCostUSD,
-      totalUSD,
+      subtotalUSD: totals.subtotalUSD,
+      shippingCostUSD: data.shippingCost || 0,
+      totalUSD: totals.totalUSD,
       bcvRate,
-      totalBS,
-      profitUSD,
-      profitBS,
+      totalBS: totals.totalBS,
+      profitUSD: totals.profitUSD,
+      profitBS: totals.profitBS,
       items: {
         create: itemsWithTotals.map(item => ({
           productId: item.productId,
@@ -106,7 +108,19 @@ export class SaleService {
       },
     })
 
-    // Create initial audit log
+    // 5. System Audit Log (Point 4 - GDPR compliant)
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: sale.id,
+      action: 'CREATE',
+      userId: data.userId,
+      userName: data.customerName,
+      details: { saleNumber, totalUSD: totals.totalUSD },
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent
+    })
+
+    // 6. Create initial legacy audit log (for compatibility)
     await this.saleRepo.createAuditLog({
       saleId: sale.id,
       action: 'CREATED',
@@ -115,88 +129,73 @@ export class SaleService {
       reason: 'Pedido creado desde el carrito'
     })
 
-    // Create notification for admin
+    // 7. Notifications
     await this.notificationRepo.create({
       type: 'SALE',
       title: 'Nuevo Pedido Recibido',
-      message: `El cliente ${data.customerName} ha realizado un pedido de ${itemsWithTotals.length} productos por un total de $${totalUSD.toFixed(2)}.`
+      message: `El cliente ${data.customerName} ha realizado un pedido por un total de $${totals.totalUSD.toFixed(2)}.`
     })
 
-    // Notify Admin via WhatsApp
-    try {
-      const adminPhoneSetting = await this.settingsRepo.findByKey('whatsapp_number')
-      const adminPhone = adminPhoneSetting?.value
-
-      if (adminPhone) {
-        const itemsList = itemsWithTotals.map(item => `- ${item.name} (x${item.quantity})`).join('\n')
-        const whatsappMessage = `*¡Nuevo Pedido Recibido!* 🛒\n\n` +
-          `*Cliente:* ${data.customerName}\n` +
-          `*Número:* ${data.customerPhone}\n` +
-          `*Total:* $${totalUSD.toFixed(2)}\n` +
-          `*Método de Pago:* ${data.paymentMethod || 'WhatsApp'}\n\n` +
-          `*Productos:*\n${itemsList}\n\n` +
-          `*Fecha:* ${new Date().toLocaleString()}\n\n` +
-          `Ver detalles en el panel: ${process.env.FRONTEND_URL}/admin/orders`
-
-        console.log(`[WhatsApp Admin Notification] To: ${adminPhone}, Message: ${whatsappMessage}`)
-        // In a real implementation, you would call a WhatsApp API provider here
-      }
-    } catch (error) {
-      console.error('Error sending WhatsApp notification to admin:', error)
-      // We don't throw here to not break the sale creation flow
+    // 8. Stock management using StockManager
+    for (const item of itemsWithTotals) {
+      await this.stockManager.deductStock(
+        item.productId, 
+        item.quantity, 
+        'Venta', 
+        saleNumber
+      )
     }
 
-    for (const item of data.items) {
-      const product = await this.productRepo.findById(item.productId)
-      if (product) {
-        const previousStock = product.stock
-        const newStock = previousStock - item.quantity
+    // 9. Handle initial payment
+    if (data.initialPaymentUSD && data.initialPaymentUSD > 0) {
+      await this.paymentService.registerPayment({
+        saleId: sale.id,
+        amountUSD: data.initialPaymentUSD,
+        amountBS: data.initialPaymentUSD * bcvRate,
+        bcvRate,
+        paymentMethod: data.paymentMethod || 'CASH',
+        notes: 'Pago inicial al crear la venta'
+      })
+    }
 
-        await this.productRepo.update(item.productId, {
-          stock: newStock,
-          inStock: newStock > 0,
-        })
-
-        // Discount from batches (FEFO)
-        let remainingToDiscount = item.quantity
-        const batches = await this.batchRepo.findMany({
-          where: { productId: item.productId, stock: { gt: 0 } },
-          orderBy: { expirationDate: 'asc' },
-        })
-
-        for (const batch of batches) {
-          if (remainingToDiscount <= 0) break
-
-          const discountFromThisBatch = Math.min(batch.stock, remainingToDiscount)
-          await this.batchRepo.update(batch.id, {
-            stock: { decrement: discountFromThisBatch },
-          })
-          remainingToDiscount -= discountFromThisBatch
-        }
-
-        await this.logRepo.create({
-          productId: item.productId,
-          changeType: 'SALE',
-          previousStock,
-          newStock,
-          changeAmount: -item.quantity,
-          reason: `Venta ${saleNumber}`,
-        })
-      }
+    if (data.installmentPlan && data.installmentPlan.length > 0) {
+      await this.paymentService.createInstallmentPlan(sale.id, data.installmentPlan)
     }
 
     return sale
   }
 
-  async getSaleById(id: string) {
+  async getSaleById(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(id)
     if (!sale) {
       throw new NotFoundError('Venta')
     }
+
+    // Audit log for accessing specific sale details
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: id,
+      action: 'VIEW_DETAILS',
+      userId,
+      details: { saleNumber: sale.saleNumber },
+      ipAddress,
+      userAgent
+    })
+
     return sale
   }
 
-  async getAllSales(options?: any) {
+  async getAllSales(options?: any, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing all sales (sensitive data)
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_ALL_SALES',
+      userId,
+      details: { options },
+      ipAddress,
+      userAgent
+    })
+
     const { status = null, startDate = null, endDate = null, page = 1, limit = 20 } = options || {}
 
     const where: any = {}
@@ -253,7 +252,7 @@ export class SaleService {
     }
   }
 
-  async updateSaleStatus(id: string, status: string, userId?: string, reason?: string) {
+  async updateSaleStatus(id: string, status: string, userId?: string, reason?: string, financing?: { initialPaymentUSD?: number, installmentPlan?: { amountUSD: number, dueDate: Date }[] }, ipAddress?: string, userAgent?: string) {
     console.log(`Updating sale status for ${id} to ${status}...`)
     const sale = await this.saleRepo.findById(id)
     if (!sale) {
@@ -275,10 +274,43 @@ export class SaleService {
       throw new ValidationError('No se puede marcar como completada una orden que no ha sido pagada. Por favor, confirma el pago primero.')
     }
 
+    // Lógica de Financiamiento al Aceptar
+    if (status === 'ACCEPTED' && financing) {
+      const bcvRate = sale.bcvRate || await this.getCurrentBCV()
+      
+      // 1. Registrar Pago Inicial si existe
+      if (financing.initialPaymentUSD && financing.initialPaymentUSD > 0) {
+        await this.paymentService.registerPayment({
+          saleId: id,
+          amountUSD: financing.initialPaymentUSD,
+          amountBS: financing.initialPaymentUSD * bcvRate,
+          bcvRate,
+          paymentMethod: 'CASH', // O el método que se defina
+          notes: 'Pago inicial al aceptar el pedido'
+        }, userId, ipAddress, userAgent)
+      }
+
+      // 2. Crear Plan de Cuotas si existe
+      if (financing.installmentPlan && financing.installmentPlan.length > 0) {
+        await this.paymentService.createInstallmentPlan(id, financing.installmentPlan, userId, ipAddress, userAgent)
+      }
+    }
+
     console.log(`Updating database record for sale ${id}...`)
     const updatedSale = await this.saleRepo.update(id, { status })
 
-    // Create audit log for status change
+    // GDPR Compliant Audit
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: id,
+      action: 'STATUS_CHANGE',
+      userId,
+      details: { oldStatus, newStatus: status, reason },
+      ipAddress,
+      userAgent
+    })
+
+    // Create legacy audit log for status change
     console.log(`Creating audit log for sale ${id}...`)
     await this.saleRepo.createAuditLog({
       saleId: id,
@@ -350,7 +382,7 @@ export class SaleService {
     return updatedSale
   }
 
-  async updateSaleItemQuantity(saleId: string, itemId: string, quantity: number, userId?: string) {
+  async updateSaleItemQuantity(saleId: string, itemId: string, quantity: number, userId?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(saleId)
     if (!sale) {
       throw new NotFoundError('Venta')
@@ -384,6 +416,23 @@ export class SaleService {
     }
 
     const updatedItem = await this.saleRepo.updateItem(itemId, updateData)
+
+    // Audit the item quantity change
+    await this.auditService.logAction({
+      entityType: 'SALE_ITEM',
+      entityId: itemId,
+      action: 'UPDATE_QUANTITY',
+      userId,
+      details: { 
+        saleId, 
+        saleNumber: sale.saleNumber, 
+        oldQuantity, 
+        newQuantity: quantity,
+        productName: item.name
+      },
+      ipAddress,
+      userAgent
+    })
 
     // Ajustar stock: devolvemos la diferencia al inventario
     const diff = oldQuantity - quantity
@@ -439,7 +488,7 @@ export class SaleService {
     return updatedItem
   }
 
-  async updateSaleItemStatus(saleId: string, itemId: string, status: string, userId?: string) {
+  async updateSaleItemStatus(saleId: string, itemId: string, status: string, userId?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(saleId)
     if (!sale) {
       throw new NotFoundError('Venta')
@@ -460,50 +509,39 @@ export class SaleService {
 
     const updatedItem = await this.saleRepo.updateItem(itemId, { status })
 
+    // Audit the item status change
+    await this.auditService.logAction({
+      entityType: 'SALE_ITEM',
+      entityId: itemId,
+      action: 'UPDATE_STATUS',
+      userId,
+      details: { 
+        saleId, 
+        saleNumber: sale.saleNumber, 
+        oldStatus, 
+        newStatus: status,
+        productName: item.name
+      },
+      ipAddress,
+      userAgent
+    })
+
     // Si el item se rechaza, devolvemos el stock
     if (status === 'REJECTED') {
-      const product = await this.productRepo.findById(item.productId)
-      if (product) {
-        const previousStock = product.stock
-        const newStock = previousStock + item.quantity
-
-        await this.productRepo.update(item.productId, {
-          stock: newStock,
-          inStock: true,
-        })
-
-        // Devolver a los batches (opcionalmente al último o proporcionalmente, 
-        // aquí simplificamos devolviendo al primer batch con stock o creando log)
-        await this.logRepo.create({
-          productId: item.productId,
-          changeType: 'CANCELLED_SALE_ITEM',
-          previousStock,
-          newStock,
-          changeAmount: item.quantity,
-          reason: `Item de venta ${sale.saleNumber} rechazado por el administrador`,
-        })
-      }
+      await this.stockManager.addStock(
+        item.productId, 
+        item.quantity, 
+        'Item de venta rechazado', 
+        sale.saleNumber
+      )
     } else if (status === 'ACCEPTED' && oldStatus === 'REJECTED') {
       // Si antes estaba rechazado y ahora se acepta, descontamos stock de nuevo
-      const product = await this.productRepo.findById(item.productId)
-      if (product) {
-        const previousStock = product.stock
-        const newStock = previousStock - item.quantity
-
-        await this.productRepo.update(item.productId, {
-          stock: newStock,
-          inStock: newStock > 0,
-        })
-
-        await this.logRepo.create({
-          productId: item.productId,
-          changeType: 'SALE_ITEM_RESTORED',
-          previousStock,
-          newStock,
-          changeAmount: -item.quantity,
-          reason: `Item de venta ${sale.saleNumber} aceptado nuevamente por el administrador`,
-        })
-      }
+      await this.stockManager.deductStock(
+        item.productId, 
+        item.quantity, 
+        'Item de venta aceptado (reversión de rechazo)', 
+        sale.saleNumber
+      )
     }
 
     // Recalcular totales de la venta
@@ -536,7 +574,7 @@ export class SaleService {
     return updatedItem
   }
 
-  async acceptAllItems(saleId: string, userId?: string) {
+  async acceptAllItems(saleId: string, userId?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(saleId)
     if (!sale) {
       throw new NotFoundError('Venta')
@@ -545,13 +583,13 @@ export class SaleService {
     const itemsToUpdate = sale.items.filter((i: any) => i.status !== 'ACCEPTED')
     
     for (const item of itemsToUpdate) {
-      await this.updateSaleItemStatus(saleId, item.id, 'ACCEPTED', userId)
+      await this.updateSaleItemStatus(saleId, item.id, 'ACCEPTED', userId, ipAddress, userAgent)
     }
 
     return this.saleRepo.findById(saleId)
   }
 
-  async updateDeliveryStatus(id: string, deliveryStatus: string, userId?: string, reason?: string) {
+  async updateDeliveryStatus(id: string, deliveryStatus: string, userId?: string, reason?: string, ipAddress?: string, userAgent?: string) {
     console.log(`Updating delivery status for ${id} to ${deliveryStatus}...`)
     const sale = await this.saleRepo.findById(id)
     if (!sale) {
@@ -559,7 +597,7 @@ export class SaleService {
       throw new NotFoundError('Venta')
     }
 
-    const validStatuses = ['NOT_DELIVERED', 'DELIVERED']
+    const validStatuses = ['NOT_DELIVERED', 'IN_TRANSIT', 'DELIVERED']
     if (!validStatuses.includes(deliveryStatus)) {
       console.error(`Invalid delivery status: ${deliveryStatus}`)
       throw new ValidationError('Estado de entrega inválido')
@@ -571,6 +609,16 @@ export class SaleService {
 
     // Create audit log for delivery status change
     console.log(`Creating audit log for sale ${id} delivery status...`)
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: id,
+      action: 'UPDATE_DELIVERY_STATUS',
+      userId,
+      details: { oldDeliveryStatus, newDeliveryStatus: deliveryStatus, reason },
+      ipAddress,
+      userAgent
+    })
+
     await this.saleRepo.createAuditLog({
       saleId: id,
       action: 'DELIVERY_STATUS_CHANGE',
@@ -609,7 +657,7 @@ export class SaleService {
     return updatedSale
   }
 
-  async confirmPayment(id: string, amount: number, userId?: string, reason?: string) {
+  async confirmPayment(id: string, amount: number, userId?: string, reason?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(id)
     if (!sale) {
       throw new NotFoundError('Venta')
@@ -623,6 +671,16 @@ export class SaleService {
     })
 
     // Create audit log for payment confirmation
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: id,
+      action: 'CONFIRM_PAYMENT',
+      userId,
+      details: { amount, reason, oldStatus, newStatus: 'COMPLETED' },
+      ipAddress,
+      userAgent
+    })
+
     await this.saleRepo.createAuditLog({
       saleId: id,
       action: 'PAYMENT_CONFIRMED',
@@ -757,7 +815,7 @@ export class SaleService {
     return this.saleRepo.findById(id)
   }
 
-  async cancelSale(id: string, userId?: string, reason?: string) {
+  async cancelSale(id: string, userId?: string, reason?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.getSaleById(id)
 
     if (sale.status === 'CANCELLED') {
@@ -765,26 +823,28 @@ export class SaleService {
     }
 
     for (const item of sale.items) {
-      if (item.status === 'REJECTED') continue // No devolver stock si ya fue rechazado
+      if (item.status === 'REJECTED') continue
 
-      const product = await this.productRepo.findById(item.productId)
-      const previousStock = product?.stock || 0
-      const newStock = previousStock + item.quantity
-
-      await this.productRepo.update(item.productId, {
-        stock: newStock,
-        inStock: true,
-      })
-
-      await this.logRepo.create({
-        productId: item.productId,
-        changeType: 'CANCELLED_SALE',
-        previousStock,
-        newStock,
-        changeAmount: item.quantity,
-        reason: `Venta ${sale.saleNumber} cancelada`,
-      })
+      await this.stockManager.addStock(
+        item.productId, 
+        item.quantity, 
+        'Venta cancelada', 
+        sale.saleNumber
+      )
     }
+
+    const oldStatus = sale.status
+
+    // Audit log
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: id,
+      action: 'CANCEL',
+      userId,
+      details: { reason, oldStatus, newStatus: 'CANCELLED' },
+      ipAddress,
+      userAgent
+    })
 
     // Create audit log for cancellation
     await this.saleRepo.createAuditLog({
@@ -833,7 +893,17 @@ export class SaleService {
     return this.bcvRepo.getCurrentRate()
   }
 
-  async getSalesSummary(options?: any) {
+  async getSalesSummary(options?: any, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing sales summary (sensitive data)
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_SALES_SUMMARY',
+      userId,
+      details: { options },
+      ipAddress,
+      userAgent
+    })
+
     const sales = await this.saleRepo.getSummary(options || {})
 
     const completedSalesData = (sales || []).filter((s: any) => s.status === 'COMPLETED')
@@ -872,18 +942,39 @@ export class SaleService {
     }
   }
 
-  async getRecentSales(limit = 10) {
+  async getRecentSales(limit = 10, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing recent sales (dashboard)
+    await this.auditService.logAction({
+      entityType: 'DASHBOARD',
+      action: 'VIEW_RECENT_SALES',
+      userId,
+      details: { limit },
+      ipAddress,
+      userAgent
+    })
+
     return this.saleRepo.findAll({
       orderBy: { createdAt: 'desc' },
       take: limit,
     })
   }
 
-  async generateInvoicePDF(id: string): Promise<Buffer> {
+  async generateInvoicePDF(id: string, userId?: string, ipAddress?: string, userAgent?: string): Promise<Buffer> {
     const sale = await this.saleRepo.findById(id)
     if (!sale) {
       throw new NotFoundError('Venta')
     }
+
+    // Audit log for generating invoice PDF (sensitive document)
+    await this.auditService.logAction({
+      entityType: 'SALE',
+      entityId: id,
+      action: 'GENERATE_INVOICE',
+      userId,
+      details: { saleNumber: sale.saleNumber },
+      ipAddress,
+      userAgent
+    })
 
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 })

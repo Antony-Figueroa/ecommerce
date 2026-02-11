@@ -13,7 +13,8 @@ export const validationRules = {
   name: z
     .string()
     .min(2, "El nombre debe tener al menos 2 caracteres")
-    .max(50, "El nombre no puede exceder los 50 caracteres"),
+    .max(50, "El nombre no puede exceder los 50 caracteres")
+    .regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, "Solo se permiten letras y espacios"),
   
   email: z
     .string()
@@ -22,7 +23,7 @@ export const validationRules = {
 
   phone: z
     .string()
-    .min(11, "El teléfono debe tener 11 dígitos")
+    .min(10, "El teléfono debe tener al menos 10 dígitos")
     .max(15, "El teléfono no puede exceder los 15 dígitos")
     .regex(/^\d+$/, "Solo se permiten números"),
 

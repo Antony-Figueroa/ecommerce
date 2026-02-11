@@ -1,0 +1,303 @@
+56d287239bb0fae735b763f0de32d883
+/* istanbul ignore next */
+function cov_9wngyj8vl() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.notification-setting.repository.ts";
+  var hash = "7c31971523c930879a1b023af2c9f7a672a575b2";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.notification-setting.repository.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 4,
+          column: 8
+        },
+        end: {
+          line: 6,
+          column: 11
+        }
+      },
+      "1": {
+        start: {
+          line: 9,
+          column: 8
+        },
+        end: {
+          line: 20,
+          column: 11
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 3,
+            column: 4
+          },
+          end: {
+            line: 3,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 3,
+            column: 31
+          },
+          end: {
+            line: 7,
+            column: 5
+          }
+        },
+        line: 3
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 8,
+            column: 4
+          },
+          end: {
+            line: 8,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 8,
+            column: 31
+          },
+          end: {
+            line: 21,
+            column: 5
+          }
+        },
+        line: 8
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 15,
+            column: 24
+          },
+          end: {
+            line: 15,
+            column: 43
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 15,
+            column: 24
+          },
+          end: {
+            line: 15,
+            column: 35
+          }
+        }, {
+          start: {
+            line: 15,
+            column: 39
+          },
+          end: {
+            line: 15,
+            column: 43
+          }
+        }],
+        line: 15
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 16,
+            column: 27
+          },
+          end: {
+            line: 16,
+            column: 49
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 16,
+            column: 27
+          },
+          end: {
+            line: 16,
+            column: 41
+          }
+        }, {
+          start: {
+            line: 16,
+            column: 45
+          },
+          end: {
+            line: 16,
+            column: 49
+          }
+        }],
+        line: 16
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 17,
+            column: 28
+          },
+          end: {
+            line: 17,
+            column: 51
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 17,
+            column: 28
+          },
+          end: {
+            line: 17,
+            column: 43
+          }
+        }, {
+          start: {
+            line: 17,
+            column: 47
+          },
+          end: {
+            line: 17,
+            column: 51
+          }
+        }],
+        line: 17
+      },
+      "3": {
+        loc: {
+          start: {
+            line: 18,
+            column: 24
+          },
+          end: {
+            line: 18,
+            column: 43
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 18,
+            column: 24
+          },
+          end: {
+            line: 18,
+            column: 35
+          }
+        }, {
+          start: {
+            line: 18,
+            column: 39
+          },
+          end: {
+            line: 18,
+            column: 43
+          }
+        }],
+        line: 18
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0
+    },
+    b: {
+      "0": [0, 0],
+      "1": [0, 0],
+      "2": [0, 0],
+      "3": [0, 0]
+    },
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.notification-setting.repository.ts",
+      mappings: "AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,oBAAoB,CAAA;AAI3C,MAAM,OAAO,mCAAmC;IAC9C,KAAK,CAAC,YAAY,CAAC,MAAc;QAC/B,OAAO,MAAM,CAAC,mBAAmB,CAAC,UAAU,CAAC;YAC3C,KAAK,EAAE,EAAE,MAAM,EAAE;SAClB,CAAC,CAAA;IACJ,CAAC;IAED,KAAK,CAAC,MAAM,CAAC,MAAc,EAAE,IAK5B;QACC,OAAO,MAAM,CAAC,mBAAmB,CAAC,MAAM,CAAC;YACvC,KAAK,EAAE,EAAE,MAAM,EAAE;YACjB,MAAM,EAAE,IAAI;YACZ,MAAM,EAAE;gBACN,MAAM;gBACN,GAAG,IAAI;gBACP,MAAM,EAAE,IAAI,CAAC,MAAM,IAAI,IAAI;gBAC3B,SAAS,EAAE,IAAI,CAAC,SAAS,IAAI,IAAI;gBACjC,UAAU,EAAE,IAAI,CAAC,UAAU,IAAI,IAAI;gBACnC,MAAM,EAAE,IAAI,CAAC,MAAM,IAAI,IAAI;aAC5B;SACF,CAAC,CAAA;IACJ,CAAC;CACF",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.notification-setting.repository.ts"],
+      sourcesContent: ["import { prisma } from './prisma.client.js'\nimport { NotificationSetting } from '@prisma/client'\nimport { NotificationSettingRepository } from '../../domain/repositories/business.repository.js'\n\nexport class PrismaNotificationSettingRepository implements NotificationSettingRepository {\n  async findByUserId(userId: string) {\n    return prisma.notificationSetting.findUnique({\n      where: { userId }\n    })\n  }\n\n  async upsert(userId: string, data: {\n    orders?: boolean\n    favorites?: boolean\n    promotions?: boolean\n    system?: boolean\n  }) {\n    return prisma.notificationSetting.upsert({\n      where: { userId },\n      update: data,\n      create: {\n        userId,\n        ...data,\n        orders: data.orders ?? true,\n        favorites: data.favorites ?? true,\n        promotions: data.promotions ?? true,\n        system: data.system ?? true,\n      }\n    })\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "7c31971523c930879a1b023af2c9f7a672a575b2"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_9wngyj8vl = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_9wngyj8vl();
+import { prisma } from './prisma.client.js';
+export class PrismaNotificationSettingRepository {
+  async findByUserId(userId) {
+    /* istanbul ignore next */
+    cov_9wngyj8vl().f[0]++;
+    cov_9wngyj8vl().s[0]++;
+    return prisma.notificationSetting.findUnique({
+      where: {
+        userId
+      }
+    });
+  }
+  async upsert(userId, data) {
+    /* istanbul ignore next */
+    cov_9wngyj8vl().f[1]++;
+    cov_9wngyj8vl().s[1]++;
+    return prisma.notificationSetting.upsert({
+      where: {
+        userId
+      },
+      update: data,
+      create: {
+        userId,
+        ...data,
+        orders: 
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[0][0]++, data.orders) ??
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[0][1]++, true),
+        favorites: 
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[1][0]++, data.favorites) ??
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[1][1]++, true),
+        promotions: 
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[2][0]++, data.promotions) ??
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[2][1]++, true),
+        system: 
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[3][0]++, data.system) ??
+        /* istanbul ignore next */
+        (cov_9wngyj8vl().b[3][1]++, true)
+      }
+    });
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJwcmlzbWEiLCJQcmlzbWFOb3RpZmljYXRpb25TZXR0aW5nUmVwb3NpdG9yeSIsImZpbmRCeVVzZXJJZCIsInVzZXJJZCIsImNvdl85d25neWo4dmwiLCJmIiwicyIsIm5vdGlmaWNhdGlvblNldHRpbmciLCJmaW5kVW5pcXVlIiwid2hlcmUiLCJ1cHNlcnQiLCJkYXRhIiwidXBkYXRlIiwiY3JlYXRlIiwib3JkZXJzIiwiYiIsImZhdm9yaXRlcyIsInByb21vdGlvbnMiLCJzeXN0ZW0iXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFNlcnZlciBBZG1pblxcRGVza3RvcFxcZWNvbW1lcmNlXFxzZXJ2ZXJcXHNyY1xcaW5mcmFzdHJ1Y3R1cmVcXHBlcnNpc3RlbmNlXFxwcmlzbWEubm90aWZpY2F0aW9uLXNldHRpbmcucmVwb3NpdG9yeS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBwcmlzbWEgfSBmcm9tICcuL3ByaXNtYS5jbGllbnQuanMnXG5pbXBvcnQgeyBOb3RpZmljYXRpb25TZXR0aW5nIH0gZnJvbSAnQHByaXNtYS9jbGllbnQnXG5pbXBvcnQgeyBOb3RpZmljYXRpb25TZXR0aW5nUmVwb3NpdG9yeSB9IGZyb20gJy4uLy4uL2RvbWFpbi9yZXBvc2l0b3JpZXMvYnVzaW5lc3MucmVwb3NpdG9yeS5qcydcblxuZXhwb3J0IGNsYXNzIFByaXNtYU5vdGlmaWNhdGlvblNldHRpbmdSZXBvc2l0b3J5IGltcGxlbWVudHMgTm90aWZpY2F0aW9uU2V0dGluZ1JlcG9zaXRvcnkge1xuICBhc3luYyBmaW5kQnlVc2VySWQodXNlcklkOiBzdHJpbmcpIHtcbiAgICByZXR1cm4gcHJpc21hLm5vdGlmaWNhdGlvblNldHRpbmcuZmluZFVuaXF1ZSh7XG4gICAgICB3aGVyZTogeyB1c2VySWQgfVxuICAgIH0pXG4gIH1cblxuICBhc3luYyB1cHNlcnQodXNlcklkOiBzdHJpbmcsIGRhdGE6IHtcbiAgICBvcmRlcnM/OiBib29sZWFuXG4gICAgZmF2b3JpdGVzPzogYm9vbGVhblxuICAgIHByb21vdGlvbnM/OiBib29sZWFuXG4gICAgc3lzdGVtPzogYm9vbGVhblxuICB9KSB7XG4gICAgcmV0dXJuIHByaXNtYS5ub3RpZmljYXRpb25TZXR0aW5nLnVwc2VydCh7XG4gICAgICB3aGVyZTogeyB1c2VySWQgfSxcbiAgICAgIHVwZGF0ZTogZGF0YSxcbiAgICAgIGNyZWF0ZToge1xuICAgICAgICB1c2VySWQsXG4gICAgICAgIC4uLmRhdGEsXG4gICAgICAgIG9yZGVyczogZGF0YS5vcmRlcnMgPz8gdHJ1ZSxcbiAgICAgICAgZmF2b3JpdGVzOiBkYXRhLmZhdm9yaXRlcyA/PyB0cnVlLFxuICAgICAgICBwcm9tb3Rpb25zOiBkYXRhLnByb21vdGlvbnMgPz8gdHJ1ZSxcbiAgICAgICAgc3lzdGVtOiBkYXRhLnN5c3RlbSA/PyB0cnVlLFxuICAgICAgfVxuICAgIH0pXG4gIH1cbn1cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLFNBQVNBLE1BQU0sUUFBUSxvQkFBb0I7QUFJM0MsT0FBTSxNQUFPQyxtQ0FBbUM7RUFDOUMsTUFBTUMsWUFBWUEsQ0FBQ0MsTUFBYztJQUFBO0lBQUFDLGFBQUEsR0FBQUMsQ0FBQTtJQUFBRCxhQUFBLEdBQUFFLENBQUE7SUFDL0IsT0FBT04sTUFBTSxDQUFDTyxtQkFBbUIsQ0FBQ0MsVUFBVSxDQUFDO01BQzNDQyxLQUFLLEVBQUU7UUFBRU47TUFBTTtLQUNoQixDQUFDO0VBQ0o7RUFFQSxNQUFNTyxNQUFNQSxDQUFDUCxNQUFjLEVBQUVRLElBSzVCO0lBQUE7SUFBQVAsYUFBQSxHQUFBQyxDQUFBO0lBQUFELGFBQUEsR0FBQUUsQ0FBQTtJQUNDLE9BQU9OLE1BQU0sQ0FBQ08sbUJBQW1CLENBQUNHLE1BQU0sQ0FBQztNQUN2Q0QsS0FBSyxFQUFFO1FBQUVOO01BQU0sQ0FBRTtNQUNqQlMsTUFBTSxFQUFFRCxJQUFJO01BQ1pFLE1BQU0sRUFBRTtRQUNOVixNQUFNO1FBQ04sR0FBR1EsSUFBSTtRQUNQRyxNQUFNO1FBQUU7UUFBQSxDQUFBVixhQUFBLEdBQUFXLENBQUEsVUFBQUosSUFBSSxDQUFDRyxNQUFNO1FBQUE7UUFBQSxDQUFBVixhQUFBLEdBQUFXLENBQUEsVUFBSSxJQUFJO1FBQzNCQyxTQUFTO1FBQUU7UUFBQSxDQUFBWixhQUFBLEdBQUFXLENBQUEsVUFBQUosSUFBSSxDQUFDSyxTQUFTO1FBQUE7UUFBQSxDQUFBWixhQUFBLEdBQUFXLENBQUEsVUFBSSxJQUFJO1FBQ2pDRSxVQUFVO1FBQUU7UUFBQSxDQUFBYixhQUFBLEdBQUFXLENBQUEsVUFBQUosSUFBSSxDQUFDTSxVQUFVO1FBQUE7UUFBQSxDQUFBYixhQUFBLEdBQUFXLENBQUEsVUFBSSxJQUFJO1FBQ25DRyxNQUFNO1FBQUU7UUFBQSxDQUFBZCxhQUFBLEdBQUFXLENBQUEsVUFBQUosSUFBSSxDQUFDTyxNQUFNO1FBQUE7UUFBQSxDQUFBZCxhQUFBLEdBQUFXLENBQUEsVUFBSSxJQUFJOztLQUU5QixDQUFDO0VBQ0oiLCJpZ25vcmVMaXN0IjpbXX0=

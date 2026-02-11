@@ -1,0 +1,60 @@
+e4170746d74f8d5bb5a23053e6407731
+export class FavoriteService {
+    constructor(favoriteRepo, notificationService) {
+        Object.defineProperty(this, "favoriteRepo", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: favoriteRepo
+        });
+        Object.defineProperty(this, "notificationService", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: notificationService
+        });
+    }
+    async getFavorites(userId) {
+        try {
+            const favorites = await this.favoriteRepo.findAllByUserId(userId);
+            // Filtrar favoritos que puedan tener el producto nulo y mapear a productos
+            return favorites
+                .filter((f) => f.product !== null)
+                .map((f) => f.product);
+        }
+        catch (error) {
+            console.error('Error in FavoriteService.getFavorites:', error);
+            throw error;
+        }
+    }
+    async checkFavorite(userId, productId) {
+        const favorite = await this.favoriteRepo.findUnique(userId, productId);
+        return !!favorite;
+    }
+    async addFavorite(userId, productId) {
+        const favorite = await this.favoriteRepo.upsert(userId, productId);
+        return favorite;
+    }
+    async notifyPriceDrop(productId, oldPrice, newPrice) {
+        if (newPrice >= oldPrice)
+            return;
+        const interestedUsers = await this.favoriteRepo.findAllByProductId(productId);
+        const product = await this.favoriteRepo.findProductById(productId); // Asumimos que existe este helper o lo buscamos vía productRepo
+        for (const fav of interestedUsers) {
+            await this.notificationService.createNotification({
+                type: 'PRICE_DROP',
+                category: 'FAVORITES',
+                priority: 'NORMAL',
+                title: '¡Bajada de precio!',
+                message: `El producto ${product.name} ha bajado de precio de $${oldPrice} a $${newPrice}. ¡Aprovecha ahora!`,
+                userId: fav.userId,
+                link: `/product/${product.slug}`,
+                metadata: JSON.stringify({ productId, oldPrice, newPrice })
+            });
+        }
+    }
+    async removeFavorite(userId, productId) {
+        await this.favoriteRepo.delete(userId, productId);
+    }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxTZXJ2ZXIgQWRtaW5cXERlc2t0b3BcXGVjb21tZXJjZVxcc2VydmVyXFxzcmNcXGFwcGxpY2F0aW9uXFxzZXJ2aWNlc1xcZmF2b3JpdGUuc2VydmljZS50cyIsIm1hcHBpbmdzIjoiQUFHQSxNQUFNLE9BQU8sZUFBZTtJQUMxQixZQUNVLFlBQWdDLEVBQ2hDLG1CQUF3QztRQURoRDs7OzttQkFBUSxZQUFZO1dBQW9CO1FBQ3hDOzs7O21CQUFRLG1CQUFtQjtXQUFxQjtJQUMvQyxDQUFDO0lBRUosS0FBSyxDQUFDLFlBQVksQ0FBQyxNQUFjO1FBQy9CLElBQUksQ0FBQztZQUNILE1BQU0sU0FBUyxHQUFHLE1BQU0sSUFBSSxDQUFDLFlBQVksQ0FBQyxlQUFlLENBQUMsTUFBTSxDQUFDLENBQUE7WUFDakUsMkVBQTJFO1lBQzNFLE9BQU8sU0FBUztpQkFDYixNQUFNLENBQUMsQ0FBQyxDQUFNLEVBQUUsRUFBRSxDQUFDLENBQUMsQ0FBQyxPQUFPLEtBQUssSUFBSSxDQUFDO2lCQUN0QyxHQUFHLENBQUMsQ0FBQyxDQUFNLEVBQUUsRUFBRSxDQUFDLENBQUMsQ0FBQyxPQUFPLENBQUMsQ0FBQTtRQUMvQixDQUFDO1FBQUMsT0FBTyxLQUFLLEVBQUUsQ0FBQztZQUNmLE9BQU8sQ0FBQyxLQUFLLENBQUMsd0NBQXdDLEVBQUUsS0FBSyxDQUFDLENBQUE7WUFDOUQsTUFBTSxLQUFLLENBQUE7UUFDYixDQUFDO0lBQ0gsQ0FBQztJQUVELEtBQUssQ0FBQyxhQUFhLENBQUMsTUFBYyxFQUFFLFNBQWlCO1FBQ25ELE1BQU0sUUFBUSxHQUFHLE1BQU0sSUFBSSxDQUFDLFlBQVksQ0FBQyxVQUFVLENBQUMsTUFBTSxFQUFFLFNBQVMsQ0FBQyxDQUFBO1FBQ3RFLE9BQU8sQ0FBQyxDQUFDLFFBQVEsQ0FBQTtJQUNuQixDQUFDO0lBRUQsS0FBSyxDQUFDLFdBQVcsQ0FBQyxNQUFjLEVBQUUsU0FBaUI7UUFDakQsTUFBTSxRQUFRLEdBQUcsTUFBTSxJQUFJLENBQUMsWUFBWSxDQUFDLE1BQU0sQ0FBQyxNQUFNLEVBQUUsU0FBUyxDQUFDLENBQUE7UUFDbEUsT0FBTyxRQUFRLENBQUE7SUFDakIsQ0FBQztJQUVELEtBQUssQ0FBQyxlQUFlLENBQUMsU0FBaUIsRUFBRSxRQUFnQixFQUFFLFFBQWdCO1FBQ3pFLElBQUksUUFBUSxJQUFJLFFBQVE7WUFBRSxPQUFNO1FBRWhDLE1BQU0sZUFBZSxHQUFHLE1BQU0sSUFBSSxDQUFDLFlBQVksQ0FBQyxrQkFBa0IsQ0FBQyxTQUFTLENBQUMsQ0FBQTtRQUM3RSxNQUFNLE9BQU8sR0FBRyxNQUFNLElBQUksQ0FBQyxZQUFZLENBQUMsZUFBZSxDQUFDLFNBQVMsQ0FBQyxDQUFBLENBQUMsZ0VBQWdFO1FBRW5JLEtBQUssTUFBTSxHQUFHLElBQUksZUFBZSxFQUFFLENBQUM7WUFDbEMsTUFBTSxJQUFJLENBQUMsbUJBQW1CLENBQUMsa0JBQWtCLENBQUM7Z0JBQ2hELElBQUksRUFBRSxZQUFZO2dCQUNsQixRQUFRLEVBQUUsV0FBVztnQkFDckIsUUFBUSxFQUFFLFFBQVE7Z0JBQ2xCLEtBQUssRUFBRSxvQkFBb0I7Z0JBQzNCLE9BQU8sRUFBRSxlQUFlLE9BQU8sQ0FBQyxJQUFJLDRCQUE0QixRQUFRLE9BQU8sUUFBUSxxQkFBcUI7Z0JBQzVHLE1BQU0sRUFBRSxHQUFHLENBQUMsTUFBTTtnQkFDbEIsSUFBSSxFQUFFLFlBQVksT0FBTyxDQUFDLElBQUksRUFBRTtnQkFDaEMsUUFBUSxFQUFFLElBQUksQ0FBQyxTQUFTLENBQUMsRUFBRSxTQUFTLEVBQUUsUUFBUSxFQUFFLFFBQVEsRUFBRSxDQUFDO2FBQzVELENBQUMsQ0FBQTtRQUNKLENBQUM7SUFDSCxDQUFDO0lBRUQsS0FBSyxDQUFDLGNBQWMsQ0FBQyxNQUFjLEVBQUUsU0FBaUI7UUFDcEQsTUFBTSxJQUFJLENBQUMsWUFBWSxDQUFDLE1BQU0sQ0FBQyxNQUFNLEVBQUUsU0FBUyxDQUFDLENBQUE7SUFDbkQsQ0FBQztDQUNGIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcU2VydmVyIEFkbWluXFxEZXNrdG9wXFxlY29tbWVyY2VcXHNlcnZlclxcc3JjXFxhcHBsaWNhdGlvblxcc2VydmljZXNcXGZhdm9yaXRlLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgRmF2b3JpdGVSZXBvc2l0b3J5IH0gZnJvbSAnLi4vLi4vZG9tYWluL3JlcG9zaXRvcmllcy9mYXZvcml0ZS5yZXBvc2l0b3J5LmpzJ1xuaW1wb3J0IHsgTm90aWZpY2F0aW9uU2VydmljZSB9IGZyb20gJy4vbm90aWZpY2F0aW9uLnNlcnZpY2UuanMnXG5cbmV4cG9ydCBjbGFzcyBGYXZvcml0ZVNlcnZpY2Uge1xuICBjb25zdHJ1Y3RvcihcbiAgICBwcml2YXRlIGZhdm9yaXRlUmVwbzogRmF2b3JpdGVSZXBvc2l0b3J5LFxuICAgIHByaXZhdGUgbm90aWZpY2F0aW9uU2VydmljZTogTm90aWZpY2F0aW9uU2VydmljZVxuICApIHt9XG5cbiAgYXN5bmMgZ2V0RmF2b3JpdGVzKHVzZXJJZDogc3RyaW5nKSB7XG4gICAgdHJ5IHtcbiAgICAgIGNvbnN0IGZhdm9yaXRlcyA9IGF3YWl0IHRoaXMuZmF2b3JpdGVSZXBvLmZpbmRBbGxCeVVzZXJJZCh1c2VySWQpXG4gICAgICAvLyBGaWx0cmFyIGZhdm9yaXRvcyBxdWUgcHVlZGFuIHRlbmVyIGVsIHByb2R1Y3RvIG51bG8geSBtYXBlYXIgYSBwcm9kdWN0b3NcbiAgICAgIHJldHVybiBmYXZvcml0ZXNcbiAgICAgICAgLmZpbHRlcigoZjogYW55KSA9PiBmLnByb2R1Y3QgIT09IG51bGwpXG4gICAgICAgIC5tYXAoKGY6IGFueSkgPT4gZi5wcm9kdWN0KVxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKCdFcnJvciBpbiBGYXZvcml0ZVNlcnZpY2UuZ2V0RmF2b3JpdGVzOicsIGVycm9yKVxuICAgICAgdGhyb3cgZXJyb3JcbiAgICB9XG4gIH1cblxuICBhc3luYyBjaGVja0Zhdm9yaXRlKHVzZXJJZDogc3RyaW5nLCBwcm9kdWN0SWQ6IHN0cmluZykge1xuICAgIGNvbnN0IGZhdm9yaXRlID0gYXdhaXQgdGhpcy5mYXZvcml0ZVJlcG8uZmluZFVuaXF1ZSh1c2VySWQsIHByb2R1Y3RJZClcbiAgICByZXR1cm4gISFmYXZvcml0ZVxuICB9XG5cbiAgYXN5bmMgYWRkRmF2b3JpdGUodXNlcklkOiBzdHJpbmcsIHByb2R1Y3RJZDogc3RyaW5nKSB7XG4gICAgY29uc3QgZmF2b3JpdGUgPSBhd2FpdCB0aGlzLmZhdm9yaXRlUmVwby51cHNlcnQodXNlcklkLCBwcm9kdWN0SWQpXG4gICAgcmV0dXJuIGZhdm9yaXRlXG4gIH1cblxuICBhc3luYyBub3RpZnlQcmljZURyb3AocHJvZHVjdElkOiBzdHJpbmcsIG9sZFByaWNlOiBudW1iZXIsIG5ld1ByaWNlOiBudW1iZXIpIHtcbiAgICBpZiAobmV3UHJpY2UgPj0gb2xkUHJpY2UpIHJldHVyblxuXG4gICAgY29uc3QgaW50ZXJlc3RlZFVzZXJzID0gYXdhaXQgdGhpcy5mYXZvcml0ZVJlcG8uZmluZEFsbEJ5UHJvZHVjdElkKHByb2R1Y3RJZClcbiAgICBjb25zdCBwcm9kdWN0ID0gYXdhaXQgdGhpcy5mYXZvcml0ZVJlcG8uZmluZFByb2R1Y3RCeUlkKHByb2R1Y3RJZCkgLy8gQXN1bWltb3MgcXVlIGV4aXN0ZSBlc3RlIGhlbHBlciBvIGxvIGJ1c2NhbW9zIHbDrWEgcHJvZHVjdFJlcG9cblxuICAgIGZvciAoY29uc3QgZmF2IG9mIGludGVyZXN0ZWRVc2Vycykge1xuICAgICAgYXdhaXQgdGhpcy5ub3RpZmljYXRpb25TZXJ2aWNlLmNyZWF0ZU5vdGlmaWNhdGlvbih7XG4gICAgICAgIHR5cGU6ICdQUklDRV9EUk9QJyxcbiAgICAgICAgY2F0ZWdvcnk6ICdGQVZPUklURVMnLFxuICAgICAgICBwcmlvcml0eTogJ05PUk1BTCcsXG4gICAgICAgIHRpdGxlOiAnwqFCYWphZGEgZGUgcHJlY2lvIScsXG4gICAgICAgIG1lc3NhZ2U6IGBFbCBwcm9kdWN0byAke3Byb2R1Y3QubmFtZX0gaGEgYmFqYWRvIGRlIHByZWNpbyBkZSAkJHtvbGRQcmljZX0gYSAkJHtuZXdQcmljZX0uIMKhQXByb3ZlY2hhIGFob3JhIWAsXG4gICAgICAgIHVzZXJJZDogZmF2LnVzZXJJZCxcbiAgICAgICAgbGluazogYC9wcm9kdWN0LyR7cHJvZHVjdC5zbHVnfWAsXG4gICAgICAgIG1ldGFkYXRhOiBKU09OLnN0cmluZ2lmeSh7IHByb2R1Y3RJZCwgb2xkUHJpY2UsIG5ld1ByaWNlIH0pXG4gICAgICB9KVxuICAgIH1cbiAgfVxuXG4gIGFzeW5jIHJlbW92ZUZhdm9yaXRlKHVzZXJJZDogc3RyaW5nLCBwcm9kdWN0SWQ6IHN0cmluZykge1xuICAgIGF3YWl0IHRoaXMuZmF2b3JpdGVSZXBvLmRlbGV0ZSh1c2VySWQsIHByb2R1Y3RJZClcbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

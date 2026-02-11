@@ -6,33 +6,62 @@ import { config } from '../../shared/config/index.js'
 import { ValidationError, AuthenticationError } from '../../shared/errors/app.errors.js'
 import { UserRepository } from '../../domain/repositories/user.repository.js'
 import { EmailService } from './email.service.js'
+import { AuditService } from './audit.service.js'
 
 export class AuthService {
   private googleClient: OAuth2Client
 
   constructor(
     private userRepo: UserRepository,
-    private emailService: EmailService
+    private emailService: EmailService,
+    private auditService: AuditService
   ) {
     this.googleClient = new OAuth2Client(config.googleClientId)
   }
 
-  async login(email: string, pass: string) {
+  async login(email: string, pass: string, ipAddress?: string, userAgent?: string) {
     const user = await this.userRepo.findByEmail(email)
     if (!user || !user.passwordHash) {
+      await this.auditService.logAction({
+        entityType: 'AUTH',
+        action: 'LOGIN_FAILED',
+        details: { email, reason: 'User not found or no password hash' },
+        ipAddress,
+        userAgent
+      })
       throw new AuthenticationError('Credenciales inválidas')
     }
 
     const isMatch = await bcrypt.compare(pass, user.passwordHash)
     if (!isMatch) {
+      await this.auditService.logAction({
+        entityType: 'AUTH',
+        action: 'LOGIN_FAILED',
+        entityId: user.id,
+        userId: user.id,
+        userName: user.username || user.email,
+        details: { email, reason: 'Invalid password' },
+        ipAddress,
+        userAgent
+      })
       throw new AuthenticationError('Credenciales inválidas')
     }
+
+    await this.auditService.logAction({
+      entityType: 'AUTH',
+      action: 'LOGIN_SUCCESS',
+      entityId: user.id,
+      userId: user.id,
+      userName: user.username || user.email,
+      ipAddress,
+      userAgent
+    })
 
     const token = this.generateToken(user)
     return { user: this.sanitizeUser(user), token }
   }
 
-  async register(data: any) {
+  async register(data: any, ipAddress?: string, userAgent?: string) {
     const { email, password, name, username } = data
 
     const existingEmail = await this.userRepo.findByEmail(email)
@@ -56,6 +85,16 @@ export class AuthService {
       username,
       emailVerified: true,
       role: 'USER'
+    })
+
+    await this.auditService.logAction({
+      entityType: 'USER',
+      entityId: user.id,
+      action: 'REGISTER',
+      userId: user.id,
+      userName: user.username || user.email,
+      ipAddress,
+      userAgent
     })
 
     return this.sanitizeUser(user)

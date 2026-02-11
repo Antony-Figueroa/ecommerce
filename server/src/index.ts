@@ -22,6 +22,11 @@ import adminCustomerRoutes from './infrastructure/web/routes/admin/customer.rout
 import adminUploadRoutes from './infrastructure/web/routes/admin/upload.routes.js'
 import adminSettingsRoutes from './infrastructure/web/routes/admin/settings.routes.js'
 import adminNotificationRoutes from './infrastructure/web/routes/admin/notification.routes.js'
+import adminPaymentRoutes from './infrastructure/web/routes/admin/payment.routes.js'
+import adminVentasRoutes from './infrastructure/web/routes/admin/ventas.routes.js'
+import adminCuotaRoutes from './infrastructure/web/routes/admin/cuota.routes.js'
+import adminProviderRoutes from './infrastructure/web/routes/admin/provider.routes.js'
+import adminBatchRoutes from './infrastructure/web/routes/admin/batch.routes.js'
 import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
@@ -37,28 +42,40 @@ import { socketService } from './infrastructure/socket.service.js'
 const app = express()
 const httpServer = createServer(app)
 
-app.use(cors({
-  origin: (origin, callback) => {
-    console.log(`[CORS_CHECK] Origin: ${origin}`);
-    callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-}))
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
 
 app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
+  console.log(`[VERY_TOP_DEBUG] ${new Date().toISOString()} ${req.method} ${req.path} - Origin: ${req.headers.origin}`);
+  if (req.method === 'OPTIONS' || req.headers['access-control-request-private-network']) {
     res.setHeader('Access-Control-Allow-Private-Network', 'true');
-    return res.sendStatus(204);
   }
   next();
 });
 
-app.use((req, res, next) => {
-  console.log(`[TOP_DEBUG] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
-  next();
-});
+app.use(cors({
+  origin: (origin, callback) => {
+    // Loguear el origen para depuración
+    console.log(`[CORS_DEBUG] ${new Date().toISOString()} Origin: ${origin}`);
+    
+    // Si el origen es undefined (como en herramientas de testing o llamadas directas) 
+    // o está en la lista de permitidos, permitimos la petición.
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS_DENIED] ${new Date().toISOString()} Origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}))
 
 // Initialize Socket.io
 socketService.init(httpServer)
@@ -70,16 +87,14 @@ app.use((_req, res, next) => {
   next();
 });
 app.use((req, _res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} - Headers: ${JSON.stringify({
+    origin: req.headers.origin,
+    auth: !!req.headers.authorization
+  })}`);
   next();
 });
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
-
-app.use((req, res, next) => {
-  console.log(`[ROUTE_CHECK] ${req.method} ${req.url} - RawPath: ${req.path}`);
-  next();
-});
 
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -126,7 +141,12 @@ app.use('/api/admin/sales', adminSaleRoutes)
 app.use('/api/admin/reports', adminReportRoutes)
 app.use('/api/admin/customers', adminCustomerRoutes)
 app.use('/api/admin/notifications', adminNotificationRoutes)
+app.use('/api/admin/payments', adminPaymentRoutes)
+app.use('/api/admin/ventas', adminVentasRoutes)
+app.use('/api/admin/cuotas', adminCuotaRoutes)
 app.use('/api/admin/upload', adminUploadRoutes)
+app.use('/api/admin/providers', adminProviderRoutes)
+app.use('/api/admin/batches', adminBatchRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
 

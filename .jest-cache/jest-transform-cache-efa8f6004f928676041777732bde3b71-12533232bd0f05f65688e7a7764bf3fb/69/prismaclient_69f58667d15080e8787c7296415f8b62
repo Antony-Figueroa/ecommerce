@@ -1,0 +1,220 @@
+17e0994678c8d959f70dd0245584d76d
+/* istanbul ignore next */
+function cov_7xdmqkl4x() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.client.ts";
+  var hash = "c658ace8b3c0300c9ed29d54c3d144a7dda4774e";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.client.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 24
+        },
+        end: {
+          line: 2,
+          column: 34
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 22
+        },
+        end: {
+          line: 5,
+          column: 2
+        }
+      },
+      "2": {
+        start: {
+          line: 6,
+          column: 0
+        },
+        end: {
+          line: 7,
+          column: 36
+        }
+      },
+      "3": {
+        start: {
+          line: 7,
+          column: 4
+        },
+        end: {
+          line: 7,
+          column: 36
+        }
+      }
+    },
+    fnMap: {},
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 3,
+            column: 22
+          },
+          end: {
+            line: 5,
+            column: 2
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 22
+          },
+          end: {
+            line: 3,
+            column: 44
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 48
+          },
+          end: {
+            line: 5,
+            column: 2
+          }
+        }],
+        line: 3
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 4,
+            column: 9
+          },
+          end: {
+            line: 4,
+            column: 88
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 4,
+            column: 50
+          },
+          end: {
+            line: 4,
+            column: 76
+          }
+        }, {
+          start: {
+            line: 4,
+            column: 79
+          },
+          end: {
+            line: 4,
+            column: 88
+          }
+        }],
+        line: 4
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 6,
+            column: 0
+          },
+          end: {
+            line: 7,
+            column: 36
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 6,
+            column: 0
+          },
+          end: {
+            line: 7,
+            column: 36
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 6
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    f: {},
+    b: {
+      "0": [0, 0],
+      "1": [0, 0],
+      "2": [0, 0]
+    },
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.client.ts",
+      mappings: "AAAA,OAAO,EAAE,YAAY,EAAE,MAAM,gBAAgB,CAAA;AAE7C,MAAM,eAAe,GAAG,UAEvB,CAAA;AAED,MAAM,CAAC,MAAM,MAAM,GAAG,eAAe,CAAC,MAAM,IAAI,IAAI,YAAY,CAAC;IAC/D,GAAG,EAAE,OAAO,CAAC,GAAG,CAAC,QAAQ,KAAK,aAAa,CAAC,CAAC,CAAC,CAAC,OAAO,EAAE,OAAO,EAAE,MAAM,CAAC,CAAC,CAAC,CAAC,CAAC,OAAO,CAAC;CACrF,CAAC,CAAA;AAEF,IAAI,OAAO,CAAC,GAAG,CAAC,QAAQ,KAAK,YAAY;IAAE,eAAe,CAAC,MAAM,GAAG,MAAM,CAAA",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.client.ts"],
+      sourcesContent: ["import { PrismaClient } from '@prisma/client'\n\nconst globalForPrisma = globalThis as unknown as {\n  prisma: PrismaClient | undefined\n}\n\nexport const prisma = globalForPrisma.prisma ?? new PrismaClient({\n  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],\n})\n\nif (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "c658ace8b3c0300c9ed29d54c3d144a7dda4774e"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_7xdmqkl4x = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_7xdmqkl4x();
+import { PrismaClient } from '@prisma/client';
+const globalForPrisma =
+/* istanbul ignore next */
+(cov_7xdmqkl4x().s[0]++, globalThis);
+export const prisma =
+/* istanbul ignore next */
+(cov_7xdmqkl4x().s[1]++, 
+/* istanbul ignore next */
+(cov_7xdmqkl4x().b[0][0]++, globalForPrisma.prisma) ??
+/* istanbul ignore next */
+(cov_7xdmqkl4x().b[0][1]++, new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ?
+  /* istanbul ignore next */
+  (cov_7xdmqkl4x().b[1][0]++, ['query', 'error', 'warn']) :
+  /* istanbul ignore next */
+  (cov_7xdmqkl4x().b[1][1]++, ['error'])
+})));
+/* istanbul ignore next */
+cov_7xdmqkl4x().s[2]++;
+if (process.env.NODE_ENV !== 'production') {
+  /* istanbul ignore next */
+  cov_7xdmqkl4x().b[2][0]++;
+  cov_7xdmqkl4x().s[3]++;
+  globalForPrisma.prisma = prisma;
+} else
+/* istanbul ignore next */
+{
+  cov_7xdmqkl4x().b[2][1]++;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJQcmlzbWFDbGllbnQiLCJnbG9iYWxGb3JQcmlzbWEiLCJjb3ZfN3hkbXFrbDR4IiwicyIsImdsb2JhbFRoaXMiLCJwcmlzbWEiLCJiIiwibG9nIiwicHJvY2VzcyIsImVudiIsIk5PREVfRU5WIl0sInNvdXJjZXMiOlsiQzpcXFVzZXJzXFxTZXJ2ZXIgQWRtaW5cXERlc2t0b3BcXGVjb21tZXJjZVxcc2VydmVyXFxzcmNcXGluZnJhc3RydWN0dXJlXFxwZXJzaXN0ZW5jZVxccHJpc21hLmNsaWVudC50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBQcmlzbWFDbGllbnQgfSBmcm9tICdAcHJpc21hL2NsaWVudCdcblxuY29uc3QgZ2xvYmFsRm9yUHJpc21hID0gZ2xvYmFsVGhpcyBhcyB1bmtub3duIGFzIHtcbiAgcHJpc21hOiBQcmlzbWFDbGllbnQgfCB1bmRlZmluZWRcbn1cblxuZXhwb3J0IGNvbnN0IHByaXNtYSA9IGdsb2JhbEZvclByaXNtYS5wcmlzbWEgPz8gbmV3IFByaXNtYUNsaWVudCh7XG4gIGxvZzogcHJvY2Vzcy5lbnYuTk9ERV9FTlYgPT09ICdkZXZlbG9wbWVudCcgPyBbJ3F1ZXJ5JywgJ2Vycm9yJywgJ3dhcm4nXSA6IFsnZXJyb3InXSxcbn0pXG5cbmlmIChwcm9jZXNzLmVudi5OT0RFX0VOViAhPT0gJ3Byb2R1Y3Rpb24nKSBnbG9iYWxGb3JQcmlzbWEucHJpc21hID0gcHJpc21hXG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLFNBQVNBLFlBQVksUUFBUSxnQkFBZ0I7QUFFN0MsTUFBTUMsZUFBZTtBQUFBO0FBQUEsQ0FBQUMsYUFBQSxHQUFBQyxDQUFBLE9BQUdDLFVBRXZCO0FBRUQsT0FBTyxNQUFNQyxNQUFNO0FBQUE7QUFBQSxDQUFBSCxhQUFBLEdBQUFDLENBQUE7QUFBRztBQUFBLENBQUFELGFBQUEsR0FBQUksQ0FBQSxVQUFBTCxlQUFlLENBQUNJLE1BQU07QUFBQTtBQUFBLENBQUFILGFBQUEsR0FBQUksQ0FBQSxVQUFJLElBQUlOLFlBQVksQ0FBQztFQUMvRE8sR0FBRyxFQUFFQyxPQUFPLENBQUNDLEdBQUcsQ0FBQ0MsUUFBUSxLQUFLLGFBQWE7RUFBQTtFQUFBLENBQUFSLGFBQUEsR0FBQUksQ0FBQSxVQUFHLENBQUMsT0FBTyxFQUFFLE9BQU8sRUFBRSxNQUFNLENBQUM7RUFBQTtFQUFBLENBQUFKLGFBQUEsR0FBQUksQ0FBQSxVQUFHLENBQUMsT0FBTyxDQUFDO0NBQ3JGLENBQUM7QUFBQTtBQUFBSixhQUFBLEdBQUFDLENBQUE7QUFFRixJQUFJSyxPQUFPLENBQUNDLEdBQUcsQ0FBQ0MsUUFBUSxLQUFLLFlBQVksRUFBRTtFQUFBO0VBQUFSLGFBQUEsR0FBQUksQ0FBQTtFQUFBSixhQUFBLEdBQUFDLENBQUE7RUFBQUYsZUFBZSxDQUFDSSxNQUFNLEdBQUdBLE1BQU07QUFBQTtBQUFBO0FBQUE7RUFBQUgsYUFBQSxHQUFBSSxDQUFBO0FBQUEiLCJpZ25vcmVMaXN0IjpbXX0=

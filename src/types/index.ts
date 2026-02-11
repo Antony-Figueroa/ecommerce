@@ -79,8 +79,39 @@ export interface Sale {
   notes?: string | null
   items: SaleItem[]
   auditLogs?: SaleAuditLog[]
+  paymentStatus?: {
+    totalUSD: number
+    paidAmountUSD: number
+    pendingAmountUSD: number
+    isPaid: boolean
+    payments: any[]
+    installments: Installment[]
+  }
   createdAt: string
   updatedAt?: string
+}
+
+export interface Installment {
+  id: string
+  saleId: string
+  amountUSD: number
+  dueDate: string
+  status: string
+  paidAmount: number
+  paidAt?: string | null
+  notes?: string | null
+  proofs?: PaymentProof[]
+}
+
+export interface PaymentProof {
+  id: string
+  installmentId: string
+  proofUrl: string
+  amountUSD: number
+  status: string
+  notes?: string | null
+  paidAt: string
+  createdAt: string
 }
 
 export interface SaleItem {

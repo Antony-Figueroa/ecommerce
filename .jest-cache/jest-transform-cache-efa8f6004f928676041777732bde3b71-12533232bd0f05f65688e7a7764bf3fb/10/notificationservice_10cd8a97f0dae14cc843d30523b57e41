@@ -1,0 +1,555 @@
+617a118287bb2dec170723fe03a465d5
+/* istanbul ignore next */
+function cov_23q3sghfx6() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification.service.ts";
+  var hash = "76916a6059cf687136d9af746c9a20118b186bc6";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification.service.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 3,
+          column: 8
+        },
+        end: {
+          line: 8,
+          column: 11
+        }
+      },
+      "1": {
+        start: {
+          line: 9,
+          column: 8
+        },
+        end: {
+          line: 14,
+          column: 11
+        }
+      },
+      "2": {
+        start: {
+          line: 15,
+          column: 8
+        },
+        end: {
+          line: 20,
+          column: 11
+        }
+      },
+      "3": {
+        start: {
+          line: 21,
+          column: 8
+        },
+        end: {
+          line: 26,
+          column: 11
+        }
+      },
+      "4": {
+        start: {
+          line: 27,
+          column: 8
+        },
+        end: {
+          line: 32,
+          column: 11
+        }
+      },
+      "5": {
+        start: {
+          line: 35,
+          column: 8
+        },
+        end: {
+          line: 35,
+          column: 65
+        }
+      },
+      "6": {
+        start: {
+          line: 38,
+          column: 8
+        },
+        end: {
+          line: 38,
+          column: 56
+        }
+      },
+      "7": {
+        start: {
+          line: 41,
+          column: 8
+        },
+        end: {
+          line: 41,
+          column: 80
+        }
+      },
+      "8": {
+        start: {
+          line: 44,
+          column: 8
+        },
+        end: {
+          line: 44,
+          column: 61
+        }
+      },
+      "9": {
+        start: {
+          line: 47,
+          column: 8
+        },
+        end: {
+          line: 47,
+          column: 66
+        }
+      },
+      "10": {
+        start: {
+          line: 50,
+          column: 8
+        },
+        end: {
+          line: 50,
+          column: 69
+        }
+      },
+      "11": {
+        start: {
+          line: 53,
+          column: 8
+        },
+        end: {
+          line: 53,
+          column: 48
+        }
+      },
+      "12": {
+        start: {
+          line: 56,
+          column: 8
+        },
+        end: {
+          line: 56,
+          column: 56
+        }
+      },
+      "13": {
+        start: {
+          line: 59,
+          column: 8
+        },
+        end: {
+          line: 59,
+          column: 59
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 2,
+            column: 4
+          },
+          end: {
+            line: 2,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 2,
+            column: 92
+          },
+          end: {
+            line: 33,
+            column: 5
+          }
+        },
+        line: 2
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 34,
+            column: 4
+          },
+          end: {
+            line: 34,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 34,
+            column: 35
+          },
+          end: {
+            line: 36,
+            column: 5
+          }
+        },
+        line: 34
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 37,
+            column: 4
+          },
+          end: {
+            line: 37,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 37,
+            column: 41
+          },
+          end: {
+            line: 39,
+            column: 5
+          }
+        },
+        line: 37
+      },
+      "3": {
+        name: "(anonymous_3)",
+        decl: {
+          start: {
+            line: 40,
+            column: 4
+          },
+          end: {
+            line: 40,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 40,
+            column: 61
+          },
+          end: {
+            line: 42,
+            column: 5
+          }
+        },
+        line: 40
+      },
+      "4": {
+        name: "(anonymous_4)",
+        decl: {
+          start: {
+            line: 43,
+            column: 4
+          },
+          end: {
+            line: 43,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 43,
+            column: 47
+          },
+          end: {
+            line: 45,
+            column: 5
+          }
+        },
+        line: 43
+      },
+      "5": {
+        name: "(anonymous_5)",
+        decl: {
+          start: {
+            line: 46,
+            column: 4
+          },
+          end: {
+            line: 46,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 46,
+            column: 25
+          },
+          end: {
+            line: 48,
+            column: 5
+          }
+        },
+        line: 46
+      },
+      "6": {
+        name: "(anonymous_6)",
+        decl: {
+          start: {
+            line: 49,
+            column: 4
+          },
+          end: {
+            line: 49,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 49,
+            column: 42
+          },
+          end: {
+            line: 51,
+            column: 5
+          }
+        },
+        line: 49
+      },
+      "7": {
+        name: "(anonymous_7)",
+        decl: {
+          start: {
+            line: 52,
+            column: 4
+          },
+          end: {
+            line: 52,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 52,
+            column: 33
+          },
+          end: {
+            line: 54,
+            column: 5
+          }
+        },
+        line: 52
+      },
+      "8": {
+        name: "(anonymous_8)",
+        decl: {
+          start: {
+            line: 55,
+            column: 4
+          },
+          end: {
+            line: 55,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 55,
+            column: 26
+          },
+          end: {
+            line: 57,
+            column: 5
+          }
+        },
+        line: 55
+      },
+      "9": {
+        name: "(anonymous_9)",
+        decl: {
+          start: {
+            line: 58,
+            column: 4
+          },
+          end: {
+            line: 58,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 58,
+            column: 29
+          },
+          end: {
+            line: 60,
+            column: 5
+          }
+        },
+        line: 58
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
+      "13": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0
+    },
+    b: {},
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification.service.ts",
+      mappings: "AAIA,MAAM,OAAO,mBAAmB;IAC9B,YACU,gBAAwC,EACxC,WAA8B,EAC9B,SAA0B,EAC1B,mBAAwC,EACxC,WAA2C;QAJnD;;;;mBAAQ,gBAAgB;WAAwB;QAChD;;;;mBAAQ,WAAW;WAAmB;QACtC;;;;mBAAQ,SAAS;WAAiB;QAClC;;;;mBAAQ,mBAAmB;WAAqB;QAChD;;;;mBAAQ,WAAW;WAAgC;IAClD,CAAC;IAEJ,KAAK,CAAC,kBAAkB,CAAC,IASxB;QACC,OAAO,IAAI,CAAC,mBAAmB,CAAC,kBAAkB,CAAC,IAAI,CAAC,CAAA;IAC1D,CAAC;IAED,KAAK,CAAC,sBAAsB,CAAC,MAAe;QAC1C,OAAO,IAAI,CAAC,gBAAgB,CAAC,UAAU,CAAC,MAAM,CAAC,CAAA;IACjD,CAAC;IAED,KAAK,CAAC,mBAAmB,CAAC,MAAe,EAAE,QAAiB,EAAE,KAAc,EAAE,IAAa;QACzF,OAAO,IAAI,CAAC,gBAAgB,CAAC,OAAO,CAAC,EAAE,MAAM,EAAE,QAAQ,EAAE,KAAK,EAAE,IAAI,EAAE,CAAC,CAAA;IACzE,CAAC;IAED,KAAK,CAAC,kBAAkB,CAAC,MAAe,EAAE,QAAiB;QACzD,OAAO,IAAI,CAAC,gBAAgB,CAAC,KAAK,CAAC,MAAM,EAAE,QAAQ,CAAC,CAAA;IACtD,CAAC;IAED,KAAK,CAAC,UAAU,CAAC,EAAU;QACzB,OAAO,IAAI,CAAC,gBAAgB,CAAC,MAAM,CAAC,EAAE,EAAE,EAAE,MAAM,EAAE,IAAI,EAAE,CAAC,CAAA;IAC3D,CAAC;IAED,KAAK,CAAC,aAAa,CAAC,MAAe,EAAE,QAAiB;QACpD,OAAO,IAAI,CAAC,gBAAgB,CAAC,aAAa,CAAC,MAAM,EAAE,QAAQ,CAAC,CAAA;IAC9D,CAAC;IAED,KAAK,CAAC,kBAAkB,CAAC,EAAU;QACjC,OAAO,IAAI,CAAC,gBAAgB,CAAC,MAAM,CAAC,EAAE,CAAC,CAAA;IACzC,CAAC;IAED,KAAK,CAAC,aAAa;QACjB,OAAO,IAAI,CAAC,mBAAmB,CAAC,aAAa,EAAE,CAAA;IACjD,CAAC;IAED,KAAK,CAAC,gBAAgB;QACpB,OAAO,IAAI,CAAC,mBAAmB,CAAC,gBAAgB,EAAE,CAAA;IACpD,CAAC;CACF",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification.service.ts"],
+      sourcesContent: ["import { NotificationRepository, BatchRepository, NotificationSettingRepository } from '../../domain/repositories/business.repository.js'\nimport { ProductRepository } from '../../domain/repositories/product.repository.js'\nimport { NotificationManager } from './notification-manager.service.js'\n\nexport class NotificationService {\n  constructor(\n    private notificationRepo: NotificationRepository,\n    private productRepo: ProductRepository,\n    private batchRepo: BatchRepository,\n    private notificationManager: NotificationManager,\n    private settingRepo?: NotificationSettingRepository\n  ) {}\n\n  async createNotification(data: {\n    type: string\n    priority?: string\n    category?: string\n    title: string\n    message: string\n    userId?: string\n    link?: string\n    metadata?: string\n  }) {\n    return this.notificationManager.createNotification(data)\n  }\n\n  async getUnreadNotifications(userId?: string) {\n    return this.notificationRepo.findUnread(userId)\n  }\n\n  async getAllNotifications(userId?: string, category?: string, limit?: number, skip?: number) {\n    return this.notificationRepo.findAll({ userId, category, limit, skip })\n  }\n\n  async countNotifications(userId?: string, category?: string) {\n    return this.notificationRepo.count(userId, category)\n  }\n\n  async markAsRead(id: string) {\n    return this.notificationRepo.update(id, { isRead: true })\n  }\n\n  async markAllAsRead(userId?: string, category?: string) {\n    return this.notificationRepo.markAllAsRead(userId, category)\n  }\n\n  async deleteNotification(id: string) {\n    return this.notificationRepo.delete(id)\n  }\n\n  async checkLowStock() {\n    return this.notificationManager.checkLowStock()\n  }\n\n  async checkExpirations() {\n    return this.notificationManager.checkExpirations()\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "76916a6059cf687136d9af746c9a20118b186bc6"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_23q3sghfx6 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_23q3sghfx6();
+export class NotificationService {
+  constructor(notificationRepo, productRepo, batchRepo, notificationManager, settingRepo) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[0]++;
+    cov_23q3sghfx6().s[0]++;
+    Object.defineProperty(this, "notificationRepo", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: notificationRepo
+    });
+    /* istanbul ignore next */
+    cov_23q3sghfx6().s[1]++;
+    Object.defineProperty(this, "productRepo", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: productRepo
+    });
+    /* istanbul ignore next */
+    cov_23q3sghfx6().s[2]++;
+    Object.defineProperty(this, "batchRepo", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: batchRepo
+    });
+    /* istanbul ignore next */
+    cov_23q3sghfx6().s[3]++;
+    Object.defineProperty(this, "notificationManager", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: notificationManager
+    });
+    /* istanbul ignore next */
+    cov_23q3sghfx6().s[4]++;
+    Object.defineProperty(this, "settingRepo", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: settingRepo
+    });
+  }
+  async createNotification(data) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[1]++;
+    cov_23q3sghfx6().s[5]++;
+    return this.notificationManager.createNotification(data);
+  }
+  async getUnreadNotifications(userId) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[2]++;
+    cov_23q3sghfx6().s[6]++;
+    return this.notificationRepo.findUnread(userId);
+  }
+  async getAllNotifications(userId, category, limit, skip) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[3]++;
+    cov_23q3sghfx6().s[7]++;
+    return this.notificationRepo.findAll({
+      userId,
+      category,
+      limit,
+      skip
+    });
+  }
+  async countNotifications(userId, category) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[4]++;
+    cov_23q3sghfx6().s[8]++;
+    return this.notificationRepo.count(userId, category);
+  }
+  async markAsRead(id) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[5]++;
+    cov_23q3sghfx6().s[9]++;
+    return this.notificationRepo.update(id, {
+      isRead: true
+    });
+  }
+  async markAllAsRead(userId, category) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[6]++;
+    cov_23q3sghfx6().s[10]++;
+    return this.notificationRepo.markAllAsRead(userId, category);
+  }
+  async deleteNotification(id) {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[7]++;
+    cov_23q3sghfx6().s[11]++;
+    return this.notificationRepo.delete(id);
+  }
+  async checkLowStock() {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[8]++;
+    cov_23q3sghfx6().s[12]++;
+    return this.notificationManager.checkLowStock();
+  }
+  async checkExpirations() {
+    /* istanbul ignore next */
+    cov_23q3sghfx6().f[9]++;
+    cov_23q3sghfx6().s[13]++;
+    return this.notificationManager.checkExpirations();
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJOb3RpZmljYXRpb25TZXJ2aWNlIiwiY29uc3RydWN0b3IiLCJub3RpZmljYXRpb25SZXBvIiwicHJvZHVjdFJlcG8iLCJiYXRjaFJlcG8iLCJub3RpZmljYXRpb25NYW5hZ2VyIiwic2V0dGluZ1JlcG8iLCJjb3ZfMjNxM3NnaGZ4NiIsImYiLCJzIiwiT2JqZWN0IiwiZGVmaW5lUHJvcGVydHkiLCJjcmVhdGVOb3RpZmljYXRpb24iLCJkYXRhIiwiZ2V0VW5yZWFkTm90aWZpY2F0aW9ucyIsInVzZXJJZCIsImZpbmRVbnJlYWQiLCJnZXRBbGxOb3RpZmljYXRpb25zIiwiY2F0ZWdvcnkiLCJsaW1pdCIsInNraXAiLCJmaW5kQWxsIiwiY291bnROb3RpZmljYXRpb25zIiwiY291bnQiLCJtYXJrQXNSZWFkIiwiaWQiLCJ1cGRhdGUiLCJpc1JlYWQiLCJtYXJrQWxsQXNSZWFkIiwiZGVsZXRlTm90aWZpY2F0aW9uIiwiZGVsZXRlIiwiY2hlY2tMb3dTdG9jayIsImNoZWNrRXhwaXJhdGlvbnMiXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFNlcnZlciBBZG1pblxcRGVza3RvcFxcZWNvbW1lcmNlXFxzZXJ2ZXJcXHNyY1xcYXBwbGljYXRpb25cXHNlcnZpY2VzXFxub3RpZmljYXRpb24uc2VydmljZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBOb3RpZmljYXRpb25SZXBvc2l0b3J5LCBCYXRjaFJlcG9zaXRvcnksIE5vdGlmaWNhdGlvblNldHRpbmdSZXBvc2l0b3J5IH0gZnJvbSAnLi4vLi4vZG9tYWluL3JlcG9zaXRvcmllcy9idXNpbmVzcy5yZXBvc2l0b3J5LmpzJ1xuaW1wb3J0IHsgUHJvZHVjdFJlcG9zaXRvcnkgfSBmcm9tICcuLi8uLi9kb21haW4vcmVwb3NpdG9yaWVzL3Byb2R1Y3QucmVwb3NpdG9yeS5qcydcbmltcG9ydCB7IE5vdGlmaWNhdGlvbk1hbmFnZXIgfSBmcm9tICcuL25vdGlmaWNhdGlvbi1tYW5hZ2VyLnNlcnZpY2UuanMnXG5cbmV4cG9ydCBjbGFzcyBOb3RpZmljYXRpb25TZXJ2aWNlIHtcbiAgY29uc3RydWN0b3IoXG4gICAgcHJpdmF0ZSBub3RpZmljYXRpb25SZXBvOiBOb3RpZmljYXRpb25SZXBvc2l0b3J5LFxuICAgIHByaXZhdGUgcHJvZHVjdFJlcG86IFByb2R1Y3RSZXBvc2l0b3J5LFxuICAgIHByaXZhdGUgYmF0Y2hSZXBvOiBCYXRjaFJlcG9zaXRvcnksXG4gICAgcHJpdmF0ZSBub3RpZmljYXRpb25NYW5hZ2VyOiBOb3RpZmljYXRpb25NYW5hZ2VyLFxuICAgIHByaXZhdGUgc2V0dGluZ1JlcG8/OiBOb3RpZmljYXRpb25TZXR0aW5nUmVwb3NpdG9yeVxuICApIHt9XG5cbiAgYXN5bmMgY3JlYXRlTm90aWZpY2F0aW9uKGRhdGE6IHtcbiAgICB0eXBlOiBzdHJpbmdcbiAgICBwcmlvcml0eT86IHN0cmluZ1xuICAgIGNhdGVnb3J5Pzogc3RyaW5nXG4gICAgdGl0bGU6IHN0cmluZ1xuICAgIG1lc3NhZ2U6IHN0cmluZ1xuICAgIHVzZXJJZD86IHN0cmluZ1xuICAgIGxpbms/OiBzdHJpbmdcbiAgICBtZXRhZGF0YT86IHN0cmluZ1xuICB9KSB7XG4gICAgcmV0dXJuIHRoaXMubm90aWZpY2F0aW9uTWFuYWdlci5jcmVhdGVOb3RpZmljYXRpb24oZGF0YSlcbiAgfVxuXG4gIGFzeW5jIGdldFVucmVhZE5vdGlmaWNhdGlvbnModXNlcklkPzogc3RyaW5nKSB7XG4gICAgcmV0dXJuIHRoaXMubm90aWZpY2F0aW9uUmVwby5maW5kVW5yZWFkKHVzZXJJZClcbiAgfVxuXG4gIGFzeW5jIGdldEFsbE5vdGlmaWNhdGlvbnModXNlcklkPzogc3RyaW5nLCBjYXRlZ29yeT86IHN0cmluZywgbGltaXQ/OiBudW1iZXIsIHNraXA/OiBudW1iZXIpIHtcbiAgICByZXR1cm4gdGhpcy5ub3RpZmljYXRpb25SZXBvLmZpbmRBbGwoeyB1c2VySWQsIGNhdGVnb3J5LCBsaW1pdCwgc2tpcCB9KVxuICB9XG5cbiAgYXN5bmMgY291bnROb3RpZmljYXRpb25zKHVzZXJJZD86IHN0cmluZywgY2F0ZWdvcnk/OiBzdHJpbmcpIHtcbiAgICByZXR1cm4gdGhpcy5ub3RpZmljYXRpb25SZXBvLmNvdW50KHVzZXJJZCwgY2F0ZWdvcnkpXG4gIH1cblxuICBhc3luYyBtYXJrQXNSZWFkKGlkOiBzdHJpbmcpIHtcbiAgICByZXR1cm4gdGhpcy5ub3RpZmljYXRpb25SZXBvLnVwZGF0ZShpZCwgeyBpc1JlYWQ6IHRydWUgfSlcbiAgfVxuXG4gIGFzeW5jIG1hcmtBbGxBc1JlYWQodXNlcklkPzogc3RyaW5nLCBjYXRlZ29yeT86IHN0cmluZykge1xuICAgIHJldHVybiB0aGlzLm5vdGlmaWNhdGlvblJlcG8ubWFya0FsbEFzUmVhZCh1c2VySWQsIGNhdGVnb3J5KVxuICB9XG5cbiAgYXN5bmMgZGVsZXRlTm90aWZpY2F0aW9uKGlkOiBzdHJpbmcpIHtcbiAgICByZXR1cm4gdGhpcy5ub3RpZmljYXRpb25SZXBvLmRlbGV0ZShpZClcbiAgfVxuXG4gIGFzeW5jIGNoZWNrTG93U3RvY2soKSB7XG4gICAgcmV0dXJuIHRoaXMubm90aWZpY2F0aW9uTWFuYWdlci5jaGVja0xvd1N0b2NrKClcbiAgfVxuXG4gIGFzeW5jIGNoZWNrRXhwaXJhdGlvbnMoKSB7XG4gICAgcmV0dXJuIHRoaXMubm90aWZpY2F0aW9uTWFuYWdlci5jaGVja0V4cGlyYXRpb25zKClcbiAgfVxufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7QUFJQSxPQUFNLE1BQU9BLG1CQUFtQjtFQUM5QkMsWUFDVUMsZ0JBQXdDLEVBQ3hDQyxXQUE4QixFQUM5QkMsU0FBMEIsRUFDMUJDLG1CQUF3QyxFQUN4Q0MsV0FBMkM7SUFBQTtJQUFBQyxjQUFBLEdBQUFDLENBQUE7SUFBQUQsY0FBQSxHQUFBRSxDQUFBO0lBSm5EQyxNQUFBLENBQUFDLGNBQUE7Ozs7YUFBUVQ7O0lBQXdDO0lBQUFLLGNBQUEsR0FBQUUsQ0FBQTtJQUNoREMsTUFBQSxDQUFBQyxjQUFBOzs7O2FBQVFSOztJQUE4QjtJQUFBSSxjQUFBLEdBQUFFLENBQUE7SUFDdENDLE1BQUEsQ0FBQUMsY0FBQTs7OzthQUFRUDs7SUFBMEI7SUFBQUcsY0FBQSxHQUFBRSxDQUFBO0lBQ2xDQyxNQUFBLENBQUFDLGNBQUE7Ozs7YUFBUU47O0lBQXdDO0lBQUFFLGNBQUEsR0FBQUUsQ0FBQTtJQUNoREMsTUFBQSxDQUFBQyxjQUFBOzs7O2FBQVFMOztFQUNQO0VBRUgsTUFBTU0sa0JBQWtCQSxDQUFDQyxJQVN4QjtJQUFBO0lBQUFOLGNBQUEsR0FBQUMsQ0FBQTtJQUFBRCxjQUFBLEdBQUFFLENBQUE7SUFDQyxPQUFPLElBQUksQ0FBQ0osbUJBQW1CLENBQUNPLGtCQUFrQixDQUFDQyxJQUFJLENBQUM7RUFDMUQ7RUFFQSxNQUFNQyxzQkFBc0JBLENBQUNDLE1BQWU7SUFBQTtJQUFBUixjQUFBLEdBQUFDLENBQUE7SUFBQUQsY0FBQSxHQUFBRSxDQUFBO0lBQzFDLE9BQU8sSUFBSSxDQUFDUCxnQkFBZ0IsQ0FBQ2MsVUFBVSxDQUFDRCxNQUFNLENBQUM7RUFDakQ7RUFFQSxNQUFNRSxtQkFBbUJBLENBQUNGLE1BQWUsRUFBRUcsUUFBaUIsRUFBRUMsS0FBYyxFQUFFQyxJQUFhO0lBQUE7SUFBQWIsY0FBQSxHQUFBQyxDQUFBO0lBQUFELGNBQUEsR0FBQUUsQ0FBQTtJQUN6RixPQUFPLElBQUksQ0FBQ1AsZ0JBQWdCLENBQUNtQixPQUFPLENBQUM7TUFBRU4sTUFBTTtNQUFFRyxRQUFRO01BQUVDLEtBQUs7TUFBRUM7SUFBSSxDQUFFLENBQUM7RUFDekU7RUFFQSxNQUFNRSxrQkFBa0JBLENBQUNQLE1BQWUsRUFBRUcsUUFBaUI7SUFBQTtJQUFBWCxjQUFBLEdBQUFDLENBQUE7SUFBQUQsY0FBQSxHQUFBRSxDQUFBO0lBQ3pELE9BQU8sSUFBSSxDQUFDUCxnQkFBZ0IsQ0FBQ3FCLEtBQUssQ0FBQ1IsTUFBTSxFQUFFRyxRQUFRLENBQUM7RUFDdEQ7RUFFQSxNQUFNTSxVQUFVQSxDQUFDQyxFQUFVO0lBQUE7SUFBQWxCLGNBQUEsR0FBQUMsQ0FBQTtJQUFBRCxjQUFBLEdBQUFFLENBQUE7SUFDekIsT0FBTyxJQUFJLENBQUNQLGdCQUFnQixDQUFDd0IsTUFBTSxDQUFDRCxFQUFFLEVBQUU7TUFBRUUsTUFBTSxFQUFFO0lBQUksQ0FBRSxDQUFDO0VBQzNEO0VBRUEsTUFBTUMsYUFBYUEsQ0FBQ2IsTUFBZSxFQUFFRyxRQUFpQjtJQUFBO0lBQUFYLGNBQUEsR0FBQUMsQ0FBQTtJQUFBRCxjQUFBLEdBQUFFLENBQUE7SUFDcEQsT0FBTyxJQUFJLENBQUNQLGdCQUFnQixDQUFDMEIsYUFBYSxDQUFDYixNQUFNLEVBQUVHLFFBQVEsQ0FBQztFQUM5RDtFQUVBLE1BQU1XLGtCQUFrQkEsQ0FBQ0osRUFBVTtJQUFBO0lBQUFsQixjQUFBLEdBQUFDLENBQUE7SUFBQUQsY0FBQSxHQUFBRSxDQUFBO0lBQ2pDLE9BQU8sSUFBSSxDQUFDUCxnQkFBZ0IsQ0FBQzRCLE1BQU0sQ0FBQ0wsRUFBRSxDQUFDO0VBQ3pDO0VBRUEsTUFBTU0sYUFBYUEsQ0FBQTtJQUFBO0lBQUF4QixjQUFBLEdBQUFDLENBQUE7SUFBQUQsY0FBQSxHQUFBRSxDQUFBO0lBQ2pCLE9BQU8sSUFBSSxDQUFDSixtQkFBbUIsQ0FBQzBCLGFBQWEsRUFBRTtFQUNqRDtFQUVBLE1BQU1DLGdCQUFnQkEsQ0FBQTtJQUFBO0lBQUF6QixjQUFBLEdBQUFDLENBQUE7SUFBQUQsY0FBQSxHQUFBRSxDQUFBO0lBQ3BCLE9BQU8sSUFBSSxDQUFDSixtQkFBbUIsQ0FBQzJCLGdCQUFnQixFQUFFO0VBQ3BEIiwiaWdub3JlTGlzdCI6W119

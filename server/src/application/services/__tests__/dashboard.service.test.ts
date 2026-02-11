@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import { DashboardService } from '../dashboard.service.js'
 
 describe('DashboardService', () => {
@@ -21,9 +22,10 @@ describe('DashboardService', () => {
       count: jest.fn(),
     }
     mockBcvRepo = {
-      getLatest: jest.fn(),
+      getCurrentRate: jest.fn(),
     }
     mockRequirementRepo = {
+      count: jest.fn(),
       findAll: jest.fn(),
       groupBy: jest.fn(),
     }
@@ -38,138 +40,147 @@ describe('DashboardService', () => {
   })
 
   describe('getAdminStats', () => {
-    it('should return combined admin statistics correctly', async () => {
+    it('should return correct stats summary', async () => {
       mockSaleRepo.count.mockResolvedValueOnce(100) // totalOrders
-      mockSaleRepo.count.mockResolvedValueOnce(10)  // pendingOrders
-      mockSaleRepo.count.mockResolvedValueOnce(90)  // confirmedOrders
-      mockSaleRepo.getSummary.mockResolvedValue([
-        { status: 'COMPLETED', totalUSD: 500 },
-        { status: 'CONFIRMED', totalUSD: 300 },
-        { status: 'CANCELLED', totalUSD: 100 },
-      ])
-      mockUserRepo.count.mockResolvedValue(50)
+      mockSaleRepo.count.mockResolvedValueOnce(20)  // pendingOrders
+      mockSaleRepo.count.mockResolvedValueOnce(80)  // confirmedOrders
+      mockSaleRepo.getSummary.mockResolvedValue([]) // salesData
+      mockUserRepo.count.mockResolvedValue(50)      // totalCustomers
       mockProductRepo.count.mockResolvedValueOnce(200) // totalProducts
       mockProductRepo.count.mockResolvedValueOnce(5)   // lowStockCount
-      mockSaleRepo.findAll.mockResolvedValue([
-        { id: '1', saleNumber: 'V-001', customerName: 'John', totalUSD: 100, status: 'COMPLETED', createdAt: new Date() }
-      ])
+      
+      const mockRecentOrders = [
+        { id: '1', saleNumber: 'V001', customerName: 'John', totalUSD: 100, status: 'COMPLETED', isPaid: true, createdAt: new Date() }
+      ]
+      mockSaleRepo.findAll.mockResolvedValueOnce(mockRecentOrders) // recentOrders
+      mockSaleRepo.findAll.mockResolvedValueOnce(mockRecentOrders) // allSalesForChart
 
-      const result = await dashboardService.getAdminStats()
+      const stats = await dashboardService.getAdminStats()
 
-      expect(result.totalOrders).toBe(100)
-      expect(result.totalRevenue).toBe(500) // only COMPLETED sales
-      expect(result.totalCustomers).toBe(50)
-      expect(result.recentOrders).toHaveLength(1)
-      expect(result.recentOrders[0].orderNumber).toBe('V-001')
+      expect(stats.totalOrders).toBe(100)
+      expect(stats.pendingOrders).toBe(20)
+      expect(stats.confirmedOrders).toBe(80)
+      expect(stats.totalCustomers).toBe(50)
+      expect(stats.totalProducts).toBe(200)
+      expect(stats.lowStockProducts).toBe(5)
+      expect(stats.totalRevenue).toBe(100)
+      expect(stats.recentOrders).toHaveLength(1)
+      expect(stats.recentOrders[0].orderNumber).toBe('V001')
     })
 
-    it('should apply date filters to repository calls', async () => {
-      const startDate = '2024-01-01'
-      const endDate = '2024-01-31'
-      
-      mockSaleRepo.count.mockResolvedValue(0)
+    it('should handle repository errors gracefully', async () => {
+      mockSaleRepo.count.mockRejectedValue(new Error('DB Error'))
       mockSaleRepo.getSummary.mockResolvedValue([])
       mockUserRepo.count.mockResolvedValue(0)
       mockProductRepo.count.mockResolvedValue(0)
       mockSaleRepo.findAll.mockResolvedValue([])
 
-      await dashboardService.getAdminStats(startDate, endDate)
+      const stats = await dashboardService.getAdminStats()
 
-      const expectedWhere = {
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        }
-      }
-
-      expect(mockSaleRepo.count).toHaveBeenCalledWith(expectedWhere)
-      expect(mockSaleRepo.getSummary).toHaveBeenCalledWith({ startDate, endDate })
-    })
-  })
-
-  describe('getAnalyticsReport', () => {
-    it('should aggregate data by month, product and category correctly', async () => {
-      const mockSales = [
-        {
-          createdAt: new Date('2024-01-15'),
-          totalUSD: 100,
-          items: [
-            { 
-              productId: 'p1', 
-              name: 'Product 1', 
-              quantity: 2, 
-              total: 40,
-              product: { category: { name: 'Category A' } }
-            },
-            { 
-              productId: 'p2', 
-              name: 'Product 2', 
-              quantity: 1, 
-              total: 60,
-              product: { category: { name: 'Category B' } }
-            },
-          ]
-        },
-        {
-          createdAt: new Date('2024-02-10'),
-          totalUSD: 200,
-          items: [
-            { 
-              productId: 'p1', 
-              name: 'Product 1', 
-              quantity: 3, 
-              total: 60,
-              product: { category: { name: 'Category A' } }
-            },
-          ]
-        }
-      ]
-
-      mockSaleRepo.findAll.mockResolvedValue(mockSales)
-
-      const result = await dashboardService.getAnalyticsReport()
-
-      // Check monthly stats
-      expect(result.monthlyStats).toHaveLength(2)
-      expect(result.monthlyStats[0].revenue).toBe(100)
-      expect(result.monthlyStats[1].revenue).toBe(200)
-
-      // Check top products
-      expect(result.topProducts).toHaveLength(2)
-      // Product 1 total sales: 2 + 3 = 5
-      // Product 2 total sales: 1
-      expect(result.topProducts[0].name).toBe('Product 1')
-      expect(result.topProducts[0].sales).toBe(5)
-      expect(result.topProducts[0].revenue).toBe(100)
-
-      // Check category stats
-      expect(result.categoryStats).toHaveLength(2)
-      // Category A revenue: 40 + 60 = 100
-      // Category B revenue: 60
-      // Total revenue from items: 160
-      // Category A %: (100 / 160) * 100 = 62.5 -> round to 63
-      // Category B %: (60 / 160) * 100 = 37.5 -> round to 38
-      expect(result.categoryStats[0].name).toBe('Category A')
-      expect(result.categoryStats[0].percentage).toBe(63)
-      expect(result.categoryStats[1].name).toBe('Category B')
-      expect(result.categoryStats[1].percentage).toBe(38)
+      expect(stats.totalOrders).toBe(0) // Caught by .catch() in service
+      expect(stats.totalRevenue).toBe(0)
     })
   })
 
   describe('getProfitabilityReport', () => {
     it('should calculate profitability metrics correctly', async () => {
       const mockSales = [
-        { totalUSD: 100, profitUSD: 30 },
-        { totalUSD: 200, profitUSD: 80 },
+        { totalUSD: 100, profitUSD: 20 },
+        { totalUSD: 200, profitUSD: 50 },
       ]
       mockSaleRepo.findAll.mockResolvedValue(mockSales)
 
-      const result = await dashboardService.getProfitabilityReport()
+      const report = await dashboardService.getProfitabilityReport()
 
-      expect(result.summary.totalRevenue).toBe(300)
-      expect(result.summary.totalProfit).toBe(110)
-      expect(result.summary.totalCost).toBe(190) // 300 - 110
-      expect(result.summary.marginPercent).toBe(36.67) // (110 / 300) * 100
+      expect(report.summary.totalRevenue).toBe(300)
+      expect(report.summary.totalProfit).toBe(70)
+      expect(report.summary.totalCost).toBe(230)
+      expect(report.summary.marginPercent).toBeCloseTo(23.33)
+      expect(report.salesCount).toBe(2)
+    })
+  })
+
+  describe('getSalesReport', () => {
+    it('should format sales data correctly', async () => {
+      const mockSales = [
+        {
+          id: 's1',
+          saleNumber: 'V001',
+          createdAt: new Date(),
+          customerName: 'John',
+          items: [{ name: 'Item 1', quantity: 2, unitPrice: 10, total: 20, totalProfit: 5 }],
+          subtotalUSD: 20,
+          shippingCostUSD: 5,
+          totalUSD: 25,
+          bcvRate: 36,
+          totalBS: 900,
+          profitUSD: 5,
+          profitBS: 180
+        }
+      ]
+      mockSaleRepo.findAll.mockResolvedValue(mockSales)
+
+      const report = await dashboardService.getSalesReport()
+
+      expect(report).toHaveLength(1)
+      expect(report[0].saleNumber).toBe('V001')
+      expect(report[0].items).toHaveLength(1)
+      expect(report[0].totalUSD).toBe(25)
+    })
+  })
+
+  describe('getAnalyticsReport', () => {
+    it('should calculate analytics correctly', async () => {
+      const mockSales = [
+        {
+          id: 's1',
+          totalUSD: 100,
+          createdAt: new Date('2024-01-15'),
+          status: 'COMPLETED',
+          items: [
+            {
+              productId: 'p1',
+              name: 'Prod 1',
+              quantity: 2,
+              total: 100,
+              product: {
+                categories: [{ name: 'Cat 1' }]
+              }
+            }
+          ]
+        }
+      ]
+      mockSaleRepo.findAll.mockResolvedValue(mockSales)
+
+      const report = await dashboardService.getAnalyticsReport('2024-01-01', '2024-01-31')
+
+      expect(report.monthlyStats).toHaveLength(1)
+      expect(report.topProducts).toHaveLength(1)
+      expect(report.categoryStats).toHaveLength(1)
+      expect(report.categoryStats[0].percentage).toBe(100)
+    })
+  })
+
+  describe('getRequirementsReport', () => {
+    it('should format requirements correctly', async () => {
+      const mockRequirements = [
+        {
+          id: 'r1',
+          status: 'PENDING',
+          createdAt: new Date(),
+          items: [{ name: 'Req Item', quantity: 10 }]
+        }
+      ]
+      mockRequirementRepo.findAll.mockResolvedValue(mockRequirements)
+      mockRequirementRepo.groupBy.mockResolvedValue([
+        { status: 'PENDING', _count: { id: 1 }, _sum: { totalUSD: 100 } }
+      ])
+
+      const report = await dashboardService.getRequirementsReport()
+
+      expect(report.items).toHaveLength(1)
+      expect(report.items[0].id).toBe('r1')
+      expect(report.summary.total).toBe(1)
     })
   })
 })

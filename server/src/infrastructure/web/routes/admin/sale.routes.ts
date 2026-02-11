@@ -14,7 +14,9 @@ router.patch('/:id/items/:itemId/status', async (req: Request, res: Response, ne
   try {
     const { status } = req.body
     const userId = (req as any).user?.id
-    const updatedItem = await saleService.updateSaleItemStatus(req.params.id as string, req.params.itemId as string, status, userId)
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const updatedItem = await saleService.updateSaleItemStatus(req.params.id as string, req.params.itemId as string, status, userId, ipAddress, userAgent)
     res.json(updatedItem)
   } catch (error: any) {
     next(error)
@@ -25,7 +27,9 @@ router.patch('/:id/items/:itemId/quantity', async (req: Request, res: Response, 
   try {
     const { quantity } = req.body
     const userId = (req as any).user?.id
-    const updatedItem = await saleService.updateSaleItemQuantity(req.params.id as string, req.params.itemId as string, quantity, userId)
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const updatedItem = await saleService.updateSaleItemQuantity(req.params.id as string, req.params.itemId as string, quantity, userId, ipAddress, userAgent)
     res.json(updatedItem)
   } catch (error: any) {
     next(error)
@@ -34,7 +38,10 @@ router.patch('/:id/items/:itemId/quantity', async (req: Request, res: Response, 
 
 router.post('/', validate(saleCreateSchema), async (req: Request, res: Response, next) => {
   try {
-    const sale = await saleService.createSale(req.body)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const sale = await saleService.createSale(req.body, userId, ipAddress, userAgent)
     res.status(201).json(sale)
   } catch (error) {
     next(error)
@@ -46,13 +53,16 @@ router.get('/', async (req: Request, res: Response, next) => {
     const status = req.query.status as string | undefined
     const startDate = req.query.startDate as string | undefined
     const endDate = req.query.endDate as string | undefined
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
     const result = await saleService.getAllSales({
       status,
       startDate,
       endDate,
       page: parseInt(req.query.page as string) || 1,
       limit: parseInt(req.query.limit as string) || 20,
-    })
+    }, userId, ipAddress, userAgent)
     res.json(result)
   } catch (error) {
     next(error)
@@ -63,10 +73,13 @@ router.get('/summary', async (req: Request, res: Response, next) => {
   try {
     const startDate = req.query.startDate as string | undefined
     const endDate = req.query.endDate as string | undefined
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
     const summary = await saleService.getSalesSummary({
       startDate,
       endDate,
-    })
+    }, userId, ipAddress, userAgent)
     res.json(summary)
   } catch (error) {
     next(error)
@@ -75,7 +88,10 @@ router.get('/summary', async (req: Request, res: Response, next) => {
 
 router.get('/recent', async (req: Request, res: Response, next) => {
   try {
-    const sales = await saleService.getRecentSales(parseInt(req.query.limit as string) || 10)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const sales = await saleService.getRecentSales(parseInt(req.query.limit as string) || 10, userId, ipAddress, userAgent)
     res.json({ sales })
   } catch (error) {
     next(error)
@@ -84,7 +100,10 @@ router.get('/recent', async (req: Request, res: Response, next) => {
 
 router.get('/:id', async (req: Request, res: Response, next) => {
   try {
-    const sale = await saleService.getSaleById(req.params.id as string)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const sale = await saleService.getSaleById(req.params.id as string, userId, ipAddress, userAgent)
     res.json(sale)
   } catch (error) {
     next(error)
@@ -94,9 +113,11 @@ router.get('/:id', async (req: Request, res: Response, next) => {
 router.patch('/:id/status', async (req: Request, res: Response, next) => {
   console.log(`PATCH Status for sale ${req.params.id}:`, req.body)
   try {
-    const { status, reason } = req.body
+    const { status, reason, financing } = req.body
     const userId = (req as any).user?.id // Extract userId from auth middleware
-    const sale = await saleService.updateSaleStatus(req.params.id as string, status, userId, reason)
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const sale = await saleService.updateSaleStatus(req.params.id as string, status, userId, reason, financing, ipAddress, userAgent)
     res.json(sale)
   } catch (error) {
     next(error)
@@ -106,7 +127,9 @@ router.patch('/:id/status', async (req: Request, res: Response, next) => {
 router.post('/:id/accept-all', async (req: Request, res: Response, next) => {
   try {
     const userId = (req as any).user?.id
-    const sale = await saleService.acceptAllItems(req.params.id as string, userId)
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const sale = await saleService.acceptAllItems(req.params.id as string, userId, ipAddress, userAgent)
     res.json(sale)
   } catch (error: any) {
     next(error)
@@ -118,7 +141,9 @@ router.patch('/:id/delivery-status', async (req: Request, res: Response, next) =
   try {
     const { deliveryStatus, reason } = req.body
     const userId = (req as any).user?.id
-    const sale = await saleService.updateDeliveryStatus(req.params.id as string, deliveryStatus, userId, reason)
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const sale = await saleService.updateDeliveryStatus(req.params.id as string, deliveryStatus, userId, reason, ipAddress, userAgent)
     res.json(sale)
   } catch (error: any) {
     next(error)
@@ -129,12 +154,14 @@ router.post('/:id/confirm-payment', async (req: Request, res: Response, next) =>
   try {
     const { amount, reason } = req.body
     const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
     
     if (amount === undefined || amount === null) {
       throw new ValidationError('El monto es obligatorio')
     }
 
-    const sale = await saleService.confirmPayment(req.params.id as string, Number(amount), userId, reason)
+    const sale = await saleService.confirmPayment(req.params.id as string, Number(amount), userId, reason, ipAddress, userAgent)
     res.json(sale)
   } catch (error: any) {
     next(error)
@@ -144,8 +171,10 @@ router.post('/:id/confirm-payment', async (req: Request, res: Response, next) =>
 router.post('/:id/cancel', async (req: Request, res: Response, next) => {
   try {
     const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
     const { reason } = req.body
-    const sale = await saleService.cancelSale(req.params.id as string, userId, reason)
+    const sale = await saleService.cancelSale(req.params.id as string, userId, reason, ipAddress, userAgent)
     res.json(sale)
   } catch (error) {
     next(error)

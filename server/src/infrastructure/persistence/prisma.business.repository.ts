@@ -1,5 +1,13 @@
 import { prisma } from './prisma.client.js'
-import { SaleRepository, RequirementRepository, NotificationRepository, BatchRepository } from '../../domain/repositories/business.repository.js'
+import { 
+  SaleRepository, 
+  RequirementRepository, 
+  NotificationRepository, 
+  BatchRepository,
+  PaymentRepository,
+  InstallmentRepository,
+  PaymentProofRepository
+} from '../../domain/repositories/business.repository.js'
 
 export class PrismaSaleRepository implements SaleRepository {
   async create(data: any) {
@@ -135,6 +143,100 @@ export class PrismaSaleRepository implements SaleRepository {
           not: 'CANCELLED',
         },
       },
+    })
+  }
+}
+
+export class PrismaPaymentRepository implements PaymentRepository {
+  async create(data: any) {
+    return prisma.payment.create({ data })
+  }
+
+  async findById(id: string) {
+    return prisma.payment.findUnique({ where: { id } })
+  }
+
+  async findBySaleId(saleId: string) {
+    return prisma.payment.findMany({
+      where: { saleId },
+      orderBy: { paidAt: 'desc' }
+    })
+  }
+}
+
+export class PrismaInstallmentRepository implements InstallmentRepository {
+  async create(data: any) {
+    return prisma.installment.create({ data })
+  }
+
+  async createMany(data: any[]) {
+    return prisma.installment.createMany({ data })
+  }
+
+  async findById(id: string) {
+    return prisma.installment.findUnique({ 
+      where: { id },
+      include: { proofs: true }
+    })
+  }
+
+  async findBySaleId(saleId: string) {
+    return prisma.installment.findMany({
+      where: { saleId },
+      include: { proofs: true },
+      orderBy: { dueDate: 'asc' }
+    })
+  }
+
+  async update(id: string, data: any) {
+    return prisma.installment.update({
+      where: { id },
+      data
+    })
+  }
+
+  async findOverdue(date: Date) {
+    return prisma.installment.findMany({
+      where: {
+        dueDate: { lt: date },
+        status: { in: ['PENDING', 'PARTIAL'] }
+      },
+      include: { sale: true }
+    })
+  }
+}
+
+export class PrismaPaymentProofRepository implements PaymentProofRepository {
+  async create(data: any) {
+    return prisma.paymentProof.create({ data })
+  }
+
+  async findById(id: string) {
+    return prisma.paymentProof.findUnique({
+      where: { id },
+      include: { installment: true }
+    })
+  }
+
+  async findByInstallmentId(installmentId: string) {
+    return prisma.paymentProof.findMany({
+      where: { installmentId },
+      orderBy: { createdAt: 'desc' }
+    })
+  }
+
+  async findByStatus(status: string) {
+    return prisma.paymentProof.findMany({
+      where: { status },
+      include: { installment: { include: { sale: true } } },
+      orderBy: { createdAt: 'desc' }
+    })
+  }
+
+  async update(id: string, data: any) {
+    return prisma.paymentProof.update({
+      where: { id },
+      data
     })
   }
 }

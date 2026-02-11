@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { userRepo, saleRepo } from '../../../shared/container.js'
+import { userService, saleRepo } from '../../../shared/container.js'
 import { NotFoundError } from '../../../shared/errors/app.errors.js'
 
 export const getCustomers = async (req: Request, res: Response): Promise<void> => {
@@ -7,43 +7,20 @@ export const getCustomers = async (req: Request, res: Response): Promise<void> =
     const page = Number(req.query.page) || 1
     const limit = Number(req.query.limit) || 10
     const search = req.query.search as string | undefined
-    const skip = (page - 1) * limit
-    const take = limit
+    
+    // El ID del usuario que realiza la consulta (admin)
+    const adminId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
 
-    const where: any = {}
+    const result = await userService.getCustomers(
+      { page, limit, search },
+      adminId,
+      ipAddress,
+      userAgent
+    )
 
-    if (search) {
-      where.OR = [
-        { email: { contains: search } },
-        { name: { contains: search } },
-        { phone: { contains: search } },
-      ]
-    }
-
-    const [customers, total] = await Promise.all([
-      userRepo.findAll({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          _count: {
-            select: { sales: true }
-          }
-        },
-      }),
-      userRepo.count(where),
-    ])
-
-    res.json({
-      customers,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
-    })
+    res.json(result)
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener clientes' })
   }
@@ -52,25 +29,16 @@ export const getCustomers = async (req: Request, res: Response): Promise<void> =
 export const getCustomer = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string
+    const adminId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
 
-    const customer = await userRepo.findFirst({
-      where: { id },
-      include: {
-        sales: {
-          take: 5,
-          orderBy: { createdAt: 'desc' },
-          include: {
-            _count: {
-              select: { items: true }
-            }
-          }
-        }
-      },
-    })
-
-    if (!customer) {
-      throw new NotFoundError('Cliente no encontrado')
-    }
+    const customer = await userService.getCustomerById(
+      id,
+      adminId,
+      ipAddress,
+      userAgent
+    )
 
     res.json({ customer })
   } catch (error) {
@@ -135,14 +103,18 @@ export const getCustomerOrders = async (req: Request, res: Response): Promise<vo
 export const updateCustomer = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string
-    const { email, name, phone, isActive } = req.body
+    const data = req.body
+    const adminId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
 
-    const customer = await userRepo.update(id, {
-      ...(email && { email }),
-      ...(name && { name }),
-      ...(phone && { phone }),
-      ...(isActive !== undefined && { isActive }),
-    })
+    const customer = await userService.updateCustomer(
+      id,
+      data,
+      adminId,
+      ipAddress,
+      userAgent
+    )
 
     res.json({ customer })
   } catch (error) {
@@ -153,9 +125,16 @@ export const updateCustomer = async (req: Request, res: Response): Promise<void>
 export const deleteCustomer = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string
+    const adminId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
 
-    // Borrado lógico: cambiamos isActive a false en lugar de eliminar el registro
-    await userRepo.update(id, { isActive: false })
+    await userService.deleteCustomer(
+      id,
+      adminId,
+      ipAddress,
+      userAgent
+    )
 
     res.json({ message: 'Cliente desactivado correctamente' })
   } catch (error) {

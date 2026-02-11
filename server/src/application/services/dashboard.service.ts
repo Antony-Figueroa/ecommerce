@@ -2,6 +2,7 @@ import { SaleRepository, RequirementRepository } from '../../domain/repositories
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { UserRepository } from '../../domain/repositories/user.repository.js'
 import { BCVRepository } from '../../domain/repositories/settings.repository.js'
+import { AuditService } from './audit.service.js'
 
 export class DashboardService {
   constructor(
@@ -9,11 +10,21 @@ export class DashboardService {
     private productRepo: ProductRepository,
     private userRepo: UserRepository,
     private bcvRepo: BCVRepository,
-    private requirementRepo: RequirementRepository
+    private requirementRepo: RequirementRepository,
+    private auditService: AuditService
   ) {}
 
-  async getAdminStats(startDate?: string, endDate?: string) {
+  async getAdminStats(startDate?: string, endDate?: string, userId?: string, ipAddress?: string, userAgent?: string) {
     try {
+      // Audit log for accessing sensitive financial/admin data
+      await this.auditService.logAction({
+        entityType: 'DASHBOARD',
+        action: 'VIEW_STATS',
+        userId,
+        details: { startDate, endDate },
+        ipAddress,
+        userAgent
+      })
       const start = startDate ? new Date(startDate) : undefined
       const end = endDate ? new Date(endDate) : undefined
       const where: any = {}
@@ -114,7 +125,17 @@ export class DashboardService {
     }
   }
 
-  async getProfitabilityReport(startDate?: string, endDate?: string) {
+  async getProfitabilityReport(startDate?: string, endDate?: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing profitability data (highly sensitive)
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_PROFITABILITY',
+      userId,
+      details: { startDate, endDate },
+      ipAddress,
+      userAgent
+    })
+
     const where: any = {
       status: 'COMPLETED',
       createdAt: {
@@ -154,7 +175,17 @@ export class DashboardService {
     }
   }
 
-  async getSalesReport(startDate?: string, endDate?: string) {
+  async getSalesReport(startDate?: string, endDate?: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing sales report
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_SALES',
+      userId,
+      details: { startDate, endDate },
+      ipAddress,
+      userAgent
+    })
+
     const where: any = {
       status: { not: 'CANCELLED' },
       createdAt: {
@@ -191,7 +222,17 @@ export class DashboardService {
     }))
   }
 
-  async getAnalyticsReport(startDate?: string, endDate?: string) {
+  async getAnalyticsReport(startDate?: string, endDate?: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing business analytics
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_ANALYTICS',
+      userId,
+      details: { startDate, endDate },
+      ipAddress,
+      userAgent
+    })
+
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     const end = endDate ? new Date(endDate) : new Date()
 
@@ -288,7 +329,17 @@ export class DashboardService {
     }
   }
 
-  async getRequirementsReport(status?: string) {
+  async getRequirementsReport(status?: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing requirements report
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_REQUIREMENTS',
+      userId,
+      details: { status },
+      ipAddress,
+      userAgent
+    })
+
     const requirements = await this.requirementRepo.findAll({
       where: {
         status: status || undefined,

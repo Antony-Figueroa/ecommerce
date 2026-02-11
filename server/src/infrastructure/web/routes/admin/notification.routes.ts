@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { notificationService } from '../../../../shared/container.js'
 import { authenticate, authorize } from '../../middleware/auth.middleware.js'
 
@@ -59,12 +59,12 @@ router.post('/:id/read', async (req: Request, res: Response) => {
 })
 
 // Marcar todas las notificaciones como leídas
-router.post('/read-all', async (_req: Request, res: Response) => {
+router.post('/read-all', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     await notificationService.markAllAsRead()
     res.status(204).send()
   } catch (error) {
-    res.status(500).json({ error: 'Error al marcar todas las notificaciones como leídas' })
+    next(error)
   }
 })
 

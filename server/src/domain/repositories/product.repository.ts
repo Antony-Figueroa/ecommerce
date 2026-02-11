@@ -9,6 +9,7 @@ export interface ProductRepository {
   }): Promise<{ products: any[]; total: number }>
   findById(id: string): Promise<any | null>
   findBySku(sku: string): Promise<any | null>
+  findByProductCode(productCode: string): Promise<any | null>
   create(data: any): Promise<any>
   update(id: string, data: any): Promise<any>
   delete(id: string): Promise<void>

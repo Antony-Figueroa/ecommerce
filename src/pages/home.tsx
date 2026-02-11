@@ -268,7 +268,7 @@ export function HomePage() {
               { 
                 icon: Award, 
                 title: "Asesoría Experta", 
-                desc: "Nuestro equipo está listo para guiarte en tu elección según tus metas personales.",
+                desc: "Estamos para guiarte en tu elección según tus metas personales.",
                 color: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400"
               }
             ].map((feature, i) => (
@@ -303,7 +303,7 @@ export function HomePage() {
               </div>
               <div>
                 <p className="text-primary font-bold uppercase tracking-widest text-[10px] mb-2">Atención Cercana</p>
-                <p className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground">800-BIENESTAR</p>
+                <p className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground">04121234567</p>
               </div>
             </motion.div>
             

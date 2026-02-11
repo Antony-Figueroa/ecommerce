@@ -10,7 +10,10 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate as string | undefined
     const endDate = req.query.endDate as string | undefined
-    const stats = await dashboardService.getAdminStats(startDate, endDate)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const stats = await dashboardService.getAdminStats(startDate, endDate, userId, ipAddress, userAgent)
     res.json(stats)
   } catch (error: any) {
     console.error('Error fetching stats:', error)

@@ -1,0 +1,116 @@
+1aa9f8251d7d3e8fba11d26fbd54c8b8
+export class BCVUpdaterService {
+    constructor(bcvRepo, settingsRepo, notificationService, inventoryService) {
+        Object.defineProperty(this, "bcvRepo", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: bcvRepo
+        });
+        Object.defineProperty(this, "settingsRepo", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: settingsRepo
+        });
+        Object.defineProperty(this, "notificationService", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: notificationService
+        });
+        Object.defineProperty(this, "inventoryService", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: inventoryService
+        });
+    }
+    /**
+     * Actualiza la tasa BCV desde la API y ajusta los precios de los productos en bolívares.
+     */
+    async updateRate() {
+        try {
+            console.log(`[${new Date().toISOString()}] Iniciando actualización de tasa BCV...`);
+            // 1. Obtener tasa actual para validación
+            const previousRate = await this.bcvRepo.getCurrentRate();
+            let newRate = null;
+            let source = 'auto-ve-dolarapi-bcv';
+            try {
+                // 2. Consultar API (DolarApi.com - BCV Oficial)
+                const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+                if (!response.ok) {
+                    throw new Error(`Error HTTP ${response.status} al obtener tasa BCV`);
+                }
+                const data = (await response.json());
+                console.log('Datos recibidos de DolarApi (BCV Oficial):', data);
+                const rateValue = data.official || data.price || data.promedio || data.price_old;
+                newRate = rateValue ?? null;
+                console.log('Valor BCV Oficial procesado:', newRate);
+            }
+            catch (apiError) {
+                console.error('Error consultando DolarApi BCV:', apiError);
+                // 1. Intentar usar la tasa previa de la BD (último registro obtenido de la API exitosamente)
+                if (previousRate > 0) {
+                    newRate = previousRate;
+                    source = 'auto-fallback-db';
+                    console.log(`API falló. Usando última tasa conocida de la BD como respaldo: ${newRate}`);
+                    // Notificar advertencia para que el administrador sepa que la API falló pero el sistema continúa
+                    await this.notificationService.createNotification({
+                        type: 'SYSTEM',
+                        title: 'Advertencia Actualización BCV',
+                        message: 'La API de DolarApi falló. Se está utilizando el último monto registrado en la base de datos como respaldo.'
+                    });
+                }
+                else {
+                    // 2. Mecanismo de respaldo final: Tasa fija desde configuración
+                    const fallbackSetting = await this.settingsRepo.findByKey('FIXED_BCV_RATE');
+                    if (fallbackSetting && fallbackSetting.value) {
+                        newRate = parseFloat(fallbackSetting.value);
+                        source = 'auto-fallback-fixed';
+                        console.log(`API falló y no hay historial. Usando tasa de respaldo fija configurada: ${newRate}`);
+                    }
+                    else {
+                        throw new Error('La API falló, no hay historial en la BD y no hay una tasa de respaldo fija configurada');
+                    }
+                }
+            }
+            if (!newRate || typeof newRate !== 'number') {
+                throw new Error('No se pudo determinar una tasa válida');
+            }
+            // 3. Validación de rango
+            if (previousRate > 0) {
+                const diff = Math.abs(newRate - previousRate) / previousRate;
+                if (diff > 15.0) {
+                    const errorMsg = `Validación de rango fallida: La nueva tasa (${newRate}) varía demasiado respecto a la anterior (${previousRate})`;
+                    await this.notificationService.createNotification({
+                        type: 'SYSTEM',
+                        title: 'Alerta de Tasa BCV',
+                        message: errorMsg
+                    });
+                    throw new Error(errorMsg);
+                }
+            }
+            // 4. Actualización de tasa y precios
+            // Desactivar tasas anteriores
+            await this.bcvRepo.deactivateAll();
+            // Crear nueva tasa
+            await this.bcvRepo.setRate(newRate, source);
+            // 5. Actualizar precios de productos configurados en BS
+            if (previousRate > 0) {
+                await this.inventoryService.updatePricesByBCV(newRate, previousRate);
+            }
+            console.log(`[${new Date().toISOString()}] Tasa BCV actualizada exitosamente a ${newRate} (${source})`);
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : 'Error desconocido';
+            console.error(`[${new Date().toISOString()}] Error en el actualizador BCV:`, message);
+            await this.notificationService.createNotification({
+                type: 'SYSTEM',
+                title: 'Error Actualización BCV',
+                message: `El sistema de actualización automática falló: ${message}`
+            });
+        }
+    }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxTZXJ2ZXIgQWRtaW5cXERlc2t0b3BcXGVjb21tZXJjZVxcc2VydmVyXFxzcmNcXGFwcGxpY2F0aW9uXFxzZXJ2aWNlc1xcYmN2LXVwZGF0ZXIuc2VydmljZS50cyIsIm1hcHBpbmdzIjoiQUFJQSxNQUFNLE9BQU8saUJBQWlCO0lBQzVCLFlBQ1UsT0FBc0IsRUFDdEIsWUFBZ0MsRUFDaEMsbUJBQXdDLEVBQ3hDLGdCQUFrQztRQUgxQzs7OzttQkFBUSxPQUFPO1dBQWU7UUFDOUI7Ozs7bUJBQVEsWUFBWTtXQUFvQjtRQUN4Qzs7OzttQkFBUSxtQkFBbUI7V0FBcUI7UUFDaEQ7Ozs7bUJBQVEsZ0JBQWdCO1dBQWtCO0lBQ3pDLENBQUM7SUFFSjs7T0FFRztJQUNILEtBQUssQ0FBQyxVQUFVO1FBQ2QsSUFBSSxDQUFDO1lBQ0gsT0FBTyxDQUFDLEdBQUcsQ0FBQyxJQUFJLElBQUksSUFBSSxFQUFFLENBQUMsV0FBVyxFQUFFLDBDQUEwQyxDQUFDLENBQUE7WUFFbkYseUNBQXlDO1lBQ3pDLE1BQU0sWUFBWSxHQUFHLE1BQU0sSUFBSSxDQUFDLE9BQU8sQ0FBQyxjQUFjLEVBQUUsQ0FBQTtZQUV4RCxJQUFJLE9BQU8sR0FBa0IsSUFBSSxDQUFBO1lBQ2pDLElBQUksTUFBTSxHQUFHLHNCQUFzQixDQUFBO1lBRW5DLElBQUksQ0FBQztnQkFDSCxnREFBZ0Q7Z0JBQ2hELE1BQU0sUUFBUSxHQUFHLE1BQU0sS0FBSyxDQUFDLDRDQUE0QyxDQUFDLENBQUE7Z0JBQzFFLElBQUksQ0FBQyxRQUFRLENBQUMsRUFBRSxFQUFFLENBQUM7b0JBQ2pCLE1BQU0sSUFBSSxLQUFLLENBQUMsY0FBYyxRQUFRLENBQUMsTUFBTSxzQkFBc0IsQ0FBQyxDQUFBO2dCQUN0RSxDQUFDO2dCQUVELE1BQU0sSUFBSSxHQUFHLENBQUMsTUFBTSxRQUFRLENBQUMsSUFBSSxFQUFFLENBQWlGLENBQUE7Z0JBQ3BILE9BQU8sQ0FBQyxHQUFHLENBQUMsNENBQTRDLEVBQUUsSUFBSSxDQUFDLENBQUE7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RyxDQUFDLElBQUksSUFBSSxJQUFJLEVBQUUsQ0FBQyxXQUFXLEVBQUUseUNBQXlDLE9BQU8sS0FBSyxNQUFNLEdBQUcsQ0FBQyxDQUFBO1FBRXpHLENBQUM7UUFBQyxPQUFPLEtBQUssRUFBRSxDQUFDO1lBQ2YsTUFBTSxPQUFPLEdBQUcsS0FBSyxZQUFZLEtBQUssQ0FBQyxDQUFDLENBQUMsS0FBSyxDQUFDLE9BQU8sQ0FBQyxDQUFDLENBQUMsbUJBQW1CLENBQUE7WUFDNUUsT0FBTyxDQUFDLEtBQUssQ0FBQyxJQUFJLElBQUksSUFBSSxFQUFFLENBQUMsV0FBVyxFQUFFLGlDQUFpQyxFQUFFLE9BQU8sQ0FBQyxDQUFBO1lBRXJGLE1BQU0sSUFBSSxDQUFDLG1CQUFtQixDQUFDLGtCQUFrQixDQUFDO2dCQUNoRCxJQUFJLEVBQUUsUUFBUTtnQkFDZCxLQUFLLEVBQUUseUJBQXlCO2dCQUNoQyxPQUFPLEVBQUUsaURBQWlELE9BQU8sRUFBRTthQUNwRSxDQUFDLENBQUE7UUFDSixDQUFDO0lBQ0gsQ0FBQztDQUNGIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcU2VydmVyIEFkbWluXFxEZXNrdG9wXFxlY29tbWVyY2VcXHNlcnZlclxcc3JjXFxhcHBsaWNhdGlvblxcc2VydmljZXNcXGJjdi11cGRhdGVyLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQkNWUmVwb3NpdG9yeSwgU2V0dGluZ3NSZXBvc2l0b3J5IH0gZnJvbSAnLi4vLi4vZG9tYWluL3JlcG9zaXRvcmllcy9zZXR0aW5ncy5yZXBvc2l0b3J5LmpzJ1xuaW1wb3J0IHsgTm90aWZpY2F0aW9uU2VydmljZSB9IGZyb20gJy4vbm90aWZpY2F0aW9uLnNlcnZpY2UuanMnXG5pbXBvcnQgeyBJbnZlbnRvcnlTZXJ2aWNlIH0gZnJvbSAnLi9pbnZlbnRvcnkuc2VydmljZS5qcydcblxuZXhwb3J0IGNsYXNzIEJDVlVwZGF0ZXJTZXJ2aWNlIHtcbiAgY29uc3RydWN0b3IoXG4gICAgcHJpdmF0ZSBiY3ZSZXBvOiBCQ1ZSZXBvc2l0b3J5LFxuICAgIHByaXZhdGUgc2V0dGluZ3NSZXBvOiBTZXR0aW5nc1JlcG9zaXRvcnksXG4gICAgcHJpdmF0ZSBub3RpZmljYXRpb25TZXJ2aWNlOiBOb3RpZmljYXRpb25TZXJ2aWNlLFxuICAgIHByaXZhdGUgaW52ZW50b3J5U2VydmljZTogSW52ZW50b3J5U2VydmljZVxuICApIHt9XG5cbiAgLyoqXG4gICAqIEFjdHVhbGl6YSBsYSB0YXNhIEJDViBkZXNkZSBsYSBBUEkgeSBhanVzdGEgbG9zIHByZWNpb3MgZGUgbG9zIHByb2R1Y3RvcyBlbiBib2zDrXZhcmVzLlxuICAgKi9cbiAgYXN5bmMgdXBkYXRlUmF0ZSgpIHtcbiAgICB0cnkge1xuICAgICAgY29uc29sZS5sb2coYFske25ldyBEYXRlKCkudG9JU09TdHJpbmcoKX1dIEluaWNpYW5kbyBhY3R1YWxpemFjacOzbiBkZSB0YXNhIEJDVi4uLmApXG4gICAgICBcbiAgICAgIC8vIDEuIE9idGVuZXIgdGFzYSBhY3R1YWwgcGFyYSB2YWxpZGFjacOzblxuICAgICAgY29uc3QgcHJldmlvdXNSYXRlID0gYXdhaXQgdGhpcy5iY3ZSZXBvLmdldEN1cnJlbnRSYXRlKClcbiAgICAgIFxuICAgICAgbGV0IG5ld1JhdGU6IG51bWJlciB8IG51bGwgPSBudWxsXG4gICAgICBsZXQgc291cmNlID0gJ2F1dG8tdmUtZG9sYXJhcGktYmN2J1xuXG4gICAgICB0cnkge1xuICAgICAgICAvLyAyLiBDb25zdWx0YXIgQVBJIChEb2xhckFwaS5jb20gLSBCQ1YgT2ZpY2lhbClcbiAgICAgICAgY29uc3QgcmVzcG9uc2UgPSBhd2FpdCBmZXRjaCgnaHR0cHM6Ly92ZS5kb2xhcmFwaS5jb20vdjEvZG9sYXJlcy9vZmljaWFsJylcbiAgICAgICAgaWYgKCFyZXNwb25zZS5vaykge1xuICAgICAgICAgIHRocm93IG5ldyBFcnJvcihgRXJyb3IgSFRUUCAke3Jlc3BvbnNlLnN0YXR1c30gYWwgb2J0ZW5lciB0YXNhIEJDVmApXG4gICAgICAgIH1cbiAgICAgICAgXG4gICAgICAgIGNvbnN0IGRhdGEgPSAoYXdhaXQgcmVzcG9uc2UuanNvbigpKSBhcyB7IHByb21lZGlvPzogbnVtYmVyOyBwcmljZT86IG51bWJlcjsgb2ZmaWNpYWw/OiBudW1iZXI7IHByaWNlX29sZD86IG51bWJlciB9XG4gICAgICAgIGNvbnNvbGUubG9nKCdEYXRvcyByZWNpYmlkb3MgZGUgRG9sYXJBcGkgKEJDViBPZmljaWFsKTonLCBkYXRhKVxuICAgICAgICBcbiAgICAgICAgY29uc3QgcmF0ZVZhbHVlID0gZGF0YS5vZmZpY2lhbCB8fCBkYXRhLnByaWNlIHx8IGRhdGEucHJvbWVkaW8gfHwgZGF0YS5wcmljZV9vbGRcbiAgICAgICAgbmV3UmF0ZSA9IHJhdGVWYWx1ZSA/PyBudWxsXG4gICAgICAgIFxuICAgICAgICBjb25zb2xlLmxvZygnVmFsb3IgQkNWIE9maWNpYWwgcHJvY2VzYWRvOicsIG5ld1JhdGUpXG4gICAgICB9IGNhdGNoIChhcGlFcnJvcikge1xuICAgICAgICBjb25zb2xlLmVycm9yKCdFcnJvciBjb25zdWx0YW5kbyBEb2xhckFwaSBCQ1Y6JywgYXBpRXJyb3IpXG4gICAgICAgIFxuICAgICAgICAvLyAxLiBJbnRlbnRhciB1c2FyIGxhIHRhc2EgcHJldmlhIGRlIGxhIEJEICjDumx0aW1vIHJlZ2lzdHJvIG9idGVuaWRvIGRlIGxhIEFQSSBleGl0b3NhbWVudGUpXG4gICAgICAgIGlmIChwcmV2aW91c1JhdGUgPiAwKSB7XG4gICAgICAgICAgbmV3UmF0ZSA9IHByZXZpb3VzUmF0ZVxuICAgICAgICAgIHNvdXJjZSA9ICdhdXRvLWZhbGxiYWNrLWRiJ1xuICAgICAgICAgIGNvbnNvbGUubG9nKGBBUEkgZmFsbMOzLiBVc2FuZG8gw7psdGltYSB0YXNhIGNvbm9jaWRhIGRlIGxhIEJEIGNvbW8gcmVzcGFsZG86ICR7bmV3UmF0ZX1gKVxuICAgICAgICAgIFxuICAgICAgICAgIC8vIE5vdGlmaWNhciBhZHZlcnRlbmNpYSBwYXJhIHF1ZSBlbCBhZG1pbmlzdHJhZG9yIHNlcGEgcXVlIGxhIEFQSSBmYWxsw7MgcGVybyBlbCBzaXN0ZW1hIGNvbnRpbsO6YVxuICAgICAgICAgIGF3YWl0IHRoaXMubm90aWZpY2F0aW9uU2VydmljZS5jcmVhdGVOb3RpZmljYXRpb24oe1xuICAgICAgICAgICAgdHlwZTogJ1NZU1RFTScsXG4gICAgICAgICAgICB0aXRsZTogJ0FkdmVydGVuY2lhIEFjdHVhbGl6YWNpw7NuIEJDVicsXG4gICAgICAgICAgICBtZXNzYWdlOiAnTGEgQVBJIGRlIERvbGFyQXBpIGZhbGzDsy4gU2UgZXN0w6EgdXRpbGl6YW5kbyBlbCDDumx0aW1vIG1vbnRvIHJlZ2lzdHJhZG8gZW4gbGEgYmFzZSBkZSBkYXRvcyBjb21vIHJlc3BhbGRvLidcbiAgICAgICAgICB9KVxuICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgIC8vIDIuIE1lY2FuaXNtbyBkZSByZXNwYWxkbyBmaW5hbDogVGFzYSBmaWphIGRlc2RlIGNvbmZpZ3VyYWNpw7NuXG4gICAgICAgICAgY29uc3QgZmFsbGJhY2tTZXR0aW5nID0gYXdhaXQgdGhpcy5zZXR0aW5nc1JlcG8uZmluZEJ5S2V5KCdGSVhFRF9CQ1ZfUkFURScpXG4gICAgICAgICAgXG4gICAgICAgICAgaWYgKGZhbGxiYWNrU2V0dGluZyAmJiBmYWxsYmFja1NldHRpbmcudmFsdWUpIHtcbiAgICAgICAgICAgIG5ld1JhdGUgPSBwYXJzZUZsb2F0KGZhbGxiYWNrU2V0dGluZy52YWx1ZSlcbiAgICAgICAgICAgIHNvdXJjZSA9ICdhdXRvLWZhbGxiYWNrLWZpeGVkJ1xuICAgICAgICAgICAgY29uc29sZS5sb2coYEFQSSBmYWxsw7MgeSBubyBoYXkgaGlzdG9yaWFsLiBVc2FuZG8gdGFzYSBkZSByZXNwYWxkbyBmaWphIGNvbmZpZ3VyYWRhOiAke25ld1JhdGV9YClcbiAgICAgICAgICB9IGVsc2Uge1xuICAgICAgICAgICAgdGhyb3cgbmV3IEVycm9yKCdMYSBBUEkgZmFsbMOzLCBubyBoYXkgaGlzdG9yaWFsIGVuIGxhIEJEIHkgbm8gaGF5IHVuYSB0YXNhIGRlIHJlc3BhbGRvIGZpamEgY29uZmlndXJhZGEnKVxuICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICBpZiAoIW5ld1JhdGUgfHwgdHlwZW9mIG5ld1JhdGUgIT09ICdudW1iZXInKSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcignTm8gc2UgcHVkbyBkZXRlcm1pbmFyIHVuYSB0YXNhIHbDoWxpZGEnKVxuICAgICAgfVxuXG4gICAgICAvLyAzLiBWYWxpZGFjacOzbiBkZSByYW5nb1xuICAgICAgaWYgKHByZXZpb3VzUmF0ZSA+IDApIHtcbiAgICAgICAgY29uc3QgZGlmZiA9IE1hdGguYWJzKG5ld1JhdGUgLSBwcmV2aW91c1JhdGUpIC8gcHJldmlvdXNSYXRlXG4gICAgICAgIGlmIChkaWZmID4gMTUuMCkge1xuICAgICAgICAgIGNvbnN0IGVycm9yTXNnID0gYFZhbGlkYWNpw7NuIGRlIHJhbmdvIGZhbGxpZGE6IExhIG51ZXZhIHRhc2EgKCR7bmV3UmF0ZX0pIHZhcsOtYSBkZW1hc2lhZG8gcmVzcGVjdG8gYSBsYSBhbnRlcmlvciAoJHtwcmV2aW91c1JhdGV9KWBcbiAgICAgICAgICBcbiAgICAgICAgICBhd2FpdCB0aGlzLm5vdGlmaWNhdGlvblNlcnZpY2UuY3JlYXRlTm90aWZpY2F0aW9uKHtcbiAgICAgICAgICAgIHR5cGU6ICdTWVNURU0nLFxuICAgICAgICAgICAgdGl0bGU6ICdBbGVydGEgZGUgVGFzYSBCQ1YnLFxuICAgICAgICAgICAgbWVzc2FnZTogZXJyb3JNc2dcbiAgICAgICAgICB9KVxuICAgICAgICAgIFxuICAgICAgICAgIHRocm93IG5ldyBFcnJvcihlcnJvck1zZylcbiAgICAgICAgfVxuICAgICAgfVxuXG4gICAgICAvLyA0LiBBY3R1YWxpemFjacOzbiBkZSB0YXNhIHkgcHJlY2lvc1xuICAgICAgLy8gRGVzYWN0aXZhciB0YXNhcyBhbnRlcmlvcmVzXG4gICAgICBhd2FpdCB0aGlzLmJjdlJlcG8uZGVhY3RpdmF0ZUFsbCgpXG5cbiAgICAgIC8vIENyZWFyIG51ZXZhIHRhc2FcbiAgICAgIGF3YWl0IHRoaXMuYmN2UmVwby5zZXRSYXRlKG5ld1JhdGUhLCBzb3VyY2UpXG5cbiAgICAgIC8vIDUuIEFjdHVhbGl6YXIgcHJlY2lvcyBkZSBwcm9kdWN0b3MgY29uZmlndXJhZG9zIGVuIEJTXG4gICAgICBpZiAocHJldmlvdXNSYXRlID4gMCkge1xuICAgICAgICBhd2FpdCB0aGlzLmludmVudG9yeVNlcnZpY2UudXBkYXRlUHJpY2VzQnlCQ1YobmV3UmF0ZSEsIHByZXZpb3VzUmF0ZSlcbiAgICAgIH1cblxuICAgICAgY29uc29sZS5sb2coYFske25ldyBEYXRlKCkudG9JU09TdHJpbmcoKX1dIFRhc2EgQkNWIGFjdHVhbGl6YWRhIGV4aXRvc2FtZW50ZSBhICR7bmV3UmF0ZX0gKCR7c291cmNlfSlgKVxuICAgICAgXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcbiAgICAgIGNvbnN0IG1lc3NhZ2UgPSBlcnJvciBpbnN0YW5jZW9mIEVycm9yID8gZXJyb3IubWVzc2FnZSA6ICdFcnJvciBkZXNjb25vY2lkbydcbiAgICAgIGNvbnNvbGUuZXJyb3IoYFske25ldyBEYXRlKCkudG9JU09TdHJpbmcoKX1dIEVycm9yIGVuIGVsIGFjdHVhbGl6YWRvciBCQ1Y6YCwgbWVzc2FnZSlcbiAgICAgIFxuICAgICAgYXdhaXQgdGhpcy5ub3RpZmljYXRpb25TZXJ2aWNlLmNyZWF0ZU5vdGlmaWNhdGlvbih7XG4gICAgICAgIHR5cGU6ICdTWVNURU0nLFxuICAgICAgICB0aXRsZTogJ0Vycm9yIEFjdHVhbGl6YWNpw7NuIEJDVicsXG4gICAgICAgIG1lc3NhZ2U6IGBFbCBzaXN0ZW1hIGRlIGFjdHVhbGl6YWNpw7NuIGF1dG9tw6F0aWNhIGZhbGzDszogJHttZXNzYWdlfWBcbiAgICAgIH0pXG4gICAgfVxuICB9XG59XG4iXSwidmVyc2lvbiI6M30=

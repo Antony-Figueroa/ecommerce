@@ -34,6 +34,38 @@ export interface InventoryLog {
   createdAt: Date
 }
 
+export interface Provider {
+  id: string
+  name: string
+  phone?: string | null
+  email?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface InventoryBatch {
+  id: string
+  code: string
+  providerId?: string | null
+  notes?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface InventoryBatchItem {
+  id: string
+  batchId: string
+  productId: string
+  quantity: number
+  soldQuantity: number
+  unitCostUSD: number
+  unitSaleUSD: number
+  shippingCostUSD: number
+  entryDate: Date
+  discounted: boolean
+  discountPercent: number
+}
+
 export interface CategoryRepository {
   findAll(options?: any): Promise<Category[]>
   findFirst(options: any): Promise<Category | null>
@@ -56,4 +88,19 @@ export interface BrandRepository {
 export interface InventoryLogRepository {
   create(data: any): Promise<InventoryLog>
   findAll(productId?: string): Promise<InventoryLog[]>
+}
+
+export interface ProviderRepository {
+  findAll(): Promise<Provider[]>
+  findByName(name: string): Promise<Provider | null>
+  create(data: any): Promise<Provider>
+}
+
+export interface InventoryBatchRepository {
+  findMany(options?: any): Promise<any[]>
+  findById(id: string): Promise<any | null>
+  create(data: any): Promise<any>
+  update(id: string, data: any): Promise<any>
+  findAvailableItemsByProduct(productId: string): Promise<any[]>
+  updateItem(id: string, data: any): Promise<any>
 }

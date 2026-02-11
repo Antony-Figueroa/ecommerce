@@ -1,22 +1,151 @@
-import { authService, userRepo } from '../../../shared/container.js'
+import { jest } from '@jest/globals'
 
-describe('AuthService register', () => {
-  it('registra usuario con email verificado y sin token de verificación', async () => {
-    const suffix = Date.now()
-    const email = `test.auth.${suffix}@example.com`
+// Mock dependencies before imports with both default and named exports for ESM compatibility
+jest.mock('bcryptjs', () => ({
+  __esModule: true,
+  default: {
+    compare: jest.fn().mockResolvedValue(true),
+    hash: jest.fn().mockResolvedValue('hashed_password'),
+  },
+  compare: jest.fn().mockResolvedValue(true),
+  hash: jest.fn().mockResolvedValue('hashed_password'),
+}))
 
-    const user = await authService.register({
-      name: 'Test User',
-      email,
-      password: 'Aa123456'
+jest.mock('jsonwebtoken', () => ({
+  __esModule: true,
+  default: {
+    sign: jest.fn().mockReturnValue('mock_token'),
+    verify: jest.fn().mockReturnValue({}),
+  },
+  sign: jest.fn().mockReturnValue('mock_token'),
+  verify: jest.fn().mockReturnValue({}),
+}))
+
+jest.mock('crypto', () => ({
+  __esModule: true,
+  default: {
+    randomBytes: jest.fn(() => ({
+      toString: jest.fn(() => 'mocked_hex_token')
+    })),
+  },
+  randomBytes: jest.fn(() => ({
+    toString: jest.fn(() => 'mocked_hex_token')
+  })),
+}))
+
+import { AuthService } from '../auth.service.js'
+import { AuthenticationError, ValidationError } from '../../../shared/errors/app.errors.js'
+import bcrypt from 'bcryptjs'
+import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
+
+const mockUserRepo = {
+  findByEmail: jest.fn(),
+  findByUsername: jest.fn(),
+  findById: jest.fn(),
+  findFirst: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+}
+
+const mockEmailService = {
+  sendVerificationEmail: jest.fn(),
+  sendPasswordResetEmail: jest.fn(),
+}
+
+const mockAuditService = {
+  logAction: jest.fn(),
+}
+
+describe('AuthService', () => {
+  let authService: AuthService
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    authService = new AuthService(mockUserRepo as any, mockEmailService as any, mockAuditService as any)
+  })
+
+  describe('login', () => {
+    it('should login successfully with valid credentials', async () => {
+      const mockUser = {
+        id: '1',
+        email: 'test@example.com',
+        passwordHash: 'hashed_password',
+        role: 'USER',
+      }
+      mockUserRepo.findByEmail.mockResolvedValue(mockUser)
+      
+      // Accessing the mocked functions
+      const compareMock = (bcrypt.compare || (bcrypt as any).default.compare) as jest.Mock
+      const signMock = (jwt.sign || (jwt as any).default.sign) as jest.Mock
+      
+      compareMock.mockResolvedValue(true)
+      signMock.mockReturnValue('mock_token')
+
+      const result = await authService.login('test@example.com', 'password', '127.0.0.1', 'test-agent')
+
+      expect(result.user.email).toBe('test@example.com')
+      expect(result.token).toBe('mock_token')
+      expect(mockAuditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'LOGIN_SUCCESS',
+        ipAddress: '127.0.0.1',
+        userAgent: 'test-agent'
+      }))
     })
 
-    expect(user.email).toBe(email)
+    it('should throw AuthenticationError and log failure if user not found', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue(null)
+      await expect(authService.login('test@example.com', 'password', '127.0.0.1'))
+        .rejects.toThrow(AuthenticationError)
+      
+      expect(mockAuditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'LOGIN_FAILED',
+        details: expect.objectContaining({ reason: 'User not found or no password hash' })
+      }))
+    })
+  })
 
-    const stored = await userRepo.findByEmail(email)
-    expect(stored).not.toBeNull()
-    expect(stored!.emailVerified).toBe(true)
-    expect(stored!.verificationToken).toBeNull()
-    expect(stored!.verificationTokenExpires).toBeNull()
+  describe('register', () => {
+    it('should register a new user and log action', async () => {
+      const userData = { email: 'new@example.com', password: 'password', name: 'New' }
+      mockUserRepo.findByEmail.mockResolvedValue(null)
+      const hashMock = (bcrypt.hash || (bcrypt as any).default.hash) as jest.Mock
+      hashMock.mockResolvedValue('hashed_password')
+      mockUserRepo.create.mockResolvedValue({ ...userData, id: '2', role: 'USER', emailVerified: true })
+
+      const result = await authService.register(userData, '127.0.0.1', 'test-agent')
+
+      expect(result.email).toBe('new@example.com')
+      expect(mockUserRepo.create).toHaveBeenCalled()
+      expect(mockAuditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+        action: 'REGISTER',
+        entityType: 'USER',
+        ipAddress: '127.0.0.1'
+      }))
+    })
+  })
+
+  describe('resendVerificationEmail', () => {
+    it('should resend verification email', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue({ id: '1', email: 'test@example.com', emailVerified: false, name: 'Test' })
+      
+      await authService.resendVerificationEmail('test@example.com')
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({
+        verificationToken: 'mocked_hex_token'
+      }))
+      expect(mockEmailService.sendVerificationEmail).toHaveBeenCalled()
+    })
+  })
+
+  describe('requestPasswordReset', () => {
+    it('should request password reset', async () => {
+      mockUserRepo.findByEmail.mockResolvedValue({ id: '1', email: 'test@example.com' })
+      await authService.requestPasswordReset('test@example.com')
+      expect(mockUserRepo.update).toHaveBeenCalledWith('1', expect.objectContaining({
+        resetPasswordToken: 'mocked_hex_token'
+      }))
+      expect(mockEmailService.sendPasswordResetEmail).toHaveBeenCalled()
+    })
   })
 })

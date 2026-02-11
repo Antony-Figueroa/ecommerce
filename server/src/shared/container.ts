@@ -1,11 +1,12 @@
 import { PrismaProductRepository } from '../infrastructure/persistence/prisma.product.repository.js'
-import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
-import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository } from '../infrastructure/persistence/prisma.business.repository.js'
+import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
+import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository, PrismaPaymentRepository, PrismaInstallmentRepository, PrismaPaymentProofRepository } from '../infrastructure/persistence/prisma.business.repository.js'
 import { PrismaBCVRepository, PrismaSettingsRepository } from '../infrastructure/persistence/prisma.settings.repository.js'
 import { PrismaUserRepository } from '../infrastructure/persistence/prisma.user.repository.js'
 import { PrismaFavoriteRepository } from '../infrastructure/persistence/prisma.favorite.repository.js'
 import { PrismaCartRepository } from '../infrastructure/persistence/prisma.cart.repository.js'
 import { PrismaNotificationSettingRepository } from '../infrastructure/persistence/prisma.notification-setting.repository.js'
+import { PrismaAuditRepository } from '../infrastructure/persistence/prisma.audit.repository.js'
 
 import { InventoryService } from '../application/services/inventory.service.js'
 import { SaleService } from '../application/services/sale.service.js'
@@ -21,6 +22,15 @@ import { FavoriteService } from '../application/services/favorite.service.js'
 import { EmailService } from '../application/services/email.service.js'
 import { UploadService } from '../application/services/upload.service.js'
 import { CartService } from '../application/services/cart.service.js'
+import { PaymentService } from '../application/services/payment.service.js'
+import { AuditService } from '../application/services/audit.service.js'
+import { StockManager } from '../application/services/stock-manager.service.js'
+import { SaleCalculator } from '../application/services/sale-calculator.service.js'
+import { BatchManager } from '../application/services/batch-manager.service.js'
+import { ProductManager } from '../application/services/product-manager.service.js'
+import { PaymentManager } from '../application/services/payment-manager.service.js'
+import { NotificationManager } from '../application/services/notification-manager.service.js'
+import { UserService } from '../application/services/user.service.js'
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
 
 // Repositories
@@ -28,26 +38,69 @@ export const productRepo = new PrismaProductRepository()
 export const categoryRepo = new PrismaCategoryRepository()
 export const brandRepo = new PrismaBrandRepository()
 export const logRepo = new PrismaInventoryLogRepository()
+export const providerRepo = new PrismaProviderRepository()
+export const inventoryBatchRepo = new PrismaInventoryBatchRepository()
 export const saleRepo = new PrismaSaleRepository()
 export const requirementRepo = new PrismaRequirementRepository()
 export const notificationRepo = new PrismaNotificationRepository()
 export const bcvRepo = new PrismaBCVRepository()
 export const settingsRepo = new PrismaSettingsRepository()
 export const batchRepo = new PrismaBatchRepository()
+export const paymentRepo = new PrismaPaymentRepository()
+export const installmentRepo = new PrismaInstallmentRepository()
+export const paymentProofRepo = new PrismaPaymentProofRepository()
 export const userRepo = new PrismaUserRepository()
 export const favoriteRepo = new PrismaFavoriteRepository()
 export const cartRepo = new PrismaCartRepository()
 export const notificationSettingRepo = new PrismaNotificationSettingRepository()
+export const auditRepo = new PrismaAuditRepository()
 
 // Services
 export const emailService = new EmailService()
 export const uploadService = new UploadService()
+export const auditService = new AuditService(auditRepo)
+export const stockManager = new StockManager(productRepo, logRepo, inventoryBatchRepo)
+export const saleCalculator = new SaleCalculator()
+
+export const paymentManager = new PaymentManager(
+  paymentRepo,
+  installmentRepo,
+  saleRepo,
+  paymentProofRepo,
+  auditService
+)
+
+export const notificationManager = new NotificationManager(
+  notificationRepo,
+  productRepo,
+  batchRepo,
+  auditService,
+  notificationSettingRepo
+)
 
 export const notificationService = new NotificationService(
   notificationRepo,
   productRepo,
   batchRepo,
+  notificationManager,
   notificationSettingRepo
+)
+
+export const batchManager = new BatchManager(
+  productRepo,
+  logRepo,
+  inventoryBatchRepo,
+  auditService
+)
+
+export const productManager = new ProductManager(
+  productRepo,
+  categoryRepo,
+  brandRepo,
+  logRepo,
+  favoriteRepo,
+  notificationService,
+  auditService
 )
 
 export const inventoryService = new InventoryService(
@@ -55,11 +108,16 @@ export const inventoryService = new InventoryService(
   categoryRepo,
   brandRepo,
   logRepo,
+  providerRepo,
+  inventoryBatchRepo,
   notificationService,
-  favoriteRepo
+  favoriteRepo,
+  batchManager,
+  productManager,
+  auditService
 )
 
-export const bcvService = new BCVService(bcvRepo)
+export const bcvService = new BCVService(bcvRepo, auditService)
 
 export const bcvUpdaterService = new BCVUpdaterService(
   bcvRepo,
@@ -68,22 +126,37 @@ export const bcvUpdaterService = new BCVUpdaterService(
   inventoryService
 )
 
+export const settingsService = new SettingsService(settingsRepo, auditService)
+
+export const paymentService = new PaymentService(
+  paymentRepo,
+  installmentRepo,
+  saleRepo,
+  paymentProofRepo,
+  paymentManager,
+  auditService
+)
+
 export const saleService = new SaleService(
   saleRepo,
   productRepo,
-  logRepo,
   bcvRepo,
-  batchRepo,
   notificationRepo,
   settingsRepo,
-  notificationService
+  notificationService,
+  paymentService,
+  auditService,
+  stockManager,
+  saleCalculator,
+  logRepo
 )
 
 export const requirementService = new RequirementService(
   requirementRepo,
   productRepo,
   batchRepo,
-  logRepo
+  logRepo,
+  auditService
 )
 
 export const dashboardService = new DashboardService(
@@ -91,15 +164,15 @@ export const dashboardService = new DashboardService(
   productRepo,
   userRepo,
   bcvRepo,
-  requirementRepo
+  requirementRepo,
+  auditService
 )
 
-export const settingsService = new SettingsService(settingsRepo)
-
-export const authService = new AuthService(userRepo, emailService)
+export const authService = new AuthService(userRepo, emailService, auditService)
 
 export const notificationSettingService = new NotificationSettingService(notificationSettingRepo)
 
 export const favoriteService = new FavoriteService(favoriteRepo, notificationService)
 
 export const cartService = new CartService(cartRepo, notificationService, emailService)
+export const userService = new UserService(userRepo, auditService)

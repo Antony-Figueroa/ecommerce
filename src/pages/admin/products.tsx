@@ -37,6 +37,7 @@ import type { ProductImage } from "@/types"
 interface Product {
   id: string
   name: string
+  productCode: string
   sku: string
   description: string
   price: number
@@ -51,6 +52,7 @@ interface Product {
   format: string
   isFeatured: boolean
   isActive: boolean
+  shippingCost: number
   image: string
   images?: ProductImage[]
   categories?: { id: string; name: string }[]
@@ -75,6 +77,7 @@ interface Category {
 
 interface ProductFormData {
   name: string
+  productCode: string
   sku: string
   description: string
   price: number
@@ -87,6 +90,7 @@ interface ProductFormData {
   format: string
   isFeatured: boolean
   isActive: boolean
+  shippingCost: number
   image: string
   images: Partial<ProductImage>[]
   batchNumber?: string
@@ -95,10 +99,9 @@ interface ProductFormData {
 
 interface ProductErrors {
   name?: string
+  productCode?: string
   sku?: string
-  price?: string
-  purchasePrice?: string
-  stock?: string
+  shippingCost?: string
   categoryIds?: string
   brand?: string
   format?: string
@@ -150,6 +153,7 @@ export function AdminProductsPage() {
   ]
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
+    productCode: "",
     sku: "",
     description: "",
     price: 0,
@@ -162,6 +166,7 @@ export function AdminProductsPage() {
     format: "",
     isFeatured: false,
     isActive: true,
+    shippingCost: 0,
     image: "/placeholder.jpg",
     images: [],
     batchNumber: "",
@@ -242,6 +247,7 @@ export function AdminProductsPage() {
   const resetForm = () => {
     setFormData({
       name: "",
+      productCode: "",
       sku: "",
       description: "",
       price: 0,
@@ -254,6 +260,7 @@ export function AdminProductsPage() {
       format: "",
       isFeatured: false,
       isActive: true,
+      shippingCost: 0,
       image: "/placeholder.jpg",
       images: [],
       batchNumber: "",
@@ -278,18 +285,13 @@ export function AdminProductsPage() {
       isValid = false
     }
 
-    if (formData.price <= 0) {
-      newErrors.price = "El precio de venta debe ser mayor a 0"
+    if (!formData.productCode.trim()) {
+      newErrors.productCode = "El código de producto es obligatorio"
       isValid = false
     }
 
-    if (formData.purchasePrice <= 0) {
-      newErrors.purchasePrice = "El precio de compra es obligatorio"
-      isValid = false
-    }
-
-    if (formData.stock < 0) {
-      newErrors.stock = "El stock no puede ser negativo"
+    if (formData.shippingCost < 0) {
+      newErrors.shippingCost = "El costo de envío no puede ser negativo"
       isValid = false
     }
 
@@ -341,8 +343,8 @@ export function AdminProductsPage() {
       } else {
         const createData = {
           ...productData,
-          batchNumber: formData.batchNumber,
-          expirationDate: formData.expirationDate,
+          ...(formData.batchNumber ? { batchNumber: formData.batchNumber } : {}),
+          ...(formData.expirationDate ? { expirationDate: formData.expirationDate } : {}),
         }
         await api.createProduct(createData)
       }
@@ -390,6 +392,7 @@ export function AdminProductsPage() {
 
     const newFormData: ProductFormData = {
       name: String(product.name || ""),
+      productCode: String((product as any).productCode || (product as any).code || ""),
       sku: String(product.sku || ""),
       description: String(product.description || ""),
       price: Number(product.price) || 0,
@@ -402,6 +405,7 @@ export function AdminProductsPage() {
       format: String(formatValue || ""), // Asegurar que sea string
       isFeatured: !!product.isFeatured,
       isActive: !!product.isActive,
+      shippingCost: Number((product as any).shippingCost) || 0,
       image: String(product.image || "/placeholder.jpg"),
       images: Array.isArray(product.images) 
         ? product.images.map(img => ({
@@ -537,38 +541,41 @@ export function AdminProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
-        <AdminPageHeader 
-          title="Catálogo de Productos"
-          subtitle={`${products.length} productos en total ${lowStockCount > 0 ? `(${lowStockCount} con stock bajo, ${outOfStockCount} agotados)` : ''}`}
-          icon={Box}
-          action={{
-            label: "Agregar Producto",
-            onClick: () => {
-              resetForm()
-              setShowAddDialog(true)
-            },
-            icon: Plus
-          }}
-        />
+    <div className="space-y-6" role="main" aria-label="Gestión de Productos">
+        <header>
+          <AdminPageHeader 
+            title="Productos"
+            subtitle={`Total: ${products.length} · Stock bajo: ${lowStockCount} · Agotados: ${outOfStockCount}`}
+            icon={Box}
+            action={{
+              label: "Agregar Producto",
+              onClick: () => {
+                resetForm()
+                setShowAddDialog(true)
+              },
+              icon: Plus
+            }}
+          />
+        </header>
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 items-center">
+        <section className="flex flex-col md:flex-row gap-4 items-center" aria-label="Filtros y búsqueda">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               placeholder="Buscar productos por nombre, SKU o marca..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 bg-white/50 dark:bg-muted/10 border-slate-200/50 dark:border-border/50"
+              className="pl-10 h-11 bg-background border-border/60 rounded-xl shadow-sm focus:ring-primary/20"
+              aria-label="Buscar productos por nombre, SKU o marca"
             />
           </div>
 
           <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Filtrar:</span>
-            <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap" id="filter-label">Filtrar:</span>
+            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-11 items-center px-1.5 shrink-0" role="group" aria-labelledby="filter-label">
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-40 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider">
+                <SelectTrigger className="w-40 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider" aria-label="Filtrar por categoría">
                   <SelectValue placeholder="Categoria" />
                 </SelectTrigger>
                 <SelectContent>
@@ -579,10 +586,10 @@ export function AdminProductsPage() {
                 </SelectContent>
               </Select>
               
-              <div className="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1" />
+              <div className="w-px h-4 bg-border/60 mx-1" aria-hidden="true" />
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider">
+                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider" aria-label="Filtrar por estado">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -592,10 +599,10 @@ export function AdminProductsPage() {
                 </SelectContent>
               </Select>
 
-              <div className="w-px h-4 bg-slate-200 dark:bg-border/50 mx-1" />
+              <div className="w-px h-4 bg-border/60 mx-1" aria-hidden="true" />
 
               <Select value={stockFilter} onValueChange={setStockFilter}>
-                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider">
+                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider" aria-label="Filtrar por disponibilidad de stock">
                   <SelectValue placeholder="Stock" />
                 </SelectTrigger>
                 <SelectContent>
@@ -607,7 +614,7 @@ export function AdminProductsPage() {
               </Select>
             </div>
 
-            <div className="flex items-center bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 px-1.5 shrink-0">
+            <div className="flex items-center bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-11 px-1.5 shrink-0" role="group" aria-label="Modo de visualización">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 transition-all duration-300 rounded-lg ${
@@ -615,8 +622,10 @@ export function AdminProductsPage() {
                     ? "bg-white dark:bg-card text-primary shadow-sm scale-[1.05]" 
                     : "text-muted-foreground hover:text-primary"
                 }`}
+                aria-label="Ver en cuadrícula"
+                aria-pressed={viewMode === "grid"}
               >
-                <Grid className="h-4 w-4" />
+                <Grid className="h-4 w-4" aria-hidden="true" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
@@ -625,22 +634,24 @@ export function AdminProductsPage() {
                     ? "bg-white dark:bg-card text-primary shadow-sm scale-[1.05]" 
                     : "text-muted-foreground hover:text-primary"
                 }`}
+                aria-label="Ver en lista"
+                aria-pressed={viewMode === "list"}
               >
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Products Display */}
         {viewMode === "grid" ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Lista de productos en cuadrícula">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden">
-                <div className="aspect-square relative bg-gray-100 dark:bg-slate-800/50 p-2">
+              <Card key={product.id} className="overflow-hidden border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-all" role="listitem">
+                <div className="aspect-square relative bg-muted/40 p-2">
                   <img
                     src={product.images?.find(img => img.isMain)?.url || product.image}
-                    alt={product.name}
+                    alt={`Imagen de ${product.name}`}
                     className="w-full h-full object-contain"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -649,7 +660,7 @@ export function AdminProductsPage() {
                     }}
                   />
                   {!product.inStock && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center" aria-label="Producto agotado">
                       <Badge variant="destructive">Agotado</Badge>
                     </div>
                   )}
@@ -662,36 +673,36 @@ export function AdminProductsPage() {
                         {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
                       </p>
                     </div>
-                    <p className="text-lg font-bold text-primary">
+                    <p className="text-lg font-bold text-primary" aria-label={`Precio: ${formatUSD(product.price)}`}>
                       {formatUSD(product.price)}
                     </p>
                   </div>
                   
                   <div className="flex flex-wrap items-center gap-2 mt-2 text-sm">
-                    <Badge variant="outline">{String(product.format || "N/A")}</Badge>
-                    <Badge variant="outline">
+                    <Badge variant="outline" aria-label={`Formato: ${product.format || "N/A"}`}>{String(product.format || "N/A")}</Badge>
+                    <Badge variant="outline" aria-label={`Categorías: ${product.categories?.map(c => c.name).join(", ") || "Sin categoría"}`}>
                       {product.categories && product.categories.length > 0 
                         ? product.categories.map(c => c.name).join(", ") 
                         : (product as any).category?.name || "Sin categoría"}
                     </Badge>
-                    <Badge variant={product.inStock ? "secondary" : "destructive"}>
+                    <Badge variant={product.inStock ? "secondary" : "destructive"} aria-label={`Stock actual: ${product.stock}`}>
                       Stock: {Number(product.stock)}
                     </Badge>
                     {product.stock < 10 && product.inStock && (
-                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <AlertTriangle className="h-4 w-4 text-amber-500" aria-label="Alerta: Stock bajo" />
                     )}
                   </div>
 
                   <div className="flex items-center gap-2 mt-3">
-                    <Badge variant={product.isActive ? "default" : "secondary"}>
+                    <Badge variant={product.isActive ? "default" : "secondary"} aria-label={`Estado: ${product.isActive ? "Activo" : "Inactivo"}`}>
                       {product.isActive ? "Activo" : "Inactivo"}
                     </Badge>
                     {product.isFeatured && (
-                      <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800">Destacado</Badge>
+                      <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" aria-label="Producto destacado">Destacado</Badge>
                     )}
                   </div>
 
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex gap-2 mt-4" role="group" aria-label={`Acciones para ${product.name}`}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -707,8 +718,9 @@ export function AdminProductsPage() {
                         })
                         setShowAddStockDialog(true)
                       }}
+                      aria-label={`Reabastecer stock de ${product.name}`}
                     >
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
                       Stock
                     </Button>
                     <Button
@@ -716,8 +728,9 @@ export function AdminProductsPage() {
                       size="sm"
                       className="flex-1"
                       onClick={() => setViewingProduct(product)}
+                      aria-label={`Ver detalles de ${product.name}`}
                     >
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="h-4 w-4 mr-1" aria-hidden="true" />
                       Ver
                     </Button>
                     <Button
@@ -725,19 +738,21 @@ export function AdminProductsPage() {
                       size="sm"
                       className="flex-1"
                       onClick={() => handleEdit(product)}
+                      aria-label={`Editar ${product.name}`}
                     >
-                      <Edit className="h-4 w-4 mr-1" />
+                      <Edit className="h-4 w-4 mr-1" aria-hidden="true" />
                       Editar
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => toggleProductStatus(product.id, product.isActive)}
+                      aria-label={product.isActive ? `Desactivar ${product.name}` : `Activar ${product.name}`}
                     >
                       {product.isActive ? (
-                        <X className="h-4 w-4 text-red-500" />
+                        <X className="h-4 w-4 text-red-500" aria-hidden="true" />
                       ) : (
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
                       )}
                     </Button>
                   </div>
@@ -746,28 +761,29 @@ export function AdminProductsPage() {
             ))}
           </div>
         ) : (
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-border/60 rounded-2xl shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+              <table className="w-full text-left" aria-label="Tabla de productos">
+                <thead className="bg-muted/40 border-b border-border/60">
                   <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Producto</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Marca/Cat</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Precio</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Stock</th>
-                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Acciones</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Producto</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Marca/Cat</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Precio</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Stock</th>
+                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right" scope="col">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-border/40">
                   {filteredProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr key={product.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
-                          <div className="bg-slate-100 dark:bg-slate-800 aspect-square rounded-lg size-12 flex-shrink-0 overflow-hidden">
+                          <div className="bg-muted/40 aspect-square rounded-lg size-12 flex-shrink-0 overflow-hidden">
                             <img
                               src={product.images?.find(img => img.isMain)?.url || product.image}
-                              alt={product.name}
+                              alt=""
                               className="w-full h-full object-contain"
+                              aria-hidden="true"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
@@ -776,14 +792,14 @@ export function AdminProductsPage() {
                             />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{product.name}</p>
-                            <p className="text-xs text-slate-400 font-medium">SKU: {product.sku}</p>
+                            <p className="text-sm font-bold text-foreground leading-tight">{product.name}</p>
+                            <p className="text-xs text-muted-foreground font-medium" aria-label={`SKU: ${product.sku}`}>SKU: {product.sku}</p>
                             <div className="flex items-center gap-1 mt-1">
                               {product.isFeatured && (
-                                <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-200">Destacado</Badge>
+                                <Badge variant="outline" className="text-[10px] h-4 px-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 border-amber-200" aria-label="Destacado">Destacado</Badge>
                               )}
                               {!product.isActive && (
-                                <Badge variant="secondary" className="text-[10px] h-4 px-1">Inactivo</Badge>
+                                <Badge variant="secondary" className="text-[10px] h-4 px-1" aria-label="Inactivo">Inactivo</Badge>
                               )}
                             </div>
                           </div>
@@ -791,10 +807,10 @@ export function AdminProductsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                          <span className="text-sm font-medium text-muted-foreground" aria-label={`Marca: ${product.brand}`}>
                             {String(typeof product.brand === 'string' ? product.brand : (product as any).brandName || (product as any).brand?.name || "Sin marca")}
                           </span>
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs text-muted-foreground" aria-label={`Categorías: ${product.categories?.map(c => c.name).join(", ") || "Sin categoría"}`}>
                             {product.categories && product.categories.length > 0 
                               ? product.categories.map(c => c.name).join(", ") 
                               : (product as any).category?.name || "Sin categoría"}
@@ -802,7 +818,7 @@ export function AdminProductsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-bold text-primary">{formatUSD(product.price)}</span>
+                        <span className="text-sm font-bold text-primary" aria-label={`Precio: ${formatUSD(product.price)}`}>{formatUSD(product.price)}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1">
@@ -811,14 +827,14 @@ export function AdminProductsPage() {
                             product.stock === 0 ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400" :
                             product.stock < 10 ? "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400" :
                             "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                          )}>
+                          )} aria-label={`Estado de stock: ${product.stock === 0 ? "Agotado" : "En Stock"}`}>
                             {product.stock === 0 ? "Agotado" : `En Stock (${product.stock})`}
                           </span>
-                          <span className="text-[10px] text-slate-400 font-medium uppercase">{product.format}</span>
+                          <span className="text-[10px] text-slate-400 font-medium uppercase" aria-label={`Formato: ${product.format}`}>{product.format}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2" role="group" aria-label={`Acciones para ${product.name}`}>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -834,36 +850,39 @@ export function AdminProductsPage() {
                               })
                               setShowAddStockDialog(true)
                             }}
-                            title="Reabastecer"
+                            aria-label={`Reabastecer stock de ${product.name}`}
                           >
-                            <Package className="h-4 w-4" />
+                            <Package className="h-4 w-4" aria-hidden="true" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-slate-400 hover:text-primary"
                             onClick={() => setViewingProduct(product)}
+                            aria-label={`Ver detalles de ${product.name}`}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4" aria-hidden="true" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-slate-400 hover:text-blue-500"
                             onClick={() => handleEdit(product)}
+                            aria-label={`Editar ${product.name}`}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-4 w-4" aria-hidden="true" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-slate-400 hover:text-red-500"
                             onClick={() => toggleProductStatus(product.id, product.isActive)}
+                            aria-label={product.isActive ? `Desactivar ${product.name}` : `Activar ${product.name}`}
                           >
                             {product.isActive ? (
-                              <X className="h-4 w-4" />
+                              <X className="h-4 w-4" aria-hidden="true" />
                             ) : (
-                              <Check className="h-4 w-4 text-green-500" />
+                              <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
                             )}
                           </Button>
                         </div>
@@ -1000,7 +1019,20 @@ export function AdminProductsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Código de producto *</label>
+                  <Input
+                    value={formData.productCode}
+                    onChange={(e) => {
+                      setFormData({ ...formData, productCode: e.target.value })
+                      if (errors.productCode) setErrors({ ...errors, productCode: undefined })
+                    }}
+                    placeholder="Ej: PROD-001"
+                    className={errors.productCode ? "border-red-500" : ""}
+                  />
+                  {errors.productCode && <p className="text-xs text-red-500 mt-1">{errors.productCode}</p>}
+                </div>
                 <div>
                   <label className="text-sm font-medium">SKU (Opcional)</label>
                   <Input
@@ -1015,120 +1047,21 @@ export function AdminProductsPage() {
                   {errors.sku && <p className="text-xs text-red-500 mt-1">{errors.sku}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Costo Compra *</label>
+                  <label className="text-sm font-medium">Costo envío por unidad (USD)</label>
                   <Input
                     type="number"
-                    value={formData.purchasePrice || ""}
+                    step="0.01"
+                    value={formData.shippingCost || ""}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0
-                      const newPrice = val * formData.profitMargin
-                      setFormData({ 
-                        ...formData, 
-                        purchasePrice: val,
-                        price: Number(newPrice.toFixed(2))
-                      })
-                      if (errors.purchasePrice) setErrors({ ...errors, purchasePrice: undefined })
+                      setFormData({ ...formData, shippingCost: parseFloat(e.target.value) || 0 })
+                      if (errors.shippingCost) setErrors({ ...errors, shippingCost: undefined })
                     }}
                     placeholder="0.00"
-                    className={errors.purchasePrice ? "border-red-500" : ""}
+                    className={errors.shippingCost ? "border-red-500" : ""}
                   />
-                  {errors.purchasePrice && <p className="text-xs text-red-500 mt-1">{errors.purchasePrice}</p>}
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Margen (x1.5)</label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.profitMargin || ""}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0
-                      const newPrice = formData.purchasePrice * val
-                      setFormData({ 
-                        ...formData, 
-                        profitMargin: val,
-                        price: Number(newPrice.toFixed(2))
-                      })
-                    }}
-                    placeholder="1.5"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Precio Venta *</label>
-                  <Input
-                    type="number"
-                    value={formData.price || ""}
-                    onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0
-                      const newMargin = formData.purchasePrice > 0 ? val / formData.purchasePrice : 1.5
-                      setFormData({ 
-                        ...formData, 
-                        price: val,
-                        profitMargin: Number(newMargin.toFixed(2))
-                      })
-                      if (errors.price) setErrors({ ...errors, price: undefined })
-                    }}
-                    placeholder="0.00"
-                    className={errors.price ? "border-red-500" : ""}
-                  />
-                  {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
+                  {errors.shippingCost && <p className="text-xs text-red-500 mt-1">{errors.shippingCost}</p>}
                 </div>
               </div>
-
-              {!editingProduct && (
-                <div className="grid grid-cols-3 gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-800">
-                  <div className="col-span-3 text-xs font-bold uppercase text-slate-500 mb-1">Datos del Lote Inicial</div>
-                  <div>
-                    <label className="text-sm font-medium">Stock Inicial *</label>
-                    <Input
-                      type="number"
-                      value={formData.stock || ""}
-                      onChange={(e) => {
-                        setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
-                        if (errors.stock) setErrors({ ...errors, stock: undefined })
-                      }}
-                      placeholder="0"
-                      className={errors.stock ? "border-red-500" : ""}
-                    />
-                    {errors.stock && <p className="text-xs text-red-500 mt-1">{errors.stock}</p>}
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Nro Lote</label>
-                    <Input
-                      value={formData.batchNumber}
-                      onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
-                      placeholder="Ej: LOTE-001"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Vencimiento</label>
-                    <Input
-                      type="date"
-                      value={formData.expirationDate}
-                      onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {editingProduct && (
-                <div>
-                  <label className="text-sm font-medium">Stock Total</label>
-                  <Input
-                    type="number"
-                    value={formData.stock || ""}
-                    onChange={(e) => {
-                      setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })
-                      if (errors.stock) setErrors({ ...errors, stock: undefined })
-                    }}
-                    placeholder="0"
-                    disabled
-                    className="bg-slate-50"
-                  />
-                  <p className="text-[10px] text-muted-foreground mt-1 italic">
-                    Para añadir stock usa el botón de reabastecimiento en la lista.
-                  </p>
-                </div>
-              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1147,7 +1080,7 @@ export function AdminProductsPage() {
                   {errors.categoryIds && <p className="text-xs text-red-500 mt-1">{errors.categoryIds}</p>}
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Marca *</label>
+                  <label className="text-sm font-medium" id="brand-label">Marca *</label>
                   <Select
                     value={formData.brand}
                     onValueChange={(val) => {
@@ -1160,7 +1093,7 @@ export function AdminProductsPage() {
                       }
                     }}
                   >
-                    <SelectTrigger className={errors.brand ? "border-red-500" : ""}>
+                    <SelectTrigger className={errors.brand ? "border-red-500" : ""} aria-labelledby="brand-label">
                       <SelectValue placeholder="Seleccionar marca" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1180,12 +1113,20 @@ export function AdminProductsPage() {
                   </Select>
                   
                   {showCustomBrand && (
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2 mt-2" role="group" aria-label="Añadir nueva marca">
                       <Input
                         value={customBrand}
                         onChange={(e) => setCustomBrand(e.target.value)}
                         placeholder="Escribe la marca..."
                         className="flex-1"
+                        aria-label="Nombre de la nueva marca"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const submitBtn = e.currentTarget.nextElementSibling as HTMLButtonElement;
+                            submitBtn?.click();
+                          }
+                        }}
                       />
                       <Button 
                         type="button"
@@ -1202,95 +1143,95 @@ export function AdminProductsPage() {
                             if (errors.brand) setErrors({ ...errors, brand: undefined })
                           }
                         }}
+                        aria-label="Confirmar nueva marca"
                       >
                         Añadir
                       </Button>
                     </div>
                   )}
-                  {errors.brand && <p className="text-xs text-red-500 mt-1">{errors.brand}</p>}
+                  {errors.brand && <p className="text-xs text-red-500 mt-1" role="alert">{errors.brand}</p>}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Imágenes del producto</label>
+                <label className="text-sm font-medium mb-2 block" id="images-label">Imágenes del producto</label>
                 <ImageUpload 
                   images={formData.images} 
                   onChange={(images) => {
                     setFormData({ ...formData, images })
                     if (errors.images) setErrors({ ...errors, images: undefined })
                   }}
+                  aria-labelledby="images-label"
                 />
-                {errors.images && <p className="text-xs text-red-500 mt-1">{errors.images}</p>}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Formato *</label>
-                  <Select
-                    value={formData.format}
-                    onValueChange={(val) => {
-                      if (val === "custom") {
-                        setShowCustomFormat(true)
-                      } else {
-                        setFormData({ ...formData, format: val })
-                        setShowCustomFormat(false)
-                        if (errors.format) setErrors({ ...errors, format: undefined })
-                      }
-                    }}
-                  >
-                    <SelectTrigger className={errors.format ? "border-red-500" : ""}>
-                      <SelectValue placeholder="Seleccionar formato" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {FORMAT_OPTIONS.map((opt) => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                      ))}
-                      <SelectItem value="custom" className="text-primary font-medium">
-                        + Otro formato...
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {showCustomFormat && (
-                    <div className="flex gap-2 mt-2">
-                      <Input
-                        value={customFormat}
-                        onChange={(e) => setCustomFormat(e.target.value)}
-                        placeholder="Escribe el formato..."
-                        className="flex-1"
-                      />
-                      <Button 
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          if (customFormat.trim()) {
-                            const newFormat = customFormat.trim()
-                            setFormData({ ...formData, format: newFormat })
-                            setShowCustomFormat(false)
-                            setCustomFormat("")
-                            if (errors.format) setErrors({ ...errors, format: undefined })
-                          }
-                        }}
-                      >
-                        Añadir
-                      </Button>
-                    </div>
-                  )}
-                  {errors.format && <p className="text-xs text-red-500 mt-1">{errors.format}</p>}
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Precio original (oferta)</label>
-                  <Input
-                    type="number"
-                    value={formData.originalPrice || ""}
-                    onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) || null })}
-                    placeholder="Opcional"
-                  />
-                </div>
+                {errors.images && <p className="text-xs text-red-500 mt-1" role="alert">{errors.images}</p>}
               </div>
 
               <div>
-                <label className="text-sm font-medium">Descripcion</label>
+                <label className="text-sm font-medium" id="format-label">Formato *</label>
+                <Select
+                  value={formData.format}
+                  onValueChange={(val) => {
+                    if (val === "custom") {
+                      setShowCustomFormat(true)
+                    } else {
+                      setFormData({ ...formData, format: val })
+                      setShowCustomFormat(false)
+                      if (errors.format) setErrors({ ...errors, format: undefined })
+                    }
+                  }}
+                >
+                  <SelectTrigger className={errors.format ? "border-red-500" : ""} aria-labelledby="format-label">
+                    <SelectValue placeholder="Seleccionar formato" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FORMAT_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                    <SelectItem value="custom" className="text-primary font-medium">
+                      + Otro formato...
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {showCustomFormat && (
+                  <div className="flex gap-2 mt-2" role="group" aria-label="Añadir nuevo formato">
+                    <Input
+                      value={customFormat}
+                      onChange={(e) => setCustomFormat(e.target.value)}
+                      placeholder="Escribe el formato..."
+                      className="flex-1"
+                      aria-label="Nombre del nuevo formato"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const submitBtn = e.currentTarget.nextElementSibling as HTMLButtonElement;
+                          submitBtn?.click();
+                        }
+                      }}
+                    />
+                    <Button 
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        if (customFormat.trim()) {
+                          const newFormat = customFormat.trim()
+                          setFormData({ ...formData, format: newFormat })
+                          setShowCustomFormat(false)
+                          setCustomFormat("")
+                          if (errors.format) setErrors({ ...errors, format: undefined })
+                        }
+                      }}
+                      aria-label="Confirmar nuevo formato"
+                    >
+                      Añadir
+                    </Button>
+                  </div>
+                )}
+                {errors.format && <p className="text-xs text-red-500 mt-1" role="alert">{errors.format}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium" id="description-label">Descripcion</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => {
@@ -1302,26 +1243,29 @@ export function AdminProductsPage() {
                     "w-full px-3 py-2 border rounded-md min-h-[100px]",
                     errors.description ? "border-red-500" : ""
                   )}
+                  aria-labelledby="description-label"
                 />
-                {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description}</p>}
+                {errors.description && <p className="text-xs text-red-500 mt-1" role="alert">{errors.description}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isFeatured}
                     onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                     className="rounded"
+                    aria-label="Marcar como producto destacado"
                   />
                   <span className="text-sm">Producto destacado</span>
                 </label>
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                     className="rounded"
+                    aria-label="Mantener producto activo"
                   />
                   <span className="text-sm">Activo</span>
                 </label>
@@ -1392,21 +1336,29 @@ export function AdminProductsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                  <p className="text-sm text-muted-foreground">SKU</p>
-                  <p className="font-medium">{String(viewingProduct.sku || "N/A")}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Categorías</p>
-                  <p className="font-medium">
-                    {viewingProduct.categories && viewingProduct.categories.length > 0 
-                      ? viewingProduct.categories.map(c => c.name).join(", ") 
-                      : (viewingProduct as any).categoryName || (viewingProduct as any).category?.name || "Sin categoría"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Formato</p>
-                  <p className="font-medium">{String(viewingProduct.format || "N/A")}</p>
-                </div>
+                    <p className="text-sm text-muted-foreground">Código de producto</p>
+                    <p className="font-medium">{String((viewingProduct as any).productCode || (viewingProduct as any).code || "N/A")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">SKU</p>
+                    <p className="font-medium">{String(viewingProduct.sku || "N/A")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Categorías</p>
+                    <p className="font-medium">
+                      {viewingProduct.categories && viewingProduct.categories.length > 0 
+                        ? viewingProduct.categories.map(c => c.name).join(", ") 
+                        : (viewingProduct as any).categoryName || (viewingProduct as any).category?.name || "Sin categoría"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Formato</p>
+                    <p className="font-medium">{String(viewingProduct.format || "N/A")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Costo envío por unidad</p>
+                    <p className="font-medium">{formatUSD((viewingProduct as any).shippingCost || 0)}</p>
+                  </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Precio</p>
                     <p className="text-2xl font-bold text-green-600">
@@ -1418,10 +1370,10 @@ export function AdminProductsPage() {
                     <p className="font-medium">{Number(viewingProduct.stock)} unidades</p>
                   </div>
                   <div>
-                  <p className="text-sm text-muted-foreground">Ventas</p>
-                  <p className="font-medium">{Number(viewingProduct.salesCount || 0)} unidades</p>
+                    <p className="text-sm text-muted-foreground">Ventas</p>
+                    <p className="font-medium">{Number(viewingProduct.salesCount || 0)} unidades</p>
+                  </div>
                 </div>
-              </div>
 
               {viewingProduct.priceHistory && viewingProduct.priceHistory.length > 0 && (
                 <div className="space-y-2">

@@ -56,7 +56,11 @@ router.post('/manual', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Tasa inválida' })
     }
     
-    const newRecord = await bcvService.setRate(parseFloat(rate), 'manual-admin')
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    
+    const newRecord = await bcvService.setRate(parseFloat(rate), 'manual-admin', userId, ipAddress, userAgent)
     res.json({ 
       message: 'Tasa actualizada manualmente', 
       rate: newRecord.rate,

@@ -1,5 +1,5 @@
 import { Router, Response } from 'express'
-import { saleService } from '../../../shared/container.js'
+import { saleService, paymentService } from '../../../shared/container.js'
 import { authenticate, AuthRequest } from '../middleware/auth.middleware.js'
 
 const router = Router()
@@ -34,12 +34,39 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'No tienes permiso para ver este pedido' })
     }
 
-    res.json(sale)
+    // Incluir estado de pagos e instalamentos
+    const paymentStatus = await paymentService.getPaymentStatus(saleId)
+    
+    res.json({
+      ...sale,
+      paymentStatus
+    })
   } catch (error) {
     if (error instanceof Error && error.message.includes('no encontrado')) {
       return res.status(404).json({ error: error.message })
     }
     res.status(500).json({ error: 'Error al obtener detalle del pedido' })
+  }
+})
+
+// Subir comprobante de pago
+router.post('/installments/:installmentId/proof', async (req: AuthRequest, res: Response) => {
+  try {
+    const installmentId = req.params.installmentId as string
+    const { proofUrl, amountUSD, notes } = req.body
+
+    const proof = await paymentService.submitPaymentProof({
+      installmentId,
+      proofUrl,
+      amountUSD: Number(amountUSD),
+      notes
+    })
+
+    res.status(201).json(proof)
+  } catch (error: any) {
+    console.error('Error al subir comprobante:', error)
+    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
+    res.status(status).json({ error: error.message || 'Error al procesar comprobante' })
   }
 })
 

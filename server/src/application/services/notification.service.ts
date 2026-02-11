@@ -1,12 +1,13 @@
 import { NotificationRepository, BatchRepository, NotificationSettingRepository } from '../../domain/repositories/business.repository.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
-import { socketService } from '../../infrastructure/socket.service.js'
+import { NotificationManager } from './notification-manager.service.js'
 
 export class NotificationService {
   constructor(
     private notificationRepo: NotificationRepository,
     private productRepo: ProductRepository,
     private batchRepo: BatchRepository,
+    private notificationManager: NotificationManager,
     private settingRepo?: NotificationSettingRepository
   ) {}
 
@@ -20,30 +21,7 @@ export class NotificationService {
     link?: string
     metadata?: string
   }) {
-    // Si hay un usuario, verificar si tiene silenciada esta categoría
-    if (data.userId && this.settingRepo && data.category) {
-      const settings = await this.settingRepo.findByUserId(data.userId)
-      if (settings) {
-        const categoryKey = data.category.toLowerCase() as keyof typeof settings
-        // @ts-ignore
-        if (settings[categoryKey] === false) {
-          // Si está silenciada, no creamos la notificación (o podríamos crearla pero no emitirla)
-          // Para este caso, la crearemos para el historial pero no la emitiremos por socket
-          const notification = await this.notificationRepo.create(data)
-          return notification
-        }
-      }
-    }
-
-    const notification = await this.notificationRepo.create(data)
-    
-    if (data.userId) {
-      socketService.emitToUser(data.userId, 'notification', notification)
-    } else {
-      socketService.emitToAdmin('notification', notification)
-    }
-
-    return notification
+    return this.notificationManager.createNotification(data)
   }
 
   async getUnreadNotifications(userId?: string) {
@@ -71,42 +49,10 @@ export class NotificationService {
   }
 
   async checkLowStock() {
-    const products = await this.productRepo.findLowStock()
-
-    for (const product of products) {
-      const existingNotification = await this.notificationRepo.findFirst({
-        type: 'LOW_STOCK',
-        message: { contains: product.sku },
-        isRead: false,
-      })
-
-      if (!existingNotification) {
-        await this.createNotification({
-          type: 'LOW_STOCK',
-          title: 'Stock Bajo',
-          message: `El producto ${product.name} (SKU: ${product.sku}) tiene un stock de ${product.stock}, el mínimo es ${product.minStock}.`,
-        })
-      }
-    }
+    return this.notificationManager.checkLowStock()
   }
 
   async checkExpirations() {
-    const nearExpiryBatches = await this.batchRepo.findNearExpiry(30)
-
-    for (const batch of nearExpiryBatches) {
-      const existingNotification = await this.notificationRepo.findFirst({
-        type: 'EXPIRATION',
-        message: { contains: batch.batchNumber },
-        isRead: false,
-      })
-
-      if (!existingNotification) {
-        await this.createNotification({
-          type: 'EXPIRATION',
-          title: 'Producto próximo a vencer',
-          message: `El lote ${batch.batchNumber} del producto ${batch.product.name} vence el ${new Date(batch.expirationDate).toLocaleDateString()}.`,
-        })
-      }
-    }
+    return this.notificationManager.checkExpirations()
   }
 }

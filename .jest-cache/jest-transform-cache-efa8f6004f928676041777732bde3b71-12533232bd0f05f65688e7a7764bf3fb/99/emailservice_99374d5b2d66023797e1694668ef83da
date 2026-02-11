@@ -1,0 +1,904 @@
+cfa934dad322e9999eff5b72f969b001
+/* istanbul ignore next */
+function cov_xwpnxddg0() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\email.service.ts";
+  var hash = "bfdcb4f5fe851092d8883fb10bddd109bd569d52";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\email.service.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 5,
+          column: 8
+        },
+        end: {
+          line: 10,
+          column: 11
+        }
+      },
+      "1": {
+        start: {
+          line: 11,
+          column: 8
+        },
+        end: {
+          line: 17,
+          column: 11
+        }
+      },
+      "2": {
+        start: {
+          line: 20,
+          column: 32
+        },
+        end: {
+          line: 20,
+          column: 83
+        }
+      },
+      "3": {
+        start: {
+          line: 21,
+          column: 28
+        },
+        end: {
+          line: 42,
+          column: 9
+        }
+      },
+      "4": {
+        start: {
+          line: 43,
+          column: 8
+        },
+        end: {
+          line: 54,
+          column: 9
+        }
+      },
+      "5": {
+        start: {
+          line: 44,
+          column: 12
+        },
+        end: {
+          line: 44,
+          column: 57
+        }
+      },
+      "6": {
+        start: {
+          line: 45,
+          column: 12
+        },
+        end: {
+          line: 45,
+          column: 86
+        }
+      },
+      "7": {
+        start: {
+          line: 48,
+          column: 12
+        },
+        end: {
+          line: 48,
+          column: 76
+        }
+      },
+      "8": {
+        start: {
+          line: 50,
+          column: 12
+        },
+        end: {
+          line: 52,
+          column: 13
+        }
+      },
+      "9": {
+        start: {
+          line: 51,
+          column: 16
+        },
+        end: {
+          line: 51,
+          column: 79
+        }
+      },
+      "10": {
+        start: {
+          line: 53,
+          column: 12
+        },
+        end: {
+          line: 53,
+          column: 112
+        }
+      },
+      "11": {
+        start: {
+          line: 57,
+          column: 25
+        },
+        end: {
+          line: 57,
+          column: 78
+        }
+      },
+      "12": {
+        start: {
+          line: 58,
+          column: 28
+        },
+        end: {
+          line: 79,
+          column: 9
+        }
+      },
+      "13": {
+        start: {
+          line: 80,
+          column: 8
+        },
+        end: {
+          line: 90,
+          column: 9
+        }
+      },
+      "14": {
+        start: {
+          line: 81,
+          column: 12
+        },
+        end: {
+          line: 81,
+          column: 57
+        }
+      },
+      "15": {
+        start: {
+          line: 82,
+          column: 12
+        },
+        end: {
+          line: 82,
+          column: 90
+        }
+      },
+      "16": {
+        start: {
+          line: 85,
+          column: 12
+        },
+        end: {
+          line: 85,
+          column: 76
+        }
+      },
+      "17": {
+        start: {
+          line: 86,
+          column: 12
+        },
+        end: {
+          line: 88,
+          column: 13
+        }
+      },
+      "18": {
+        start: {
+          line: 87,
+          column: 16
+        },
+        end: {
+          line: 87,
+          column: 83
+        }
+      },
+      "19": {
+        start: {
+          line: 89,
+          column: 12
+        },
+        end: {
+          line: 89,
+          column: 132
+        }
+      },
+      "20": {
+        start: {
+          line: 93,
+          column: 24
+        },
+        end: {
+          line: 93,
+          column: 52
+        }
+      },
+      "21": {
+        start: {
+          line: 94,
+          column: 26
+        },
+        end: {
+          line: 101,
+          column: 15
+        }
+      },
+      "22": {
+        start: {
+          line: 94,
+          column: 44
+        },
+        end: {
+          line: 101,
+          column: 5
+        }
+      },
+      "23": {
+        start: {
+          line: 102,
+          column: 28
+        },
+        end: {
+          line: 125,
+          column: 9
+        }
+      },
+      "24": {
+        start: {
+          line: 126,
+          column: 8
+        },
+        end: {
+          line: 133,
+          column: 9
+        }
+      },
+      "25": {
+        start: {
+          line: 127,
+          column: 12
+        },
+        end: {
+          line: 127,
+          column: 57
+        }
+      },
+      "26": {
+        start: {
+          line: 128,
+          column: 12
+        },
+        end: {
+          line: 128,
+          column: 92
+        }
+      },
+      "27": {
+        start: {
+          line: 131,
+          column: 12
+        },
+        end: {
+          line: 131,
+          column: 98
+        }
+      },
+      "28": {
+        start: {
+          line: 136,
+          column: 28
+        },
+        end: {
+          line: 173,
+          column: 9
+        }
+      },
+      "29": {
+        start: {
+          line: 174,
+          column: 8
+        },
+        end: {
+          line: 181,
+          column: 9
+        }
+      },
+      "30": {
+        start: {
+          line: 175,
+          column: 12
+        },
+        end: {
+          line: 175,
+          column: 57
+        }
+      },
+      "31": {
+        start: {
+          line: 176,
+          column: 12
+        },
+        end: {
+          line: 176,
+          column: 72
+        }
+      },
+      "32": {
+        start: {
+          line: 179,
+          column: 12
+        },
+        end: {
+          line: 179,
+          column: 78
+        }
+      },
+      "33": {
+        start: {
+          line: 180,
+          column: 12
+        },
+        end: {
+          line: 180,
+          column: 72
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 4,
+            column: 4
+          },
+          end: {
+            line: 4,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 4,
+            column: 18
+          },
+          end: {
+            line: 18,
+            column: 5
+          }
+        },
+        line: 4
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 19,
+            column: 4
+          },
+          end: {
+            line: 19,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 19,
+            column: 52
+          },
+          end: {
+            line: 55,
+            column: 5
+          }
+        },
+        line: 19
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 56,
+            column: 4
+          },
+          end: {
+            line: 56,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 56,
+            column: 47
+          },
+          end: {
+            line: 91,
+            column: 5
+          }
+        },
+        line: 56
+      },
+      "3": {
+        name: "(anonymous_3)",
+        decl: {
+          start: {
+            line: 92,
+            column: 4
+          },
+          end: {
+            line: 92,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 92,
+            column: 53
+          },
+          end: {
+            line: 134,
+            column: 5
+          }
+        },
+        line: 92
+      },
+      "4": {
+        name: "(anonymous_4)",
+        decl: {
+          start: {
+            line: 94,
+            column: 36
+          },
+          end: {
+            line: 94,
+            column: 37
+          }
+        },
+        loc: {
+          start: {
+            line: 94,
+            column: 44
+          },
+          end: {
+            line: 101,
+            column: 5
+          }
+        },
+        line: 94
+      },
+      "5": {
+        name: "(anonymous_5)",
+        decl: {
+          start: {
+            line: 135,
+            column: 4
+          },
+          end: {
+            line: 135,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 135,
+            column: 45
+          },
+          end: {
+            line: 182,
+            column: 5
+          }
+        },
+        line: 135
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 50,
+            column: 12
+          },
+          end: {
+            line: 52,
+            column: 13
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 50,
+            column: 12
+          },
+          end: {
+            line: 52,
+            column: 13
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 50
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 86,
+            column: 12
+          },
+          end: {
+            line: 88,
+            column: 13
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 86,
+            column: 12
+          },
+          end: {
+            line: 88,
+            column: 13
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 86
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
+      "13": 0,
+      "14": 0,
+      "15": 0,
+      "16": 0,
+      "17": 0,
+      "18": 0,
+      "19": 0,
+      "20": 0,
+      "21": 0,
+      "22": 0,
+      "23": 0,
+      "24": 0,
+      "25": 0,
+      "26": 0,
+      "27": 0,
+      "28": 0,
+      "29": 0,
+      "30": 0,
+      "31": 0,
+      "32": 0,
+      "33": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    },
+    b: {
+      "0": [0, 0],
+      "1": [0, 0]
+    },
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\email.service.ts",
+      mappings: "AAAA,OAAO,UAAU,MAAM,YAAY,CAAA;AACnC,OAAO,EAAE,MAAM,EAAE,MAAM,8BAA8B,CAAA;AAErD,MAAM,OAAO,YAAY;IAGvB;QAFQ;;;;;WAAmC;QAGzC,IAAI,CAAC,WAAW,GAAG,UAAU,CAAC,eAAe,CAAC;YAC5C,OAAO,EAAE,OAAO;YAChB,IAAI,EAAE;gBACJ,IAAI,EAAE,MAAM,CAAC,QAAQ;gBACrB,IAAI,EAAE,MAAM,CAAC,QAAQ;aACtB;SACF,CAAC,CAAA;IACJ,CAAC;IAED,KAAK,CAAC,qBAAqB,CAAC,KAAa,EAAE,KAAa,EAAE,IAAY;QACpE,MAAM,eAAe,GAAG,GAAG,MAAM,CAAC,WAAW,uBAAuB,KAAK,EAAE,CAAA;QAE3E,MAAM,WAAW,GAAG;YAClB,IAAI,EAAE,wBAAwB,MAAM,CAAC,SAAS,GAAG;YACjD,EAAE,EAAE,KAAK;YACT,OAAO,EAAE,yCAAyC;YAClD,IAAI,EAAE;;sBAEU,IAAI;;;uBAGH,eAAe;;;;;;eAMvB,eAAe;;;;;OAKvB;SACF,CAAA;QAED,IAAI,CAAC;YACH,MAAM,IAAI,CAAC,WAAW,CAAC,QAAQ,CAAC,WAAW,CAAC,CAAA;YAC5C,OAAO,CAAC,GAAG,CAAC,qDAAqD,KAAK,EAAE,CAAC,CAAA;QAC3E,CAAC;QAAC,OAAO,KAAK,EAAE,CAAC;YACf,OAAO,CAAC,KAAK,CAAC,yCAAyC,EAAE,KAAK,CAAC,CAAA;YAC/D,qEAAqE;YACrE,IAAI,MAAM,CAAC,OAAO,KAAK,YAAY,EAAE,CAAC;gBACpC,MAAM,IAAI,KAAK,CAAC,6CAA6C,CAAC,CAAA;YAChE,CAAC;YACD,OAAO,CAAC,IAAI,CAAC,qFAAqF,CAAC,CAAA;QACrG,CAAC;IACH,CAAC;IAED,KAAK,CAAC,sBAAsB,CAAC,KAAa,EAAE,KAAa;QACvD,MAAM,QAAQ,GAAG,GAAG,MAAM,CAAC,WAAW,yBAAyB,KAAK,EAAE,CAAA;QAEtE,MAAM,WAAW,GAAG;YAClB,IAAI,EAAE,wBAAwB,MAAM,CAAC,SAAS,GAAG;YACjD,EAAE,EAAE,KAAK;YACT,OAAO,EAAE,6CAA6C;YACtD,IAAI,EAAE;;;;;uBAKW,QAAQ;;;;;;eAMhB,QAAQ;;;;;OAKhB;SACF,CAAA;QAED,IAAI,CAAC;YACH,MAAM,IAAI,CAAC,WAAW,CAAC,QAAQ,CAAC,WAAW,CAAC,CAAA;YAC5C,OAAO,CAAC,GAAG,CAAC,yDAAyD,KAAK,EAAE,CAAC,CAAA;QAC/E,CAAC;QAAC,OAAO,KAAK,EAAE,CAAC;YACf,OAAO,CAAC,KAAK,CAAC,yCAAyC,EAAE,KAAK,CAAC,CAAA;YAC/D,IAAI,MAAM,CAAC,OAAO,KAAK,YAAY,EAAE,CAAC;gBACpC,MAAM,IAAI,KAAK,CAAC,iDAAiD,CAAC,CAAA;YACpE,CAAC;YACD,OAAO,CAAC,IAAI,CAAC,yGAAyG,CAAC,CAAA;QACzH,CAAC;IACH,CAAC;IAED,KAAK,CAAC,sBAAsB,CAAC,KAAa,EAAE,IAAY,EAAE,KAAY;QACpE,MAAM,OAAO,GAAG,GAAG,MAAM,CAAC,WAAW,OAAO,CAAA;QAC5C,MAAM,SAAS,GAAG,KAAK,CAAC,GAAG,CAAC,IAAI,CAAC,EAAE,CAAC;;;qDAGa,IAAI,CAAC,OAAO,CAAC,IAAI;0EACI,IAAI,CAAC,QAAQ;;;KAGlF,CAAC,CAAC,IAAI,CAAC,EAAE,CAAC,CAAA;QAEX,MAAM,WAAW,GAAG;YAClB,IAAI,EAAE,wBAAwB,MAAM,CAAC,SAAS,GAAG;YACjD,EAAE,EAAE,KAAK;YACT,OAAO,EAAE,sCAAsC;YAC/C,IAAI,EAAE;;sBAEU,IAAI;;;;cAIZ,SAAS;;;uBAGA,OAAO;;;;;;;uDAOyB,IAAI,IAAI,EAAE,CAAC,WAAW,EAAE;;OAExE;SACF,CAAA;QAED,IAAI,CAAC;YACH,MAAM,IAAI,CAAC,WAAW,CAAC,QAAQ,CAAC,WAAW,CAAC,CAAA;YAC5C,OAAO,CAAC,GAAG,CAAC,2DAA2D,KAAK,EAAE,CAAC,CAAA;QACjF,CAAC;QAAC,OAAO,KAAK,EAAE,CAAC;YACf,OAAO,CAAC,KAAK,CAAC,+DAA+D,EAAE,KAAK,CAAC,CAAA;YACrF,wDAAwD;QAC1D,CAAC;IACH,CAAC;IAED,KAAK,CAAC,gBAAgB,CAAC,KAAa,EAAE,SAAiB;QACrD,MAAM,WAAW,GAAG;YAClB,IAAI,EAAE,wBAAwB,MAAM,CAAC,SAAS,GAAG;YACjD,EAAE,EAAE,KAAK;YACT,OAAO,EAAE,oDAAoD;YAC7D,IAAI,EAAE;;;;;;;;;;;;;;;;uBAgBW,MAAM,CAAC,WAAW;;;;;;;;;OASlC;YACD,WAAW,EAAE;gBACX;oBACE,QAAQ,EAAE,+BAA+B;oBACzC,OAAO,EAAE,SAAS;oBAClB,WAAW,EAAE,iBAAiB;iBAC/B;aACF;SACF,CAAA;QAED,IAAI,CAAC;YACH,MAAM,IAAI,CAAC,WAAW,CAAC,QAAQ,CAAC,WAAW,CAAC,CAAA;YAC5C,OAAO,CAAC,GAAG,CAAC,uCAAuC,KAAK,EAAE,CAAC,CAAA;QAC7D,CAAC;QAAC,OAAO,KAAK,EAAE,CAAC;YACf,OAAO,CAAC,KAAK,CAAC,2CAA2C,EAAE,KAAK,CAAC,CAAA;YACjE,MAAM,IAAI,KAAK,CAAC,0CAA0C,CAAC,CAAA;QAC7D,CAAC;IACH,CAAC;CACF",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\email.service.ts"],
+      sourcesContent: ["import nodemailer from 'nodemailer'\nimport { config } from '../../shared/config/index.js'\n\nexport class EmailService {\n  private transporter: nodemailer.Transporter\n\n  constructor() {\n    this.transporter = nodemailer.createTransport({\n      service: 'gmail',\n      auth: {\n        user: config.smtpUser,\n        pass: config.smtpPass,\n      },\n    })\n  }\n\n  async sendVerificationEmail(email: string, token: string, name: string) {\n    const verificationUrl = `${config.frontendUrl}/verify-email?token=${token}`\n\n    const mailOptions = {\n      from: `\"Ana's Supplements\" <${config.emailFrom}>`,\n      to: email,\n      subject: 'Verifica tu cuenta - Ana\\'s Supplements',\n      html: `\n        <div style=\"font-family: sans-serif; max-width: 600px; margin: 0 auto;\">\n          <h2>\xA1Hola ${name}!</h2>\n          <p>Gracias por registrarte en Ana's Supplements. Para completar tu registro y activar tu cuenta, por favor haz clic en el siguiente bot\xF3n:</p>\n          <div style=\"text-align: center; margin: 30px 0;\">\n            <a href=\"${verificationUrl}\" \n               style=\"background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;\">\n              Verificar mi cuenta\n            </a>\n          </div>\n          <p>O copia y pega este enlace en tu navegador:</p>\n          <p>${verificationUrl}</p>\n          <p>Este enlace expirar\xE1 en 24 horas.</p>\n          <hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">\n          <p style=\"color: #666; font-size: 12px;\">Si no creaste esta cuenta, puedes ignorar este correo.</p>\n        </div>\n      `,\n    }\n\n    try {\n      await this.transporter.sendMail(mailOptions)\n      console.log(`[Email Service] Correo de verificaci\xF3n enviado a: ${email}`)\n    } catch (error) {\n      console.error('[Email Service] Error al enviar correo:', error)\n      // En desarrollo, no bloqueamos el flujo por error de env\xEDo de correo\n      if (config.nodeEnv === 'production') {\n        throw new Error('No se pudo enviar el correo de verificaci\xF3n')\n      }\n      console.warn('[Email Service] Desarrollo: No se pudo enviar el correo, pero continuamos el flujo.')\n    }\n  }\n\n  async sendPasswordResetEmail(email: string, token: string) {\n    const resetUrl = `${config.frontendUrl}/reset-password?token=${token}`\n\n    const mailOptions = {\n      from: `\"Ana's Supplements\" <${config.emailFrom}>`,\n      to: email,\n      subject: 'Restablecer contrase\xF1a - Ana\\'s Supplements',\n      html: `\n        <div style=\"font-family: sans-serif; max-width: 600px; margin: 0 auto;\">\n          <h2>Restablecer contrase\xF1a</h2>\n          <p>Has solicitado restablecer tu contrase\xF1a. Haz clic en el siguiente bot\xF3n para continuar:</p>\n          <div style=\"text-align: center; margin: 30px 0;\">\n            <a href=\"${resetUrl}\" \n               style=\"background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;\">\n              Restablecer contrase\xF1a\n            </a>\n          </div>\n          <p>O copia y pega este enlace en tu navegador:</p>\n          <p>${resetUrl}</p>\n          <p>Este enlace expirar\xE1 en 1 hora.</p>\n          <hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">\n          <p style=\"color: #666; font-size: 12px;\">Si no solicitaste este cambio, puedes ignorar este correo.</p>\n        </div>\n      `,\n    }\n\n    try {\n      await this.transporter.sendMail(mailOptions)\n      console.log(`[Email Service] Correo de restablecimiento enviado a: ${email}`)\n    } catch (error) {\n      console.error('[Email Service] Error al enviar correo:', error)\n      if (config.nodeEnv === 'production') {\n        throw new Error('No se pudo enviar el correo de restablecimiento')\n      }\n      console.warn('[Email Service] Desarrollo: No se pudo enviar el correo de restablecimiento, pero continuamos el flujo.')\n    }\n  }\n\n  async sendAbandonedCartEmail(email: string, name: string, items: any[]) {\n    const cartUrl = `${config.frontendUrl}/cart`\n    const itemsHtml = items.map(item => `\n      <div style=\"display: flex; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;\">\n        <div style=\"flex: 1;\">\n          <p style=\"margin: 0; font-weight: bold;\">${item.product.name}</p>\n          <p style=\"margin: 0; color: #666; font-size: 14px;\">Cantidad: ${item.quantity}</p>\n        </div>\n      </div>\n    `).join('')\n\n    const mailOptions = {\n      from: `\"Ana's Supplements\" <${config.emailFrom}>`,\n      to: email,\n      subject: '\xA1Te extra\xF1amos! Tu carrito te espera',\n      html: `\n        <div style=\"font-family: sans-serif; max-width: 600px; margin: 0 auto;\">\n          <h2>\xA1Hola ${name}!</h2>\n          <p>Notamos que dejaste algunos productos incre\xEDbles en tu carrito. \xA1A\xFAn est\xE1n disponibles para ti!</p>\n          <div style=\"margin: 20px 0; background: #f9f9f9; padding: 20px; border-radius: 8px;\">\n            <h3 style=\"margin-top: 0;\">Tu Carrito:</h3>\n            ${itemsHtml}\n          </div>\n          <div style=\"text-align: center; margin: 30px 0;\">\n            <a href=\"${cartUrl}\" \n               style=\"background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;\">\n              Volver a mi carrito\n            </a>\n          </div>\n          <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>\n          <hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">\n          <p style=\"color: #666; font-size: 12px;\">\xA9 ${new Date().getFullYear()} Ana's Supplements. Todos los derechos reservados.</p>\n        </div>\n      `,\n    }\n\n    try {\n      await this.transporter.sendMail(mailOptions)\n      console.log(`[Email Service] Correo de carrito abandonado enviado a: ${email}`)\n    } catch (error) {\n      console.error('[Email Service] Error al enviar correo de carrito abandonado:', error)\n      // No lanzamos error para no detener el proceso de fondo\n    }\n  }\n\n  async sendCatalogEmail(email: string, pdfBuffer: Buffer) {\n    const mailOptions = {\n      from: `\"Ana's Supplements\" <${config.emailFrom}>`,\n      to: email,\n      subject: 'Nuestro Cat\xE1logo de Productos - Ana\\'s Supplements',\n      html: `\n        <div style=\"font-family: sans-serif; max-width: 600px; margin: 0 auto;\">\n          <h2 style=\"color: #10b981;\">\xA1Hola!</h2>\n          <p>Adjunto encontrar\xE1s nuestro cat\xE1logo actualizado de productos en formato PDF.</p>\n          <p>En Ana's Supplements nos esforzamos por ofrecerte los mejores suplementos y productos para tu salud al mejor precio.</p>\n          <div style=\"background-color: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;\">\n            <p style=\"margin: 0; font-weight: bold;\">\xBFQu\xE9 encontrar\xE1s en este cat\xE1logo?</p>\n            <ul style=\"margin-top: 10px;\">\n              <li>Vitaminas y Multivitam\xEDnicos</li>\n              <li>Suplementos Nutricionales</li>\n              <li>Productos de Cuidado Personal</li>\n              <li>\xA1Y mucho m\xE1s!</li>\n            </ul>\n          </div>\n          <p>Puedes realizar tus pedidos directamente en nuestra plataforma web:</p>\n          <div style=\"text-align: center; margin: 30px 0;\">\n            <a href=\"${config.frontendUrl}\" \n               style=\"background-color: #10b981; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;\">\n              Visitar Tienda Online\n            </a>\n          </div>\n          <p>Si tienes alguna pregunta, no dudes en contactarnos respondiendo a este correo.</p>\n          <hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">\n          <p style=\"color: #666; font-size: 12px;\">\xA9 2026 Ana's Supplements. Todos los derechos reservados.</p>\n        </div>\n      `,\n      attachments: [\n        {\n          filename: 'catalogo-anas-supplements.pdf',\n          content: pdfBuffer,\n          contentType: 'application/pdf'\n        }\n      ]\n    }\n\n    try {\n      await this.transporter.sendMail(mailOptions)\n      console.log(`[Email Service] Cat\xE1logo enviado a: ${email}`)\n    } catch (error) {\n      console.error('[Email Service] Error al enviar cat\xE1logo:', error)\n      throw new Error('No se pudo enviar el cat\xE1logo por correo')\n    }\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "bfdcb4f5fe851092d8883fb10bddd109bd569d52"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_xwpnxddg0 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_xwpnxddg0();
+import nodemailer from 'nodemailer';
+import { config } from '../../shared/config/index.js';
+export class EmailService {
+  constructor() {
+    /* istanbul ignore next */
+    cov_xwpnxddg0().f[0]++;
+    cov_xwpnxddg0().s[0]++;
+    Object.defineProperty(this, "transporter", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: void 0
+    });
+    /* istanbul ignore next */
+    cov_xwpnxddg0().s[1]++;
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: config.smtpUser,
+        pass: config.smtpPass
+      }
+    });
+  }
+  async sendVerificationEmail(email, token, name) {
+    /* istanbul ignore next */
+    cov_xwpnxddg0().f[1]++;
+    const verificationUrl =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[2]++, `${config.frontendUrl}/verify-email?token=${token}`);
+    const mailOptions =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[3]++, {
+      from: `"Ana's Supplements" <${config.emailFrom}>`,
+      to: email,
+      subject: 'Verifica tu cuenta - Ana\'s Supplements',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>¡Hola ${name}!</h2>
+          <p>Gracias por registrarte en Ana's Supplements. Para completar tu registro y activar tu cuenta, por favor haz clic en el siguiente botón:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Verificar mi cuenta
+            </a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p>${verificationUrl}</p>
+          <p>Este enlace expirará en 24 horas.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">Si no creaste esta cuenta, puedes ignorar este correo.</p>
+        </div>
+      `
+    });
+    /* istanbul ignore next */
+    cov_xwpnxddg0().s[4]++;
+    try {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[5]++;
+      await this.transporter.sendMail(mailOptions);
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[6]++;
+      console.log(`[Email Service] Correo de verificación enviado a: ${email}`);
+    } catch (error) {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[7]++;
+      console.error('[Email Service] Error al enviar correo:', error);
+      // En desarrollo, no bloqueamos el flujo por error de envío de correo
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[8]++;
+      if (config.nodeEnv === 'production') {
+        /* istanbul ignore next */
+        cov_xwpnxddg0().b[0][0]++;
+        cov_xwpnxddg0().s[9]++;
+        throw new Error('No se pudo enviar el correo de verificación');
+      } else
+      /* istanbul ignore next */
+      {
+        cov_xwpnxddg0().b[0][1]++;
+      }
+      cov_xwpnxddg0().s[10]++;
+      console.warn('[Email Service] Desarrollo: No se pudo enviar el correo, pero continuamos el flujo.');
+    }
+  }
+  async sendPasswordResetEmail(email, token) {
+    /* istanbul ignore next */
+    cov_xwpnxddg0().f[2]++;
+    const resetUrl =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[11]++, `${config.frontendUrl}/reset-password?token=${token}`);
+    const mailOptions =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[12]++, {
+      from: `"Ana's Supplements" <${config.emailFrom}>`,
+      to: email,
+      subject: 'Restablecer contraseña - Ana\'s Supplements',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Restablecer contraseña</h2>
+          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón para continuar:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Restablecer contraseña
+            </a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p>${resetUrl}</p>
+          <p>Este enlace expirará en 1 hora.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">Si no solicitaste este cambio, puedes ignorar este correo.</p>
+        </div>
+      `
+    });
+    /* istanbul ignore next */
+    cov_xwpnxddg0().s[13]++;
+    try {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[14]++;
+      await this.transporter.sendMail(mailOptions);
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[15]++;
+      console.log(`[Email Service] Correo de restablecimiento enviado a: ${email}`);
+    } catch (error) {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[16]++;
+      console.error('[Email Service] Error al enviar correo:', error);
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[17]++;
+      if (config.nodeEnv === 'production') {
+        /* istanbul ignore next */
+        cov_xwpnxddg0().b[1][0]++;
+        cov_xwpnxddg0().s[18]++;
+        throw new Error('No se pudo enviar el correo de restablecimiento');
+      } else
+      /* istanbul ignore next */
+      {
+        cov_xwpnxddg0().b[1][1]++;
+      }
+      cov_xwpnxddg0().s[19]++;
+      console.warn('[Email Service] Desarrollo: No se pudo enviar el correo de restablecimiento, pero continuamos el flujo.');
+    }
+  }
+  async sendAbandonedCartEmail(email, name, items) {
+    /* istanbul ignore next */
+    cov_xwpnxddg0().f[3]++;
+    const cartUrl =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[20]++, `${config.frontendUrl}/cart`);
+    const itemsHtml =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[21]++, items.map(item => {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().f[4]++;
+      cov_xwpnxddg0().s[22]++;
+      return `
+      <div style="display: flex; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <div style="flex: 1;">
+          <p style="margin: 0; font-weight: bold;">${item.product.name}</p>
+          <p style="margin: 0; color: #666; font-size: 14px;">Cantidad: ${item.quantity}</p>
+        </div>
+      </div>
+    `;
+    }).join(''));
+    const mailOptions =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[23]++, {
+      from: `"Ana's Supplements" <${config.emailFrom}>`,
+      to: email,
+      subject: '¡Te extrañamos! Tu carrito te espera',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>¡Hola ${name}!</h2>
+          <p>Notamos que dejaste algunos productos increíbles en tu carrito. ¡Aún están disponibles para ti!</p>
+          <div style="margin: 20px 0; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+            <h3 style="margin-top: 0;">Tu Carrito:</h3>
+            ${itemsHtml}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cartUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Volver a mi carrito
+            </a>
+          </div>
+          <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© ${new Date().getFullYear()} Ana's Supplements. Todos los derechos reservados.</p>
+        </div>
+      `
+    });
+    /* istanbul ignore next */
+    cov_xwpnxddg0().s[24]++;
+    try {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[25]++;
+      await this.transporter.sendMail(mailOptions);
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[26]++;
+      console.log(`[Email Service] Correo de carrito abandonado enviado a: ${email}`);
+    } catch (error) {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[27]++;
+      console.error('[Email Service] Error al enviar correo de carrito abandonado:', error);
+      // No lanzamos error para no detener el proceso de fondo
+    }
+  }
+  async sendCatalogEmail(email, pdfBuffer) {
+    /* istanbul ignore next */
+    cov_xwpnxddg0().f[5]++;
+    const mailOptions =
+    /* istanbul ignore next */
+    (cov_xwpnxddg0().s[28]++, {
+      from: `"Ana's Supplements" <${config.emailFrom}>`,
+      to: email,
+      subject: 'Nuestro Catálogo de Productos - Ana\'s Supplements',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #10b981;">¡Hola!</h2>
+          <p>Adjunto encontrarás nuestro catálogo actualizado de productos en formato PDF.</p>
+          <p>En Ana's Supplements nos esforzamos por ofrecerte los mejores suplementos y productos para tu salud al mejor precio.</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p style="margin: 0; font-weight: bold;">¿Qué encontrarás en este catálogo?</p>
+            <ul style="margin-top: 10px;">
+              <li>Vitaminas y Multivitamínicos</li>
+              <li>Suplementos Nutricionales</li>
+              <li>Productos de Cuidado Personal</li>
+              <li>¡Y mucho más!</li>
+            </ul>
+          </div>
+          <p>Puedes realizar tus pedidos directamente en nuestra plataforma web:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${config.frontendUrl}" 
+               style="background-color: #10b981; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Visitar Tienda Online
+            </a>
+          </div>
+          <p>Si tienes alguna pregunta, no dudes en contactarnos respondiendo a este correo.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© 2026 Ana's Supplements. Todos los derechos reservados.</p>
+        </div>
+      `,
+      attachments: [{
+        filename: 'catalogo-anas-supplements.pdf',
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      }]
+    });
+    /* istanbul ignore next */
+    cov_xwpnxddg0().s[29]++;
+    try {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[30]++;
+      await this.transporter.sendMail(mailOptions);
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[31]++;
+      console.log(`[Email Service] Catálogo enviado a: ${email}`);
+    } catch (error) {
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[32]++;
+      console.error('[Email Service] Error al enviar catálogo:', error);
+      /* istanbul ignore next */
+      cov_xwpnxddg0().s[33]++;
+      throw new Error('No se pudo enviar el catálogo por correo');
+    }
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJub2RlbWFpbGVyIiwiY29uZmlnIiwiRW1haWxTZXJ2aWNlIiwiY29uc3RydWN0b3IiLCJjb3ZfeHdwbnhkZGcwIiwiZiIsInMiLCJPYmplY3QiLCJkZWZpbmVQcm9wZXJ0eSIsInRyYW5zcG9ydGVyIiwiY3JlYXRlVHJhbnNwb3J0Iiwic2VydmljZSIsImF1dGgiLCJ1c2VyIiwic210cFVzZXIiLCJwYXNzIiwic210cFBhc3MiLCJzZW5kVmVyaWZpY2F0aW9uRW1haWwiLCJlbWFpbCIsInRva2VuIiwibmFtZSIsInZlcmlmaWNhdGlvblVybCIsImZyb250ZW5kVXJsIiwibWFpbE9wdGlvbnMiLCJmcm9tIiwiZW1haWxGcm9tIiwidG8iLCJzdWJqZWN0IiwiaHRtbCIsInNlbmRNYWlsIiwiY29uc29sZSIsImxvZyIsImVycm9yIiwibm9kZUVudiIsImIiLCJFcnJvciIsIndhcm4iLCJzZW5kUGFzc3dvcmRSZXNldEVtYWlsIiwicmVzZXRVcmwiLCJzZW5kQWJhbmRvbmVkQ2FydEVtYWlsIiwiaXRlbXMiLCJjYXJ0VXJsIiwiaXRlbXNIdG1sIiwibWFwIiwiaXRlbSIsInByb2R1Y3QiLCJxdWFudGl0eSIsImpvaW4iLCJEYXRlIiwiZ2V0RnVsbFllYXIiLCJzZW5kQ2F0YWxvZ0VtYWlsIiwicGRmQnVmZmVyIiwiYXR0YWNobWVudHMiLCJmaWxlbmFtZSIsImNvbnRlbnQiLCJjb250ZW50VHlwZSJdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcU2VydmVyIEFkbWluXFxEZXNrdG9wXFxlY29tbWVyY2VcXHNlcnZlclxcc3JjXFxhcHBsaWNhdGlvblxcc2VydmljZXNcXGVtYWlsLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IG5vZGVtYWlsZXIgZnJvbSAnbm9kZW1haWxlcidcbmltcG9ydCB7IGNvbmZpZyB9IGZyb20gJy4uLy4uL3NoYXJlZC9jb25maWcvaW5kZXguanMnXG5cbmV4cG9ydCBjbGFzcyBFbWFpbFNlcnZpY2Uge1xuICBwcml2YXRlIHRyYW5zcG9ydGVyOiBub2RlbWFpbGVyLlRyYW5zcG9ydGVyXG5cbiAgY29uc3RydWN0b3IoKSB7XG4gICAgdGhpcy50cmFuc3BvcnRlciA9IG5vZGVtYWlsZXIuY3JlYXRlVHJhbnNwb3J0KHtcbiAgICAgIHNlcnZpY2U6ICdnbWFpbCcsXG4gICAgICBhdXRoOiB7XG4gICAgICAgIHVzZXI6IGNvbmZpZy5zbXRwVXNlcixcbiAgICAgICAgcGFzczogY29uZmlnLnNtdHBQYXNzLFxuICAgICAgfSxcbiAgICB9KVxuICB9XG5cbiAgYXN5bmMgc2VuZFZlcmlmaWNhdGlvbkVtYWlsKGVtYWlsOiBzdHJpbmcsIHRva2VuOiBzdHJpbmcsIG5hbWU6IHN0cmluZykge1xuICAgIGNvbnN0IHZlcmlmaWNhdGlvblVybCA9IGAke2NvbmZpZy5mcm9udGVuZFVybH0vdmVyaWZ5LWVtYWlsP3Rva2VuPSR7dG9rZW59YFxuXG4gICAgY29uc3QgbWFpbE9wdGlvbnMgPSB7XG4gICAgICBmcm9tOiBgXCJBbmEncyBTdXBwbGVtZW50c1wiIDwke2NvbmZpZy5lbWFpbEZyb219PmAsXG4gICAgICB0bzogZW1haWwsXG4gICAgICBzdWJqZWN0OiAnVmVyaWZpY2EgdHUgY3VlbnRhIC0gQW5hXFwncyBTdXBwbGVtZW50cycsXG4gICAgICBodG1sOiBgXG4gICAgICAgIDxkaXYgc3R5bGU9XCJmb250LWZhbWlseTogc2Fucy1zZXJpZjsgbWF4LXdpZHRoOiA2MDBweDsgbWFyZ2luOiAwIGF1dG87XCI+XG4gICAgICAgICAgPGgyPsKhSG9sYSAke25hbWV9ITwvaDI+XG4gICAgICAgICAgPHA+R3JhY2lhcyBwb3IgcmVnaXN0cmFydGUgZW4gQW5hJ3MgU3VwcGxlbWVudHMuIFBhcmEgY29tcGxldGFyIHR1IHJlZ2lzdHJvIHkgYWN0aXZhciB0dSBjdWVudGEsIHBvciBmYXZvciBoYXogY2xpYyBlbiBlbCBzaWd1aWVudGUgYm90w7NuOjwvcD5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke3ZlcmlmaWNhdGlvblVybH1cIiBcbiAgICAgICAgICAgICAgIHN0eWxlPVwiYmFja2dyb3VuZC1jb2xvcjogIzAwMDsgY29sb3I6ICNmZmY7IHBhZGRpbmc6IDEycHggMjRweDsgdGV4dC1kZWNvcmF0aW9uOiBub25lOyBib3JkZXItcmFkaXVzOiA1cHg7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPlxuICAgICAgICAgICAgICBWZXJpZmljYXIgbWkgY3VlbnRhXG4gICAgICAgICAgICA8L2E+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPHA+TyBjb3BpYSB5IHBlZ2EgZXN0ZSBlbmxhY2UgZW4gdHUgbmF2ZWdhZG9yOjwvcD5cbiAgICAgICAgICA8cD4ke3ZlcmlmaWNhdGlvblVybH08L3A+XG4gICAgICAgICAgPHA+RXN0ZSBlbmxhY2UgZXhwaXJhcsOhIGVuIDI0IGhvcmFzLjwvcD5cbiAgICAgICAgICA8aHIgc3R5bGU9XCJib3JkZXI6IG5vbmU7IGJvcmRlci10b3A6IDFweCBzb2xpZCAjZWVlOyBtYXJnaW46IDIwcHggMDtcIj5cbiAgICAgICAgICA8cCBzdHlsZT1cImNvbG9yOiAjNjY2OyBmb250LXNpemU6IDEycHg7XCI+U2kgbm8gY3JlYXN0ZSBlc3RhIGN1ZW50YSwgcHVlZGVzIGlnbm9yYXIgZXN0ZSBjb3JyZW8uPC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIGAsXG4gICAgfVxuXG4gICAgdHJ5IHtcbiAgICAgIGF3YWl0IHRoaXMudHJhbnNwb3J0ZXIuc2VuZE1haWwobWFpbE9wdGlvbnMpXG4gICAgICBjb25zb2xlLmxvZyhgW0VtYWlsIFNlcnZpY2VdIENvcnJlbyBkZSB2ZXJpZmljYWNpw7NuIGVudmlhZG8gYTogJHtlbWFpbH1gKVxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKCdbRW1haWwgU2VydmljZV0gRXJyb3IgYWwgZW52aWFyIGNvcnJlbzonLCBlcnJvcilcbiAgICAgIC8vIEVuIGRlc2Fycm9sbG8sIG5vIGJsb3F1ZWFtb3MgZWwgZmx1am8gcG9yIGVycm9yIGRlIGVudsOtbyBkZSBjb3JyZW9cbiAgICAgIGlmIChjb25maWcubm9kZUVudiA9PT0gJ3Byb2R1Y3Rpb24nKSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcignTm8gc2UgcHVkbyBlbnZpYXIgZWwgY29ycmVvIGRlIHZlcmlmaWNhY2nDs24nKVxuICAgICAgfVxuICAgICAgY29uc29sZS53YXJuKCdbRW1haWwgU2VydmljZV0gRGVzYXJyb2xsbzogTm8gc2UgcHVkbyBlbnZpYXIgZWwgY29ycmVvLCBwZXJvIGNvbnRpbnVhbW9zIGVsIGZsdWpvLicpXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgc2VuZFBhc3N3b3JkUmVzZXRFbWFpbChlbWFpbDogc3RyaW5nLCB0b2tlbjogc3RyaW5nKSB7XG4gICAgY29uc3QgcmVzZXRVcmwgPSBgJHtjb25maWcuZnJvbnRlbmRVcmx9L3Jlc2V0LXBhc3N3b3JkP3Rva2VuPSR7dG9rZW59YFxuXG4gICAgY29uc3QgbWFpbE9wdGlvbnMgPSB7XG4gICAgICBmcm9tOiBgXCJBbmEncyBTdXBwbGVtZW50c1wiIDwke2NvbmZpZy5lbWFpbEZyb219PmAsXG4gICAgICB0bzogZW1haWwsXG4gICAgICBzdWJqZWN0OiAnUmVzdGFibGVjZXIgY29udHJhc2XDsWEgLSBBbmFcXCdzIFN1cHBsZW1lbnRzJyxcbiAgICAgIGh0bWw6IGBcbiAgICAgICAgPGRpdiBzdHlsZT1cImZvbnQtZmFtaWx5OiBzYW5zLXNlcmlmOyBtYXgtd2lkdGg6IDYwMHB4OyBtYXJnaW46IDAgYXV0bztcIj5cbiAgICAgICAgICA8aDI+UmVzdGFibGVjZXIgY29udHJhc2XDsWE8L2gyPlxuICAgICAgICAgIDxwPkhhcyBzb2xpY2l0YWRvIHJlc3RhYmxlY2VyIHR1IGNvbnRyYXNlw7FhLiBIYXogY2xpYyBlbiBlbCBzaWd1aWVudGUgYm90w7NuIHBhcmEgY29udGludWFyOjwvcD5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke3Jlc2V0VXJsfVwiIFxuICAgICAgICAgICAgICAgc3R5bGU9XCJiYWNrZ3JvdW5kLWNvbG9yOiAjMDAwOyBjb2xvcjogI2ZmZjsgcGFkZGluZzogMTJweCAyNHB4OyB0ZXh0LWRlY29yYXRpb246IG5vbmU7IGJvcmRlci1yYWRpdXM6IDVweDsgZm9udC13ZWlnaHQ6IGJvbGQ7XCI+XG4gICAgICAgICAgICAgIFJlc3RhYmxlY2VyIGNvbnRyYXNlw7FhXG4gICAgICAgICAgICA8L2E+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPHA+TyBjb3BpYSB5IHBlZ2EgZXN0ZSBlbmxhY2UgZW4gdHUgbmF2ZWdhZG9yOjwvcD5cbiAgICAgICAgICA8cD4ke3Jlc2V0VXJsfTwvcD5cbiAgICAgICAgICA8cD5Fc3RlIGVubGFjZSBleHBpcmFyw6EgZW4gMSBob3JhLjwvcD5cbiAgICAgICAgICA8aHIgc3R5bGU9XCJib3JkZXI6IG5vbmU7IGJvcmRlci10b3A6IDFweCBzb2xpZCAjZWVlOyBtYXJnaW46IDIwcHggMDtcIj5cbiAgICAgICAgICA8cCBzdHlsZT1cImNvbG9yOiAjNjY2OyBmb250LXNpemU6IDEycHg7XCI+U2kgbm8gc29saWNpdGFzdGUgZXN0ZSBjYW1iaW8sIHB1ZWRlcyBpZ25vcmFyIGVzdGUgY29ycmVvLjwvcD5cbiAgICAgICAgPC9kaXY+XG4gICAgICBgLFxuICAgIH1cblxuICAgIHRyeSB7XG4gICAgICBhd2FpdCB0aGlzLnRyYW5zcG9ydGVyLnNlbmRNYWlsKG1haWxPcHRpb25zKVxuICAgICAgY29uc29sZS5sb2coYFtFbWFpbCBTZXJ2aWNlXSBDb3JyZW8gZGUgcmVzdGFibGVjaW1pZW50byBlbnZpYWRvIGE6ICR7ZW1haWx9YClcbiAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgY29uc29sZS5lcnJvcignW0VtYWlsIFNlcnZpY2VdIEVycm9yIGFsIGVudmlhciBjb3JyZW86JywgZXJyb3IpXG4gICAgICBpZiAoY29uZmlnLm5vZGVFbnYgPT09ICdwcm9kdWN0aW9uJykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ05vIHNlIHB1ZG8gZW52aWFyIGVsIGNvcnJlbyBkZSByZXN0YWJsZWNpbWllbnRvJylcbiAgICAgIH1cbiAgICAgIGNvbnNvbGUud2FybignW0VtYWlsIFNlcnZpY2VdIERlc2Fycm9sbG86IE5vIHNlIHB1ZG8gZW52aWFyIGVsIGNvcnJlbyBkZSByZXN0YWJsZWNpbWllbnRvLCBwZXJvIGNvbnRpbnVhbW9zIGVsIGZsdWpvLicpXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgc2VuZEFiYW5kb25lZENhcnRFbWFpbChlbWFpbDogc3RyaW5nLCBuYW1lOiBzdHJpbmcsIGl0ZW1zOiBhbnlbXSkge1xuICAgIGNvbnN0IGNhcnRVcmwgPSBgJHtjb25maWcuZnJvbnRlbmRVcmx9L2NhcnRgXG4gICAgY29uc3QgaXRlbXNIdG1sID0gaXRlbXMubWFwKGl0ZW0gPT4gYFxuICAgICAgPGRpdiBzdHlsZT1cImRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiBjZW50ZXI7IG1hcmdpbi1ib3R0b206IDEwcHg7IGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjZWVlOyBwYWRkaW5nLWJvdHRvbTogMTBweDtcIj5cbiAgICAgICAgPGRpdiBzdHlsZT1cImZsZXg6IDE7XCI+XG4gICAgICAgICAgPHAgc3R5bGU9XCJtYXJnaW46IDA7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPiR7aXRlbS5wcm9kdWN0Lm5hbWV9PC9wPlxuICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiAwOyBjb2xvcjogIzY2NjsgZm9udC1zaXplOiAxNHB4O1wiPkNhbnRpZGFkOiAke2l0ZW0ucXVhbnRpdHl9PC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIDwvZGl2PlxuICAgIGApLmpvaW4oJycpXG5cbiAgICBjb25zdCBtYWlsT3B0aW9ucyA9IHtcbiAgICAgIGZyb206IGBcIkFuYSdzIFN1cHBsZW1lbnRzXCIgPCR7Y29uZmlnLmVtYWlsRnJvbX0+YCxcbiAgICAgIHRvOiBlbWFpbCxcbiAgICAgIHN1YmplY3Q6ICfCoVRlIGV4dHJhw7FhbW9zISBUdSBjYXJyaXRvIHRlIGVzcGVyYScsXG4gICAgICBodG1sOiBgXG4gICAgICAgIDxkaXYgc3R5bGU9XCJmb250LWZhbWlseTogc2Fucy1zZXJpZjsgbWF4LXdpZHRoOiA2MDBweDsgbWFyZ2luOiAwIGF1dG87XCI+XG4gICAgICAgICAgPGgyPsKhSG9sYSAke25hbWV9ITwvaDI+XG4gICAgICAgICAgPHA+Tm90YW1vcyBxdWUgZGVqYXN0ZSBhbGd1bm9zIHByb2R1Y3RvcyBpbmNyZcOtYmxlcyBlbiB0dSBjYXJyaXRvLiDCoUHDum4gZXN0w6FuIGRpc3BvbmlibGVzIHBhcmEgdGkhPC9wPlxuICAgICAgICAgIDxkaXYgc3R5bGU9XCJtYXJnaW46IDIwcHggMDsgYmFja2dyb3VuZDogI2Y5ZjlmOTsgcGFkZGluZzogMjBweDsgYm9yZGVyLXJhZGl1czogOHB4O1wiPlxuICAgICAgICAgICAgPGgzIHN0eWxlPVwibWFyZ2luLXRvcDogMDtcIj5UdSBDYXJyaXRvOjwvaDM+XG4gICAgICAgICAgICAke2l0ZW1zSHRtbH1cbiAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke2NhcnRVcmx9XCIgXG4gICAgICAgICAgICAgICBzdHlsZT1cImJhY2tncm91bmQtY29sb3I6ICMwMDA7IGNvbG9yOiAjZmZmOyBwYWRkaW5nOiAxMnB4IDI0cHg7IHRleHQtZGVjb3JhdGlvbjogbm9uZTsgYm9yZGVyLXJhZGl1czogNXB4OyBmb250LXdlaWdodDogYm9sZDtcIj5cbiAgICAgICAgICAgICAgVm9sdmVyIGEgbWkgY2Fycml0b1xuICAgICAgICAgICAgPC9hPlxuICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgIDxwPlNpIHRpZW5lcyBhbGd1bmEgcHJlZ3VudGEsIG5vIGR1ZGVzIGVuIGNvbnRhY3Rhcm5vcy48L3A+XG4gICAgICAgICAgPGhyIHN0eWxlPVwiYm9yZGVyOiBub25lOyBib3JkZXItdG9wOiAxcHggc29saWQgI2VlZTsgbWFyZ2luOiAyMHB4IDA7XCI+XG4gICAgICAgICAgPHAgc3R5bGU9XCJjb2xvcjogIzY2NjsgZm9udC1zaXplOiAxMnB4O1wiPsKpICR7bmV3IERhdGUoKS5nZXRGdWxsWWVhcigpfSBBbmEncyBTdXBwbGVtZW50cy4gVG9kb3MgbG9zIGRlcmVjaG9zIHJlc2VydmFkb3MuPC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIGAsXG4gICAgfVxuXG4gICAgdHJ5IHtcbiAgICAgIGF3YWl0IHRoaXMudHJhbnNwb3J0ZXIuc2VuZE1haWwobWFpbE9wdGlvbnMpXG4gICAgICBjb25zb2xlLmxvZyhgW0VtYWlsIFNlcnZpY2VdIENvcnJlbyBkZSBjYXJyaXRvIGFiYW5kb25hZG8gZW52aWFkbyBhOiAke2VtYWlsfWApXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcbiAgICAgIGNvbnNvbGUuZXJyb3IoJ1tFbWFpbCBTZXJ2aWNlXSBFcnJvciBhbCBlbnZpYXIgY29ycmVvIGRlIGNhcnJpdG8gYWJhbmRvbmFkbzonLCBlcnJvcilcbiAgICAgIC8vIE5vIGxhbnphbW9zIGVycm9yIHBhcmEgbm8gZGV0ZW5lciBlbCBwcm9jZXNvIGRlIGZvbmRvXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgc2VuZENhdGFsb2dFbWFpbChlbWFpbDogc3RyaW5nLCBwZGZCdWZmZXI6IEJ1ZmZlcikge1xuICAgIGNvbnN0IG1haWxPcHRpb25zID0ge1xuICAgICAgZnJvbTogYFwiQW5hJ3MgU3VwcGxlbWVudHNcIiA8JHtjb25maWcuZW1haWxGcm9tfT5gLFxuICAgICAgdG86IGVtYWlsLFxuICAgICAgc3ViamVjdDogJ051ZXN0cm8gQ2F0w6Fsb2dvIGRlIFByb2R1Y3RvcyAtIEFuYVxcJ3MgU3VwcGxlbWVudHMnLFxuICAgICAgaHRtbDogYFxuICAgICAgICA8ZGl2IHN0eWxlPVwiZm9udC1mYW1pbHk6IHNhbnMtc2VyaWY7IG1heC13aWR0aDogNjAwcHg7IG1hcmdpbjogMCBhdXRvO1wiPlxuICAgICAgICAgIDxoMiBzdHlsZT1cImNvbG9yOiAjMTBiOTgxO1wiPsKhSG9sYSE8L2gyPlxuICAgICAgICAgIDxwPkFkanVudG8gZW5jb250cmFyw6FzIG51ZXN0cm8gY2F0w6Fsb2dvIGFjdHVhbGl6YWRvIGRlIHByb2R1Y3RvcyBlbiBmb3JtYXRvIFBERi48L3A+XG4gICAgICAgICAgPHA+RW4gQW5hJ3MgU3VwcGxlbWVudHMgbm9zIGVzZm9yemFtb3MgcG9yIG9mcmVjZXJ0ZSBsb3MgbWVqb3JlcyBzdXBsZW1lbnRvcyB5IHByb2R1Y3RvcyBwYXJhIHR1IHNhbHVkIGFsIG1lam9yIHByZWNpby48L3A+XG4gICAgICAgICAgPGRpdiBzdHlsZT1cImJhY2tncm91bmQtY29sb3I6ICNmM2Y0ZjY7IHBhZGRpbmc6IDIwcHg7IGJvcmRlci1yYWRpdXM6IDEwcHg7IG1hcmdpbjogMjBweCAwO1wiPlxuICAgICAgICAgICAgPHAgc3R5bGU9XCJtYXJnaW46IDA7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPsK/UXXDqSBlbmNvbnRyYXLDoXMgZW4gZXN0ZSBjYXTDoWxvZ28/PC9wPlxuICAgICAgICAgICAgPHVsIHN0eWxlPVwibWFyZ2luLXRvcDogMTBweDtcIj5cbiAgICAgICAgICAgICAgPGxpPlZpdGFtaW5hcyB5IE11bHRpdml0YW3DrW5pY29zPC9saT5cbiAgICAgICAgICAgICAgPGxpPlN1cGxlbWVudG9zIE51dHJpY2lvbmFsZXM8L2xpPlxuICAgICAgICAgICAgICA8bGk+UHJvZHVjdG9zIGRlIEN1aWRhZG8gUGVyc29uYWw8L2xpPlxuICAgICAgICAgICAgICA8bGk+wqFZIG11Y2hvIG3DoXMhPC9saT5cbiAgICAgICAgICAgIDwvdWw+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPHA+UHVlZGVzIHJlYWxpemFyIHR1cyBwZWRpZG9zIGRpcmVjdGFtZW50ZSBlbiBudWVzdHJhIHBsYXRhZm9ybWEgd2ViOjwvcD5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke2NvbmZpZy5mcm9udGVuZFVybH1cIiBcbiAgICAgICAgICAgICAgIHN0eWxlPVwiYmFja2dyb3VuZC1jb2xvcjogIzEwYjk4MTsgY29sb3I6ICNmZmY7IHBhZGRpbmc6IDEycHggMjRweDsgdGV4dC1kZWNvcmF0aW9uOiBub25lOyBib3JkZXItcmFkaXVzOiA1cHg7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPlxuICAgICAgICAgICAgICBWaXNpdGFyIFRpZW5kYSBPbmxpbmVcbiAgICAgICAgICAgIDwvYT5cbiAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICA8cD5TaSB0aWVuZXMgYWxndW5hIHByZWd1bnRhLCBubyBkdWRlcyBlbiBjb250YWN0YXJub3MgcmVzcG9uZGllbmRvIGEgZXN0ZSBjb3JyZW8uPC9wPlxuICAgICAgICAgIDxociBzdHlsZT1cImJvcmRlcjogbm9uZTsgYm9yZGVyLXRvcDogMXB4IHNvbGlkICNlZWU7IG1hcmdpbjogMjBweCAwO1wiPlxuICAgICAgICAgIDxwIHN0eWxlPVwiY29sb3I6ICM2NjY7IGZvbnQtc2l6ZTogMTJweDtcIj7CqSAyMDI2IEFuYSdzIFN1cHBsZW1lbnRzLiBUb2RvcyBsb3MgZGVyZWNob3MgcmVzZXJ2YWRvcy48L3A+XG4gICAgICAgIDwvZGl2PlxuICAgICAgYCxcbiAgICAgIGF0dGFjaG1lbnRzOiBbXG4gICAgICAgIHtcbiAgICAgICAgICBmaWxlbmFtZTogJ2NhdGFsb2dvLWFuYXMtc3VwcGxlbWVudHMucGRmJyxcbiAgICAgICAgICBjb250ZW50OiBwZGZCdWZmZXIsXG4gICAgICAgICAgY29udGVudFR5cGU6ICdhcHBsaWNhdGlvbi9wZGYnXG4gICAgICAgIH1cbiAgICAgIF1cbiAgICB9XG5cbiAgICB0cnkge1xuICAgICAgYXdhaXQgdGhpcy50cmFuc3BvcnRlci5zZW5kTWFpbChtYWlsT3B0aW9ucylcbiAgICAgIGNvbnNvbGUubG9nKGBbRW1haWwgU2VydmljZV0gQ2F0w6Fsb2dvIGVudmlhZG8gYTogJHtlbWFpbH1gKVxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKCdbRW1haWwgU2VydmljZV0gRXJyb3IgYWwgZW52aWFyIGNhdMOhbG9nbzonLCBlcnJvcilcbiAgICAgIHRocm93IG5ldyBFcnJvcignTm8gc2UgcHVkbyBlbnZpYXIgZWwgY2F0w6Fsb2dvIHBvciBjb3JyZW8nKVxuICAgIH1cbiAgfVxufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7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

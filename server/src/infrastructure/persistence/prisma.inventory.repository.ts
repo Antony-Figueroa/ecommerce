@@ -1,5 +1,5 @@
 import { prisma } from './prisma.client.js'
-import { Category, Brand, InventoryLog, CategoryRepository, BrandRepository, InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
+import { Category, Brand, InventoryLog, CategoryRepository, BrandRepository, InventoryLogRepository, Provider, ProviderRepository, InventoryBatchRepository } from '../../domain/repositories/inventory.repository.js'
 
 export class PrismaCategoryRepository implements CategoryRepository {
   async findAll(options?: any): Promise<Category[]> {
@@ -104,5 +104,97 @@ export class PrismaInventoryLogRepository implements InventoryLogRepository {
       take: 50,
     })
     return logs as unknown as InventoryLog[]
+  }
+}
+
+export class PrismaProviderRepository implements ProviderRepository {
+  async findAll(): Promise<Provider[]> {
+    const providers = await prisma.provider.findMany({
+      orderBy: { name: 'asc' },
+    })
+    return providers as unknown as Provider[]
+  }
+
+  async findByName(name: string): Promise<Provider | null> {
+    const provider = await prisma.provider.findFirst({ where: { name } })
+    return provider as unknown as Provider | null
+  }
+
+  async create(data: any): Promise<Provider> {
+    const provider = await prisma.provider.create({ data })
+    return provider as unknown as Provider
+  }
+}
+
+export class PrismaInventoryBatchRepository implements InventoryBatchRepository {
+  async findMany(options?: any) {
+    return prisma.inventoryBatch.findMany({
+      ...options,
+      include: {
+        provider: true,
+        items: {
+          include: {
+            product: true,
+          },
+          orderBy: { entryDate: 'asc' }
+        }
+      },
+      orderBy: options?.orderBy || { createdAt: 'desc' },
+    })
+  }
+
+  async findById(id: string) {
+    return prisma.inventoryBatch.findUnique({
+      where: { id },
+      include: {
+        provider: true,
+        items: {
+          include: { product: true },
+          orderBy: { entryDate: 'asc' }
+        }
+      }
+    })
+  }
+
+  async create(data: any) {
+    return prisma.inventoryBatch.create({
+      data,
+      include: {
+        provider: true,
+        items: {
+          include: { product: true }
+        }
+      }
+    })
+  }
+
+  async update(id: string, data: any) {
+    return prisma.inventoryBatch.update({
+      where: { id },
+      data,
+      include: {
+        provider: true,
+        items: {
+          include: { product: true }
+        }
+      }
+    })
+  }
+
+  async findAvailableItemsByProduct(productId: string) {
+    return prisma.inventoryBatchItem.findMany({
+      where: {
+        productId,
+        quantity: { gt: 0 }
+      },
+      orderBy: { entryDate: 'asc' }
+    })
+  }
+
+  async updateItem(id: string, data: any) {
+    return prisma.inventoryBatchItem.update({
+      where: { id },
+      data
+    })
   }
 }

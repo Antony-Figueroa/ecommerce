@@ -77,6 +77,12 @@ export class PrismaProductRepository implements ProductRepository {
     })
   }
 
+  async findByProductCode(productCode: string) {
+    return prisma.product.findFirst({
+      where: { productCode },
+    })
+  }
+
   async create(data: any) {
     return prisma.product.create({
       data,

@@ -364,6 +364,13 @@ class ApiClient {
     })
   }
 
+  async submitPaymentProof(installmentId: string, data: { proofUrl: string; amountUSD: number; notes?: string }) {
+    return this.request(`/sales/installments/${installmentId}/proof`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
   // Admin Products
   async getAdminProducts(params?: { page?: number; limit?: number; categoryId?: string; categoryIds?: string[]; search?: string; onlyActive?: boolean }) {
     const searchParams = new URLSearchParams()
@@ -415,6 +422,41 @@ class ApiClient {
     )
   }
 
+  async getProviders() {
+    return this.request<{ providers: any[] }>('/admin/providers')
+  }
+
+  async createProvider(data: any) {
+    return this.request('/admin/providers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async getBatches(params?: { search?: string; limit?: number }) {
+    const searchParams = new URLSearchParams()
+    if (params?.search) searchParams.set('search', params.search)
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
+    const query = searchParams.toString()
+    return this.request<{ batches: any[] }>(
+      `/admin/batches${query ? `?${query}` : ''}`
+    )
+  }
+
+  async createBatch(data: any) {
+    return this.request('/admin/batches', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateBatch(id: string, data: any) {
+    return this.request(`/admin/batches/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
   // Admin Sales
   async getSales(params?: { page?: number; limit?: number; status?: string; startDate?: string; endDate?: string }) {
     const searchParams = new URLSearchParams()
@@ -436,10 +478,10 @@ class ApiClient {
     })
   }
 
-  async updateSaleStatus(id: string, status: string, reason?: string) {
+  async updateSaleStatus(id: string, status: string, reason?: string, financing?: any) {
     return this.request(`/admin/sales/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, reason }),
+      body: JSON.stringify({ status, reason, financing }),
     })
   }
 
@@ -492,6 +534,59 @@ class ApiClient {
 
   async getBCVHistory(limit = 50) {
     return this.request<{ history: any[] }>(`/admin/sales/bcv/history?limit=${limit}`)
+  }
+
+  // Admin Payments
+  async getPaymentStatus(saleId: string) {
+    const status = await this.request<any>(`/admin/ventas/${saleId}/estado-cuotas`)
+    return {
+      ...status,
+      remainingUSD: status.pendingAmountUSD ?? status.montoPendienteUSD ?? 0
+    }
+  }
+
+  async registerPayment(saleId: string, data: {
+    amountUSD: number;
+    amountBS?: number;
+    bcvRate?: number;
+    paymentMethod: string;
+    reference?: string;
+    notes?: string;
+  }) {
+    return this.request<any>(`/admin/ventas/${saleId}/pagos`, {
+      method: 'POST',
+      body: JSON.stringify({
+        montoUSD: data.amountUSD,
+        montoBS: data.amountBS,
+        tasaBCV: data.bcvRate,
+        metodoPago: data.paymentMethod,
+        referencia: data.reference,
+        notas: data.notes
+      }),
+    })
+  }
+
+  async createInstallmentPlan(saleId: string, installments: { amountUSD: number; dueDate: string }[]) {
+    return this.request<any>(`/admin/ventas/${saleId}/plan-cuotas`, {
+      method: 'POST',
+      body: JSON.stringify({
+        cuotas: installments.map(inst => ({
+          montoUSD: inst.amountUSD,
+          fechaVencimiento: inst.dueDate
+        }))
+      }),
+    })
+  }
+
+  async getPendingPaymentProofs() {
+    return this.request<any[]>('/admin/payments/proofs/pending')
+  }
+
+  async verifyPaymentProof(proofId: string, data: { status: 'APPROVED' | 'REJECTED'; notes?: string }) {
+    return this.request<any>(`/admin/payments/proofs/${proofId}/verify`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   }
 
   // Admin Requirements

@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError } from '../../shared/errors/app.errors.j
 import { RequirementRepository, BatchRepository } from '../../domain/repositories/business.repository.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
+import { AuditService } from './audit.service.js'
 
 function generateRequirementCode(): string {
   const date = new Date()
@@ -16,10 +17,11 @@ export class RequirementService {
     private requirementRepo: RequirementRepository,
     private productRepo: ProductRepository,
     private batchRepo: BatchRepository,
-    private logRepo: InventoryLogRepository
+    private logRepo: InventoryLogRepository,
+    private auditService: AuditService
   ) {}
 
-  async createRequirement(data: any) {
+  async createRequirement(data: any, userId?: string, ipAddress?: string, userAgent?: string) {
     const itemsWithTotals = data.items.map((item: any) => ({
       ...item,
       total: item.quantity * item.unitCost,
@@ -57,18 +59,50 @@ export class RequirementService {
       },
     })
 
+    await this.auditService.logAction({
+      entityType: 'REQUIREMENT',
+      entityId: requirement.id,
+      action: 'CREATE',
+      userId,
+      details: { code: requirement.code, totalUSD: requirement.totalUSD },
+      ipAddress,
+      userAgent
+    })
+
     return requirement
   }
 
-  async getRequirementById(id: string) {
+  async getRequirementById(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
     const requirement = await this.requirementRepo.findById(id)
     if (!requirement) {
       throw new NotFoundError('Requerimiento')
     }
+
+    // Audit log for accessing specific requirement
+    await this.auditService.logAction({
+      entityType: 'REQUIREMENT',
+      entityId: id,
+      action: 'VIEW_DETAILS',
+      userId,
+      details: { code: requirement.code },
+      ipAddress,
+      userAgent
+    })
+
     return requirement
   }
 
-  async getAllRequirements(options?: any) {
+  async getAllRequirements(options?: any, userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing all requirements
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_ALL_REQUIREMENTS',
+      userId,
+      details: { options },
+      ipAddress,
+      userAgent
+    })
+
     const { status = null, supplier = null, page = 1, limit = 20 } = options || {}
 
     const where: any = {}
@@ -92,7 +126,7 @@ export class RequirementService {
     }
   }
 
-  async updateRequirementStatus(id: string, status: string) {
+  async updateRequirementStatus(id: string, status: string, userId?: string, ipAddress?: string, userAgent?: string) {
     const requirement = await this.requirementRepo.findById(id)
     if (!requirement) {
       throw new NotFoundError('Requerimiento')
@@ -104,6 +138,17 @@ export class RequirementService {
     }
 
     const updated = await this.requirementRepo.update(id, { status })
+
+    // Audit status change
+    await this.auditService.logAction({
+      entityType: 'REQUIREMENT',
+      entityId: id,
+      action: 'UPDATE_STATUS',
+      userId,
+      details: { oldStatus: requirement.status, newStatus: status },
+      ipAddress,
+      userAgent
+    })
 
     if (status === 'RECEIVED') {
       const fullRequirement = await this.requirementRepo.findById(id)
@@ -143,7 +188,7 @@ export class RequirementService {
     return updated
   }
 
-  async deleteRequirement(id: string) {
+  async deleteRequirement(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
     const requirement = await this.requirementRepo.findById(id)
     if (!requirement) {
       throw new NotFoundError('Requerimiento')
@@ -154,18 +199,38 @@ export class RequirementService {
     }
 
     await this.requirementRepo.delete(id)
+
+    // Audit deletion
+    await this.auditService.logAction({
+      entityType: 'REQUIREMENT',
+      entityId: id,
+      action: 'DELETE',
+      userId,
+      details: { code: requirement.code },
+      ipAddress,
+      userAgent
+    })
+
     return { success: true }
   }
 
-  async receiveRequirement(id: string) {
-    return this.updateRequirementStatus(id, 'RECEIVED')
+  async receiveRequirement(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    return this.updateRequirementStatus(id, 'RECEIVED', userId, ipAddress, userAgent)
   }
 
-  async cancelRequirement(id: string) {
-    return this.updateRequirementStatus(id, 'CANCELLED')
+  async cancelRequirement(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    return this.updateRequirementStatus(id, 'CANCELLED', userId, ipAddress, userAgent)
   }
 
-  async getRequirementsSummary() {
+  async getRequirementsSummary(userId?: string, ipAddress?: string, userAgent?: string) {
+    // Audit log for accessing requirements summary
+    await this.auditService.logAction({
+      entityType: 'REPORT',
+      action: 'VIEW_REQUIREMENTS_SUMMARY',
+      userId,
+      ipAddress,
+      userAgent
+    })
     return this.requirementRepo.getSummary()
   }
 }

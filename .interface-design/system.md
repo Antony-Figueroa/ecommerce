@@ -31,3 +31,11 @@ Todos los márgenes y rellenos siguen una cuadrícula de 8px para una sensación
 1. **Tarjeta Genérica** -> **Tarjeta Vital**: Acentos olivo suaves + radio de 16px + superficie blanca.
 2. **Barra Lateral Estándar** -> **Navegación Limpia**: Etiquetas de alto contraste + indicadores olivo.
 3. **Caja de Métricas** -> **Estadística de Salud**: Iconos olivo + números pizarra.
+
+## Panel Admin: Dirección Operativa
+- **Intención**: Sereno, clínico y operativo. La información crítica aparece primero.
+- **Jerarquía**: Resumen arriba + acciones rápidas + lista operacional.
+- **Métricas clave**: Ventas totales, pedidos pendientes, productos críticos, ticket promedio.
+- **Inventario**: Cobertura promedio, movimientos recientes, stock bajo/crítico/sobrestock.
+- **Tablas**: Encabezados en muted, separadores suaves, hover en muted/30.
+- **Filtros**: Chips compactos con estados activos y contadores discretos.

@@ -91,8 +91,8 @@ export function FeatureBanner() {
   const features = [
     {
       icon: <Truck className="h-6 w-6" />,
-      title: "Envío Gratis",
-      description: "En pedidos mayores a $500",
+      title: "Envío Rápido",
+      description: "No esperes más, tu pedido llegara antes de lo que crees",
     },
     {
       icon: <Shield className="h-6 w-6" />,
@@ -102,7 +102,7 @@ export function FeatureBanner() {
     {
       icon: <Clock className="h-6 w-6" />,
       title: "Atención 24/7",
-      description: "Soporte always on",
+      description: "Cuenta con nosotros",
     },
   ] as const
 

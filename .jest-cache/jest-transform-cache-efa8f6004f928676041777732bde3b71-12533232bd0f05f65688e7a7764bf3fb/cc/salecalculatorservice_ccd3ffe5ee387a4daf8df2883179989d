@@ -1,0 +1,480 @@
+5bf6c07a7347043a7661ea4ad4d44e90
+/* istanbul ignore next */
+function cov_2oftwjlvv2() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\sale-calculator.service.ts";
+  var hash = "366f85e3926188487125ef812c7f8f884e4ad129";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\sale-calculator.service.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 3,
+          column: 25
+        },
+        end: {
+          line: 3,
+          column: 60
+        }
+      },
+      "1": {
+        start: {
+          line: 4,
+          column: 26
+        },
+        end: {
+          line: 4,
+          column: 71
+        }
+      },
+      "2": {
+        start: {
+          line: 5,
+          column: 30
+        },
+        end: {
+          line: 5,
+          column: 50
+        }
+      },
+      "3": {
+        start: {
+          line: 6,
+          column: 8
+        },
+        end: {
+          line: 15,
+          column: 10
+        }
+      },
+      "4": {
+        start: {
+          line: 18,
+          column: 28
+        },
+        end: {
+          line: 18,
+          column: 76
+        }
+      },
+      "5": {
+        start: {
+          line: 18,
+          column: 56
+        },
+        end: {
+          line: 18,
+          column: 72
+        }
+      },
+      "6": {
+        start: {
+          line: 19,
+          column: 25
+        },
+        end: {
+          line: 19,
+          column: 51
+        }
+      },
+      "7": {
+        start: {
+          line: 20,
+          column: 24
+        },
+        end: {
+          line: 20,
+          column: 42
+        }
+      },
+      "8": {
+        start: {
+          line: 21,
+          column: 26
+        },
+        end: {
+          line: 21,
+          column: 80
+        }
+      },
+      "9": {
+        start: {
+          line: 21,
+          column: 54
+        },
+        end: {
+          line: 21,
+          column: 76
+        }
+      },
+      "10": {
+        start: {
+          line: 22,
+          column: 25
+        },
+        end: {
+          line: 22,
+          column: 44
+        }
+      },
+      "11": {
+        start: {
+          line: 23,
+          column: 8
+        },
+        end: {
+          line: 29,
+          column: 10
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 2,
+            column: 4
+          },
+          end: {
+            line: 2,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 2,
+            column: 39
+          },
+          end: {
+            line: 16,
+            column: 5
+          }
+        },
+        line: 2
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 17,
+            column: 4
+          },
+          end: {
+            line: 17,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 17,
+            column: 54
+          },
+          end: {
+            line: 30,
+            column: 5
+          }
+        },
+        line: 17
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 18,
+            column: 41
+          },
+          end: {
+            line: 18,
+            column: 42
+          }
+        },
+        loc: {
+          start: {
+            line: 18,
+            column: 56
+          },
+          end: {
+            line: 18,
+            column: 72
+          }
+        },
+        line: 18
+      },
+      "3": {
+        name: "(anonymous_3)",
+        decl: {
+          start: {
+            line: 21,
+            column: 39
+          },
+          end: {
+            line: 21,
+            column: 40
+          }
+        },
+        loc: {
+          start: {
+            line: 21,
+            column: 54
+          },
+          end: {
+            line: 21,
+            column: 76
+          }
+        },
+        line: 21
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 3,
+            column: 32
+          },
+          end: {
+            line: 3,
+            column: 59
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 32
+          },
+          end: {
+            line: 3,
+            column: 54
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 58
+          },
+          end: {
+            line: 3,
+            column: 59
+          }
+        }],
+        line: 3
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 4,
+            column: 33
+          },
+          end: {
+            line: 4,
+            column: 70
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 4,
+            column: 33
+          },
+          end: {
+            line: 4,
+            column: 47
+          }
+        }, {
+          start: {
+            line: 4,
+            column: 51
+          },
+          end: {
+            line: 4,
+            column: 65
+          }
+        }, {
+          start: {
+            line: 4,
+            column: 69
+          },
+          end: {
+            line: 4,
+            column: 70
+          }
+        }],
+        line: 4
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 8,
+            column: 18
+          },
+          end: {
+            line: 8,
+            column: 70
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 8,
+            column: 18
+          },
+          end: {
+            line: 8,
+            column: 31
+          }
+        }, {
+          start: {
+            line: 8,
+            column: 35
+          },
+          end: {
+            line: 8,
+            column: 44
+          }
+        }, {
+          start: {
+            line: 8,
+            column: 48
+          },
+          end: {
+            line: 8,
+            column: 70
+          }
+        }],
+        line: 8
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 0,
+      "10": 0,
+      "11": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    b: {
+      "0": [0, 0],
+      "1": [0, 0, 0],
+      "2": [0, 0, 0]
+    },
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\sale-calculator.service.ts",
+      mappings: "AAQA,MAAM,OAAO,cAAc;IACzB,mBAAmB,CAAC,IAAkB,EAAE,OAAY;QAClD,MAAM,QAAQ,GAAG,MAAM,CAAC,OAAO,EAAE,aAAa,IAAI,CAAC,CAAC,CAAA;QACpD,MAAM,SAAS,GAAG,MAAM,CAAC,IAAI,CAAC,SAAS,IAAI,OAAO,EAAE,KAAK,IAAI,CAAC,CAAC,CAAA;QAC/D,MAAM,aAAa,GAAG,SAAS,GAAG,QAAQ,CAAA;QAE1C,OAAO;YACL,SAAS,EAAE,IAAI,CAAC,SAAS;YACzB,IAAI,EAAE,OAAO,EAAE,IAAI,IAAI,IAAI,CAAC,IAAI,IAAI,sBAAsB;YAC1D,QAAQ,EAAE,IAAI,CAAC,QAAQ;YACvB,QAAQ;YACR,SAAS;YACT,KAAK,EAAE,IAAI,CAAC,QAAQ,GAAG,SAAS;YAChC,aAAa;YACb,WAAW,EAAE,aAAa,GAAG,IAAI,CAAC,QAAQ;SAC3C,CAAA;IACH,CAAC;IAED,mBAAmB,CAAC,KAAY,EAAE,YAAoB,EAAE,OAAe;QACrE,MAAM,WAAW,GAAG,KAAK,CAAC,MAAM,CAAC,CAAC,GAAG,EAAE,IAAI,EAAE,EAAE,CAAC,GAAG,GAAG,IAAI,CAAC,KAAK,EAAE,CAAC,CAAC,CAAA;QACpE,MAAM,QAAQ,GAAG,WAAW,GAAG,YAAY,CAAA;QAC3C,MAAM,OAAO,GAAG,QAAQ,GAAG,OAAO,CAAA;QAClC,MAAM,SAAS,GAAG,KAAK,CAAC,MAAM,CAAC,CAAC,GAAG,EAAE,IAAI,EAAE,EAAE,CAAC,GAAG,GAAG,IAAI,CAAC,WAAW,EAAE,CAAC,CAAC,CAAA;QACxE,MAAM,QAAQ,GAAG,SAAS,GAAG,OAAO,CAAA;QAEpC,OAAO;YACL,WAAW;YACX,QAAQ;YACR,OAAO;YACP,SAAS;YACT,QAAQ;SACT,CAAA;IACH,CAAC;CACF",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\sale-calculator.service.ts"],
+      sourcesContent: ["export interface SaleItemData {\n  productId: string\n  name?: string\n  quantity: number\n  unitPrice?: number\n  purchasePrice?: number\n}\n\nexport class SaleCalculator {\n  calculateItemTotals(item: SaleItemData, product: any) {\n    const unitCost = Number(product?.purchasePrice || 0)\n    const unitPrice = Number(item.unitPrice || product?.price || 0)\n    const profitPerUnit = unitPrice - unitCost\n    \n    return {\n      productId: item.productId,\n      name: product?.name || item.name || 'Producto desconocido',\n      quantity: item.quantity,\n      unitCost,\n      unitPrice,\n      total: item.quantity * unitPrice,\n      profitPerUnit,\n      totalProfit: profitPerUnit * item.quantity,\n    }\n  }\n\n  calculateSaleTotals(items: any[], shippingCost: number, bcvRate: number) {\n    const subtotalUSD = items.reduce((sum, item) => sum + item.total, 0)\n    const totalUSD = subtotalUSD + shippingCost\n    const totalBS = totalUSD * bcvRate\n    const profitUSD = items.reduce((sum, item) => sum + item.totalProfit, 0)\n    const profitBS = profitUSD * bcvRate\n\n    return {\n      subtotalUSD,\n      totalUSD,\n      totalBS,\n      profitUSD,\n      profitBS\n    }\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "366f85e3926188487125ef812c7f8f884e4ad129"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_2oftwjlvv2 = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_2oftwjlvv2();
+export class SaleCalculator {
+  calculateItemTotals(item, product) {
+    /* istanbul ignore next */
+    cov_2oftwjlvv2().f[0]++;
+    const unitCost =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[0]++, Number(
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().b[0][0]++, product?.purchasePrice) ||
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().b[0][1]++, 0)));
+    const unitPrice =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[1]++, Number(
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().b[1][0]++, item.unitPrice) ||
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().b[1][1]++, product?.price) ||
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().b[1][2]++, 0)));
+    const profitPerUnit =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[2]++, unitPrice - unitCost);
+    /* istanbul ignore next */
+    cov_2oftwjlvv2().s[3]++;
+    return {
+      productId: item.productId,
+      name: 
+      /* istanbul ignore next */
+      (cov_2oftwjlvv2().b[2][0]++, product?.name) ||
+      /* istanbul ignore next */
+      (cov_2oftwjlvv2().b[2][1]++, item.name) ||
+      /* istanbul ignore next */
+      (cov_2oftwjlvv2().b[2][2]++, 'Producto desconocido'),
+      quantity: item.quantity,
+      unitCost,
+      unitPrice,
+      total: item.quantity * unitPrice,
+      profitPerUnit,
+      totalProfit: profitPerUnit * item.quantity
+    };
+  }
+  calculateSaleTotals(items, shippingCost, bcvRate) {
+    /* istanbul ignore next */
+    cov_2oftwjlvv2().f[1]++;
+    const subtotalUSD =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[4]++, items.reduce((sum, item) => {
+      /* istanbul ignore next */
+      cov_2oftwjlvv2().f[2]++;
+      cov_2oftwjlvv2().s[5]++;
+      return sum + item.total;
+    }, 0));
+    const totalUSD =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[6]++, subtotalUSD + shippingCost);
+    const totalBS =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[7]++, totalUSD * bcvRate);
+    const profitUSD =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[8]++, items.reduce((sum, item) => {
+      /* istanbul ignore next */
+      cov_2oftwjlvv2().f[3]++;
+      cov_2oftwjlvv2().s[9]++;
+      return sum + item.totalProfit;
+    }, 0));
+    const profitBS =
+    /* istanbul ignore next */
+    (cov_2oftwjlvv2().s[10]++, profitUSD * bcvRate);
+    /* istanbul ignore next */
+    cov_2oftwjlvv2().s[11]++;
+    return {
+      subtotalUSD,
+      totalUSD,
+      totalBS,
+      profitUSD,
+      profitBS
+    };
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb3ZfMm9mdHdqbHZ2MiIsImFjdHVhbENvdmVyYWdlIiwiU2FsZUNhbGN1bGF0b3IiLCJjYWxjdWxhdGVJdGVtVG90YWxzIiwiaXRlbSIsInByb2R1Y3QiLCJmIiwidW5pdENvc3QiLCJzIiwiTnVtYmVyIiwiYiIsInB1cmNoYXNlUHJpY2UiLCJ1bml0UHJpY2UiLCJwcmljZSIsInByb2ZpdFBlclVuaXQiLCJwcm9kdWN0SWQiLCJuYW1lIiwicXVhbnRpdHkiLCJ0b3RhbCIsInRvdGFsUHJvZml0IiwiY2FsY3VsYXRlU2FsZVRvdGFscyIsIml0ZW1zIiwic2hpcHBpbmdDb3N0IiwiYmN2UmF0ZSIsInN1YnRvdGFsVVNEIiwicmVkdWNlIiwic3VtIiwidG90YWxVU0QiLCJ0b3RhbEJTIiwicHJvZml0VVNEIiwicHJvZml0QlMiXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFNlcnZlciBBZG1pblxcRGVza3RvcFxcZWNvbW1lcmNlXFxzZXJ2ZXJcXHNyY1xcYXBwbGljYXRpb25cXHNlcnZpY2VzXFxzYWxlLWNhbGN1bGF0b3Iuc2VydmljZS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJleHBvcnQgaW50ZXJmYWNlIFNhbGVJdGVtRGF0YSB7XG4gIHByb2R1Y3RJZDogc3RyaW5nXG4gIG5hbWU/OiBzdHJpbmdcbiAgcXVhbnRpdHk6IG51bWJlclxuICB1bml0UHJpY2U/OiBudW1iZXJcbiAgcHVyY2hhc2VQcmljZT86IG51bWJlclxufVxuXG5leHBvcnQgY2xhc3MgU2FsZUNhbGN1bGF0b3Ige1xuICBjYWxjdWxhdGVJdGVtVG90YWxzKGl0ZW06IFNhbGVJdGVtRGF0YSwgcHJvZHVjdDogYW55KSB7XG4gICAgY29uc3QgdW5pdENvc3QgPSBOdW1iZXIocHJvZHVjdD8ucHVyY2hhc2VQcmljZSB8fCAwKVxuICAgIGNvbnN0IHVuaXRQcmljZSA9IE51bWJlcihpdGVtLnVuaXRQcmljZSB8fCBwcm9kdWN0Py5wcmljZSB8fCAwKVxuICAgIGNvbnN0IHByb2ZpdFBlclVuaXQgPSB1bml0UHJpY2UgLSB1bml0Q29zdFxuICAgIFxuICAgIHJldHVybiB7XG4gICAgICBwcm9kdWN0SWQ6IGl0ZW0ucHJvZHVjdElkLFxuICAgICAgbmFtZTogcHJvZHVjdD8ubmFtZSB8fCBpdGVtLm5hbWUgfHwgJ1Byb2R1Y3RvIGRlc2Nvbm9jaWRvJyxcbiAgICAgIHF1YW50aXR5OiBpdGVtLnF1YW50aXR5LFxuICAgICAgdW5pdENvc3QsXG4gICAgICB1bml0UHJpY2UsXG4gICAgICB0b3RhbDogaXRlbS5xdWFudGl0eSAqIHVuaXRQcmljZSxcbiAgICAgIHByb2ZpdFBlclVuaXQsXG4gICAgICB0b3RhbFByb2ZpdDogcHJvZml0UGVyVW5pdCAqIGl0ZW0ucXVhbnRpdHksXG4gICAgfVxuICB9XG5cbiAgY2FsY3VsYXRlU2FsZVRvdGFscyhpdGVtczogYW55W10sIHNoaXBwaW5nQ29zdDogbnVtYmVyLCBiY3ZSYXRlOiBudW1iZXIpIHtcbiAgICBjb25zdCBzdWJ0b3RhbFVTRCA9IGl0ZW1zLnJlZHVjZSgoc3VtLCBpdGVtKSA9PiBzdW0gKyBpdGVtLnRvdGFsLCAwKVxuICAgIGNvbnN0IHRvdGFsVVNEID0gc3VidG90YWxVU0QgKyBzaGlwcGluZ0Nvc3RcbiAgICBjb25zdCB0b3RhbEJTID0gdG90YWxVU0QgKiBiY3ZSYXRlXG4gICAgY29uc3QgcHJvZml0VVNEID0gaXRlbXMucmVkdWNlKChzdW0sIGl0ZW0pID0+IHN1bSArIGl0ZW0udG90YWxQcm9maXQsIDApXG4gICAgY29uc3QgcHJvZml0QlMgPSBwcm9maXRVU0QgKiBiY3ZSYXRlXG5cbiAgICByZXR1cm4ge1xuICAgICAgc3VidG90YWxVU0QsXG4gICAgICB0b3RhbFVTRCxcbiAgICAgIHRvdGFsQlMsXG4gICAgICBwcm9maXRVU0QsXG4gICAgICBwcm9maXRCU1xuICAgIH1cbiAgfVxufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7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

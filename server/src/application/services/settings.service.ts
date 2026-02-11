@@ -1,5 +1,6 @@
 import { ValidationError } from '../../shared/errors/app.errors.js'
 import { SettingsRepository } from '../../domain/repositories/settings.repository.js'
+import { AuditService } from './audit.service.js'
 
 export interface UpdateSettingInput {
   key: string
@@ -8,7 +9,10 @@ export interface UpdateSettingInput {
 }
 
 export class SettingsService {
-  constructor(private settingsRepo: SettingsRepository) {}
+  constructor(
+    private settingsRepo: SettingsRepository,
+    private auditService: AuditService
+  ) {}
 
   /**
    * Obtiene todas las configuraciones agrupadas
@@ -39,9 +43,21 @@ export class SettingsService {
   /**
    * Actualiza múltiples configuraciones con auditoría
    */
-  async updateSettings(updates: UpdateSettingInput[], userId: string) {
+  async updateSettings(updates: UpdateSettingInput[], userId: string, ipAddress?: string, userAgent?: string) {
     try {
-      return await this.settingsRepo.updateManyWithHistory(updates, userId)
+      const result = await this.settingsRepo.updateManyWithHistory(updates, userId)
+      
+      // GDPR Compliant Audit
+      await this.auditService.logAction({
+        entityType: 'SETTINGS',
+        action: 'UPDATE',
+        userId,
+        details: { updates: updates.map(u => ({ key: u.key, value: u.value })) },
+        ipAddress,
+        userAgent
+      })
+
+      return result
     } catch (error: any) {
       throw new ValidationError(error.message)
     }

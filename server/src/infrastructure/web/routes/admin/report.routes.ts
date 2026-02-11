@@ -10,7 +10,10 @@ router.get('/profitability', async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate as string | undefined
     const endDate = req.query.endDate as string | undefined
-    const report = await dashboardService.getProfitabilityReport(startDate, endDate)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const report = await dashboardService.getProfitabilityReport(startDate, endDate, userId, ipAddress, userAgent)
     res.json(report)
   } catch (error) {
     console.error('Error generating profitability report:', error)
@@ -22,14 +25,17 @@ router.get('/sales', async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate as string | undefined
     const endDate = req.query.endDate as string | undefined
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
     const bcvRate = await bcvService.getCurrentRate()
 
     const salesSummary = await saleService.getSalesSummary({
       startDate,
       endDate,
-    })
+    }, userId, ipAddress, userAgent)
 
-    const items = await dashboardService.getSalesReport(startDate, endDate)
+    const items = await dashboardService.getSalesReport(startDate, endDate, userId, ipAddress, userAgent)
     const totalItems = (items || []).reduce((sum: number, sale: any) => {
       return sum + (sale.items || []).reduce((itemSum: number, item: any) => itemSum + (Number(item.quantity) || 0), 0)
     }, 0)
@@ -73,7 +79,10 @@ router.get('/sales', async (req: Request, res: Response) => {
 
 router.get('/inventory', async (req: Request, res: Response) => {
   try {
-    const report = await inventoryService.getInventoryReport()
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const report = await inventoryService.getInventoryReport(userId, ipAddress, userAgent)
     const bcvRate = await bcvService.getCurrentRate()
 
     const items = report.products.map((product: any) => ({
@@ -123,7 +132,10 @@ router.get('/inventory', async (req: Request, res: Response) => {
 router.get('/requirements', async (req: Request, res: Response) => {
   try {
     const status = req.query.status as string | undefined
-    const report = await dashboardService.getRequirementsReport(status)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const report = await dashboardService.getRequirementsReport(status, userId, ipAddress, userAgent)
 
     res.json({
       reportDate: new Date().toISOString(),
@@ -139,7 +151,10 @@ router.get('/analytics', async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate as string | undefined
     const endDate = req.query.endDate as string | undefined
-    const report = await dashboardService.getAnalyticsReport(startDate, endDate)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const report = await dashboardService.getAnalyticsReport(startDate, endDate, userId, ipAddress, userAgent)
     res.json(report)
   } catch (error) {
     console.error('Error generating analytics report:', error)
@@ -149,14 +164,18 @@ router.get('/analytics', async (req: Request, res: Response) => {
 
 router.get('/dashboard', async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+
     const [salesSummary, inventoryReport, requirementsSummary, bcvRate] = await Promise.all([
-      saleService.getSalesSummary(),
-      inventoryService.getInventoryReport(),
-      requirementService.getRequirementsSummary(),
+      saleService.getSalesSummary(undefined, userId, ipAddress, userAgent),
+      inventoryService.getInventoryReport(userId, ipAddress, userAgent),
+      requirementService.getRequirementsSummary(userId, ipAddress, userAgent),
       bcvService.getCurrentRate(),
     ])
 
-    const recentSales = await saleService.getRecentSales(5)
+    const recentSales = await saleService.getRecentSales(5, userId, ipAddress, userAgent)
 
     res.json({
       updatedAt: new Date().toISOString(),

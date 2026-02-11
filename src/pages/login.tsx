@@ -30,7 +30,6 @@ export function LoginPage() {
   const { login, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [isBrave, setIsBrave] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -41,12 +40,6 @@ export function LoginPage() {
 
   useEffect(() => {
     setGoogleReady(true)
-    ;(async () => {
-      const anyNav = navigator as any
-      const braveFlag = anyNav.brave && anyNav.brave.isBrave ? await anyNav.brave.isBrave() : false
-      const uaFlag = /Brave/i.test(navigator.userAgent)
-      setIsBrave(Boolean(braveFlag || uaFlag))
-    })()
   }, [])
 
   // Validación en tiempo real
@@ -295,11 +288,11 @@ export function LoginPage() {
 
           <div className="flex justify-center">
             <div className="w-full flex justify-center min-h-[44px]">
-              {isBrave && (
+              {/* {isBrave && (
                 <div className="mb-2 w-[250px] p-2 text-xs rounded-lg border border-amber-200 bg-amber-50 text-amber-700">
                   Si usas Brave, desactiva Shields o permite cookies de terceros para usar Google.
                 </div>
-              )}
+              )} */}
               {googleReady ? (
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}

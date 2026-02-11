@@ -7,6 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SystemAuditLog {
+  id          String   @id @default(uuid())
+  entityType  String   // PRODUCT, SALE, USER, SETTING, etc.
+  entityId    String?
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  userId      String?
+  userName    String?
+  details     String?  // JSON string with changes or extra info
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], name: "UserAuditLogs")
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model User {
   id                       String               @id @default(uuid())
   email                    String               @unique
@@ -32,6 +50,7 @@ model User {
   notificationSettings     NotificationSetting?
   sales                    Sale[]
   auditLogs                SaleAuditLog[]
+  systemAuditLogs          SystemAuditLog[]     @relation("UserAuditLogs")
   settingHistory           SettingHistory[]
 }
 
@@ -49,6 +68,7 @@ model Favorite {
 model Product {
   id               String                @id @default(uuid())
   sku              String                @unique
+  productCode      String?               @unique
   name             String
   slug             String                @unique
   description      String
@@ -79,7 +99,47 @@ model Product {
   priceHistory     ProductPriceHistory[]
   requirementItems RequirementItem[]
   saleItems        SaleItem[]
+  inventoryBatchItems InventoryBatchItem[]
   categories       Category[]            @relation("CategoryToProduct")
+}
+
+model Provider {
+  id        String           @id @default(uuid())
+  name      String           @unique
+  phone     String?
+  email     String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  batches   InventoryBatch[]
+}
+
+model InventoryBatch {
+  id         String               @id @default(uuid())
+  code       String               @unique
+  providerId String?
+  notes      String?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  provider   Provider?            @relation(fields: [providerId], references: [id])
+  items      InventoryBatchItem[]
+}
+
+model InventoryBatchItem {
+  id              String         @id @default(uuid())
+  batchId         String
+  productId       String
+  quantity        Int
+  soldQuantity    Int            @default(0)
+  unitCostUSD     Decimal
+  unitSaleUSD     Decimal
+  shippingCostUSD Decimal        @default(0)
+  entryDate       DateTime
+  discounted      Boolean        @default(false)
+  discountPercent Decimal        @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  batch           InventoryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Cart {
@@ -213,6 +273,51 @@ model Sale {
   user            User?          @relation(fields: [userId], references: [id])
   auditLogs       SaleAuditLog[]
   items           SaleItem[]
+  payments        Payment[]
+  installments    Installment[]
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  saleId        String
+  amountUSD     Decimal
+  amountBS      Decimal
+  bcvRate       Decimal
+  paymentMethod String
+  reference     String?
+  notes         String?
+  paidAt        DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sale          Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+}
+
+model Installment {
+  id          String    @id @default(uuid())
+  saleId      String
+  amountUSD   Decimal
+  dueDate     DateTime
+  status      String    @default("PENDING") // PENDING, PAID, PARTIAL, OVERDUE
+  paidAmount  Decimal   @default(0)
+  paidAt      DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  sale        Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  proofs      PaymentProof[]
+}
+
+model PaymentProof {
+  id            String   @id @default(uuid())
+  installmentId String
+  proofUrl      String
+  amountUSD     Decimal
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  notes         String?
+  paidAt        DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  installment   Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
 }
 
 model SaleItem {

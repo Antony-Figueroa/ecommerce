@@ -77,7 +77,7 @@ router.get('/check-username/:username', async (req: Request, res: Response) => {
 
 router.post('/register', validate(registerSchema), async (req: Request, res: Response) => {
   try {
-    const user = await authService.register(req.body)
+    const user = await authService.register(req.body, req.ip, req.get('User-Agent'))
     res.status(201).json({
       success: true,
         message: 'Usuario registrado exitosamente.',
@@ -147,7 +147,12 @@ router.post('/reset-password', async (req: Request, res: Response) => {
 
 router.post('/login', validate(loginSchema), async (req: Request, res: Response) => {
   try {
-    const result = await authService.login(req.body.email, req.body.password)
+    const result = await authService.login(
+      req.body.email, 
+      req.body.password, 
+      req.ip, 
+      req.get('User-Agent')
+    )
     res.json(result)
   } catch (error: any) {
     console.error('Error en login:', error)

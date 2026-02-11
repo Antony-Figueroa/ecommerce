@@ -1,4 +1,6 @@
+import { jest } from '@jest/globals'
 import { InventoryService } from '../inventory.service.js'
+import { NotFoundError } from '../../../shared/errors/app.errors.js'
 
 describe('InventoryService', () => {
   let inventoryService: InventoryService
@@ -6,37 +8,48 @@ describe('InventoryService', () => {
   let mockCategoryRepo: any
   let mockBrandRepo: any
   let mockLogRepo: any
+  let mockProviderRepo: any
+  let mockInventoryBatchRepo: any
   let mockNotificationService: any
   let mockFavoriteRepo: any
+  let mockBatchManager: any
+  let mockProductManager: any
+  let mockAuditService: any
 
   beforeEach(() => {
     mockProductRepo = {
       findMany: jest.fn(),
-      count: jest.fn(),
-      findBySku: jest.fn(),
-      create: jest.fn(),
       update: jest.fn(),
       findById: jest.fn(),
       findAll: jest.fn(),
-      deleteImages: jest.fn(),
     }
-    mockCategoryRepo = {
-      findById: jest.fn(),
-    }
-    mockBrandRepo = {
-      findAll: jest.fn(),
-      upsert: jest.fn(),
-    }
+    mockCategoryRepo = {}
+    mockBrandRepo = {}
     mockLogRepo = {
-      create: jest.fn(),
       findAll: jest.fn(),
     }
+    mockProviderRepo = {
+      findAll: jest.fn(),
+      findByName: jest.fn(),
+      create: jest.fn(),
+    }
+    mockInventoryBatchRepo = {}
     mockNotificationService = {
-      notifyPriceChange: jest.fn(),
-      notifyLowStock: jest.fn(),
+      createNotification: jest.fn(),
     }
     mockFavoriteRepo = {
-      findByProductId: jest.fn(),
+      findAllByProductId: jest.fn(),
+    }
+    mockBatchManager = {
+      createBatch: jest.fn(),
+    }
+    mockProductManager = {
+      createProduct: jest.fn(),
+      updateProduct: jest.fn(),
+      getProductById: jest.fn(),
+    }
+    mockAuditService = {
+      logAction: jest.fn(),
     }
 
     inventoryService = new InventoryService(
@@ -44,202 +57,96 @@ describe('InventoryService', () => {
       mockCategoryRepo,
       mockBrandRepo,
       mockLogRepo,
+      mockProviderRepo,
+      mockInventoryBatchRepo,
       mockNotificationService,
-      mockFavoriteRepo
+      mockFavoriteRepo,
+      mockBatchManager,
+      mockProductManager,
+      mockAuditService
     )
   })
 
-  describe('getInventoryReport', () => {
-    it('should generate inventory report correctly', async () => {
-      const mockProducts = [
-        {
-          id: '1',
-          name: 'Product A',
-          sku: 'SKU-A',
-          stock: 10,
-          minStock: 5,
-          purchasePrice: 10,
-          shippingCost: 2,
-          price: 20,
-          profitMargin: 1.67,
-        },
-        {
-          id: '2',
-          name: 'Product B',
-          sku: 'SKU-B',
-          stock: 2,
-          minStock: 5,
-          purchasePrice: 20,
-          shippingCost: 5,
-          price: 40,
-          profitMargin: 1.6,
-        }
-      ]
-
-      mockProductRepo.findMany.mockResolvedValue(mockProducts)
-
-      const result = await inventoryService.getInventoryReport()
-
-      expect(result.totalProducts).toBe(2)
-      expect(result.totalItems).toBe(12) // 10 + 2
-      
-      // Total Cost: 10*10 + 2*20 = 100 + 40 = 140
-      expect(result.totalCostUSD).toBe(140)
-      
-      // Total Value: 20*10 + 40*2 = 200 + 80 = 280
-      expect(result.totalValueUSD).toBe(280)
-      
-      expect(result.potentialProfit).toBe(140) // 280 - 140
-      expect(result.lowStockCount).toBe(1) // Product B
-      expect(result.outOfStockCount).toBe(0)
-    })
-  })
-
-  describe('calculateMargin and calculatePrice', () => {
-    it('should calculate margin correctly', () => {
-      // @ts-ignore - access private method
-      const margin = inventoryService.calculateMargin(10, 15)
-      expect(margin).toBe(1.5)
-    })
-
-    it('should calculate price correctly', () => {
-      // @ts-ignore - access private method
-      const price = inventoryService.calculatePrice(10, 1.5)
-      expect(price).toBe(15)
-    })
-
-    it('should handle zero purchase price in margin', () => {
-      // @ts-ignore - access private method
-      const margin = inventoryService.calculateMargin(0, 15)
-      expect(margin).toBe(0)
-    })
-  })
-
-  describe('createProduct with batch data', () => {
-    it('should create product with initial batch and price history', async () => {
-      const productData = {
-        name: 'Test Product',
-        categoryId: 'cat1',
-        brand: 'BrandX',
-        purchasePrice: 10,
-        profitMargin: 1.5,
-        stock: 100,
-        format: 'Tabletas',
-        batchNumber: 'LOTE-001',
-        expirationDate: '2025-12-31'
-      }
-
-      mockCategoryRepo.findById.mockResolvedValue({ id: 'cat1', name: 'Category1' })
-      mockProductRepo.count.mockResolvedValue(0)
-      mockProductRepo.findBySku.mockResolvedValue(null)
-      mockBrandRepo.upsert.mockResolvedValue({ id: 'brand1', name: 'BrandX' })
-      mockProductRepo.create.mockResolvedValue({ id: 'prod1', ...productData })
-
-      await inventoryService.createProduct(productData)
-
-      expect(mockProductRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        purchasePrice: 10,
-        price: 15,
-        profitMargin: 1.5,
-        stock: 100,
-        batches: {
-          create: {
-            batchNumber: 'LOTE-001',
-            expirationDate: expect.any(Date),
-            stock: 100,
-            purchasePrice: 10,
-            salePrice: 15
-          }
-        },
-        priceHistory: {
-          create: {
-            purchasePrice: 10,
-            salePrice: 15,
-            batchQuantity: 100,
-            batchNumber: 'LOTE-001'
-          }
-        }
-      }))
-    })
-  })
-
-  describe('updateProduct with restock batch', () => {
-    it('should update stock and prices when restock batch is provided', async () => {
-      const existingProduct = {
-        id: 'prod1',
-        name: 'Test Product',
-        stock: 50,
-        purchasePrice: 10,
-        price: 15,
-        profitMargin: 1.5
-      }
-      
-      const restockData = {
-        batch: {
-          batchNumber: 'LOTE-002',
-          expirationDate: '2026-01-01',
-          purchasePrice: 12,
-          salePrice: 20,
-          stock: 30
-        }
-      }
-
-      mockProductRepo.findById.mockResolvedValue(existingProduct)
-      mockProductRepo.update.mockResolvedValue({ ...existingProduct, stock: 80, purchasePrice: 12, price: 20 })
-
-      await inventoryService.updateProduct('prod1', restockData)
-
-      expect(mockProductRepo.update).toHaveBeenCalledWith('prod1', expect.objectContaining({
-        stock: 80,
-        purchasePrice: 12,
-        price: 20,
-        profitMargin: 20/12,
-        batches: {
-          create: {
-            batchNumber: 'LOTE-002',
-            expirationDate: expect.any(Date),
-            stock: 30,
-            purchasePrice: 12,
-            salePrice: 20
-          }
-        }
-      }))
-    })
-  })
-
-  describe('updateProduct price manual', () => {
-    it('should recalculate margin when price is updated manually', async () => {
-      const existingProduct = {
-        id: 'prod1',
-        purchasePrice: 10,
-        price: 15,
-        profitMargin: 1.5,
-        stock: 100
-      }
-
-      mockProductRepo.findById.mockResolvedValue(existingProduct)
-      
-      await inventoryService.updateProduct('prod1', { price: 25 })
-
-      expect(mockProductRepo.update).toHaveBeenCalledWith('prod1', expect.objectContaining({
-        price: 25,
-        profitMargin: 2.5
-      }))
-    })
-  })
-
   describe('updatePricesByBCV', () => {
-    it('should update prices based on ratio correctly', async () => {
+    it('should update prices and notify users when rate changes', async () => {
       const mockProducts = [
-        { id: '1', price: 100, currency: 'BS' },
-        { id: '2', price: 200, currency: 'BS' },
+        { id: '1', name: 'Prod 1', price: 100, currency: 'BS', slug: 'prod-1' }
+      ]
+      mockProductRepo.findMany.mockResolvedValue(mockProducts)
+      mockFavoriteRepo.findAllByProductId.mockResolvedValue([{ userId: 'user-1' }])
+
+      await inventoryService.updatePricesByBCV(40, 36)
+
+      expect(mockProductRepo.update).toHaveBeenCalledWith('1', { price: 100 * (40 / 36) })
+      expect(mockNotificationService.createNotification).toHaveBeenCalled()
+      expect(mockAuditService.logAction).toHaveBeenCalledWith(expect.objectContaining({
+        entityType: 'BCV_UPDATE',
+        action: 'UPDATE_PRICES'
+      }))
+    })
+
+    it('should skip if previous rate is 0 or less', async () => {
+      await inventoryService.updatePricesByBCV(40, 0)
+      expect(mockProductRepo.findMany).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('createProvider', () => {
+    it('should create a new provider if it does not exist', async () => {
+      mockProviderRepo.findByName.mockResolvedValue(null)
+      mockProviderRepo.create.mockResolvedValue({ id: 'prov-1', name: 'New Prov' })
+
+      const provider = await inventoryService.createProvider({ name: 'New Prov' })
+
+      expect(provider.id).toBe('prov-1')
+      expect(mockProviderRepo.create).toHaveBeenCalled()
+      expect(mockAuditService.logAction).toHaveBeenCalled()
+    })
+
+    it('should return existing provider if name matches', async () => {
+      mockProviderRepo.findByName.mockResolvedValue({ id: 'prov-1', name: 'Existing Prov' })
+
+      const provider = await inventoryService.createProvider({ name: 'Existing Prov' })
+
+      expect(provider.id).toBe('prov-1')
+      expect(mockProviderRepo.create).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('deleteProduct', () => {
+    it('should set isActive to false', async () => {
+      mockProductRepo.findById.mockResolvedValue({ id: '1', isActive: true })
+
+      const result = await inventoryService.deleteProduct('1')
+
+      expect(result.success).toBe(true)
+      expect(mockProductRepo.update).toHaveBeenCalledWith('1', { isActive: false })
+    })
+
+    it('should throw NotFoundError if product does not exist', async () => {
+      mockProductRepo.findById.mockResolvedValue(null)
+
+      await expect(inventoryService.deleteProduct('999')).rejects.toThrow(NotFoundError)
+    })
+  })
+
+  describe('getInventoryReport', () => {
+    it('should calculate report metrics correctly', async () => {
+      const mockProducts = [
+        { id: '1', name: 'P1', stock: 10, minStock: 5, purchasePrice: 50, price: 100, profitMargin: 50 },
+        { id: '2', name: 'P2', stock: 2, minStock: 5, purchasePrice: 20, price: 50, profitMargin: 60 },
       ]
       mockProductRepo.findMany.mockResolvedValue(mockProducts)
 
-      await inventoryService.updatePricesByBCV(40, 36) // ratio 40/36 = 1.111...
+      const report = await inventoryService.getInventoryReport()
 
-      expect(mockProductRepo.update).toHaveBeenCalledWith('1', { price: 100 * (40/36) })
-      expect(mockProductRepo.update).toHaveBeenCalledWith('2', { price: 200 * (40/36) })
+      expect(report.totalProducts).toBe(2)
+      expect(report.totalItems).toBe(12)
+      expect(report.totalCostUSD).toBe(10 * 50 + 2 * 20)
+      expect(report.totalValueUSD).toBe(10 * 100 + 2 * 50)
+      expect(report.lowStockCount).toBe(1)
+      expect(report.alerts.lowStock).toHaveLength(1)
+      expect(report.alerts.lowStock[0].id).toBe('2')
     })
   })
 })

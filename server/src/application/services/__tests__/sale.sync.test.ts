@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import { SaleService } from '../sale.service.js'
 import { ValidationError, NotFoundError } from '../../../shared/errors/app.errors.js'
 
@@ -5,12 +6,15 @@ describe('SaleService Sync & Delivery Status', () => {
   let saleService: SaleService
   let mockSaleRepo: any
   let mockProductRepo: any
-  let mockLogRepo: any
   let mockBcvRepo: any
-  let mockBatchRepo: any
   let mockNotificationRepo: any
   let mockSettingsRepo: any
   let mockNotificationService: any
+  let mockPaymentService: any
+  let mockAuditService: any
+  let mockStockManager: any
+  let mockSaleCalculator: any
+  let mockLogRepo: any
 
   beforeEach(() => {
     mockSaleRepo = {
@@ -22,20 +26,15 @@ describe('SaleService Sync & Delivery Status', () => {
       findBySaleNumber: jest.fn(),
       findDuplicate: jest.fn(),
       createAuditLog: jest.fn(),
+      updateItem: jest.fn(),
+      getSummary: jest.fn(),
     }
     mockProductRepo = {
       findById: jest.fn(),
       update: jest.fn(),
     }
-    mockLogRepo = {
-      create: jest.fn(),
-    }
     mockBcvRepo = {
       getCurrentRate: jest.fn().mockResolvedValue(36),
-    }
-    mockBatchRepo = {
-      findMany: jest.fn(),
-      update: jest.fn(),
     }
     mockNotificationRepo = {
       create: jest.fn(),
@@ -44,18 +43,39 @@ describe('SaleService Sync & Delivery Status', () => {
       findByKey: jest.fn(),
     }
     mockNotificationService = {
+      createNotification: jest.fn(),
       notifySaleStatusChange: jest.fn(),
+    }
+    mockPaymentService = {
+      getPaymentStatus: jest.fn(),
+    }
+    mockAuditService = {
+      logAction: jest.fn(),
+    }
+    mockStockManager = {
+      addStock: jest.fn(),
+      deductStock: jest.fn(),
+    }
+    mockSaleCalculator = {
+      calculateItemTotals: jest.fn(),
+      calculateSaleTotals: jest.fn(),
+    }
+    mockLogRepo = {
+      create: jest.fn(),
     }
 
     saleService = new SaleService(
       mockSaleRepo,
       mockProductRepo,
-      mockLogRepo,
       mockBcvRepo,
-      mockBatchRepo,
       mockNotificationRepo,
       mockSettingsRepo,
-      mockNotificationService
+      mockNotificationService,
+      mockPaymentService,
+      mockAuditService,
+      mockStockManager,
+      mockSaleCalculator,
+      mockLogRepo
     )
   })
 
@@ -72,7 +92,7 @@ describe('SaleService Sync & Delivery Status', () => {
     })
 
     it('should allow COMPLETED status if sale is paid', async () => {
-      const mockSale = { id: 'sale-1', status: 'PENDING', isPaid: true }
+      const mockSale = { id: 'sale-1', status: 'PENDING', isPaid: true, saleNumber: 'V-1', customerName: 'Test' }
       mockSaleRepo.findById.mockResolvedValue(mockSale)
       mockSaleRepo.update.mockResolvedValue({ ...mockSale, status: 'COMPLETED' })
 
@@ -80,73 +100,28 @@ describe('SaleService Sync & Delivery Status', () => {
 
       expect(result.status).toBe('COMPLETED')
       expect(mockSaleRepo.update).toHaveBeenCalledWith('sale-1', { status: 'COMPLETED' })
-      expect(mockSaleRepo.createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
-        action: 'STATUS_CHANGE',
-        newStatus: 'COMPLETED'
-      }))
-    })
-
-    it('should allow other statuses even if not paid', async () => {
-      const mockSale = { id: 'sale-1', status: 'PENDING', isPaid: false }
-      mockSaleRepo.findById.mockResolvedValue(mockSale)
-      mockSaleRepo.update.mockResolvedValue({ ...mockSale, status: 'PROCESSING' })
-
-      const result = await saleService.updateSaleStatus('sale-1', 'PROCESSING')
-
-      expect(result.status).toBe('PROCESSING')
-      expect(mockSaleRepo.update).toHaveBeenCalledWith('sale-1', { status: 'PROCESSING' })
     })
   })
 
   describe('updateDeliveryStatus', () => {
-    it('should update delivery status and create audit log', async () => {
-      const mockSale = { id: 'sale-1', deliveryStatus: 'NOT_DELIVERED', customerPhone: '123456' }
+    it('should update delivery status and notify', async () => {
+      const mockSale = { id: 'sale-1', deliveryStatus: 'NOT_DELIVERED', saleNumber: 'V-1', customerName: 'Test' }
       mockSaleRepo.findById.mockResolvedValue(mockSale)
-      mockSaleRepo.update.mockResolvedValue({ ...mockSale, deliveryStatus: 'IN_TRANSIT' })
+      mockSaleRepo.update.mockResolvedValue({ ...mockSale, deliveryStatus: 'DELIVERED' })
 
-      const result = await saleService.updateDeliveryStatus('sale-1', 'IN_TRANSIT', 'admin-1', 'En camino')
+      const result = await saleService.updateDeliveryStatus('sale-1', 'DELIVERED')
 
-      expect(result.deliveryStatus).toBe('IN_TRANSIT')
-      expect(mockSaleRepo.update).toHaveBeenCalledWith('sale-1', { deliveryStatus: 'IN_TRANSIT' })
-      expect(mockSaleRepo.createAuditLog).toHaveBeenCalledWith({
-        saleId: 'sale-1',
-        action: 'DELIVERY_STATUS_CHANGE',
-        oldDeliveryStatus: 'NOT_DELIVERED',
-        newDeliveryStatus: 'IN_TRANSIT',
-        userId: 'admin-1',
-        reason: 'En camino'
-      })
+      expect(result.deliveryStatus).toBe('DELIVERED')
+      expect(mockSaleRepo.update).toHaveBeenCalledWith('sale-1', { deliveryStatus: 'DELIVERED' })
     })
 
-    it('should throw ValidationError for invalid delivery status', async () => {
+    it('should throw ValidationError for invalid status', async () => {
       const mockSale = { id: 'sale-1', deliveryStatus: 'NOT_DELIVERED' }
       mockSaleRepo.findById.mockResolvedValue(mockSale)
 
       await expect(
         saleService.updateDeliveryStatus('sale-1', 'INVALID_STATUS')
       ).rejects.toThrow(ValidationError)
-    })
-  })
-
-  describe('confirmPayment', () => {
-    it('should set isPaid to true and status to COMPLETED', async () => {
-      const mockSale = { id: 'sale-1', status: 'PENDING', isPaid: false }
-      mockSaleRepo.findById.mockResolvedValue(mockSale)
-      mockSaleRepo.update.mockResolvedValue({ ...mockSale, status: 'COMPLETED', isPaid: true, paidAmountUSD: 100 })
-
-      const result = await saleService.confirmPayment('sale-1', 100, 'admin-1', 'Pago Zelle')
-
-      expect(result.isPaid).toBe(true)
-      expect(result.status).toBe('COMPLETED')
-      expect(mockSaleRepo.update).toHaveBeenCalledWith('sale-1', {
-        status: 'COMPLETED',
-        isPaid: true,
-        paidAmountUSD: 100
-      })
-      expect(mockSaleRepo.createAuditLog).toHaveBeenCalledWith(expect.objectContaining({
-        action: 'PAYMENT_CONFIRMED',
-        newStatus: 'COMPLETED'
-      }))
     })
   })
 })

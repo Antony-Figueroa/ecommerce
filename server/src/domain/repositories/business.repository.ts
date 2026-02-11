@@ -25,6 +25,29 @@ export interface SaleRepository {
   }): Promise<any | null>
 }
 
+export interface PaymentRepository {
+  create(data: any): Promise<any>
+  findById(id: string): Promise<any | null>
+  findBySaleId(saleId: string): Promise<any[]>
+}
+
+export interface InstallmentRepository {
+  create(data: any): Promise<any>
+  createMany(data: any[]): Promise<any>
+  findById(id: string): Promise<any | null>
+  findBySaleId(saleId: string): Promise<any[]>
+  update(id: string, data: any): Promise<any>
+  findOverdue(date: Date): Promise<any[]>
+}
+
+export interface PaymentProofRepository {
+  create(data: any): Promise<any>
+  findById(id: string): Promise<any | null>
+  findByInstallmentId(installmentId: string): Promise<any[]>
+  findByStatus(status: string): Promise<any[]>
+  update(id: string, data: any): Promise<any>
+}
+
 export interface NotificationRepository {
   create(data: { 
     type: string; 

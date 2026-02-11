@@ -41,7 +41,10 @@ router.get('/inventory-logs', async (req: Request, res: Response) => {
 
 router.post('/', validate(productCreateSchema), async (req: Request, res: Response) => {
   try {
-    const product = await inventoryService.createProduct(req.body)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const product = await inventoryService.createProduct(req.body, userId, ipAddress, userAgent)
     res.status(201).json(product)
   } catch (error) {
     if (error instanceof Error && error.message.includes('Ya existe')) {
@@ -53,7 +56,10 @@ router.post('/', validate(productCreateSchema), async (req: Request, res: Respon
 
 router.put('/:id', validate(productUpdateSchema), async (req: Request, res: Response) => {
   try {
-    const product = await inventoryService.updateProduct(req.params.id as string, req.body)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    const product = await inventoryService.updateProduct(req.params.id as string, req.body, userId, ipAddress, userAgent)
     res.json(product)
   } catch (error) {
     if (error instanceof Error && error.message.includes('no encontrado')) {
@@ -65,7 +71,10 @@ router.put('/:id', validate(productUpdateSchema), async (req: Request, res: Resp
 
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    await inventoryService.deleteProduct(req.params.id as string)
+    const userId = (req as any).user?.id
+    const ipAddress = req.ip
+    const userAgent = req.get('User-Agent')
+    await inventoryService.deleteProduct(req.params.id as string, userId, ipAddress, userAgent)
     res.json({ success: true })
   } catch (error) {
     if (error instanceof Error && error.message.includes('no encontrado')) {

@@ -1,0 +1,268 @@
+513e161ab6343945c90d16435e019696
+/* istanbul ignore next */
+function cov_25ygcth1if() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification-setting.service.ts";
+  var hash = "8ebf45577828505153894374ab39326517fcaf6e";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification-setting.service.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 3,
+          column: 8
+        },
+        end: {
+          line: 8,
+          column: 11
+        }
+      },
+      "1": {
+        start: {
+          line: 11,
+          column: 23
+        },
+        end: {
+          line: 11,
+          column: 66
+        }
+      },
+      "2": {
+        start: {
+          line: 12,
+          column: 8
+        },
+        end: {
+          line: 20,
+          column: 9
+        }
+      },
+      "3": {
+        start: {
+          line: 14,
+          column: 12
+        },
+        end: {
+          line: 19,
+          column: 15
+        }
+      },
+      "4": {
+        start: {
+          line: 21,
+          column: 8
+        },
+        end: {
+          line: 21,
+          column: 24
+        }
+      },
+      "5": {
+        start: {
+          line: 24,
+          column: 8
+        },
+        end: {
+          line: 24,
+          column: 53
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 2,
+            column: 4
+          },
+          end: {
+            line: 2,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 2,
+            column: 29
+          },
+          end: {
+            line: 9,
+            column: 5
+          }
+        },
+        line: 2
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 10,
+            column: 4
+          },
+          end: {
+            line: 10,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 10,
+            column: 30
+          },
+          end: {
+            line: 22,
+            column: 5
+          }
+        },
+        line: 10
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 23,
+            column: 4
+          },
+          end: {
+            line: 23,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 23,
+            column: 39
+          },
+          end: {
+            line: 25,
+            column: 5
+          }
+        },
+        line: 23
+      }
+    },
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 12,
+            column: 8
+          },
+          end: {
+            line: 20,
+            column: 9
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 12,
+            column: 8
+          },
+          end: {
+            line: 20,
+            column: 9
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 12
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0
+    },
+    b: {
+      "0": [0, 0]
+    },
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification-setting.service.ts",
+      mappings: "AAEA,MAAM,OAAO,0BAA0B;IACrC,YAAoB,WAA0C;QAAlD;;;;mBAAQ,WAAW;WAA+B;IAAG,CAAC;IAElE,KAAK,CAAC,WAAW,CAAC,MAAc;QAC9B,IAAI,QAAQ,GAAG,MAAM,IAAI,CAAC,WAAW,CAAC,YAAY,CAAC,MAAM,CAAC,CAAA;QAE1D,IAAI,CAAC,QAAQ,EAAE,CAAC;YACd,0CAA0C;YAC1C,QAAQ,GAAG,MAAM,IAAI,CAAC,WAAW,CAAC,MAAM,CAAC,MAAM,EAAE;gBAC/C,MAAM,EAAE,IAAI;gBACZ,SAAS,EAAE,IAAI;gBACf,UAAU,EAAE,IAAI;gBAChB,MAAM,EAAE,IAAI;aACb,CAAC,CAAA;QACJ,CAAC;QAED,OAAO,QAAQ,CAAA;IACjB,CAAC;IAED,KAAK,CAAC,cAAc,CAAC,MAAc,EAAE,IAKpC;QACC,OAAO,IAAI,CAAC,WAAW,CAAC,MAAM,CAAC,MAAM,EAAE,IAAI,CAAC,CAAA;IAC9C,CAAC;CACF",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\application\\services\\notification-setting.service.ts"],
+      sourcesContent: ["import { NotificationSettingRepository } from '../../domain/repositories/business.repository.js'\n\nexport class NotificationSettingService {\n  constructor(private settingRepo: NotificationSettingRepository) {}\n\n  async getSettings(userId: string) {\n    let settings = await this.settingRepo.findByUserId(userId)\n    \n    if (!settings) {\n      // Si no existen, creamos unos por defecto\n      settings = await this.settingRepo.upsert(userId, {\n        orders: true,\n        favorites: true,\n        promotions: true,\n        system: true\n      })\n    }\n    \n    return settings\n  }\n\n  async updateSettings(userId: string, data: {\n    orders?: boolean\n    favorites?: boolean\n    promotions?: boolean\n    system?: boolean\n  }) {\n    return this.settingRepo.upsert(userId, data)\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "8ebf45577828505153894374ab39326517fcaf6e"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_25ygcth1if = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_25ygcth1if();
+export class NotificationSettingService {
+  constructor(settingRepo) {
+    /* istanbul ignore next */
+    cov_25ygcth1if().f[0]++;
+    cov_25ygcth1if().s[0]++;
+    Object.defineProperty(this, "settingRepo", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: settingRepo
+    });
+  }
+  async getSettings(userId) {
+    /* istanbul ignore next */
+    cov_25ygcth1if().f[1]++;
+    let settings =
+    /* istanbul ignore next */
+    (cov_25ygcth1if().s[1]++, await this.settingRepo.findByUserId(userId));
+    /* istanbul ignore next */
+    cov_25ygcth1if().s[2]++;
+    if (!settings) {
+      /* istanbul ignore next */
+      cov_25ygcth1if().b[0][0]++;
+      cov_25ygcth1if().s[3]++;
+      // Si no existen, creamos unos por defecto
+      settings = await this.settingRepo.upsert(userId, {
+        orders: true,
+        favorites: true,
+        promotions: true,
+        system: true
+      });
+    } else
+    /* istanbul ignore next */
+    {
+      cov_25ygcth1if().b[0][1]++;
+    }
+    cov_25ygcth1if().s[4]++;
+    return settings;
+  }
+  async updateSettings(userId, data) {
+    /* istanbul ignore next */
+    cov_25ygcth1if().f[2]++;
+    cov_25ygcth1if().s[5]++;
+    return this.settingRepo.upsert(userId, data);
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJOb3RpZmljYXRpb25TZXR0aW5nU2VydmljZSIsImNvbnN0cnVjdG9yIiwic2V0dGluZ1JlcG8iLCJjb3ZfMjV5Z2N0aDFpZiIsImYiLCJzIiwiT2JqZWN0IiwiZGVmaW5lUHJvcGVydHkiLCJnZXRTZXR0aW5ncyIsInVzZXJJZCIsInNldHRpbmdzIiwiZmluZEJ5VXNlcklkIiwiYiIsInVwc2VydCIsIm9yZGVycyIsImZhdm9yaXRlcyIsInByb21vdGlvbnMiLCJzeXN0ZW0iLCJ1cGRhdGVTZXR0aW5ncyIsImRhdGEiXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFNlcnZlciBBZG1pblxcRGVza3RvcFxcZWNvbW1lcmNlXFxzZXJ2ZXJcXHNyY1xcYXBwbGljYXRpb25cXHNlcnZpY2VzXFxub3RpZmljYXRpb24tc2V0dGluZy5zZXJ2aWNlLnRzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IE5vdGlmaWNhdGlvblNldHRpbmdSZXBvc2l0b3J5IH0gZnJvbSAnLi4vLi4vZG9tYWluL3JlcG9zaXRvcmllcy9idXNpbmVzcy5yZXBvc2l0b3J5LmpzJ1xuXG5leHBvcnQgY2xhc3MgTm90aWZpY2F0aW9uU2V0dGluZ1NlcnZpY2Uge1xuICBjb25zdHJ1Y3Rvcihwcml2YXRlIHNldHRpbmdSZXBvOiBOb3RpZmljYXRpb25TZXR0aW5nUmVwb3NpdG9yeSkge31cblxuICBhc3luYyBnZXRTZXR0aW5ncyh1c2VySWQ6IHN0cmluZykge1xuICAgIGxldCBzZXR0aW5ncyA9IGF3YWl0IHRoaXMuc2V0dGluZ1JlcG8uZmluZEJ5VXNlcklkKHVzZXJJZClcbiAgICBcbiAgICBpZiAoIXNldHRpbmdzKSB7XG4gICAgICAvLyBTaSBubyBleGlzdGVuLCBjcmVhbW9zIHVub3MgcG9yIGRlZmVjdG9cbiAgICAgIHNldHRpbmdzID0gYXdhaXQgdGhpcy5zZXR0aW5nUmVwby51cHNlcnQodXNlcklkLCB7XG4gICAgICAgIG9yZGVyczogdHJ1ZSxcbiAgICAgICAgZmF2b3JpdGVzOiB0cnVlLFxuICAgICAgICBwcm9tb3Rpb25zOiB0cnVlLFxuICAgICAgICBzeXN0ZW06IHRydWVcbiAgICAgIH0pXG4gICAgfVxuICAgIFxuICAgIHJldHVybiBzZXR0aW5nc1xuICB9XG5cbiAgYXN5bmMgdXBkYXRlU2V0dGluZ3ModXNlcklkOiBzdHJpbmcsIGRhdGE6IHtcbiAgICBvcmRlcnM/OiBib29sZWFuXG4gICAgZmF2b3JpdGVzPzogYm9vbGVhblxuICAgIHByb21vdGlvbnM/OiBib29sZWFuXG4gICAgc3lzdGVtPzogYm9vbGVhblxuICB9KSB7XG4gICAgcmV0dXJuIHRoaXMuc2V0dGluZ1JlcG8udXBzZXJ0KHVzZXJJZCwgZGF0YSlcbiAgfVxufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBRUEsT0FBTSxNQUFPQSwwQkFBMEI7RUFDckNDLFlBQW9CQyxXQUEwQztJQUFBO0lBQUFDLGNBQUEsR0FBQUMsQ0FBQTtJQUFBRCxjQUFBLEdBQUFFLENBQUE7SUFBbERDLE1BQUEsQ0FBQUMsY0FBQTs7OzthQUFRTDs7RUFBNkM7RUFFakUsTUFBTU0sV0FBV0EsQ0FBQ0MsTUFBYztJQUFBO0lBQUFOLGNBQUEsR0FBQUMsQ0FBQTtJQUM5QixJQUFJTSxRQUFRO0lBQUE7SUFBQSxDQUFBUCxjQUFBLEdBQUFFLENBQUEsT0FBRyxNQUFNLElBQUksQ0FBQ0gsV0FBVyxDQUFDUyxZQUFZLENBQUNGLE1BQU0sQ0FBQztJQUFBO0lBQUFOLGNBQUEsR0FBQUUsQ0FBQTtJQUUxRCxJQUFJLENBQUNLLFFBQVEsRUFBRTtNQUFBO01BQUFQLGNBQUEsR0FBQVMsQ0FBQTtNQUFBVCxjQUFBLEdBQUFFLENBQUE7TUFDYjtNQUNBSyxRQUFRLEdBQUcsTUFBTSxJQUFJLENBQUNSLFdBQVcsQ0FBQ1csTUFBTSxDQUFDSixNQUFNLEVBQUU7UUFDL0NLLE1BQU0sRUFBRSxJQUFJO1FBQ1pDLFNBQVMsRUFBRSxJQUFJO1FBQ2ZDLFVBQVUsRUFBRSxJQUFJO1FBQ2hCQyxNQUFNLEVBQUU7T0FDVCxDQUFDO0lBQ0osQ0FBQztJQUFBO0lBQUE7TUFBQWQsY0FBQSxHQUFBUyxDQUFBO0lBQUE7SUFBQVQsY0FBQSxHQUFBRSxDQUFBO0lBRUQsT0FBT0ssUUFBUTtFQUNqQjtFQUVBLE1BQU1RLGNBQWNBLENBQUNULE1BQWMsRUFBRVUsSUFLcEM7SUFBQTtJQUFBaEIsY0FBQSxHQUFBQyxDQUFBO0lBQUFELGNBQUEsR0FBQUUsQ0FBQTtJQUNDLE9BQU8sSUFBSSxDQUFDSCxXQUFXLENBQUNXLE1BQU0sQ0FBQ0osTUFBTSxFQUFFVSxJQUFJLENBQUM7RUFDOUMiLCJpZ25vcmVMaXN0IjpbXX0=

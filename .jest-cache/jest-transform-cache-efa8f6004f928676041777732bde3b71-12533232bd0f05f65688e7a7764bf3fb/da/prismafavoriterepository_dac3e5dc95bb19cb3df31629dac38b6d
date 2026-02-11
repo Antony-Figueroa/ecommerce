@@ -1,0 +1,400 @@
+76b617cd800b054ffe06a9e657c0718a
+/* istanbul ignore next */
+function cov_ehhvxbaao() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.favorite.repository.ts";
+  var hash = "75d6d24258bc20b1ae5ef207869553981c987823";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.favorite.repository.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 4,
+          column: 8
+        },
+        end: {
+          line: 23,
+          column: 9
+        }
+      },
+      "1": {
+        start: {
+          line: 5,
+          column: 12
+        },
+        end: {
+          line: 18,
+          column: 15
+        }
+      },
+      "2": {
+        start: {
+          line: 21,
+          column: 12
+        },
+        end: {
+          line: 21,
+          column: 87
+        }
+      },
+      "3": {
+        start: {
+          line: 22,
+          column: 12
+        },
+        end: {
+          line: 22,
+          column: 24
+        }
+      },
+      "4": {
+        start: {
+          line: 26,
+          column: 8
+        },
+        end: {
+          line: 31,
+          column: 11
+        }
+      },
+      "5": {
+        start: {
+          line: 34,
+          column: 8
+        },
+        end: {
+          line: 41,
+          column: 11
+        }
+      },
+      "6": {
+        start: {
+          line: 44,
+          column: 8
+        },
+        end: {
+          line: 56,
+          column: 11
+        }
+      },
+      "7": {
+        start: {
+          line: 59,
+          column: 8
+        },
+        end: {
+          line: 66,
+          column: 11
+        }
+      },
+      "8": {
+        start: {
+          line: 69,
+          column: 8
+        },
+        end: {
+          line: 71,
+          column: 11
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 3,
+            column: 4
+          },
+          end: {
+            line: 3,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 3,
+            column: 34
+          },
+          end: {
+            line: 24,
+            column: 5
+          }
+        },
+        line: 3
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 25,
+            column: 4
+          },
+          end: {
+            line: 25,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 25,
+            column: 40
+          },
+          end: {
+            line: 32,
+            column: 5
+          }
+        },
+        line: 25
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 33,
+            column: 4
+          },
+          end: {
+            line: 33,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 33,
+            column: 40
+          },
+          end: {
+            line: 42,
+            column: 5
+          }
+        },
+        line: 33
+      },
+      "3": {
+        name: "(anonymous_3)",
+        decl: {
+          start: {
+            line: 43,
+            column: 4
+          },
+          end: {
+            line: 43,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 43,
+            column: 36
+          },
+          end: {
+            line: 57,
+            column: 5
+          }
+        },
+        line: 43
+      },
+      "4": {
+        name: "(anonymous_4)",
+        decl: {
+          start: {
+            line: 58,
+            column: 4
+          },
+          end: {
+            line: 58,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 58,
+            column: 36
+          },
+          end: {
+            line: 67,
+            column: 5
+          }
+        },
+        line: 58
+      },
+      "5": {
+        name: "(anonymous_5)",
+        decl: {
+          start: {
+            line: 68,
+            column: 4
+          },
+          end: {
+            line: 68,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 68,
+            column: 37
+          },
+          end: {
+            line: 72,
+            column: 5
+          }
+        },
+        line: 68
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    },
+    b: {},
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.favorite.repository.ts",
+      mappings: "AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,oBAAoB,CAAA;AAG3C,MAAM,OAAO,wBAAwB;IACnC,KAAK,CAAC,eAAe,CAAC,MAAc;QAClC,IAAI,CAAC;YACH,OAAO,MAAM,MAAM,CAAC,QAAQ,CAAC,QAAQ,CAAC;gBACpC,KAAK,EAAE,EAAE,MAAM,EAAE;gBACjB,OAAO,EAAE;oBACP,OAAO,EAAE;wBACP,OAAO,EAAE;4BACP,UAAU,EAAE,IAAI;4BAChB,MAAM,EAAE;gCACN,OAAO,EAAE,EAAE,SAAS,EAAE,KAAK,EAAE;6BAC9B;yBACF;qBACF;iBACF;gBACD,OAAO,EAAE,EAAE,SAAS,EAAE,MAAM,EAAE;aAC/B,CAAC,CAAA;QACJ,CAAC;QAAC,OAAO,KAAK,EAAE,CAAC;YACf,OAAO,CAAC,KAAK,CAAC,oDAAoD,EAAE,KAAK,CAAC,CAAA;YAC1E,MAAM,KAAK,CAAA;QACb,CAAC;IACH,CAAC;IAED,KAAK,CAAC,kBAAkB,CAAC,SAAiB;QACxC,OAAO,MAAM,CAAC,QAAQ,CAAC,QAAQ,CAAC;YAC9B,KAAK,EAAE,EAAE,SAAS,EAAE;YACpB,OAAO,EAAE;gBACP,IAAI,EAAE,IAAI;aACX;SACF,CAAC,CAAA;IACJ,CAAC;IAED,KAAK,CAAC,UAAU,CAAC,MAAc,EAAE,SAAiB;QAChD,OAAO,MAAM,CAAC,QAAQ,CAAC,UAAU,CAAC;YAChC,KAAK,EAAE;gBACL,gBAAgB,EAAE;oBAChB,MAAM;oBACN,SAAS;iBACV;aACF;SACF,CAAC,CAAA;IACJ,CAAC;IAED,KAAK,CAAC,MAAM,CAAC,MAAc,EAAE,SAAiB;QAC5C,OAAO,MAAM,CAAC,QAAQ,CAAC,MAAM,CAAC;YAC5B,KAAK,EAAE;gBACL,gBAAgB,EAAE;oBAChB,MAAM;oBACN,SAAS;iBACV;aACF;YACD,MAAM,EAAE,EAAE;YACV,MAAM,EAAE;gBACN,MAAM;gBACN,SAAS;aACV;SACF,CAAC,CAAA;IACJ,CAAC;IAED,KAAK,CAAC,MAAM,CAAC,MAAc,EAAE,SAAiB;QAC5C,MAAM,MAAM,CAAC,QAAQ,CAAC,MAAM,CAAC;YAC3B,KAAK,EAAE;gBACL,gBAAgB,EAAE;oBAChB,MAAM;oBACN,SAAS;iBACV;aACF;SACF,CAAC,CAAA;IACJ,CAAC;IAED,KAAK,CAAC,eAAe,CAAC,SAAiB;QACrC,OAAO,MAAM,CAAC,OAAO,CAAC,UAAU,CAAC;YAC/B,KAAK,EAAE,EAAE,EAAE,EAAE,SAAS,EAAE;SACzB,CAAC,CAAA;IACJ,CAAC;CACF",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.favorite.repository.ts"],
+      sourcesContent: ["import { prisma } from './prisma.client.js'\nimport { Favorite, FavoriteRepository } from '../../domain/repositories/favorite.repository.js'\n\nexport class PrismaFavoriteRepository implements FavoriteRepository {\n  async findAllByUserId(userId: string): Promise<any[]> {\n    try {\n      return await prisma.favorite.findMany({\n        where: { userId },\n        include: {\n          product: {\n            include: {\n              categories: true,\n              images: {\n                orderBy: { sortOrder: 'asc' }\n              }\n            }\n          }\n        },\n        orderBy: { createdAt: 'desc' }\n      })\n    } catch (error) {\n      console.error('Error in PrismaFavoriteRepository.findAllByUserId:', error)\n      throw error\n    }\n  }\n\n  async findAllByProductId(productId: string): Promise<any[]> {\n    return prisma.favorite.findMany({\n      where: { productId },\n      include: {\n        user: true\n      }\n    })\n  }\n\n  async findUnique(userId: string, productId: string): Promise<Favorite | null> {\n    return prisma.favorite.findUnique({\n      where: {\n        userId_productId: {\n          userId,\n          productId\n        }\n      }\n    })\n  }\n\n  async upsert(userId: string, productId: string): Promise<Favorite> {\n    return prisma.favorite.upsert({\n      where: {\n        userId_productId: {\n          userId,\n          productId\n        }\n      },\n      update: {},\n      create: {\n        userId,\n        productId\n      }\n    })\n  }\n\n  async delete(userId: string, productId: string): Promise<void> {\n    await prisma.favorite.delete({\n      where: {\n        userId_productId: {\n          userId,\n          productId\n        }\n      }\n    })\n  }\n\n  async findProductById(productId: string): Promise<any | null> {\n    return prisma.product.findUnique({\n      where: { id: productId }\n    })\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "75d6d24258bc20b1ae5ef207869553981c987823"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_ehhvxbaao = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_ehhvxbaao();
+import { prisma } from './prisma.client.js';
+export class PrismaFavoriteRepository {
+  async findAllByUserId(userId) {
+    /* istanbul ignore next */
+    cov_ehhvxbaao().f[0]++;
+    cov_ehhvxbaao().s[0]++;
+    try {
+      /* istanbul ignore next */
+      cov_ehhvxbaao().s[1]++;
+      return await prisma.favorite.findMany({
+        where: {
+          userId
+        },
+        include: {
+          product: {
+            include: {
+              categories: true,
+              images: {
+                orderBy: {
+                  sortOrder: 'asc'
+                }
+              }
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    } catch (error) {
+      /* istanbul ignore next */
+      cov_ehhvxbaao().s[2]++;
+      console.error('Error in PrismaFavoriteRepository.findAllByUserId:', error);
+      /* istanbul ignore next */
+      cov_ehhvxbaao().s[3]++;
+      throw error;
+    }
+  }
+  async findAllByProductId(productId) {
+    /* istanbul ignore next */
+    cov_ehhvxbaao().f[1]++;
+    cov_ehhvxbaao().s[4]++;
+    return prisma.favorite.findMany({
+      where: {
+        productId
+      },
+      include: {
+        user: true
+      }
+    });
+  }
+  async findUnique(userId, productId) {
+    /* istanbul ignore next */
+    cov_ehhvxbaao().f[2]++;
+    cov_ehhvxbaao().s[5]++;
+    return prisma.favorite.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId
+        }
+      }
+    });
+  }
+  async upsert(userId, productId) {
+    /* istanbul ignore next */
+    cov_ehhvxbaao().f[3]++;
+    cov_ehhvxbaao().s[6]++;
+    return prisma.favorite.upsert({
+      where: {
+        userId_productId: {
+          userId,
+          productId
+        }
+      },
+      update: {},
+      create: {
+        userId,
+        productId
+      }
+    });
+  }
+  async delete(userId, productId) {
+    /* istanbul ignore next */
+    cov_ehhvxbaao().f[4]++;
+    cov_ehhvxbaao().s[7]++;
+    await prisma.favorite.delete({
+      where: {
+        userId_productId: {
+          userId,
+          productId
+        }
+      }
+    });
+  }
+  async findProductById(productId) {
+    /* istanbul ignore next */
+    cov_ehhvxbaao().f[5]++;
+    cov_ehhvxbaao().s[8]++;
+    return prisma.product.findUnique({
+      where: {
+        id: productId
+      }
+    });
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJwcmlzbWEiLCJQcmlzbWFGYXZvcml0ZVJlcG9zaXRvcnkiLCJmaW5kQWxsQnlVc2VySWQiLCJ1c2VySWQiLCJjb3ZfZWhodnhiYWFvIiwiZiIsInMiLCJmYXZvcml0ZSIsImZpbmRNYW55Iiwid2hlcmUiLCJpbmNsdWRlIiwicHJvZHVjdCIsImNhdGVnb3JpZXMiLCJpbWFnZXMiLCJvcmRlckJ5Iiwic29ydE9yZGVyIiwiY3JlYXRlZEF0IiwiZXJyb3IiLCJjb25zb2xlIiwiZmluZEFsbEJ5UHJvZHVjdElkIiwicHJvZHVjdElkIiwidXNlciIsImZpbmRVbmlxdWUiLCJ1c2VySWRfcHJvZHVjdElkIiwidXBzZXJ0IiwidXBkYXRlIiwiY3JlYXRlIiwiZGVsZXRlIiwiZmluZFByb2R1Y3RCeUlkIiwiaWQiXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFNlcnZlciBBZG1pblxcRGVza3RvcFxcZWNvbW1lcmNlXFxzZXJ2ZXJcXHNyY1xcaW5mcmFzdHJ1Y3R1cmVcXHBlcnNpc3RlbmNlXFxwcmlzbWEuZmF2b3JpdGUucmVwb3NpdG9yeS50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBwcmlzbWEgfSBmcm9tICcuL3ByaXNtYS5jbGllbnQuanMnXG5pbXBvcnQgeyBGYXZvcml0ZSwgRmF2b3JpdGVSZXBvc2l0b3J5IH0gZnJvbSAnLi4vLi4vZG9tYWluL3JlcG9zaXRvcmllcy9mYXZvcml0ZS5yZXBvc2l0b3J5LmpzJ1xuXG5leHBvcnQgY2xhc3MgUHJpc21hRmF2b3JpdGVSZXBvc2l0b3J5IGltcGxlbWVudHMgRmF2b3JpdGVSZXBvc2l0b3J5IHtcbiAgYXN5bmMgZmluZEFsbEJ5VXNlcklkKHVzZXJJZDogc3RyaW5nKTogUHJvbWlzZTxhbnlbXT4ge1xuICAgIHRyeSB7XG4gICAgICByZXR1cm4gYXdhaXQgcHJpc21hLmZhdm9yaXRlLmZpbmRNYW55KHtcbiAgICAgICAgd2hlcmU6IHsgdXNlcklkIH0sXG4gICAgICAgIGluY2x1ZGU6IHtcbiAgICAgICAgICBwcm9kdWN0OiB7XG4gICAgICAgICAgICBpbmNsdWRlOiB7XG4gICAgICAgICAgICAgIGNhdGVnb3JpZXM6IHRydWUsXG4gICAgICAgICAgICAgIGltYWdlczoge1xuICAgICAgICAgICAgICAgIG9yZGVyQnk6IHsgc29ydE9yZGVyOiAnYXNjJyB9XG4gICAgICAgICAgICAgIH1cbiAgICAgICAgICAgIH1cbiAgICAgICAgICB9XG4gICAgICAgIH0sXG4gICAgICAgIG9yZGVyQnk6IHsgY3JlYXRlZEF0OiAnZGVzYycgfVxuICAgICAgfSlcbiAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgY29uc29sZS5lcnJvcignRXJyb3IgaW4gUHJpc21hRmF2b3JpdGVSZXBvc2l0b3J5LmZpbmRBbGxCeVVzZXJJZDonLCBlcnJvcilcbiAgICAgIHRocm93IGVycm9yXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgZmluZEFsbEJ5UHJvZHVjdElkKHByb2R1Y3RJZDogc3RyaW5nKTogUHJvbWlzZTxhbnlbXT4ge1xuICAgIHJldHVybiBwcmlzbWEuZmF2b3JpdGUuZmluZE1hbnkoe1xuICAgICAgd2hlcmU6IHsgcHJvZHVjdElkIH0sXG4gICAgICBpbmNsdWRlOiB7XG4gICAgICAgIHVzZXI6IHRydWVcbiAgICAgIH1cbiAgICB9KVxuICB9XG5cbiAgYXN5bmMgZmluZFVuaXF1ZSh1c2VySWQ6IHN0cmluZywgcHJvZHVjdElkOiBzdHJpbmcpOiBQcm9taXNlPEZhdm9yaXRlIHwgbnVsbD4ge1xuICAgIHJldHVybiBwcmlzbWEuZmF2b3JpdGUuZmluZFVuaXF1ZSh7XG4gICAgICB3aGVyZToge1xuICAgICAgICB1c2VySWRfcHJvZHVjdElkOiB7XG4gICAgICAgICAgdXNlcklkLFxuICAgICAgICAgIHByb2R1Y3RJZFxuICAgICAgICB9XG4gICAgICB9XG4gICAgfSlcbiAgfVxuXG4gIGFzeW5jIHVwc2VydCh1c2VySWQ6IHN0cmluZywgcHJvZHVjdElkOiBzdHJpbmcpOiBQcm9taXNlPEZhdm9yaXRlPiB7XG4gICAgcmV0dXJuIHByaXNtYS5mYXZvcml0ZS51cHNlcnQoe1xuICAgICAgd2hlcmU6IHtcbiAgICAgICAgdXNlcklkX3Byb2R1Y3RJZDoge1xuICAgICAgICAgIHVzZXJJZCxcbiAgICAgICAgICBwcm9kdWN0SWRcbiAgICAgICAgfVxuICAgICAgfSxcbiAgICAgIHVwZGF0ZToge30sXG4gICAgICBjcmVhdGU6IHtcbiAgICAgICAgdXNlcklkLFxuICAgICAgICBwcm9kdWN0SWRcbiAgICAgIH1cbiAgICB9KVxuICB9XG5cbiAgYXN5bmMgZGVsZXRlKHVzZXJJZDogc3RyaW5nLCBwcm9kdWN0SWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICAgIGF3YWl0IHByaXNtYS5mYXZvcml0ZS5kZWxldGUoe1xuICAgICAgd2hlcmU6IHtcbiAgICAgICAgdXNlcklkX3Byb2R1Y3RJZDoge1xuICAgICAgICAgIHVzZXJJZCxcbiAgICAgICAgICBwcm9kdWN0SWRcbiAgICAgICAgfVxuICAgICAgfVxuICAgIH0pXG4gIH1cblxuICBhc3luYyBmaW5kUHJvZHVjdEJ5SWQocHJvZHVjdElkOiBzdHJpbmcpOiBQcm9taXNlPGFueSB8IG51bGw+IHtcbiAgICByZXR1cm4gcHJpc21hLnByb2R1Y3QuZmluZFVuaXF1ZSh7XG4gICAgICB3aGVyZTogeyBpZDogcHJvZHVjdElkIH1cbiAgICB9KVxuICB9XG59XG4iXSwibWFwcGluZ3MiOiI7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7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

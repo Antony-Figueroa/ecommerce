@@ -45,7 +45,10 @@ Ana's Supplements es un e-commerce diseñado para optimizar la venta de suplemen
 ### 🔑 Para el Administrador (Backend)
 - **Dashboard en Tiempo Real**: Métricas de ventas, clientes y stock con actualizaciones vía WebSockets.
 - **Gestión de Pedidos**: Control total sobre el ciclo de vida de una venta (Pendiente, Procesando, Entregado).
-- **Control de Inventario**: Auditoría de movimientos y alertas de stock bajo.
+- **Sistema de Cuotas**: Creación y seguimiento de planes de pago fraccionados para ventas internas.
+- **Verificación de Pagos**: Módulo para validar comprobantes de transferencia y depósitos cargados por el cliente o admin.
+- **Control de Inventario**: Gestión por lotes (Batches) con trazabilidad de fechas de vencimiento y costos de adquisición.
+- **Auditoría**: Registro detallado de movimientos de stock y cambios en la configuración del sistema.
 - **Configuración Global**: Ajuste de tasa BCV y parámetros del sistema.
 
 ---
@@ -54,6 +57,8 @@ Ana's Supplements es un e-commerce diseñado para optimizar la venta de suplemen
 - **Integridad de Precios**: El sistema prohíbe ventas con precios menores al costo de adquisición.
 - **Seguridad**: Acceso administrativo restringido mediante roles (ADMIN/USER) y validación de tokens JWT.
 - **Consistencia**: Los pedidos no pueden ser eliminados, solo cancelados o rechazados, para mantener el historial de auditoría.
+- **Gestión de Cuotas**: El saldo pendiente de una venta se divide en cuotas quincenales sin interés. El estado de la venta cambia a COMPLETADA solo cuando el saldo llega a cero.
+- **Validación de Pagos**: Los pagos parciales actualizan automáticamente el estado de las cuotas (PENDIENTE -> PAGADA/PARCIAL).
 
 ---
 
@@ -62,4 +67,4 @@ Ana's Supplements es un e-commerce diseñado para optimizar la venta de suplemen
 - [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
 - [Manual de Mantenimiento](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/mantenimiento.md)
 
-*Última actualización: 2026-02-08 (v1.2)*
+*Última actualización: 2026-02-11 (v1.3)*

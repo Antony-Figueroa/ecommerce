@@ -81,11 +81,12 @@ export const adminCreateSchema = z.object({
 
 export const productCreateSchema = z.object({
   sku: z.string().max(50).optional().nullable().or(z.literal('')),
+  productCode: z.string().min(1).max(50),
   name: z.string().min(3).max(200),
   description: z.string().min(10),
-  price: z.number().positive(),
-  purchasePrice: z.number().positive("El precio de compra es obligatorio y debe ser mayor a 0"),
-  profitMargin: z.number().positive().optional().default(1.5),
+  price: z.number().optional().default(0),
+  purchasePrice: z.number().optional().default(0),
+  profitMargin: z.number().optional().default(1.5),
   image: z.string().optional().nullable().or(z.literal('')),
   images: z.array(z.object({
     url: z.string(),
@@ -100,6 +101,7 @@ export const productCreateSchema = z.object({
   brand: z.string().min(1).max(100),
   format: z.string().min(1).max(50),
   weight: z.string().optional().nullable().or(z.literal('')),
+  shippingCost: z.number().nonnegative().optional().default(0),
   stock: z.number().int().nonnegative().optional().default(0),
   minStock: z.number().int().nonnegative().optional().default(5),
   inStock: z.boolean().optional().default(true),
@@ -107,19 +109,9 @@ export const productCreateSchema = z.object({
   isFeatured: z.boolean().optional().default(false),
   isOffer: z.boolean().optional().default(false),
   originalPrice: z.number().nonnegative().optional().nullable(),
-  batchNumber: z.string().optional(),
-  expirationDate: z.string().optional().nullable(),
 })
 
-export const productUpdateSchema = productCreateSchema.partial().extend({
-  batch: z.object({
-    batchNumber: z.string().min(1, "El número de lote es obligatorio"),
-    expirationDate: z.string().min(1, "La fecha de vencimiento es obligatoria"),
-    stock: z.number().int().positive("La cantidad debe ser mayor a 0"),
-    purchasePrice: z.number().positive("El precio de compra es obligatorio"),
-    salePrice: z.number().positive().optional(),
-  }).optional()
-})
+export const productUpdateSchema = productCreateSchema.partial()
 
 export const categoryCreateSchema = z.object({
   name: z.string().min(2).max(100),
@@ -163,6 +155,29 @@ export const requirementCreateSchema = z.object({
   notes: z.string().optional(),
 })
 
+export const providerCreateSchema = z.object({
+  name: z.string().min(2).max(150),
+  phone: z.string().optional().nullable(),
+  email: z.string().email().optional().nullable(),
+})
+
+export const batchCreateSchema = z.object({
+  code: z.string().min(1).max(100),
+  providerId: z.string().uuid().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  products: z.array(z.object({
+    productId: z.string().uuid(),
+    quantity: z.number().int().positive(),
+    soldQuantity: z.number().int().nonnegative().optional(),
+    unitCostUSD: z.number().nonnegative(),
+    unitSaleUSD: z.number().nonnegative(),
+    shippingCostUSD: z.number().nonnegative().optional(),
+    entryDate: z.string().min(1),
+    discounted: z.boolean().optional(),
+    discountPercent: z.number().nonnegative().optional(),
+  })).min(1),
+})
+
 export const customerUpdateSchema = z.object({
   email: z.string().email().optional(),
   name: z.string().min(2).optional(),
@@ -177,7 +192,7 @@ export const paginationSchema = z.object({
 })
 
 export function validateProductCreate(req: Request, _res: Response, next: NextFunction) {
-  const { name, description, price, categoryIds, categoryId, brand, format } = req.body
+  const { name, description, productCode, categoryIds, categoryId, brand, format } = req.body
 
   const errors: string[] = []
 
@@ -187,8 +202,8 @@ export function validateProductCreate(req: Request, _res: Response, next: NextFu
   if (!description || description.length < 10) {
     errors.push('Descripción debe tener al menos 10 caracteres')
   }
-  if (!price || parseFloat(price) <= 0) {
-    errors.push('Precio debe ser mayor a 0')
+  if (!productCode || productCode.length < 1) {
+    errors.push('Código de producto es requerido')
   }
   
   const hasCategories = (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) || categoryId;
@@ -243,4 +258,3 @@ export function validateCategory(req: Request, _res: Response, next: NextFunctio
 
   next()
 }
-

@@ -57,6 +57,11 @@ El esquema de la base de datos está diseñado para garantizar la integridad ref
 - **Product**: Ficha técnica, costos, márgenes y niveles de stock.
 - **Category**: Clasificación de productos con borrado protegido.
 - **Sale**: Transacciones cerradas, vinculadas a productos y tasas de cambio.
+- **Installment**: Cuotas programadas asociadas a una venta interna.
+- **Payment**: Registros de pagos confirmados (totales o parciales).
+- **PaymentProof**: Comprobantes cargados por usuarios pendientes de validación administrativa.
+- **InventoryBatch**: Agrupación de productos por lotes de entrada con costos específicos.
+- **Provider**: Proveedores de suplementos vinculados a los lotes de inventario.
 - **Requirement**: Órdenes de compra a proveedores.
 - **BCVRate**: Historial de tasas de cambio USD/VES.
 - **InventoryLog**: Auditoría detallada de cada movimiento de mercancía.
@@ -80,4 +85,4 @@ El esquema de la base de datos está diseñado para garantizar la integridad ref
 - [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
 - [Manual de Mantenimiento](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/mantenimiento.md)
 
-*Última actualización: 2026-02-08 (v1.2)*
+*Última actualización: 2026-02-11 (v1.3)*

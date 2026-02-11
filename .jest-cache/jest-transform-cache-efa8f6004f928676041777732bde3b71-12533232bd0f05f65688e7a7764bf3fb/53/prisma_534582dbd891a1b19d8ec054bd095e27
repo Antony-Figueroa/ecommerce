@@ -1,0 +1,213 @@
+4b49c2aac5ed311f61928d63e3c5e16f
+/* istanbul ignore next */
+function cov_15be8n2fmy() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\dist\\lib\\prisma.js";
+  var hash = "f48823490219493994d997e873441d138495a1fe";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\dist\\lib\\prisma.js",
+    statementMap: {
+      "0": {
+        start: {
+          line: 2,
+          column: 24
+        },
+        end: {
+          line: 2,
+          column: 34
+        }
+      },
+      "1": {
+        start: {
+          line: 3,
+          column: 22
+        },
+        end: {
+          line: 5,
+          column: 2
+        }
+      },
+      "2": {
+        start: {
+          line: 6,
+          column: 0
+        },
+        end: {
+          line: 7,
+          column: 36
+        }
+      },
+      "3": {
+        start: {
+          line: 7,
+          column: 4
+        },
+        end: {
+          line: 7,
+          column: 36
+        }
+      }
+    },
+    fnMap: {},
+    branchMap: {
+      "0": {
+        loc: {
+          start: {
+            line: 3,
+            column: 22
+          },
+          end: {
+            line: 5,
+            column: 2
+          }
+        },
+        type: "binary-expr",
+        locations: [{
+          start: {
+            line: 3,
+            column: 22
+          },
+          end: {
+            line: 3,
+            column: 44
+          }
+        }, {
+          start: {
+            line: 3,
+            column: 48
+          },
+          end: {
+            line: 5,
+            column: 2
+          }
+        }],
+        line: 3
+      },
+      "1": {
+        loc: {
+          start: {
+            line: 4,
+            column: 9
+          },
+          end: {
+            line: 4,
+            column: 88
+          }
+        },
+        type: "cond-expr",
+        locations: [{
+          start: {
+            line: 4,
+            column: 50
+          },
+          end: {
+            line: 4,
+            column: 76
+          }
+        }, {
+          start: {
+            line: 4,
+            column: 79
+          },
+          end: {
+            line: 4,
+            column: 88
+          }
+        }],
+        line: 4
+      },
+      "2": {
+        loc: {
+          start: {
+            line: 6,
+            column: 0
+          },
+          end: {
+            line: 7,
+            column: 36
+          }
+        },
+        type: "if",
+        locations: [{
+          start: {
+            line: 6,
+            column: 0
+          },
+          end: {
+            line: 7,
+            column: 36
+          }
+        }, {
+          start: {
+            line: undefined,
+            column: undefined
+          },
+          end: {
+            line: undefined,
+            column: undefined
+          }
+        }],
+        line: 6
+      }
+    },
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    f: {},
+    b: {
+      "0": [0, 0],
+      "1": [0, 0],
+      "2": [0, 0]
+    },
+    inputSourceMap: null,
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "f48823490219493994d997e873441d138495a1fe"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_15be8n2fmy = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_15be8n2fmy();
+import { PrismaClient } from '@prisma/client';
+const globalForPrisma =
+/* istanbul ignore next */
+(cov_15be8n2fmy().s[0]++, globalThis);
+export const prisma =
+/* istanbul ignore next */
+(cov_15be8n2fmy().s[1]++, 
+/* istanbul ignore next */
+(cov_15be8n2fmy().b[0][0]++, globalForPrisma.prisma) ??
+/* istanbul ignore next */
+(cov_15be8n2fmy().b[0][1]++, new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ?
+  /* istanbul ignore next */
+  (cov_15be8n2fmy().b[1][0]++, ['query', 'error', 'warn']) :
+  /* istanbul ignore next */
+  (cov_15be8n2fmy().b[1][1]++, ['error'])
+})));
+/* istanbul ignore next */
+cov_15be8n2fmy().s[2]++;
+if (process.env.NODE_ENV !== 'production') {
+  /* istanbul ignore next */
+  cov_15be8n2fmy().b[2][0]++;
+  cov_15be8n2fmy().s[3]++;
+  globalForPrisma.prisma = prisma;
+} else
+/* istanbul ignore next */
+{
+  cov_15be8n2fmy().b[2][1]++;
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJQcmlzbWFDbGllbnQiLCJnbG9iYWxGb3JQcmlzbWEiLCJjb3ZfMTViZThuMmZteSIsInMiLCJnbG9iYWxUaGlzIiwicHJpc21hIiwiYiIsImxvZyIsInByb2Nlc3MiLCJlbnYiLCJOT0RFX0VOViJdLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9saWIvcHJpc21hLnRzIl0sInNvdXJjZXNDb250ZW50IjpbbnVsbF0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztBQUFBLFNBQVNBLFlBQVksUUFBUSxnQkFBZ0I7QUFFN0MsTUFBTUMsZUFBZTtBQUFBO0FBQUEsQ0FBQUMsY0FBQSxHQUFBQyxDQUFBLE9BQUdDLFVBRXZCO0FBRUQsT0FBTyxNQUFNQyxNQUFNO0FBQUE7QUFBQSxDQUFBSCxjQUFBLEdBQUFDLENBQUE7QUFBRztBQUFBLENBQUFELGNBQUEsR0FBQUksQ0FBQSxVQUFBTCxlQUFlLENBQUNJLE1BQU07QUFBQTtBQUFBLENBQUFILGNBQUEsR0FBQUksQ0FBQSxVQUFJLElBQUlOLFlBQVksQ0FBQztFQUMvRE8sR0FBRyxFQUFFQyxPQUFPLENBQUNDLEdBQUcsQ0FBQ0MsUUFBUSxLQUFLLGFBQWE7RUFBQTtFQUFBLENBQUFSLGNBQUEsR0FBQUksQ0FBQSxVQUFHLENBQUMsT0FBTyxFQUFFLE9BQU8sRUFBRSxNQUFNLENBQUM7RUFBQTtFQUFBLENBQUFKLGNBQUEsR0FBQUksQ0FBQSxVQUFHLENBQUMsT0FBTyxDQUFDO0NBQ3JGLENBQUM7QUFBQTtBQUFBSixjQUFBLEdBQUFDLENBQUE7QUFFRixJQUFJSyxPQUFPLENBQUNDLEdBQUcsQ0FBQ0MsUUFBUSxLQUFLLFlBQVksRUFBRTtFQUFBO0VBQUFSLGNBQUEsR0FBQUksQ0FBQTtFQUFBSixjQUFBLEdBQUFDLENBQUE7RUFBQUYsZUFBZSxDQUFDSSxNQUFNLEdBQUdBLE1BQU07QUFBQTtBQUFBO0FBQUE7RUFBQUgsY0FBQSxHQUFBSSxDQUFBO0FBQUEiLCJpZ25vcmVMaXN0IjpbXX0=

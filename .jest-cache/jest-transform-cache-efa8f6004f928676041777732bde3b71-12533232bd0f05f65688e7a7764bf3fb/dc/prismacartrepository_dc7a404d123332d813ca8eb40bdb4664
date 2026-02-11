@@ -1,0 +1,520 @@
+af440ea4f1fb2b283a3a901f7e87f09e
+/* istanbul ignore next */
+function cov_wy38vj5yo() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.cart.repository.ts";
+  var hash = "c7e8936fa569811d8eaf4b5e1b3d9e425407e3bf";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.cart.repository.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 4,
+          column: 8
+        },
+        end: {
+          line: 10,
+          column: 11
+        }
+      },
+      "1": {
+        start: {
+          line: 13,
+          column: 8
+        },
+        end: {
+          line: 19,
+          column: 11
+        }
+      },
+      "2": {
+        start: {
+          line: 22,
+          column: 8
+        },
+        end: {
+          line: 25,
+          column: 11
+        }
+      },
+      "3": {
+        start: {
+          line: 28,
+          column: 8
+        },
+        end: {
+          line: 40,
+          column: 11
+        }
+      },
+      "4": {
+        start: {
+          line: 43,
+          column: 8
+        },
+        end: {
+          line: 47,
+          column: 11
+        }
+      },
+      "5": {
+        start: {
+          line: 50,
+          column: 8
+        },
+        end: {
+          line: 55,
+          column: 11
+        }
+      },
+      "6": {
+        start: {
+          line: 58,
+          column: 8
+        },
+        end: {
+          line: 60,
+          column: 11
+        }
+      },
+      "7": {
+        start: {
+          line: 63,
+          column: 8
+        },
+        end: {
+          line: 73,
+          column: 11
+        }
+      },
+      "8": {
+        start: {
+          line: 76,
+          column: 8
+        },
+        end: {
+          line: 79,
+          column: 11
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 3,
+            column: 4
+          },
+          end: {
+            line: 3,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 3,
+            column: 31
+          },
+          end: {
+            line: 11,
+            column: 5
+          }
+        },
+        line: 3
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 12,
+            column: 4
+          },
+          end: {
+            line: 12,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 12,
+            column: 25
+          },
+          end: {
+            line: 20,
+            column: 5
+          }
+        },
+        line: 12
+      },
+      "2": {
+        name: "(anonymous_2)",
+        decl: {
+          start: {
+            line: 21,
+            column: 4
+          },
+          end: {
+            line: 21,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 21,
+            column: 40
+          },
+          end: {
+            line: 26,
+            column: 5
+          }
+        },
+        line: 21
+      },
+      "3": {
+        name: "(anonymous_3)",
+        decl: {
+          start: {
+            line: 27,
+            column: 4
+          },
+          end: {
+            line: 27,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 27,
+            column: 47
+          },
+          end: {
+            line: 41,
+            column: 5
+          }
+        },
+        line: 27
+      },
+      "4": {
+        name: "(anonymous_4)",
+        decl: {
+          start: {
+            line: 42,
+            column: 4
+          },
+          end: {
+            line: 42,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 42,
+            column: 40
+          },
+          end: {
+            line: 48,
+            column: 5
+          }
+        },
+        line: 42
+      },
+      "5": {
+        name: "(anonymous_5)",
+        decl: {
+          start: {
+            line: 49,
+            column: 4
+          },
+          end: {
+            line: 49,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 49,
+            column: 58
+          },
+          end: {
+            line: 56,
+            column: 5
+          }
+        },
+        line: 49
+      },
+      "6": {
+        name: "(anonymous_6)",
+        decl: {
+          start: {
+            line: 57,
+            column: 4
+          },
+          end: {
+            line: 57,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 57,
+            column: 24
+          },
+          end: {
+            line: 61,
+            column: 5
+          }
+        },
+        line: 57
+      },
+      "7": {
+        name: "(anonymous_7)",
+        decl: {
+          start: {
+            line: 62,
+            column: 4
+          },
+          end: {
+            line: 62,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 62,
+            column: 40
+          },
+          end: {
+            line: 74,
+            column: 5
+          }
+        },
+        line: 62
+      },
+      "8": {
+        name: "(anonymous_8)",
+        decl: {
+          start: {
+            line: 75,
+            column: 4
+          },
+          end: {
+            line: 75,
+            column: 5
+          }
+        },
+        loc: {
+          start: {
+            line: 75,
+            column: 35
+          },
+          end: {
+            line: 80,
+            column: 5
+          }
+        },
+        line: 75
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0
+    },
+    b: {},
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.cart.repository.ts",
+      mappings: "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",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\server\\src\\infrastructure\\persistence\\prisma.cart.repository.ts"],
+      sourcesContent: ["import { prisma } from './prisma.client.js'\nimport { Cart, CartItem } from '@prisma/client'\nimport { CartRepository, CartWithItems } from '../../domain/repositories/cart.repository.js'\n\nexport class PrismaCartRepository implements CartRepository {\n  async findByUserId(userId: string): Promise<CartWithItems | null> {\n    return prisma.cart.findUnique({\n      where: { userId },\n      include: {\n        items: { include: { product: true } },\n        user: true\n      }\n    }) as Promise<CartWithItems | null>\n  }\n\n  async create(userId: string): Promise<CartWithItems> {\n    return prisma.cart.create({\n      data: { userId },\n      include: {\n        items: { include: { product: true } },\n        user: true\n      }\n    }) as Promise<CartWithItems>\n  }\n\n  async updateLastInteraction(cartId: string): Promise<void> {\n    await prisma.cart.update({\n      where: { id: cartId },\n      data: { updatedAt: new Date() }\n    })\n  }\n\n  async addItem(cartId: string, productId: string, quantity: number): Promise<void> {\n    await prisma.cartItem.upsert({\n      where: {\n        cartId_productId: { cartId, productId }\n      },\n      update: {\n        quantity: { increment: quantity }\n      },\n      create: {\n        cartId,\n        productId,\n        quantity\n      }\n    })\n  }\n\n  async removeItem(cartId: string, productId: string): Promise<void> {\n    await prisma.cartItem.delete({\n      where: {\n        cartId_productId: { cartId, productId }\n      }\n    })\n  }\n\n  async updateItemQuantity(cartId: string, productId: string, quantity: number): Promise<void> {\n    await prisma.cartItem.update({\n      where: {\n        cartId_productId: { cartId, productId }\n      },\n      data: { quantity }\n    })\n  }\n\n  async clear(cartId: string): Promise<void> {\n    await prisma.cartItem.deleteMany({\n      where: { cartId }\n    })\n  }\n\n  async findAbandonedCarts(threshold: Date): Promise<CartWithItems[]> {\n    return prisma.cart.findMany({\n      where: {\n        updatedAt: { lt: threshold },\n        items: { some: {} },\n        lastReminderSent: null\n      },\n      include: {\n        items: { include: { product: true } },\n        user: true\n      }\n    }) as Promise<CartWithItems[]>\n  }\n\n  async markReminderSent(cartId: string): Promise<void> {\n    await prisma.cart.update({\n      where: { id: cartId },\n      data: { lastReminderSent: new Date() }\n    })\n  }\n}\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "c7e8936fa569811d8eaf4b5e1b3d9e425407e3bf"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_wy38vj5yo = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_wy38vj5yo();
+import { prisma } from './prisma.client.js';
+export class PrismaCartRepository {
+  async findByUserId(userId) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[0]++;
+    cov_wy38vj5yo().s[0]++;
+    return prisma.cart.findUnique({
+      where: {
+        userId
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        user: true
+      }
+    });
+  }
+  async create(userId) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[1]++;
+    cov_wy38vj5yo().s[1]++;
+    return prisma.cart.create({
+      data: {
+        userId
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        user: true
+      }
+    });
+  }
+  async updateLastInteraction(cartId) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[2]++;
+    cov_wy38vj5yo().s[2]++;
+    await prisma.cart.update({
+      where: {
+        id: cartId
+      },
+      data: {
+        updatedAt: new Date()
+      }
+    });
+  }
+  async addItem(cartId, productId, quantity) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[3]++;
+    cov_wy38vj5yo().s[3]++;
+    await prisma.cartItem.upsert({
+      where: {
+        cartId_productId: {
+          cartId,
+          productId
+        }
+      },
+      update: {
+        quantity: {
+          increment: quantity
+        }
+      },
+      create: {
+        cartId,
+        productId,
+        quantity
+      }
+    });
+  }
+  async removeItem(cartId, productId) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[4]++;
+    cov_wy38vj5yo().s[4]++;
+    await prisma.cartItem.delete({
+      where: {
+        cartId_productId: {
+          cartId,
+          productId
+        }
+      }
+    });
+  }
+  async updateItemQuantity(cartId, productId, quantity) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[5]++;
+    cov_wy38vj5yo().s[5]++;
+    await prisma.cartItem.update({
+      where: {
+        cartId_productId: {
+          cartId,
+          productId
+        }
+      },
+      data: {
+        quantity
+      }
+    });
+  }
+  async clear(cartId) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[6]++;
+    cov_wy38vj5yo().s[6]++;
+    await prisma.cartItem.deleteMany({
+      where: {
+        cartId
+      }
+    });
+  }
+  async findAbandonedCarts(threshold) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[7]++;
+    cov_wy38vj5yo().s[7]++;
+    return prisma.cart.findMany({
+      where: {
+        updatedAt: {
+          lt: threshold
+        },
+        items: {
+          some: {}
+        },
+        lastReminderSent: null
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        user: true
+      }
+    });
+  }
+  async markReminderSent(cartId) {
+    /* istanbul ignore next */
+    cov_wy38vj5yo().f[8]++;
+    cov_wy38vj5yo().s[8]++;
+    await prisma.cart.update({
+      where: {
+        id: cartId
+      },
+      data: {
+        lastReminderSent: new Date()
+      }
+    });
+  }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJwcmlzbWEiLCJQcmlzbWFDYXJ0UmVwb3NpdG9yeSIsImZpbmRCeVVzZXJJZCIsInVzZXJJZCIsImNvdl93eTM4dmo1eW8iLCJmIiwicyIsImNhcnQiLCJmaW5kVW5pcXVlIiwid2hlcmUiLCJpbmNsdWRlIiwiaXRlbXMiLCJwcm9kdWN0IiwidXNlciIsImNyZWF0ZSIsImRhdGEiLCJ1cGRhdGVMYXN0SW50ZXJhY3Rpb24iLCJjYXJ0SWQiLCJ1cGRhdGUiLCJpZCIsInVwZGF0ZWRBdCIsIkRhdGUiLCJhZGRJdGVtIiwicHJvZHVjdElkIiwicXVhbnRpdHkiLCJjYXJ0SXRlbSIsInVwc2VydCIsImNhcnRJZF9wcm9kdWN0SWQiLCJpbmNyZW1lbnQiLCJyZW1vdmVJdGVtIiwiZGVsZXRlIiwidXBkYXRlSXRlbVF1YW50aXR5IiwiY2xlYXIiLCJkZWxldGVNYW55IiwiZmluZEFiYW5kb25lZENhcnRzIiwidGhyZXNob2xkIiwiZmluZE1hbnkiLCJsdCIsInNvbWUiLCJsYXN0UmVtaW5kZXJTZW50IiwibWFya1JlbWluZGVyU2VudCJdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcU2VydmVyIEFkbWluXFxEZXNrdG9wXFxlY29tbWVyY2VcXHNlcnZlclxcc3JjXFxpbmZyYXN0cnVjdHVyZVxccGVyc2lzdGVuY2VcXHByaXNtYS5jYXJ0LnJlcG9zaXRvcnkudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgcHJpc21hIH0gZnJvbSAnLi9wcmlzbWEuY2xpZW50LmpzJ1xuaW1wb3J0IHsgQ2FydCwgQ2FydEl0ZW0gfSBmcm9tICdAcHJpc21hL2NsaWVudCdcbmltcG9ydCB7IENhcnRSZXBvc2l0b3J5LCBDYXJ0V2l0aEl0ZW1zIH0gZnJvbSAnLi4vLi4vZG9tYWluL3JlcG9zaXRvcmllcy9jYXJ0LnJlcG9zaXRvcnkuanMnXG5cbmV4cG9ydCBjbGFzcyBQcmlzbWFDYXJ0UmVwb3NpdG9yeSBpbXBsZW1lbnRzIENhcnRSZXBvc2l0b3J5IHtcbiAgYXN5bmMgZmluZEJ5VXNlcklkKHVzZXJJZDogc3RyaW5nKTogUHJvbWlzZTxDYXJ0V2l0aEl0ZW1zIHwgbnVsbD4ge1xuICAgIHJldHVybiBwcmlzbWEuY2FydC5maW5kVW5pcXVlKHtcbiAgICAgIHdoZXJlOiB7IHVzZXJJZCB9LFxuICAgICAgaW5jbHVkZToge1xuICAgICAgICBpdGVtczogeyBpbmNsdWRlOiB7IHByb2R1Y3Q6IHRydWUgfSB9LFxuICAgICAgICB1c2VyOiB0cnVlXG4gICAgICB9XG4gICAgfSkgYXMgUHJvbWlzZTxDYXJ0V2l0aEl0ZW1zIHwgbnVsbD5cbiAgfVxuXG4gIGFzeW5jIGNyZWF0ZSh1c2VySWQ6IHN0cmluZyk6IFByb21pc2U8Q2FydFdpdGhJdGVtcz4ge1xuICAgIHJldHVybiBwcmlzbWEuY2FydC5jcmVhdGUoe1xuICAgICAgZGF0YTogeyB1c2VySWQgfSxcbiAgICAgIGluY2x1ZGU6IHtcbiAgICAgICAgaXRlbXM6IHsgaW5jbHVkZTogeyBwcm9kdWN0OiB0cnVlIH0gfSxcbiAgICAgICAgdXNlcjogdHJ1ZVxuICAgICAgfVxuICAgIH0pIGFzIFByb21pc2U8Q2FydFdpdGhJdGVtcz5cbiAgfVxuXG4gIGFzeW5jIHVwZGF0ZUxhc3RJbnRlcmFjdGlvbihjYXJ0SWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICAgIGF3YWl0IHByaXNtYS5jYXJ0LnVwZGF0ZSh7XG4gICAgICB3aGVyZTogeyBpZDogY2FydElkIH0sXG4gICAgICBkYXRhOiB7IHVwZGF0ZWRBdDogbmV3IERhdGUoKSB9XG4gICAgfSlcbiAgfVxuXG4gIGFzeW5jIGFkZEl0ZW0oY2FydElkOiBzdHJpbmcsIHByb2R1Y3RJZDogc3RyaW5nLCBxdWFudGl0eTogbnVtYmVyKTogUHJvbWlzZTx2b2lkPiB7XG4gICAgYXdhaXQgcHJpc21hLmNhcnRJdGVtLnVwc2VydCh7XG4gICAgICB3aGVyZToge1xuICAgICAgICBjYXJ0SWRfcHJvZHVjdElkOiB7IGNhcnRJZCwgcHJvZHVjdElkIH1cbiAgICAgIH0sXG4gICAgICB1cGRhdGU6IHtcbiAgICAgICAgcXVhbnRpdHk6IHsgaW5jcmVtZW50OiBxdWFudGl0eSB9XG4gICAgICB9LFxuICAgICAgY3JlYXRlOiB7XG4gICAgICAgIGNhcnRJZCxcbiAgICAgICAgcHJvZHVjdElkLFxuICAgICAgICBxdWFudGl0eVxuICAgICAgfVxuICAgIH0pXG4gIH1cblxuICBhc3luYyByZW1vdmVJdGVtKGNhcnRJZDogc3RyaW5nLCBwcm9kdWN0SWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICAgIGF3YWl0IHByaXNtYS5jYXJ0SXRlbS5kZWxldGUoe1xuICAgICAgd2hlcmU6IHtcbiAgICAgICAgY2FydElkX3Byb2R1Y3RJZDogeyBjYXJ0SWQsIHByb2R1Y3RJZCB9XG4gICAgICB9XG4gICAgfSlcbiAgfVxuXG4gIGFzeW5jIHVwZGF0ZUl0ZW1RdWFudGl0eShjYXJ0SWQ6IHN0cmluZywgcHJvZHVjdElkOiBzdHJpbmcsIHF1YW50aXR5OiBudW1iZXIpOiBQcm9taXNlPHZvaWQ+IHtcbiAgICBhd2FpdCBwcmlzbWEuY2FydEl0ZW0udXBkYXRlKHtcbiAgICAgIHdoZXJlOiB7XG4gICAgICAgIGNhcnRJZF9wcm9kdWN0SWQ6IHsgY2FydElkLCBwcm9kdWN0SWQgfVxuICAgICAgfSxcbiAgICAgIGRhdGE6IHsgcXVhbnRpdHkgfVxuICAgIH0pXG4gIH1cblxuICBhc3luYyBjbGVhcihjYXJ0SWQ6IHN0cmluZyk6IFByb21pc2U8dm9pZD4ge1xuICAgIGF3YWl0IHByaXNtYS5jYXJ0SXRlbS5kZWxldGVNYW55KHtcbiAgICAgIHdoZXJlOiB7IGNhcnRJZCB9XG4gICAgfSlcbiAgfVxuXG4gIGFzeW5jIGZpbmRBYmFuZG9uZWRDYXJ0cyh0aHJlc2hvbGQ6IERhdGUpOiBQcm9taXNlPENhcnRXaXRoSXRlbXNbXT4ge1xuICAgIHJldHVybiBwcmlzbWEuY2FydC5maW5kTWFueSh7XG4gICAgICB3aGVyZToge1xuICAgICAgICB1cGRhdGVkQXQ6IHsgbHQ6IHRocmVzaG9sZCB9LFxuICAgICAgICBpdGVtczogeyBzb21lOiB7fSB9LFxuICAgICAgICBsYXN0UmVtaW5kZXJTZW50OiBudWxsXG4gICAgICB9LFxuICAgICAgaW5jbHVkZToge1xuICAgICAgICBpdGVtczogeyBpbmNsdWRlOiB7IHByb2R1Y3Q6IHRydWUgfSB9LFxuICAgICAgICB1c2VyOiB0cnVlXG4gICAgICB9XG4gICAgfSkgYXMgUHJvbWlzZTxDYXJ0V2l0aEl0ZW1zW10+XG4gIH1cblxuICBhc3luYyBtYXJrUmVtaW5kZXJTZW50KGNhcnRJZDogc3RyaW5nKTogUHJvbWlzZTx2b2lkPiB7XG4gICAgYXdhaXQgcHJpc21hLmNhcnQudXBkYXRlKHtcbiAgICAgIHdoZXJlOiB7IGlkOiBjYXJ0SWQgfSxcbiAgICAgIGRhdGE6IHsgbGFzdFJlbWluZGVyU2VudDogbmV3IERhdGUoKSB9XG4gICAgfSlcbiAgfVxufVxuIl0sIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7O0FBQUEsU0FBU0EsTUFBTSxRQUFRLG9CQUFvQjtBQUkzQyxPQUFNLE1BQU9DLG9CQUFvQjtFQUMvQixNQUFNQyxZQUFZQSxDQUFDQyxNQUFjO0lBQUE7SUFBQUMsYUFBQSxHQUFBQyxDQUFBO0lBQUFELGFBQUEsR0FBQUUs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

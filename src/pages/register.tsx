@@ -47,9 +47,10 @@ export function RegisterPage() {
   const { loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const [googleReady, setGoogleReady] = useState(false)
-  const [isBrave, setIsBrave] = useState(false)
 
-  // Validación en tiempo real
+  useEffect(() => {
+    setGoogleReady(true)
+  }, [])
   useEffect(() => {
     const validate = () => {
       try {
@@ -73,16 +74,6 @@ export function RegisterPage() {
 
     validate()
   }, [formData, acceptTerms])
-
-  useEffect(() => {
-    setGoogleReady(true)
-    ;(async () => {
-      const anyNav = navigator as any
-      const braveFlag = anyNav.brave && anyNav.brave.isBrave ? await anyNav.brave.isBrave() : false
-      const uaFlag = /Brave/i.test(navigator.userAgent)
-      setIsBrave(Boolean(braveFlag || uaFlag))
-    })()
-  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -331,11 +322,11 @@ export function RegisterPage() {
           <div className="grid grid-cols-1 gap-4">
             <div className="flex justify-center w-full overflow-hidden min-h-[44px]">
               <div className="w-full flex justify-center">
-                {isBrave && (
+                {/* {isBrave && (
                   <div className="mb-2 w-[250px] p-2 text-xs rounded-lg border border-amber-200 bg-amber-50 text-amber-700">
                     Si usas Brave, desactiva Shields o permite cookies de terceros para usar Google.
                   </div>
-                )}
+                )} */}
                 {googleReady ? (
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}

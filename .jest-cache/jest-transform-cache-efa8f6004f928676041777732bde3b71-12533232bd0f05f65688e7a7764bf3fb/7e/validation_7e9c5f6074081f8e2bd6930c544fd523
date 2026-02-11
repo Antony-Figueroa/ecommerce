@@ -1,0 +1,223 @@
+c6e5f711dd87576ff03cef10082f4af8
+/* istanbul ignore next */
+function cov_9m53qlm3t() {
+  var path = "C:\\Users\\Server Admin\\Desktop\\ecommerce\\src\\lib\\validation.ts";
+  var hash = "c9692be87d6558b046cc97bfc8410025285485e1";
+  var global = new Function("return this")();
+  var gcv = "__coverage__";
+  var coverageData = {
+    path: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\src\\lib\\validation.ts",
+    statementMap: {
+      "0": {
+        start: {
+          line: 10,
+          column: 31
+        },
+        end: {
+          line: 45,
+          column: 1
+        }
+      },
+      "1": {
+        start: {
+          line: 47,
+          column: 30
+        },
+        end: {
+          line: 59,
+          column: 2
+        }
+      },
+      "2": {
+        start: {
+          line: 53,
+          column: 45
+        },
+        end: {
+          line: 53,
+          column: 57
+        }
+      },
+      "3": {
+        start: {
+          line: 56,
+          column: 20
+        },
+        end: {
+          line: 56,
+          column: 58
+        }
+      },
+      "4": {
+        start: {
+          line: 61,
+          column: 27
+        },
+        end: {
+          line: 64,
+          column: 2
+        }
+      },
+      "5": {
+        start: {
+          line: 65,
+          column: 36
+        },
+        end: {
+          line: 71,
+          column: 2
+        }
+      }
+    },
+    fnMap: {
+      "0": {
+        name: "(anonymous_0)",
+        decl: {
+          start: {
+            line: 53,
+            column: 36
+          },
+          end: {
+            line: 53,
+            column: 37
+          }
+        },
+        loc: {
+          start: {
+            line: 53,
+            column: 45
+          },
+          end: {
+            line: 53,
+            column: 57
+          }
+        },
+        line: 53
+      },
+      "1": {
+        name: "(anonymous_1)",
+        decl: {
+          start: {
+            line: 56,
+            column: 10
+          },
+          end: {
+            line: 56,
+            column: 11
+          }
+        },
+        loc: {
+          start: {
+            line: 56,
+            column: 20
+          },
+          end: {
+            line: 56,
+            column: 58
+          }
+        },
+        line: 56
+      }
+    },
+    branchMap: {},
+    s: {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0
+    },
+    f: {
+      "0": 0,
+      "1": 0
+    },
+    b: {},
+    inputSourceMap: {
+      file: "C:\\Users\\Server Admin\\Desktop\\ecommerce\\src\\lib\\validation.ts",
+      mappings: "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",
+      names: [],
+      sources: ["C:\\Users\\Server Admin\\Desktop\\ecommerce\\src\\lib\\validation.ts"],
+      sourcesContent: ["import { z } from \"zod\"\n\n/**\n * Esquemas de validaci\xF3n reutilizables basados en los requerimientos:\n * - Tel\xE9fono: 10-15 d\xEDgitos num\xE9ricos.\n * - Nombres/Apellidos: Letras y espacios, 2-50 caracteres.\n * - Email: Formato RFC 5322.\n * - Edad: 1-120 a\xF1os.\n * - C\xF3digo Postal: Solo d\xEDgitos.\n */\n\nexport const validationRules = {\n  name: z\n    .string()\n    .min(2, \"El nombre debe tener al menos 2 caracteres\")\n    .max(50, \"El nombre no puede exceder los 50 caracteres\"),\n  \n  email: z\n    .string()\n    .min(1, \"El correo electr\xF3nico es obligatorio\")\n    .email(\"Ingresa un correo electr\xF3nico v\xE1lido\"),\n\n  phone: z\n    .string()\n    .min(11, \"El tel\xE9fono debe tener 11 d\xEDgitos\")\n    .max(15, \"El tel\xE9fono no puede exceder los 15 d\xEDgitos\")\n    .regex(/^\\d+$/, \"Solo se permiten n\xFAmeros\"),\n\n  password: z\n    .string()\n    .min(8, \"La contrase\xF1a debe tener al menos 8 caracteres\")\n    .regex(/[a-z]/, \"Debe contener al menos una min\xFAscula\")\n    .regex(/[A-Z]/, \"Debe contener al menos una may\xFAscula\")\n    .regex(/\\d/, \"Debe contener al menos un n\xFAmero\"),\n\n  age: z\n    .number()\n    .int()\n    .min(1, \"La edad m\xEDnima es 1 a\xF1o\")\n    .max(120, \"La edad m\xE1xima es 120 a\xF1os\"),\n\n  zipCode: z\n    .string()\n    .regex(/^\\d+$/, \"El c\xF3digo postal solo debe contener n\xFAmeros\")\n    .min(4, \"El c\xF3digo postal es demasiado corto\")\n    .max(10, \"El c\xF3digo postal es demasiado largo\"),\n\n  username: z\n    .string()\n    .min(3, \"El nombre de usuario debe tener al menos 3 caracteres\")\n    .max(20, \"El nombre de usuario no puede exceder los 20 caracteres\")\n    .regex(/^[a-zA-Z0-9_]+$/, \"Solo se permiten letras, n\xFAmeros y guiones bajos\"),\n}\n\n// Esquema para el registro\nexport const registerSchema = z.object({\n  name: validationRules.name,\n  email: validationRules.email,\n  phone: validationRules.phone.optional().or(z.literal(\"\")),\n  password: validationRules.password,\n  confirmPassword: z.string(),\n  acceptTerms: z.boolean().refine((val) => val === true, {\n    message: \"Debes aceptar los t\xE9rminos y condiciones\",\n  }),\n}).refine((data) => data.password === data.confirmPassword, {\n  message: \"Las contrase\xF1as no coinciden\",\n  path: [\"confirmPassword\"],\n})\n\n// Esquema para el login\nexport const loginSchema = z.object({\n  email: validationRules.email,\n  password: z.string().min(1, \"La contrase\xF1a es obligatoria\"),\n})\n\nexport const googleRegisterSchema = z.object({\n  googleId: z.string().min(1, \"Google ID requerido\"),\n  email: validationRules.email,\n  name: validationRules.name,\n  avatarUrl: z.string().optional().nullable(),\n  username: validationRules.username,\n})\n\nexport type RegisterInput = z.infer<typeof registerSchema>\nexport type LoginInput = z.infer<typeof loginSchema>\n"],
+      version: 3
+    },
+    _coverageSchema: "1a1c01bbd47fc00a2c39e90264f33305004495a9",
+    hash: "c9692be87d6558b046cc97bfc8410025285485e1"
+  };
+  var coverage = global[gcv] || (global[gcv] = {});
+  if (!coverage[path] || coverage[path].hash !== hash) {
+    coverage[path] = coverageData;
+  }
+  var actualCoverage = coverage[path];
+  {
+    // @ts-ignore
+    cov_9m53qlm3t = function () {
+      return actualCoverage;
+    };
+  }
+  return actualCoverage;
+}
+cov_9m53qlm3t();
+import { z } from "zod";
+/**
+ * Esquemas de validación reutilizables basados en los requerimientos:
+ * - Teléfono: 10-15 dígitos numéricos.
+ * - Nombres/Apellidos: Letras y espacios, 2-50 caracteres.
+ * - Email: Formato RFC 5322.
+ * - Edad: 1-120 años.
+ * - Código Postal: Solo dígitos.
+ */
+export const validationRules =
+/* istanbul ignore next */
+(cov_9m53qlm3t().s[0]++, {
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").max(50, "El nombre no puede exceder los 50 caracteres"),
+  email: z.string().min(1, "El correo electrónico es obligatorio").email("Ingresa un correo electrónico válido"),
+  phone: z.string().min(11, "El teléfono debe tener 11 dígitos").max(15, "El teléfono no puede exceder los 15 dígitos").regex(/^\d+$/, "Solo se permiten números"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres").regex(/[a-z]/, "Debe contener al menos una minúscula").regex(/[A-Z]/, "Debe contener al menos una mayúscula").regex(/\d/, "Debe contener al menos un número"),
+  age: z.number().int().min(1, "La edad mínima es 1 año").max(120, "La edad máxima es 120 años"),
+  zipCode: z.string().regex(/^\d+$/, "El código postal solo debe contener números").min(4, "El código postal es demasiado corto").max(10, "El código postal es demasiado largo"),
+  username: z.string().min(3, "El nombre de usuario debe tener al menos 3 caracteres").max(20, "El nombre de usuario no puede exceder los 20 caracteres").regex(/^[a-zA-Z0-9_]+$/, "Solo se permiten letras, números y guiones bajos")
+});
+// Esquema para el registro
+export const registerSchema =
+/* istanbul ignore next */
+(cov_9m53qlm3t().s[1]++, z.object({
+  name: validationRules.name,
+  email: validationRules.email,
+  phone: validationRules.phone.optional().or(z.literal("")),
+  password: validationRules.password,
+  confirmPassword: z.string(),
+  acceptTerms: z.boolean().refine(val => {
+    /* istanbul ignore next */
+    cov_9m53qlm3t().f[0]++;
+    cov_9m53qlm3t().s[2]++;
+    return val === true;
+  }, {
+    message: "Debes aceptar los términos y condiciones"
+  })
+}).refine(data => {
+  /* istanbul ignore next */
+  cov_9m53qlm3t().f[1]++;
+  cov_9m53qlm3t().s[3]++;
+  return data.password === data.confirmPassword;
+}, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"]
+}));
+// Esquema para el login
+export const loginSchema =
+/* istanbul ignore next */
+(cov_9m53qlm3t().s[4]++, z.object({
+  email: validationRules.email,
+  password: z.string().min(1, "La contraseña es obligatoria")
+}));
+export const googleRegisterSchema =
+/* istanbul ignore next */
+(cov_9m53qlm3t().s[5]++, z.object({
+  googleId: z.string().min(1, "Google ID requerido"),
+  email: validationRules.email,
+  name: validationRules.name,
+  avatarUrl: z.string().optional().nullable(),
+  username: validationRules.username
+}));
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjb3ZfOW01M3FsbTN0IiwiYWN0dWFsQ292ZXJhZ2UiLCJ6IiwidmFsaWRhdGlvblJ1bGVzIiwicyIsIm5hbWUiLCJzdHJpbmciLCJtaW4iLCJtYXgiLCJlbWFpbCIsInBob25lIiwicmVnZXgiLCJwYXNzd29yZCIsImFnZSIsIm51bWJlciIsImludCIsInppcENvZGUiLCJ1c2VybmFtZSIsInJlZ2lzdGVyU2NoZW1hIiwib2JqZWN0Iiwib3B0aW9uYWwiLCJvciIsImxpdGVyYWwiLCJjb25maXJtUGFzc3dvcmQiLCJhY2NlcHRUZXJtcyIsImJvb2xlYW4iLCJyZWZpbmUiLCJ2YWwiLCJmIiwibWVzc2FnZSIsImRhdGEiLCJwYXRoIiwibG9naW5TY2hlbWEiLCJnb29nbGVSZWdpc3RlclNjaGVtYSIsImdvb2dsZUlkIiwiYXZhdGFyVXJsIiwibnVsbGFibGUiXSwic291cmNlcyI6WyJDOlxcVXNlcnNcXFNlcnZlciBBZG1pblxcRGVza3RvcFxcZWNvbW1lcmNlXFxzcmNcXGxpYlxcdmFsaWRhdGlvbi50cyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyB6IH0gZnJvbSBcInpvZFwiXG5cbi8qKlxuICogRXNxdWVtYXMgZGUgdmFsaWRhY2nDs24gcmV1dGlsaXphYmxlcyBiYXNhZG9zIGVuIGxvcyByZXF1ZXJpbWllbnRvczpcbiAqIC0gVGVsw6lmb25vOiAxMC0xNSBkw61naXRvcyBudW3DqXJpY29zLlxuICogLSBOb21icmVzL0FwZWxsaWRvczogTGV0cmFzIHkgZXNwYWNpb3MsIDItNTAgY2FyYWN0ZXJlcy5cbiAqIC0gRW1haWw6IEZvcm1hdG8gUkZDIDUzMjIuXG4gKiAtIEVkYWQ6IDEtMTIwIGHDsW9zLlxuICogLSBDw7NkaWdvIFBvc3RhbDogU29sbyBkw61naXRvcy5cbiAqL1xuXG5leHBvcnQgY29uc3QgdmFsaWRhdGlvblJ1bGVzID0ge1xuICBuYW1lOiB6XG4gICAgLnN0cmluZygpXG4gICAgLm1pbigyLCBcIkVsIG5vbWJyZSBkZWJlIHRlbmVyIGFsIG1lbm9zIDIgY2FyYWN0ZXJlc1wiKVxuICAgIC5tYXgoNTAsIFwiRWwgbm9tYnJlIG5vIHB1ZWRlIGV4Y2VkZXIgbG9zIDUwIGNhcmFjdGVyZXNcIiksXG4gIFxuICBlbWFpbDogelxuICAgIC5zdHJpbmcoKVxuICAgIC5taW4oMSwgXCJFbCBjb3JyZW8gZWxlY3Ryw7NuaWNvIGVzIG9ibGlnYXRvcmlvXCIpXG4gICAgLmVtYWlsKFwiSW5ncmVzYSB1biBjb3JyZW8gZWxlY3Ryw7NuaWNvIHbDoWxpZG9cIiksXG5cbiAgcGhvbmU6IHpcbiAgICAuc3RyaW5nKClcbiAgICAubWluKDExLCBcIkVsIHRlbMOpZm9ubyBkZWJlIHRlbmVyIDExIGTDrWdpdG9zXCIpXG4gICAgLm1heCgxNSwgXCJFbCB0ZWzDqWZvbm8gbm8gcHVlZGUgZXhjZWRlciBsb3MgMTUgZMOtZ2l0b3NcIilcbiAgICAucmVnZXgoL15cXGQrJC8sIFwiU29sbyBzZSBwZXJtaXRlbiBuw7ptZXJvc1wiKSxcblxuICBwYXNzd29yZDogelxuICAgIC5zdHJpbmcoKVxuICAgIC5taW4oOCwgXCJMYSBjb250cmFzZcOxYSBkZWJlIHRlbmVyIGFsIG1lbm9zIDggY2FyYWN0ZXJlc1wiKVxuICAgIC5yZWdleCgvW2Etel0vLCBcIkRlYmUgY29udGVuZXIgYWwgbWVub3MgdW5hIG1pbsO6c2N1bGFcIilcbiAgICAucmVnZXgoL1tBLVpdLywgXCJEZWJlIGNvbnRlbmVyIGFsIG1lbm9zIHVuYSBtYXnDunNjdWxhXCIpXG4gICAgLnJlZ2V4KC9cXGQvLCBcIkRlYmUgY29udGVuZXIgYWwgbWVub3MgdW4gbsO6bWVyb1wiKSxcblxuICBhZ2U6IHpcbiAgICAubnVtYmVyKClcbiAgICAuaW50KClcbiAgICAubWluKDEsIFwiTGEgZWRhZCBtw61uaW1hIGVzIDEgYcOxb1wiKVxuICAgIC5tYXgoMTIwLCBcIkxhIGVkYWQgbcOheGltYSBlcyAxMjAgYcOxb3NcIiksXG5cbiAgemlwQ29kZTogelxuICAgIC5zdHJpbmcoKVxuICAgIC5yZWdleCgvXlxcZCskLywgXCJFbCBjw7NkaWdvIHBvc3RhbCBzb2xvIGRlYmUgY29udGVuZXIgbsO6bWVyb3NcIilcbiAgICAubWluKDQsIFwiRWwgY8OzZGlnbyBwb3N0YWwgZXMgZGVtYXNpYWRvIGNvcnRvXCIpXG4gICAgLm1heCgxMCwgXCJFbCBjw7NkaWdvIHBvc3RhbCBlcyBkZW1hc2lhZG8gbGFyZ29cIiksXG5cbiAgdXNlcm5hbWU6IHpcbiAgICAuc3RyaW5nKClcbiAgICAubWluKDMsIFwiRWwgbm9tYnJlIGRlIHVzdWFyaW8gZGViZSB0ZW5lciBhbCBtZW5vcyAzIGNhcmFjdGVyZXNcIilcbiAgICAubWF4KDIwLCBcIkVsIG5vbWJyZSBkZSB1c3VhcmlvIG5vIHB1ZWRlIGV4Y2VkZXIgbG9zIDIwIGNhcmFjdGVyZXNcIilcbiAgICAucmVnZXgoL15bYS16QS1aMC05X10rJC8sIFwiU29sbyBzZSBwZXJtaXRlbiBsZXRyYXMsIG7Dum1lcm9zIHkgZ3Vpb25lcyBiYWpvc1wiKSxcbn1cblxuLy8gRXNxdWVtYSBwYXJhIGVsIHJlZ2lzdHJvXG5leHBvcnQgY29uc3QgcmVnaXN0ZXJTY2hlbWEgPSB6Lm9iamVjdCh7XG4gIG5hbWU6IHZhbGlkYXRpb25SdWxlcy5uYW1lLFxuICBlbWFpbDogdmFsaWRhdGlvblJ1bGVzLmVtYWlsLFxuICBwaG9uZTogdmFsaWRhdGlvblJ1bGVzLnBob25lLm9wdGlvbmFsKCkub3Ioei5saXRlcmFsKFwiXCIpKSxcbiAgcGFzc3dvcmQ6IHZhbGlkYXRpb25SdWxlcy5wYXNzd29yZCxcbiAgY29uZmlybVBhc3N3b3JkOiB6LnN0cmluZygpLFxuICBhY2NlcHRUZXJtczogei5ib29sZWFuKCkucmVmaW5lKCh2YWwpID0+IHZhbCA9PT0gdHJ1ZSwge1xuICAgIG1lc3NhZ2U6IFwiRGViZXMgYWNlcHRhciBsb3MgdMOpcm1pbm9zIHkgY29uZGljaW9uZXNcIixcbiAgfSksXG59KS5yZWZpbmUoKGRhdGEpID0+IGRhdGEucGFzc3dvcmQgPT09IGRhdGEuY29uZmlybVBhc3N3b3JkLCB7XG4gIG1lc3NhZ2U6IFwiTGFzIGNvbnRyYXNlw7FhcyBubyBjb2luY2lkZW5cIixcbiAgcGF0aDogW1wiY29uZmlybVBhc3N3b3JkXCJdLFxufSlcblxuLy8gRXNxdWVtYSBwYXJhIGVsIGxvZ2luXG5leHBvcnQgY29uc3QgbG9naW5TY2hlbWEgPSB6Lm9iamVjdCh7XG4gIGVtYWlsOiB2YWxpZGF0aW9uUnVsZXMuZW1haWwsXG4gIHBhc3N3b3JkOiB6LnN0cmluZygpLm1pbigxLCBcIkxhIGNvbnRyYXNlw7FhIGVzIG9ibGlnYXRvcmlhXCIpLFxufSlcblxuZXhwb3J0IGNvbnN0IGdvb2dsZVJlZ2lzdGVyU2NoZW1hID0gei5vYmplY3Qoe1xuICBnb29nbGVJZDogei5zdHJpbmcoKS5taW4oMSwgXCJHb29nbGUgSUQgcmVxdWVyaWRvXCIpLFxuICBlbWFpbDogdmFsaWRhdGlvblJ1bGVzLmVtYWlsLFxuICBuYW1lOiB2YWxpZGF0aW9uUnVsZXMubmFtZSxcbiAgYXZhdGFyVXJsOiB6LnN0cmluZygpLm9wdGlvbmFsKCkubnVsbGFibGUoKSxcbiAgdXNlcm5hbWU6IHZhbGlkYXRpb25SdWxlcy51c2VybmFtZSxcbn0pXG5cbmV4cG9ydCB0eXBlIFJlZ2lzdGVySW5wdXQgPSB6LmluZmVyPHR5cGVvZiByZWdpc3RlclNjaGVtYT5cbmV4cG9ydCB0eXBlIExvZ2luSW5wdXQgPSB6LmluZmVyPHR5cGVvZiBsb2dpblNjaGVtYT5cbiJdLCJtYXBwaW5ncyI6Ijs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7OztJQWtCSztJQUFBQSxhQUFBLFlBQUFBLENBQUE7TUFBQSxPQUFBQyxjQUFBO0lBQUE7RUFBQTtFQUFBLE9BQUFBLGNBQUE7QUFBQTtBQUFBRCxhQUFBO0FBbEJMLFNB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

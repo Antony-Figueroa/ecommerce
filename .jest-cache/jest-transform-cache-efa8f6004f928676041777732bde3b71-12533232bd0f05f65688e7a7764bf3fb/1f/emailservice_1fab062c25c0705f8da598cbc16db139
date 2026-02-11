@@ -1,0 +1,185 @@
+c0c3aa71e7af9f9d16ec26ae5241371d
+import nodemailer from 'nodemailer';
+import { config } from '../../shared/config/index.js';
+export class EmailService {
+    constructor() {
+        Object.defineProperty(this, "transporter", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        this.transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: config.smtpUser,
+                pass: config.smtpPass,
+            },
+        });
+    }
+    async sendVerificationEmail(email, token, name) {
+        const verificationUrl = `${config.frontendUrl}/verify-email?token=${token}`;
+        const mailOptions = {
+            from: `"Ana's Supplements" <${config.emailFrom}>`,
+            to: email,
+            subject: 'Verifica tu cuenta - Ana\'s Supplements',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>¡Hola ${name}!</h2>
+          <p>Gracias por registrarte en Ana's Supplements. Para completar tu registro y activar tu cuenta, por favor haz clic en el siguiente botón:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Verificar mi cuenta
+            </a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p>${verificationUrl}</p>
+          <p>Este enlace expirará en 24 horas.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">Si no creaste esta cuenta, puedes ignorar este correo.</p>
+        </div>
+      `,
+        };
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log(`[Email Service] Correo de verificación enviado a: ${email}`);
+        }
+        catch (error) {
+            console.error('[Email Service] Error al enviar correo:', error);
+            // En desarrollo, no bloqueamos el flujo por error de envío de correo
+            if (config.nodeEnv === 'production') {
+                throw new Error('No se pudo enviar el correo de verificación');
+            }
+            console.warn('[Email Service] Desarrollo: No se pudo enviar el correo, pero continuamos el flujo.');
+        }
+    }
+    async sendPasswordResetEmail(email, token) {
+        const resetUrl = `${config.frontendUrl}/reset-password?token=${token}`;
+        const mailOptions = {
+            from: `"Ana's Supplements" <${config.emailFrom}>`,
+            to: email,
+            subject: 'Restablecer contraseña - Ana\'s Supplements',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Restablecer contraseña</h2>
+          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente botón para continuar:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Restablecer contraseña
+            </a>
+          </div>
+          <p>O copia y pega este enlace en tu navegador:</p>
+          <p>${resetUrl}</p>
+          <p>Este enlace expirará en 1 hora.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">Si no solicitaste este cambio, puedes ignorar este correo.</p>
+        </div>
+      `,
+        };
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log(`[Email Service] Correo de restablecimiento enviado a: ${email}`);
+        }
+        catch (error) {
+            console.error('[Email Service] Error al enviar correo:', error);
+            if (config.nodeEnv === 'production') {
+                throw new Error('No se pudo enviar el correo de restablecimiento');
+            }
+            console.warn('[Email Service] Desarrollo: No se pudo enviar el correo de restablecimiento, pero continuamos el flujo.');
+        }
+    }
+    async sendAbandonedCartEmail(email, name, items) {
+        const cartUrl = `${config.frontendUrl}/cart`;
+        const itemsHtml = items.map(item => `
+      <div style="display: flex; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <div style="flex: 1;">
+          <p style="margin: 0; font-weight: bold;">${item.product.name}</p>
+          <p style="margin: 0; color: #666; font-size: 14px;">Cantidad: ${item.quantity}</p>
+        </div>
+      </div>
+    `).join('');
+        const mailOptions = {
+            from: `"Ana's Supplements" <${config.emailFrom}>`,
+            to: email,
+            subject: '¡Te extrañamos! Tu carrito te espera',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>¡Hola ${name}!</h2>
+          <p>Notamos que dejaste algunos productos increíbles en tu carrito. ¡Aún están disponibles para ti!</p>
+          <div style="margin: 20px 0; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+            <h3 style="margin-top: 0;">Tu Carrito:</h3>
+            ${itemsHtml}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${cartUrl}" 
+               style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Volver a mi carrito
+            </a>
+          </div>
+          <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© ${new Date().getFullYear()} Ana's Supplements. Todos los derechos reservados.</p>
+        </div>
+      `,
+        };
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log(`[Email Service] Correo de carrito abandonado enviado a: ${email}`);
+        }
+        catch (error) {
+            console.error('[Email Service] Error al enviar correo de carrito abandonado:', error);
+            // No lanzamos error para no detener el proceso de fondo
+        }
+    }
+    async sendCatalogEmail(email, pdfBuffer) {
+        const mailOptions = {
+            from: `"Ana's Supplements" <${config.emailFrom}>`,
+            to: email,
+            subject: 'Nuestro Catálogo de Productos - Ana\'s Supplements',
+            html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #10b981;">¡Hola!</h2>
+          <p>Adjunto encontrarás nuestro catálogo actualizado de productos en formato PDF.</p>
+          <p>En Ana's Supplements nos esforzamos por ofrecerte los mejores suplementos y productos para tu salud al mejor precio.</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <p style="margin: 0; font-weight: bold;">¿Qué encontrarás en este catálogo?</p>
+            <ul style="margin-top: 10px;">
+              <li>Vitaminas y Multivitamínicos</li>
+              <li>Suplementos Nutricionales</li>
+              <li>Productos de Cuidado Personal</li>
+              <li>¡Y mucho más!</li>
+            </ul>
+          </div>
+          <p>Puedes realizar tus pedidos directamente en nuestra plataforma web:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${config.frontendUrl}" 
+               style="background-color: #10b981; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Visitar Tienda Online
+            </a>
+          </div>
+          <p>Si tienes alguna pregunta, no dudes en contactarnos respondiendo a este correo.</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">© 2026 Ana's Supplements. Todos los derechos reservados.</p>
+        </div>
+      `,
+            attachments: [
+                {
+                    filename: 'catalogo-anas-supplements.pdf',
+                    content: pdfBuffer,
+                    contentType: 'application/pdf'
+                }
+            ]
+        };
+        try {
+            await this.transporter.sendMail(mailOptions);
+            console.log(`[Email Service] Catálogo enviado a: ${email}`);
+        }
+        catch (error) {
+            console.error('[Email Service] Error al enviar catálogo:', error);
+            throw new Error('No se pudo enviar el catálogo por correo');
+        }
+    }
+}
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiQzpcXFVzZXJzXFxTZXJ2ZXIgQWRtaW5cXERlc2t0b3BcXGVjb21tZXJjZVxcc2VydmVyXFxzcmNcXGFwcGxpY2F0aW9uXFxzZXJ2aWNlc1xcZW1haWwuc2VydmljZS50cyIsIm1hcHBpbmdzIjoiQUFBQSxPQUFPLFVBQVUsTUFBTSxZQUFZLENBQUE7QUFDbkMsT0FBTyxFQUFFLE1BQU0sRUFBRSxNQUFNLDhCQUE4QixDQUFBO0FBRXJELE1BQU0sT0FBTyxZQUFZO0lBR3ZCO1FBRlE7Ozs7O1dBQW1DO1FBR3pDLElBQUksQ0FBQyxXQUFXLEdBQUcsVUFBVSxDQUFDLGVBQWUsQ0FBQztZQUM1QyxPQUFPLEVBQUUsT0FBTztZQUNoQixJQUFJLEVBQUU7Z0JBQ0osSUFBSSxFQUFFLE1BQU0sQ0FBQyxRQUFRO2dCQUNyQixJQUFJLEVBQUUsTUFBTSxDQUFDLFFBQVE7YUFDdEI7U0FDRixDQUFDLENBQUE7SUFDSixDQUFDO0lBRUQsS0FBSyxDQUFDLHFCQUFxQixDQUFDLEtBQWEsRUFBRSxLQUFhLEVBQUUsSUFBWTtRQUNwRSxNQUFNLGVBQWUsR0FBRyxHQUFHLE1BQU0sQ0FBQyxXQUFXLHVCQUF1QixLQUFLLEVBQUUsQ0FBQTtRQUUzRSxNQUFNLFdBQVcsR0FBRztZQUNsQixJQUFJLEVBQUUsd0JBQXdCLE1BQU0sQ0FBQyxTQUFTLEdBQUc7WUFDakQsRUFBRSxFQUFFLEtBQUs7WUFDVCxPQUFPLEVBQUUseUNBQXlDO1lBQ2xELElBQUksRUFBRTs7c0JBRVUsSUFBSTs7O3VCQUdILGVBQWU7Ozs7OztlQU12QixlQUFlOzs7OztPQUt2QjtTQUNGLENBQUE7UUFFRCxJQUFJLENBQUM7WUFDSCxNQUFNLElBQUksQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFDLFdBQVcsQ0FBQyxDQUFBO1lBQzVDLE9BQU8sQ0FBQyxHQUFHLENBQUMscURBQXFELEtBQUssRUFBRSxDQUFDLENBQUE7UUFDM0UsQ0FBQztRQUFDLE9BQU8sS0FBSyxFQUFFLENBQUM7WUFDZixPQUFPLENBQUMsS0FBSyxDQUFDLHlDQUF5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LFdBQVcsRUFBRTtnQkFDWDtvQkFDRSxRQUFRLEVBQUUsK0JBQStCO29CQUN6QyxPQUFPLEVBQUUsU0FBUztvQkFDbEIsV0FBVyxFQUFFLGlCQUFpQjtpQkFDL0I7YUFDRjtTQUNGLENBQUE7UUFFRCxJQUFJLENBQUM7WUFDSCxNQUFNLElBQUksQ0FBQyxXQUFXLENBQUMsUUFBUSxDQUFDLFdBQVcsQ0FBQyxDQUFBO1lBQzVDLE9BQU8sQ0FBQyxHQUFHLENBQUMsdUNBQXVDLEtBQUssRUFBRSxDQUFDLENBQUE7UUFDN0QsQ0FBQztRQUFDLE9BQU8sS0FBSyxFQUFFLENBQUM7WUFDZixPQUFPLENBQUMsS0FBSyxDQUFDLDJDQUEyQyxFQUFFLEtBQUssQ0FBQyxDQUFBO1lBQ2pFLE1BQU0sSUFBSSxLQUFLLENBQUMsMENBQTBDLENBQUMsQ0FBQTtRQUM3RCxDQUFDO0lBQ0gsQ0FBQztDQUNGIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkM6XFxVc2Vyc1xcU2VydmVyIEFkbWluXFxEZXNrdG9wXFxlY29tbWVyY2VcXHNlcnZlclxcc3JjXFxhcHBsaWNhdGlvblxcc2VydmljZXNcXGVtYWlsLnNlcnZpY2UudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IG5vZGVtYWlsZXIgZnJvbSAnbm9kZW1haWxlcidcbmltcG9ydCB7IGNvbmZpZyB9IGZyb20gJy4uLy4uL3NoYXJlZC9jb25maWcvaW5kZXguanMnXG5cbmV4cG9ydCBjbGFzcyBFbWFpbFNlcnZpY2Uge1xuICBwcml2YXRlIHRyYW5zcG9ydGVyOiBub2RlbWFpbGVyLlRyYW5zcG9ydGVyXG5cbiAgY29uc3RydWN0b3IoKSB7XG4gICAgdGhpcy50cmFuc3BvcnRlciA9IG5vZGVtYWlsZXIuY3JlYXRlVHJhbnNwb3J0KHtcbiAgICAgIHNlcnZpY2U6ICdnbWFpbCcsXG4gICAgICBhdXRoOiB7XG4gICAgICAgIHVzZXI6IGNvbmZpZy5zbXRwVXNlcixcbiAgICAgICAgcGFzczogY29uZmlnLnNtdHBQYXNzLFxuICAgICAgfSxcbiAgICB9KVxuICB9XG5cbiAgYXN5bmMgc2VuZFZlcmlmaWNhdGlvbkVtYWlsKGVtYWlsOiBzdHJpbmcsIHRva2VuOiBzdHJpbmcsIG5hbWU6IHN0cmluZykge1xuICAgIGNvbnN0IHZlcmlmaWNhdGlvblVybCA9IGAke2NvbmZpZy5mcm9udGVuZFVybH0vdmVyaWZ5LWVtYWlsP3Rva2VuPSR7dG9rZW59YFxuXG4gICAgY29uc3QgbWFpbE9wdGlvbnMgPSB7XG4gICAgICBmcm9tOiBgXCJBbmEncyBTdXBwbGVtZW50c1wiIDwke2NvbmZpZy5lbWFpbEZyb219PmAsXG4gICAgICB0bzogZW1haWwsXG4gICAgICBzdWJqZWN0OiAnVmVyaWZpY2EgdHUgY3VlbnRhIC0gQW5hXFwncyBTdXBwbGVtZW50cycsXG4gICAgICBodG1sOiBgXG4gICAgICAgIDxkaXYgc3R5bGU9XCJmb250LWZhbWlseTogc2Fucy1zZXJpZjsgbWF4LXdpZHRoOiA2MDBweDsgbWFyZ2luOiAwIGF1dG87XCI+XG4gICAgICAgICAgPGgyPsKhSG9sYSAke25hbWV9ITwvaDI+XG4gICAgICAgICAgPHA+R3JhY2lhcyBwb3IgcmVnaXN0cmFydGUgZW4gQW5hJ3MgU3VwcGxlbWVudHMuIFBhcmEgY29tcGxldGFyIHR1IHJlZ2lzdHJvIHkgYWN0aXZhciB0dSBjdWVudGEsIHBvciBmYXZvciBoYXogY2xpYyBlbiBlbCBzaWd1aWVudGUgYm90w7NuOjwvcD5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke3ZlcmlmaWNhdGlvblVybH1cIiBcbiAgICAgICAgICAgICAgIHN0eWxlPVwiYmFja2dyb3VuZC1jb2xvcjogIzAwMDsgY29sb3I6ICNmZmY7IHBhZGRpbmc6IDEycHggMjRweDsgdGV4dC1kZWNvcmF0aW9uOiBub25lOyBib3JkZXItcmFkaXVzOiA1cHg7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPlxuICAgICAgICAgICAgICBWZXJpZmljYXIgbWkgY3VlbnRhXG4gICAgICAgICAgICA8L2E+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPHA+TyBjb3BpYSB5IHBlZ2EgZXN0ZSBlbmxhY2UgZW4gdHUgbmF2ZWdhZG9yOjwvcD5cbiAgICAgICAgICA8cD4ke3ZlcmlmaWNhdGlvblVybH08L3A+XG4gICAgICAgICAgPHA+RXN0ZSBlbmxhY2UgZXhwaXJhcsOhIGVuIDI0IGhvcmFzLjwvcD5cbiAgICAgICAgICA8aHIgc3R5bGU9XCJib3JkZXI6IG5vbmU7IGJvcmRlci10b3A6IDFweCBzb2xpZCAjZWVlOyBtYXJnaW46IDIwcHggMDtcIj5cbiAgICAgICAgICA8cCBzdHlsZT1cImNvbG9yOiAjNjY2OyBmb250LXNpemU6IDEycHg7XCI+U2kgbm8gY3JlYXN0ZSBlc3RhIGN1ZW50YSwgcHVlZGVzIGlnbm9yYXIgZXN0ZSBjb3JyZW8uPC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIGAsXG4gICAgfVxuXG4gICAgdHJ5IHtcbiAgICAgIGF3YWl0IHRoaXMudHJhbnNwb3J0ZXIuc2VuZE1haWwobWFpbE9wdGlvbnMpXG4gICAgICBjb25zb2xlLmxvZyhgW0VtYWlsIFNlcnZpY2VdIENvcnJlbyBkZSB2ZXJpZmljYWNpw7NuIGVudmlhZG8gYTogJHtlbWFpbH1gKVxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKCdbRW1haWwgU2VydmljZV0gRXJyb3IgYWwgZW52aWFyIGNvcnJlbzonLCBlcnJvcilcbiAgICAgIC8vIEVuIGRlc2Fycm9sbG8sIG5vIGJsb3F1ZWFtb3MgZWwgZmx1am8gcG9yIGVycm9yIGRlIGVudsOtbyBkZSBjb3JyZW9cbiAgICAgIGlmIChjb25maWcubm9kZUVudiA9PT0gJ3Byb2R1Y3Rpb24nKSB7XG4gICAgICAgIHRocm93IG5ldyBFcnJvcignTm8gc2UgcHVkbyBlbnZpYXIgZWwgY29ycmVvIGRlIHZlcmlmaWNhY2nDs24nKVxuICAgICAgfVxuICAgICAgY29uc29sZS53YXJuKCdbRW1haWwgU2VydmljZV0gRGVzYXJyb2xsbzogTm8gc2UgcHVkbyBlbnZpYXIgZWwgY29ycmVvLCBwZXJvIGNvbnRpbnVhbW9zIGVsIGZsdWpvLicpXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgc2VuZFBhc3N3b3JkUmVzZXRFbWFpbChlbWFpbDogc3RyaW5nLCB0b2tlbjogc3RyaW5nKSB7XG4gICAgY29uc3QgcmVzZXRVcmwgPSBgJHtjb25maWcuZnJvbnRlbmRVcmx9L3Jlc2V0LXBhc3N3b3JkP3Rva2VuPSR7dG9rZW59YFxuXG4gICAgY29uc3QgbWFpbE9wdGlvbnMgPSB7XG4gICAgICBmcm9tOiBgXCJBbmEncyBTdXBwbGVtZW50c1wiIDwke2NvbmZpZy5lbWFpbEZyb219PmAsXG4gICAgICB0bzogZW1haWwsXG4gICAgICBzdWJqZWN0OiAnUmVzdGFibGVjZXIgY29udHJhc2XDsWEgLSBBbmFcXCdzIFN1cHBsZW1lbnRzJyxcbiAgICAgIGh0bWw6IGBcbiAgICAgICAgPGRpdiBzdHlsZT1cImZvbnQtZmFtaWx5OiBzYW5zLXNlcmlmOyBtYXgtd2lkdGg6IDYwMHB4OyBtYXJnaW46IDAgYXV0bztcIj5cbiAgICAgICAgICA8aDI+UmVzdGFibGVjZXIgY29udHJhc2XDsWE8L2gyPlxuICAgICAgICAgIDxwPkhhcyBzb2xpY2l0YWRvIHJlc3RhYmxlY2VyIHR1IGNvbnRyYXNlw7FhLiBIYXogY2xpYyBlbiBlbCBzaWd1aWVudGUgYm90w7NuIHBhcmEgY29udGludWFyOjwvcD5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke3Jlc2V0VXJsfVwiIFxuICAgICAgICAgICAgICAgc3R5bGU9XCJiYWNrZ3JvdW5kLWNvbG9yOiAjMDAwOyBjb2xvcjogI2ZmZjsgcGFkZGluZzogMTJweCAyNHB4OyB0ZXh0LWRlY29yYXRpb246IG5vbmU7IGJvcmRlci1yYWRpdXM6IDVweDsgZm9udC13ZWlnaHQ6IGJvbGQ7XCI+XG4gICAgICAgICAgICAgIFJlc3RhYmxlY2VyIGNvbnRyYXNlw7FhXG4gICAgICAgICAgICA8L2E+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPHA+TyBjb3BpYSB5IHBlZ2EgZXN0ZSBlbmxhY2UgZW4gdHUgbmF2ZWdhZG9yOjwvcD5cbiAgICAgICAgICA8cD4ke3Jlc2V0VXJsfTwvcD5cbiAgICAgICAgICA8cD5Fc3RlIGVubGFjZSBleHBpcmFyw6EgZW4gMSBob3JhLjwvcD5cbiAgICAgICAgICA8aHIgc3R5bGU9XCJib3JkZXI6IG5vbmU7IGJvcmRlci10b3A6IDFweCBzb2xpZCAjZWVlOyBtYXJnaW46IDIwcHggMDtcIj5cbiAgICAgICAgICA8cCBzdHlsZT1cImNvbG9yOiAjNjY2OyBmb250LXNpemU6IDEycHg7XCI+U2kgbm8gc29saWNpdGFzdGUgZXN0ZSBjYW1iaW8sIHB1ZWRlcyBpZ25vcmFyIGVzdGUgY29ycmVvLjwvcD5cbiAgICAgICAgPC9kaXY+XG4gICAgICBgLFxuICAgIH1cblxuICAgIHRyeSB7XG4gICAgICBhd2FpdCB0aGlzLnRyYW5zcG9ydGVyLnNlbmRNYWlsKG1haWxPcHRpb25zKVxuICAgICAgY29uc29sZS5sb2coYFtFbWFpbCBTZXJ2aWNlXSBDb3JyZW8gZGUgcmVzdGFibGVjaW1pZW50byBlbnZpYWRvIGE6ICR7ZW1haWx9YClcbiAgICB9IGNhdGNoIChlcnJvcikge1xuICAgICAgY29uc29sZS5lcnJvcignW0VtYWlsIFNlcnZpY2VdIEVycm9yIGFsIGVudmlhciBjb3JyZW86JywgZXJyb3IpXG4gICAgICBpZiAoY29uZmlnLm5vZGVFbnYgPT09ICdwcm9kdWN0aW9uJykge1xuICAgICAgICB0aHJvdyBuZXcgRXJyb3IoJ05vIHNlIHB1ZG8gZW52aWFyIGVsIGNvcnJlbyBkZSByZXN0YWJsZWNpbWllbnRvJylcbiAgICAgIH1cbiAgICAgIGNvbnNvbGUud2FybignW0VtYWlsIFNlcnZpY2VdIERlc2Fycm9sbG86IE5vIHNlIHB1ZG8gZW52aWFyIGVsIGNvcnJlbyBkZSByZXN0YWJsZWNpbWllbnRvLCBwZXJvIGNvbnRpbnVhbW9zIGVsIGZsdWpvLicpXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgc2VuZEFiYW5kb25lZENhcnRFbWFpbChlbWFpbDogc3RyaW5nLCBuYW1lOiBzdHJpbmcsIGl0ZW1zOiBhbnlbXSkge1xuICAgIGNvbnN0IGNhcnRVcmwgPSBgJHtjb25maWcuZnJvbnRlbmRVcmx9L2NhcnRgXG4gICAgY29uc3QgaXRlbXNIdG1sID0gaXRlbXMubWFwKGl0ZW0gPT4gYFxuICAgICAgPGRpdiBzdHlsZT1cImRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiBjZW50ZXI7IG1hcmdpbi1ib3R0b206IDEwcHg7IGJvcmRlci1ib3R0b206IDFweCBzb2xpZCAjZWVlOyBwYWRkaW5nLWJvdHRvbTogMTBweDtcIj5cbiAgICAgICAgPGRpdiBzdHlsZT1cImZsZXg6IDE7XCI+XG4gICAgICAgICAgPHAgc3R5bGU9XCJtYXJnaW46IDA7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPiR7aXRlbS5wcm9kdWN0Lm5hbWV9PC9wPlxuICAgICAgICAgIDxwIHN0eWxlPVwibWFyZ2luOiAwOyBjb2xvcjogIzY2NjsgZm9udC1zaXplOiAxNHB4O1wiPkNhbnRpZGFkOiAke2l0ZW0ucXVhbnRpdHl9PC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIDwvZGl2PlxuICAgIGApLmpvaW4oJycpXG5cbiAgICBjb25zdCBtYWlsT3B0aW9ucyA9IHtcbiAgICAgIGZyb206IGBcIkFuYSdzIFN1cHBsZW1lbnRzXCIgPCR7Y29uZmlnLmVtYWlsRnJvbX0+YCxcbiAgICAgIHRvOiBlbWFpbCxcbiAgICAgIHN1YmplY3Q6ICfCoVRlIGV4dHJhw7FhbW9zISBUdSBjYXJyaXRvIHRlIGVzcGVyYScsXG4gICAgICBodG1sOiBgXG4gICAgICAgIDxkaXYgc3R5bGU9XCJmb250LWZhbWlseTogc2Fucy1zZXJpZjsgbWF4LXdpZHRoOiA2MDBweDsgbWFyZ2luOiAwIGF1dG87XCI+XG4gICAgICAgICAgPGgyPsKhSG9sYSAke25hbWV9ITwvaDI+XG4gICAgICAgICAgPHA+Tm90YW1vcyBxdWUgZGVqYXN0ZSBhbGd1bm9zIHByb2R1Y3RvcyBpbmNyZcOtYmxlcyBlbiB0dSBjYXJyaXRvLiDCoUHDum4gZXN0w6FuIGRpc3BvbmlibGVzIHBhcmEgdGkhPC9wPlxuICAgICAgICAgIDxkaXYgc3R5bGU9XCJtYXJnaW46IDIwcHggMDsgYmFja2dyb3VuZDogI2Y5ZjlmOTsgcGFkZGluZzogMjBweDsgYm9yZGVyLXJhZGl1czogOHB4O1wiPlxuICAgICAgICAgICAgPGgzIHN0eWxlPVwibWFyZ2luLXRvcDogMDtcIj5UdSBDYXJyaXRvOjwvaDM+XG4gICAgICAgICAgICAke2l0ZW1zSHRtbH1cbiAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke2NhcnRVcmx9XCIgXG4gICAgICAgICAgICAgICBzdHlsZT1cImJhY2tncm91bmQtY29sb3I6ICMwMDA7IGNvbG9yOiAjZmZmOyBwYWRkaW5nOiAxMnB4IDI0cHg7IHRleHQtZGVjb3JhdGlvbjogbm9uZTsgYm9yZGVyLXJhZGl1czogNXB4OyBmb250LXdlaWdodDogYm9sZDtcIj5cbiAgICAgICAgICAgICAgVm9sdmVyIGEgbWkgY2Fycml0b1xuICAgICAgICAgICAgPC9hPlxuICAgICAgICAgIDwvZGl2PlxuICAgICAgICAgIDxwPlNpIHRpZW5lcyBhbGd1bmEgcHJlZ3VudGEsIG5vIGR1ZGVzIGVuIGNvbnRhY3Rhcm5vcy48L3A+XG4gICAgICAgICAgPGhyIHN0eWxlPVwiYm9yZGVyOiBub25lOyBib3JkZXItdG9wOiAxcHggc29saWQgI2VlZTsgbWFyZ2luOiAyMHB4IDA7XCI+XG4gICAgICAgICAgPHAgc3R5bGU9XCJjb2xvcjogIzY2NjsgZm9udC1zaXplOiAxMnB4O1wiPsKpICR7bmV3IERhdGUoKS5nZXRGdWxsWWVhcigpfSBBbmEncyBTdXBwbGVtZW50cy4gVG9kb3MgbG9zIGRlcmVjaG9zIHJlc2VydmFkb3MuPC9wPlxuICAgICAgICA8L2Rpdj5cbiAgICAgIGAsXG4gICAgfVxuXG4gICAgdHJ5IHtcbiAgICAgIGF3YWl0IHRoaXMudHJhbnNwb3J0ZXIuc2VuZE1haWwobWFpbE9wdGlvbnMpXG4gICAgICBjb25zb2xlLmxvZyhgW0VtYWlsIFNlcnZpY2VdIENvcnJlbyBkZSBjYXJyaXRvIGFiYW5kb25hZG8gZW52aWFkbyBhOiAke2VtYWlsfWApXG4gICAgfSBjYXRjaCAoZXJyb3IpIHtcbiAgICAgIGNvbnNvbGUuZXJyb3IoJ1tFbWFpbCBTZXJ2aWNlXSBFcnJvciBhbCBlbnZpYXIgY29ycmVvIGRlIGNhcnJpdG8gYWJhbmRvbmFkbzonLCBlcnJvcilcbiAgICAgIC8vIE5vIGxhbnphbW9zIGVycm9yIHBhcmEgbm8gZGV0ZW5lciBlbCBwcm9jZXNvIGRlIGZvbmRvXG4gICAgfVxuICB9XG5cbiAgYXN5bmMgc2VuZENhdGFsb2dFbWFpbChlbWFpbDogc3RyaW5nLCBwZGZCdWZmZXI6IEJ1ZmZlcikge1xuICAgIGNvbnN0IG1haWxPcHRpb25zID0ge1xuICAgICAgZnJvbTogYFwiQW5hJ3MgU3VwcGxlbWVudHNcIiA8JHtjb25maWcuZW1haWxGcm9tfT5gLFxuICAgICAgdG86IGVtYWlsLFxuICAgICAgc3ViamVjdDogJ051ZXN0cm8gQ2F0w6Fsb2dvIGRlIFByb2R1Y3RvcyAtIEFuYVxcJ3MgU3VwcGxlbWVudHMnLFxuICAgICAgaHRtbDogYFxuICAgICAgICA8ZGl2IHN0eWxlPVwiZm9udC1mYW1pbHk6IHNhbnMtc2VyaWY7IG1heC13aWR0aDogNjAwcHg7IG1hcmdpbjogMCBhdXRvO1wiPlxuICAgICAgICAgIDxoMiBzdHlsZT1cImNvbG9yOiAjMTBiOTgxO1wiPsKhSG9sYSE8L2gyPlxuICAgICAgICAgIDxwPkFkanVudG8gZW5jb250cmFyw6FzIG51ZXN0cm8gY2F0w6Fsb2dvIGFjdHVhbGl6YWRvIGRlIHByb2R1Y3RvcyBlbiBmb3JtYXRvIFBERi48L3A+XG4gICAgICAgICAgPHA+RW4gQW5hJ3MgU3VwcGxlbWVudHMgbm9zIGVzZm9yemFtb3MgcG9yIG9mcmVjZXJ0ZSBsb3MgbWVqb3JlcyBzdXBsZW1lbnRvcyB5IHByb2R1Y3RvcyBwYXJhIHR1IHNhbHVkIGFsIG1lam9yIHByZWNpby48L3A+XG4gICAgICAgICAgPGRpdiBzdHlsZT1cImJhY2tncm91bmQtY29sb3I6ICNmM2Y0ZjY7IHBhZGRpbmc6IDIwcHg7IGJvcmRlci1yYWRpdXM6IDEwcHg7IG1hcmdpbjogMjBweCAwO1wiPlxuICAgICAgICAgICAgPHAgc3R5bGU9XCJtYXJnaW46IDA7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPsK/UXXDqSBlbmNvbnRyYXLDoXMgZW4gZXN0ZSBjYXTDoWxvZ28/PC9wPlxuICAgICAgICAgICAgPHVsIHN0eWxlPVwibWFyZ2luLXRvcDogMTBweDtcIj5cbiAgICAgICAgICAgICAgPGxpPlZpdGFtaW5hcyB5IE11bHRpdml0YW3DrW5pY29zPC9saT5cbiAgICAgICAgICAgICAgPGxpPlN1cGxlbWVudG9zIE51dHJpY2lvbmFsZXM8L2xpPlxuICAgICAgICAgICAgICA8bGk+UHJvZHVjdG9zIGRlIEN1aWRhZG8gUGVyc29uYWw8L2xpPlxuICAgICAgICAgICAgICA8bGk+wqFZIG11Y2hvIG3DoXMhPC9saT5cbiAgICAgICAgICAgIDwvdWw+XG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgICAgPHA+UHVlZGVzIHJlYWxpemFyIHR1cyBwZWRpZG9zIGRpcmVjdGFtZW50ZSBlbiBudWVzdHJhIHBsYXRhZm9ybWEgd2ViOjwvcD5cbiAgICAgICAgICA8ZGl2IHN0eWxlPVwidGV4dC1hbGlnbjogY2VudGVyOyBtYXJnaW46IDMwcHggMDtcIj5cbiAgICAgICAgICAgIDxhIGhyZWY9XCIke2NvbmZpZy5mcm9udGVuZFVybH1cIiBcbiAgICAgICAgICAgICAgIHN0eWxlPVwiYmFja2dyb3VuZC1jb2xvcjogIzEwYjk4MTsgY29sb3I6ICNmZmY7IHBhZGRpbmc6IDEycHggMjRweDsgdGV4dC1kZWNvcmF0aW9uOiBub25lOyBib3JkZXItcmFkaXVzOiA1cHg7IGZvbnQtd2VpZ2h0OiBib2xkO1wiPlxuICAgICAgICAgICAgICBWaXNpdGFyIFRpZW5kYSBPbmxpbmVcbiAgICAgICAgICAgIDwvYT5cbiAgICAgICAgICA8L2Rpdj5cbiAgICAgICAgICA8cD5TaSB0aWVuZXMgYWxndW5hIHByZWd1bnRhLCBubyBkdWRlcyBlbiBjb250YWN0YXJub3MgcmVzcG9uZGllbmRvIGEgZXN0ZSBjb3JyZW8uPC9wPlxuICAgICAgICAgIDxociBzdHlsZT1cImJvcmRlcjogbm9uZTsgYm9yZGVyLXRvcDogMXB4IHNvbGlkICNlZWU7IG1hcmdpbjogMjBweCAwO1wiPlxuICAgICAgICAgIDxwIHN0eWxlPVwiY29sb3I6ICM2NjY7IGZvbnQtc2l6ZTogMTJweDtcIj7CqSAyMDI2IEFuYSdzIFN1cHBsZW1lbnRzLiBUb2RvcyBsb3MgZGVyZWNob3MgcmVzZXJ2YWRvcy48L3A+XG4gICAgICAgIDwvZGl2PlxuICAgICAgYCxcbiAgICAgIGF0dGFjaG1lbnRzOiBbXG4gICAgICAgIHtcbiAgICAgICAgICBmaWxlbmFtZTogJ2NhdGFsb2dvLWFuYXMtc3VwcGxlbWVudHMucGRmJyxcbiAgICAgICAgICBjb250ZW50OiBwZGZCdWZmZXIsXG4gICAgICAgICAgY29udGVudFR5cGU6ICdhcHBsaWNhdGlvbi9wZGYnXG4gICAgICAgIH1cbiAgICAgIF1cbiAgICB9XG5cbiAgICB0cnkge1xuICAgICAgYXdhaXQgdGhpcy50cmFuc3BvcnRlci5zZW5kTWFpbChtYWlsT3B0aW9ucylcbiAgICAgIGNvbnNvbGUubG9nKGBbRW1haWwgU2VydmljZV0gQ2F0w6Fsb2dvIGVudmlhZG8gYTogJHtlbWFpbH1gKVxuICAgIH0gY2F0Y2ggKGVycm9yKSB7XG4gICAgICBjb25zb2xlLmVycm9yKCdbRW1haWwgU2VydmljZV0gRXJyb3IgYWwgZW52aWFyIGNhdMOhbG9nbzonLCBlcnJvcilcbiAgICAgIHRocm93IG5ldyBFcnJvcignTm8gc2UgcHVkbyBlbnZpYXIgZWwgY2F0w6Fsb2dvIHBvciBjb3JyZW8nKVxuICAgIH1cbiAgfVxufVxuIl0sInZlcnNpb24iOjN9

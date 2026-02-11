@@ -51,6 +51,14 @@ Documentación técnica de los endpoints del sistema. Todas las rutas administra
 - **Cambiar Estado**: `PATCH /api/admin/sales/:id/status`
 - **Body**: `{ "status": "PROCESSING", "reason": "Pago verificado" }`
 
+### Gestión de Pagos y Cuotas
+- **Registrar Pago**: `POST /api/admin/payments/sales/:saleId/payments`
+- **Crear Plan de Cuotas**: `POST /api/admin/payments/sales/:saleId/installments`
+- **Estado de Pagos**: `GET /api/admin/payments/sales/:saleId/status`
+- **Comprobantes Pendientes**: `GET /api/admin/payments/proofs/pending`
+- **Verificar Comprobante**: `POST /api/admin/payments/proofs/:proofId/verify`
+- **Body (Verificación)**: `{ "status": "APPROVED", "notes": "Referencia válida" }`
+
 ### Gestión de Productos e Inventario
 - **Crear Producto**: `POST /api/admin/products`
 - **Body**:
@@ -99,4 +107,4 @@ Documentación técnica de los endpoints del sistema. Todas las rutas administra
 - [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
 - [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
 
-*Última actualización: 2026-02-08 (v1.1)*
+*Última actualización: 2026-02-11 (v1.2)*
