@@ -4,11 +4,49 @@ class ApiClient {
   private token: string | null = null
   private inFlightRequests = new Map<string, Promise<any>>()
   private cache = new Map<string, { data: any; timestamp: number }>()
-  private CACHE_DURATION = 5000 // 5 segundos para datos que cambian poco (categorías, settings)
+  private CACHE_DURATION = 30000 // Aumentamos a 30 segundos para caché en memoria
+  private PERSISTENT_CACHE_KEY = 'ana_supplements_cache'
+  private PERSISTENT_ENDPOINTS = ['/categories', '/bcv', '/settings/public']
+
+  constructor() {
+    this.loadPersistentCache()
+  }
+
+  private loadPersistentCache() {
+    if (typeof window === 'undefined') return
+    try {
+      const stored = localStorage.getItem(this.PERSISTENT_CACHE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        Object.entries(parsed).forEach(([key, value]: [string, any]) => {
+          this.cache.set(key, value)
+        })
+      }
+    } catch (e) {
+      console.warn('Error loading persistent cache:', e)
+    }
+  }
+
+  private savePersistentCache() {
+    if (typeof window === 'undefined') return
+    try {
+      const persistentData: Record<string, any> = {}
+      this.cache.forEach((value, key) => {
+        const endpoint = key.split(':').pop() || ''
+        if (this.PERSISTENT_ENDPOINTS.some(e => endpoint.startsWith(e))) {
+          persistentData[key] = value
+        }
+      })
+      localStorage.setItem(this.PERSISTENT_CACHE_KEY, JSON.stringify(persistentData))
+    } catch (e) {
+      console.warn('Error saving persistent cache:', e)
+    }
+  }
 
   setToken(token: string | null) {
     this.token = token
-    this.cache.clear() // Limpiar caché al cambiar de usuario
+    this.cache.clear()
+    localStorage.removeItem(this.PERSISTENT_CACHE_KEY)
     if (token) {
       localStorage.setItem('token', token)
     } else {
@@ -29,6 +67,7 @@ class ApiClient {
   ): Promise<T> {
     const method = options.method || 'GET';
     const isCacheable = method === 'GET' && !endpoint.includes('/auth/') && !endpoint.includes('/admin/');
+    const isPersistent = isCacheable && this.PERSISTENT_ENDPOINTS.some(e => endpoint.startsWith(e));
     const cacheKey = `${method}:${endpoint}`;
 
     // 1. Verificar si hay una petición idéntica en curso (Deduplicación)
@@ -36,74 +75,89 @@ class ApiClient {
       return this.inFlightRequests.get(cacheKey)
     }
 
-    // 2. Verificar caché para endpoints específicos que no cambian seguido
+    // 2. Verificar caché (Memoria o Persistente)
     if (isCacheable) {
       const cached = this.cache.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-        return cached.data;
+      // Si es persistente, devolvemos inmediatamente incluso si es "viejo" (SWR)
+      // pero disparamos la petición en segundo plano para actualizar
+      if (cached) {
+        const age = Date.now() - cached.timestamp;
+        if (isPersistent || age < this.CACHE_DURATION) {
+          // Si es muy reciente, no hace falta revalidar
+          if (age < 5000) return cached.data;
+          
+          // Si es persistente o tiene cierta edad, revalidamos en segundo plano
+          this.revalidate(endpoint, options, cacheKey);
+          return cached.data;
+        }
       }
     }
 
-    const fetchPromise = (async () => {
-      try {
-        const token = this.getToken()
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...options.headers,
-        }
-
-        console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
-        const response = await fetch(`${API_BASE}${endpoint}`, {
-          ...options,
-          method,
-          headers,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }))
-          
-          let errorMessage = 'Error desconocido'
-          if (typeof errorData.error === 'string') {
-            errorMessage = errorData.error
-          } else if (errorData.error && typeof errorData.error.message === 'string') {
-            errorMessage = errorData.error.message
-          } else if (typeof errorData.message === 'string') {
-            errorMessage = errorData.message
-          } else {
-            errorMessage = JSON.stringify(errorData)
-          }
-          
-          const error = new Error(errorMessage || `HTTP ${response.status}`) as any
-          error.status = response.status
-          error.data = errorData
-          throw error
-        }
-
-        if (response.status === 204) {
-          return {} as T
-        }
-
-        const text = await response.text()
-        const data = text ? JSON.parse(text) : {} as T
-
-        // Guardar en caché si es elegible
-        if (isCacheable) {
-          this.cache.set(cacheKey, { data, timestamp: Date.now() });
-        }
-
-        return data;
-      } finally {
-        // Limpiar de peticiones en curso al terminar
-        this.inFlightRequests.delete(cacheKey);
-      }
-    })();
-
+    const fetchPromise = this.performFetch<T>(endpoint, options, cacheKey, isCacheable, isPersistent);
+    
     if (method === 'GET') {
       this.inFlightRequests.set(cacheKey, fetchPromise);
     }
 
     return fetchPromise;
+  }
+
+  private async revalidate(endpoint: string, options: RequestInit, cacheKey: string) {
+    if (this.inFlightRequests.has(cacheKey)) return;
+    const isPersistent = this.PERSISTENT_ENDPOINTS.some(e => endpoint.startsWith(e));
+    const fetchPromise = this.performFetch(endpoint, options, cacheKey, true, isPersistent);
+    this.inFlightRequests.set(cacheKey, fetchPromise);
+    try {
+      await fetchPromise;
+    } catch (e) {
+      // Silenciosamente fallar la revalidación
+    }
+  }
+
+  private async performFetch<T>(
+    endpoint: string, 
+    options: RequestInit, 
+    cacheKey: string, 
+    isCacheable: boolean,
+    isPersistent: boolean
+  ): Promise<T> {
+    const method = options.method || 'GET';
+    try {
+      const token = this.getToken()
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      }
+
+      console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        method,
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }))
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      if (response.status === 204) return {} as T;
+
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : {} as T;
+
+      if (isCacheable) {
+        this.cache.set(cacheKey, { data, timestamp: Date.now() });
+        if (isPersistent) {
+          this.savePersistentCache();
+        }
+      }
+
+      return data;
+    } finally {
+      this.inFlightRequests.delete(cacheKey);
+    }
   }
 
   // Métodos genéricos
