@@ -61,17 +61,8 @@ Documentación técnica de los endpoints del sistema. Todas las rutas administra
 
 ### Gestión de Productos e Inventario
 - **Crear Producto**: `POST /api/admin/products`
-- **Body**:
-  ```json
-  {
-    "name": "Proteína Whey 2kg",
-    "description": "Proteína de alta calidad",
-    "priceUSD": 55.00,
-    "stock": 20,
-    "categoryId": "uuid-categoria",
-    "isActive": true
-  }
-  ```
+- **Gestión de Lotes**: `POST /api/admin/batches` (Registrar entrada de stock)
+- **Listar Lotes**: `GET /api/admin/batches?search=Proteina`
 - **Auditoría de Inventario**: `GET /api/admin/inventory/logs`
 
 ---
