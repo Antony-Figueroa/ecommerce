@@ -139,7 +139,9 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }))
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const error = new Error(errorData.error || `HTTP ${response.status}`)
+        ;(error as any).quotaExceeded = errorData.quotaExceeded
+        throw error
       }
 
       if (response.status === 204) return {} as T;
@@ -956,6 +958,20 @@ class ApiClient {
     return this.request<{ response: string; usage: { promptLength: number; responseLength: number } }>('/chat', {
       method: 'POST',
       body: JSON.stringify({ message, history }),
+    })
+  }
+
+  async adminChat(message: string, history: any[] = [], image?: string | null, analysisContext?: any) {
+    return this.request<{ response: string; usage: { promptLength: number; responseLength: number } }>('/admin/chat_ai/admin', {
+      method: 'POST',
+      body: JSON.stringify({ message, history, image, analysisContext }),
+    })
+  }
+
+  async analyzeImage(image: string) {
+    return this.request<any>('/admin/chat_ai/analyze-image', {
+      method: 'POST',
+      body: JSON.stringify({ image }),
     })
   }
 }

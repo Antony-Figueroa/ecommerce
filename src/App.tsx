@@ -37,6 +37,7 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings").then(m => 
 const AdminProvidersPage = lazy(() => import("@/pages/admin/providers").then(m => ({ default: m.AdminProvidersPage })))
 const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m => ({ default: m.FinancialDashboard })))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
+const AdminAIHub = lazy(() => import("@/pages/admin/AdminAIHub").then(m => ({ default: m.AdminAIHub })))
 
 function App() {
   const location = useLocation()
@@ -74,6 +75,7 @@ function App() {
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="/admin/financial" element={<FinancialDashboard />} />
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+                <Route path="/admin/ai-hub" element={<AdminAIHub />} />
               </Route>
 
               {/* Rutas Públicas y de Usuario - Usan RootLayout para Navbar/Footer persistente */}

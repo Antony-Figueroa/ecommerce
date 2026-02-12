@@ -16,6 +16,7 @@ import {
   Bell,
   LogOut,
   Leaf,
+  Cpu,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminTopNav } from "./admin-top-nav"
@@ -72,6 +73,7 @@ const menuGroups: MenuGroup[] = [
       { path: "/admin/customers", label: "Clientes", icon: Users },
       { path: "/admin/analytics", label: "Reportes", icon: BarChart3 },
       { path: "/admin/notifications", label: "Notificaciones", icon: Bell },
+      { path: "/admin/ai-hub", label: "AI Chat", icon: Cpu },
     ]
   },
   {
