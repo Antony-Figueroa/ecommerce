@@ -152,5 +152,6 @@ Para mantener la coherencia y calidad técnica, los agentes deben invocar y segu
 - [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
 - [Arquitectura de Sistemas](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/arquitectura.md)
 - [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
+- [Documentación Chat IA](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/ai-chat.md)
 
 *Última actualización: 2026-02-05*

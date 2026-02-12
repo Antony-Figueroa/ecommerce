@@ -84,5 +84,6 @@ El esquema de la base de datos está diseñado para garantizar la integridad ref
 - [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
 - [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
 - [Manual de Mantenimiento](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/mantenimiento.md)
+- [Asistente de Salud AI](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/ai-chat.md)
 
 *Última actualización: 2026-02-11 (v1.3)*
