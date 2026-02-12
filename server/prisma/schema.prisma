@@ -8,17 +8,17 @@ datasource db {
 }
 
 model SystemAuditLog {
-  id          String   @id @default(uuid())
-  entityType  String   // PRODUCT, SALE, USER, SETTING, etc.
-  entityId    String?
-  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
-  userId      String?
-  userName    String?
-  details     String?  // JSON string with changes or extra info
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
-  user        User?    @relation(fields: [userId], references: [id], name: "UserAuditLogs")
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String?
+  action     String
+  userId     String?
+  userName   String?
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation("UserAuditLogs", fields: [userId], references: [id])
 
   @@index([entityType, entityId])
   @@index([userId])
@@ -50,8 +50,8 @@ model User {
   notificationSettings     NotificationSetting?
   sales                    Sale[]
   auditLogs                SaleAuditLog[]
-  systemAuditLogs          SystemAuditLog[]     @relation("UserAuditLogs")
   settingHistory           SettingHistory[]
+  systemAuditLogs          SystemAuditLog[]     @relation("UserAuditLogs")
 }
 
 model Favorite {
@@ -66,40 +66,40 @@ model Favorite {
 }
 
 model Product {
-  id               String                @id @default(uuid())
-  sku              String                @unique
-  productCode      String?               @unique
-  name             String
-  slug             String                @unique
-  description      String
-  price            Decimal
-  currency         String                @default("USD")
-  purchasePrice    Decimal               @default(0)
-  profitMargin     Decimal               @default(1.5)
-  image            String?
-  brand            String
-  format           String
-  weight           String?
-  stock            Int                   @default(0)
-  minStock         Int                   @default(5)
-  inStock          Boolean               @default(true)
-  isActive         Boolean               @default(true)
-  isFeatured       Boolean               @default(false)
-  isOffer          Boolean               @default(false)
-  originalPrice    Decimal?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  brandId          String?
-  batches          Batch[]
-  cartItems        CartItem[]
-  favorites        Favorite[]
-  brandRelation    Brand?                @relation(fields: [brandId], references: [id])
-  images           ProductImage[]
-  priceHistory     ProductPriceHistory[]
-  requirementItems RequirementItem[]
-  saleItems        SaleItem[]
+  id                  String                @id @default(uuid())
+  sku                 String                @unique
+  productCode         String?               @unique
+  name                String
+  slug                String                @unique
+  description         String
+  price               Decimal
+  currency            String                @default("USD")
+  purchasePrice       Decimal               @default(0)
+  profitMargin        Decimal               @default(1.5)
+  image               String?
+  brand               String
+  format              String
+  weight              String?
+  stock               Int                   @default(0)
+  minStock            Int                   @default(5)
+  inStock             Boolean               @default(true)
+  isActive            Boolean               @default(true)
+  isFeatured          Boolean               @default(false)
+  isOffer             Boolean               @default(false)
+  originalPrice       Decimal?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  brandId             String?
+  batches             Batch[]
+  cartItems           CartItem[]
+  favorites           Favorite[]
   inventoryBatchItems InventoryBatchItem[]
-  categories       Category[]            @relation("CategoryToProduct")
+  brandRelation       Brand?                @relation(fields: [brandId], references: [id])
+  images              ProductImage[]
+  priceHistory        ProductPriceHistory[]
+  requirementItems    RequirementItem[]
+  saleItems           SaleItem[]
+  categories          Category[]            @relation("CategoryToProduct")
 }
 
 model Provider {
@@ -136,8 +136,8 @@ model InventoryBatchItem {
   discountPercent Decimal        @default(0)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  batch           InventoryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
   product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  batch           InventoryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 }
 
 model Cart {
@@ -268,11 +268,11 @@ model Sale {
   notes           String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  installments    Installment[]
+  payments        Payment[]
   user            User?          @relation(fields: [userId], references: [id])
   auditLogs       SaleAuditLog[]
   items           SaleItem[]
-  payments        Payment[]
-  installments    Installment[]
 }
 
 model Payment {
@@ -291,30 +291,30 @@ model Payment {
 }
 
 model Installment {
-  id          String    @id @default(uuid())
-  saleId      String
-  amountUSD   Decimal
-  dueDate     DateTime
-  status      String    @default("PENDING") // PENDING, PAID, PARTIAL, OVERDUE
-  paidAmount  Decimal   @default(0)
-  paidAt      DateTime?
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  sale        Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  proofs      PaymentProof[]
+  id         String         @id @default(uuid())
+  saleId     String
+  amountUSD  Decimal
+  dueDate    DateTime
+  status     String         @default("PENDING")
+  paidAmount Decimal        @default(0)
+  paidAt     DateTime?
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  sale       Sale           @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  proofs     PaymentProof[]
 }
 
 model PaymentProof {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   installmentId String
   proofUrl      String
   amountUSD     Decimal
-  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status        String      @default("PENDING")
   notes         String?
-  paidAt        DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  paidAt        DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   installment   Installment @relation(fields: [installmentId], references: [id], onDelete: Cascade)
 }
 
@@ -324,16 +324,16 @@ model SaleItem {
   productId        String
   name             String
   quantity         Int
-  originalQuantity Int?
   unitCost         Decimal
   unitPrice        Decimal
-  total         Decimal
-  profitPerUnit Decimal
-  totalProfit   Decimal
-  status        String   @default("ACCEPTED")
-  createdAt     DateTime @default(now())
-  sale          Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  product       Product  @relation(fields: [productId], references: [id])
+  total            Decimal
+  profitPerUnit    Decimal
+  totalProfit      Decimal
+  status           String   @default("ACCEPTED")
+  createdAt        DateTime @default(now())
+  originalQuantity Int?
+  product          Product  @relation(fields: [productId], references: [id])
+  sale             Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
 }
 
 model SaleAuditLog {

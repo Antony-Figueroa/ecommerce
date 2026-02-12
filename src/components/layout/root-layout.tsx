@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom"
 import { Navbar } from "./navbar"
 import { Footer } from "./footer"
-import { WhatsAppButton } from "@/components/shared/whatsapp-button"
+import { AIChat } from "@/components/chat/AIChat"
 import { Suspense } from "react"
 import { PageLoader } from "@/components/shared/page-loader"
 
@@ -37,7 +37,7 @@ export function RootLayout() {
         </Suspense>
       </main>
       <Footer />
-      <WhatsAppButton />
+      <AIChat />
     </>
   )
 }

@@ -28,6 +28,9 @@ export const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 
+  // Google AI (Gemini)
+  googleAiKey: process.env.GOOGLE_AI_KEY || '',
+
   // Rate Limiting
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10), // 1 minuto
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10), // Default limit

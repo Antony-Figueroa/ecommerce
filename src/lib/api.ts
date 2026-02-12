@@ -952,6 +952,12 @@ class ApiClient {
       method: 'DELETE',
     })
   }
+  async chat(message: string, history: any[] = []) {
+    return this.request<{ response: string; usage: { promptLength: number; responseLength: number } }>('/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    })
+  }
 }
 
 export const api = new ApiClient()
