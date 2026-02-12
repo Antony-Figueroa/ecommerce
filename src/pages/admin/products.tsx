@@ -12,6 +12,8 @@ import {
   Grid,
   List,
   Box,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,6 +31,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ImageUpload } from "@/components/admin/image-upload"
 import { MultiSelect } from "@/components/ui/multi-select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
 import { formatUSD, cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -115,7 +118,7 @@ export function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [stockFilter, setStockFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [activeTab, setActiveTab] = useState("active")
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     if (typeof window !== "undefined") {
       return (localStorage.getItem("adminProductsViewMode") as "grid" | "list") || "grid"
@@ -526,10 +529,11 @@ export function AdminProductsPage() {
       (stockFilter === "low" && product.stock < 10) ||
       (stockFilter === "out" && product.stock === 0) ||
       (stockFilter === "in" && product.stock >= 10)
-    const matchesStatus = 
-      statusFilter === "all" || 
-      (statusFilter === "active" && product.isActive) ||
-      (statusFilter === "inactive" && !product.isActive)
+    
+    const matchesStatus = activeTab === "all" || 
+      (activeTab === "active" && product.isActive) ||
+      (activeTab === "inactive" && !product.isActive)
+      
     return matchesSearch && matchesCategory && matchesStock && matchesStatus
   })
 
@@ -564,24 +568,25 @@ export function AdminProductsPage() {
         </header>
 
         {/* Filters */}
-        <section className="flex flex-col md:flex-row gap-4 items-center" aria-label="Filtros y búsqueda">
-          <div className="relative flex-1 w-full">
+        <section className="flex flex-col lg:flex-row gap-4 items-center justify-between" aria-label="Filtros y búsqueda">
+          <div className="relative w-full lg:flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
-              placeholder="Buscar productos por nombre, SKU o marca..."
+              placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 bg-background border-border/60 rounded-xl shadow-sm focus:ring-primary/20"
+              className="pl-10 h-11 bg-background border-border/60 rounded-xl shadow-sm focus:ring-primary/20 transition-all"
               aria-label="Buscar productos por nombre, SKU o marca"
             />
           </div>
 
-          <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap" id="filter-label">Filtrar:</span>
-            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-11 items-center px-1.5 shrink-0" role="group" aria-labelledby="filter-label">
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-11 items-center px-2 shrink-0" role="group">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 border-r border-border/60 mr-1 hidden sm:inline">Filtrar</span>
+              
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-40 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider" aria-label="Filtrar por categoría">
-                  <SelectValue placeholder="Categoria" />
+                <SelectTrigger className="min-w-[160px] w-auto border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider px-3" aria-label="Filtrar por categoría">
+                  <SelectValue placeholder="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas las categorias</SelectItem>
@@ -593,21 +598,8 @@ export function AdminProductsPage() {
               
               <div className="w-px h-4 bg-border/60 mx-1" aria-hidden="true" />
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider" aria-label="Filtrar por estado">
-                  <SelectValue placeholder="Estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="active">Activos</SelectItem>
-                  <SelectItem value="inactive">Eliminados</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="w-px h-4 bg-border/60 mx-1" aria-hidden="true" />
-
               <Select value={stockFilter} onValueChange={setStockFilter}>
-                <SelectTrigger className="w-36 border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider" aria-label="Filtrar por disponibilidad de stock">
+                <SelectTrigger className="min-w-[140px] w-auto border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider px-3" aria-label="Filtrar por disponibilidad de stock">
                   <SelectValue placeholder="Stock" />
                 </SelectTrigger>
                 <SelectContent>
@@ -647,6 +639,41 @@ export function AdminProductsPage() {
             </div>
           </div>
         </section>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-12">
+            <TabsTrigger 
+              value="active" 
+              className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-wider"
+            >
+              <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+              Activos
+              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 border-none">
+                {products.filter(p => p.isActive).length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="inactive"
+              className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-wider"
+            >
+              <XCircle className="h-4 w-4 mr-2 text-red-500" />
+              Eliminados
+              <Badge variant="secondary" className="ml-2 bg-red-100 text-red-700 border-none">
+                {products.filter(p => !p.isActive).length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="all"
+              className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-wider"
+            >
+              <Box className="h-4 w-4 mr-2 text-primary" />
+              Todos
+              <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-700 border-none">
+                {products.length}
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Products Display */}
         {viewMode === "grid" ? (

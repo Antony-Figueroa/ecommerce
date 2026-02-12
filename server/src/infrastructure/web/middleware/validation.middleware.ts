@@ -80,14 +80,14 @@ export const adminCreateSchema = z.object({
   username: authRules.username.optional().nullable(),
 })
 
-export const productCreateSchema = z.object({
+export const productBaseSchema = z.object({
   sku: z.string().max(50).optional().nullable().or(z.literal('')),
   productCode: z.string().min(1).max(50),
   name: z.string().min(3).max(200),
   description: z.string().min(10),
-  price: z.number().optional().default(0),
-  purchasePrice: z.number().optional().default(0),
-  profitMargin: z.number().optional().default(1.5),
+  price: z.number().nonnegative().optional(),
+  purchasePrice: z.number().nonnegative().optional(),
+  profitMargin: z.number().optional(),
   image: z.string().optional().nullable().or(z.literal('')),
   images: z.array(z.object({
     url: z.string(),
@@ -102,16 +102,28 @@ export const productCreateSchema = z.object({
   brand: z.string().min(1).max(100),
   format: z.string().min(1).max(50),
   weight: z.string().optional().nullable().or(z.literal('')),
+  stock: z.number().int().nonnegative().optional(),
+  minStock: z.number().int().nonnegative().optional(),
+  inStock: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  isOffer: z.boolean().optional(),
+  originalPrice: z.number().nonnegative().optional().nullable(),
+})
+
+export const productCreateSchema = productBaseSchema.extend({
+  price: z.number().nonnegative().optional().default(0),
+  purchasePrice: z.number().nonnegative().optional().default(0),
+  profitMargin: z.number().optional().default(1.5),
   stock: z.number().int().nonnegative().optional().default(0),
   minStock: z.number().int().nonnegative().optional().default(5),
   inStock: z.boolean().optional().default(true),
   isActive: z.boolean().optional().default(true),
   isFeatured: z.boolean().optional().default(false),
   isOffer: z.boolean().optional().default(false),
-  originalPrice: z.number().nonnegative().optional().nullable(),
 })
 
-export const productUpdateSchema = productCreateSchema.partial()
+export const productUpdateSchema = productBaseSchema.partial()
 
 export const categoryCreateSchema = z.object({
   name: z.string().min(2).max(100),

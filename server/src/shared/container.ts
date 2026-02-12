@@ -96,6 +96,7 @@ export const batchManager = new BatchManager(
 )
 
 export const productManager = new ProductManager(
+  prisma,
   productRepo,
   categoryRepo,
   brandRepo,

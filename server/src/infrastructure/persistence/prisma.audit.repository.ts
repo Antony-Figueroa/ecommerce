@@ -2,8 +2,9 @@ import { prisma } from './prisma.client.js'
 import { AuditRepository, SystemAuditLog } from '../../domain/repositories/audit.repository.js'
 
 export class PrismaAuditRepository implements AuditRepository {
-  async create(data: Omit<SystemAuditLog, 'id' | 'createdAt'>): Promise<SystemAuditLog> {
-    const log = await prisma.systemAuditLog.create({
+  async create(data: Omit<SystemAuditLog, 'id' | 'createdAt'>, tx?: any): Promise<SystemAuditLog> {
+    const client = tx || prisma
+    const log = await client.systemAuditLog.create({
       data: {
         entityType: data.entityType,
         entityId: data.entityId,

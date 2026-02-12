@@ -12,7 +12,7 @@ export class AuditService {
     details?: any
     ipAddress?: string
     userAgent?: string
-  }) {
+  }, tx?: any) {
     try {
       return await this.auditRepo.create({
         entityType: data.entityType,
@@ -23,7 +23,7 @@ export class AuditService {
         details: data.details ? JSON.stringify(data.details) : null,
         ipAddress: data.ipAddress || null,
         userAgent: data.userAgent || null
-      })
+      }, tx)
     } catch (error) {
       console.error('Error logging audit action:', error)
       // We don't throw to avoid breaking the main flow

@@ -80,6 +80,8 @@ router.get('/', async (req: Request, res: Response) => {
     const categoryId = req.query.categoryId as string | undefined
     const categoryIds = req.query.categoryIds as string[] | undefined
     const search = req.query.search as string | undefined
+    const isActiveQuery = req.query.isActive as string | undefined
+    
     const result = await inventoryService.getAllProducts({
       categoryId: categoryId || null,
       categoryIds: categoryIds || null,
@@ -87,6 +89,7 @@ router.get('/', async (req: Request, res: Response) => {
       page: parseInt(req.query.page as string) || 1,
       limit: parseInt(req.query.limit as string) || 20,
       onlyActive: req.query.onlyActive === 'true',
+      isActive: isActiveQuery === 'true' ? true : (isActiveQuery === 'false' ? false : undefined),
     })
     res.json(result)
   } catch (error) {

@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from '../../shared/errors/app.errors.js'
+import { NotFoundError } from '../../shared/errors/app.errors.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { CategoryRepository, BrandRepository, InventoryLogRepository, ProviderRepository, InventoryBatchRepository } from '../../domain/repositories/inventory.repository.js'
 import { NotificationService } from './notification.service.js'
@@ -6,6 +6,7 @@ import { FavoriteRepository } from '../../domain/repositories/favorite.repositor
 import { BatchManager } from './batch-manager.service.js'
 import { ProductManager } from './product-manager.service.js'
 import { AuditService } from './audit.service.js'
+import { CreateProductDTO, UpdateProductDTO } from '../dtos/product.dto.js'
 
 export class InventoryService {
   constructor(
@@ -22,6 +23,10 @@ export class InventoryService {
     private auditService: AuditService
   ) {}
 
+  /**
+   * Actualiza precios basado en la tasa BCV.
+   * Delega la lógica de notificación y actualización de campos a métodos internos.
+   */
   async updatePricesByBCV(newRate: number, previousRate: number, userId?: string, ipAddress?: string, userAgent?: string) {
     if (previousRate <= 0) return
 
@@ -67,18 +72,99 @@ export class InventoryService {
     }
   }
 
-  // ... (keep calculatePrice, calculateMargin, generateSKU, getAllBrands, getOrCreateBrand as is for internal use if needed, but they are also in ProductManager)
+  // --- Delegación a ProductManager ---
 
-  async createProduct(data: any, userId?: string, ipAddress?: string, userAgent?: string) {
+  async createProduct(data: CreateProductDTO, userId?: string, ipAddress?: string, userAgent?: string) {
     return this.productManager.createProduct(data, userId, ipAddress, userAgent)
+  }
+
+  async updateProduct(id: string, data: UpdateProductDTO, userId?: string, ipAddress?: string, userAgent?: string) {
+    return this.productManager.updateProduct(id, data, userId, ipAddress, userAgent)
+  }
+
+  async deleteProduct(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    const product = await this.productRepo.findById(id)
+    if (!product) {
+      throw new NotFoundError('Producto')
+    }
+    
+    // Marcamos como inactivo en lugar de borrar físicamente
+    await this.productRepo.update(id, { isActive: false })
+
+    await this.auditService.logAction({
+      entityType: 'PRODUCT',
+      entityId: id,
+      action: 'DELETE',
+      userId,
+      details: { name: product.name, sku: product.sku },
+      ipAddress,
+      userAgent
+    })
+
+    return { success: true }
+  }
+
+  async getProductById(id: string) {
+    return this.productManager.getProductById(id)
+  }
+
+  async getAllProducts(options?: any) {
+    const { 
+      categoryId = null, 
+      categoryIds = null, 
+      search = '', 
+      page = 1, 
+      limit = 20, 
+      onlyActive = true, // Cambiado a true por defecto
+      isActive = undefined 
+    } = options || {}
+    
+    const { products, total } = await this.productRepo.findAll({ 
+      categoryId, 
+      categoryIds, 
+      search, 
+      page, 
+      limit, 
+      onlyActive,
+      isActive 
+    })
+
+    return {
+      products,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    }
+  }
+
+  async getPublicProducts(options?: any) {
+    const { 
+      categoryId = null, 
+      categoryIds = null, 
+      search = '', 
+      isFeatured = undefined,
+      isOffer = undefined,
+      limit = 1000 
+    } = options || {}
+    
+    const { products } = await this.productRepo.findAll({ 
+      categoryId, 
+      categoryIds, 
+      search, 
+      onlyActive: true, 
+      isFeatured: isFeatured === 'true' || isFeatured === true ? true : (isFeatured === 'false' || isFeatured === false ? false : undefined),
+      isOffer: isOffer === 'true' || isOffer === true ? true : (isOffer === 'false' || isOffer === false ? false : undefined),
+      limit 
+    })
+    return products
+  }
+
+  // --- Gestión de Marcas y Proveedores ---
+
+  async getAllBrands() {
+    return this.productRepo.getAllBrands()
   }
 
   async getProviders() {
     return this.providerRepo.findAll()
-  }
-
-  async getAllBrands() {
-    return this.productRepo.getAllBrands()
   }
 
   async createProvider(data: any, userId?: string, ipAddress?: string, userAgent?: string) {
@@ -151,82 +237,17 @@ export class InventoryService {
     return { success: true }
   }
 
+  // --- Gestión de Lotes y Reportes ---
+
   async getBatches(options?: { search?: string; limit?: number }) {
-    // ... (existing getBatches implementation)
+    return this.inventoryBatchRepo.findAll(options)
   }
 
   async createBatch(data: any, userId?: string, ipAddress?: string, userAgent?: string) {
     return this.batchManager.createBatch(data, userId, ipAddress, userAgent)
   }
 
-  async updateProduct(id: string, data: any, userId?: string, ipAddress?: string, userAgent?: string) {
-    // Check if it's a restock (batch)
-    if (data.batch) {
-      // Create a batch if provided during product update (legacy compatibility or shortcut)
-      // Actually, let's keep the logic in ProductManager if we want to refactor fully.
-      // But updateProduct in InventoryService was handling both normal updates and restocks.
-    }
-    return this.productManager.updateProduct(id, data, userId, ipAddress, userAgent)
-  }
-
-  async getProductById(id: string) {
-    return this.productManager.getProductById(id)
-  }
-
-  async getAllProducts(options?: any) {
-    const { categoryId = null, categoryIds = null, search = '', page = 1, limit = 20, onlyActive = false } = options || {}
-    const { products, total } = await this.productRepo.findAll({ categoryId, categoryIds, search, page, limit, onlyActive })
-
-    return {
-      products,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-    }
-  }
-
-  async getPublicProducts(options?: any) {
-    const { 
-      categoryId = null, 
-      categoryIds = null, 
-      search = '', 
-      isFeatured = undefined,
-      isOffer = undefined,
-      limit = 1000 
-    } = options || {}
-    
-    const { products } = await this.productRepo.findAll({ 
-      categoryId, 
-      categoryIds, 
-      search, 
-      onlyActive: true, 
-      isFeatured: isFeatured === 'true' || isFeatured === true ? true : (isFeatured === 'false' || isFeatured === false ? false : undefined),
-      isOffer: isOffer === 'true' || isOffer === true ? true : (isOffer === 'false' || isOffer === false ? false : undefined),
-      limit 
-    })
-    return products
-  }
-
-  async deleteProduct(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
-    const product = await this.productRepo.findById(id)
-    if (!product) {
-      throw new NotFoundError('Producto')
-    }
-    await this.productRepo.update(id, { isActive: false })
-
-    await this.auditService.logAction({
-      entityType: 'PRODUCT',
-      entityId: id,
-      action: 'DELETE',
-      userId,
-      details: { name: product.name, sku: product.sku },
-      ipAddress,
-      userAgent
-    })
-
-    return { success: true }
-  }
-
   async getInventoryReport(userId?: string, ipAddress?: string, userAgent?: string) {
-    // Audit log for accessing inventory report
     await this.auditService.logAction({
       entityType: 'REPORT',
       action: 'VIEW_INVENTORY',
@@ -240,13 +261,8 @@ export class InventoryService {
       orderBy: { name: 'asc' },
     })
 
-    const totalCost = products.reduce((sum, p) => {
-      return sum + Number(p.purchasePrice) * p.stock
-    }, 0)
-
-    const totalValue = products.reduce((sum, p) => {
-      return sum + Number(p.price) * p.stock
-    }, 0)
+    const totalCost = products.reduce((sum, p) => sum + Number(p.purchasePrice) * p.stock, 0)
+    const totalValue = products.reduce((sum, p) => sum + Number(p.price) * p.stock, 0)
 
     const lowStockProducts = products.filter(p => p.stock <= p.minStock)
     const outOfStockProducts = products.filter(p => p.stock === 0)

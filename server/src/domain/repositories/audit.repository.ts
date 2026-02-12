@@ -12,7 +12,7 @@ export interface SystemAuditLog {
 }
 
 export interface AuditRepository {
-  create(data: Omit<SystemAuditLog, 'id' | 'createdAt'>): Promise<SystemAuditLog>
+  create(data: Omit<SystemAuditLog, 'id' | 'createdAt'>, tx?: any): Promise<SystemAuditLog>
   findAll(options: any): Promise<SystemAuditLog[]>
   findByEntity(entityType: string, entityId: string): Promise<SystemAuditLog[]>
   count(where: any): Promise<number>

@@ -9,6 +9,7 @@ export class PrismaProductRepository implements ProductRepository {
     page?: number
     limit?: number
     onlyActive?: boolean
+    isActive?: boolean
     isFeatured?: boolean
     isOffer?: boolean
   }) {
@@ -18,7 +19,8 @@ export class PrismaProductRepository implements ProductRepository {
       search = '', 
       page = 1, 
       limit = 20, 
-      onlyActive = false,
+      onlyActive = true, // Cambiado a true por defecto
+      isActive = undefined,
       isFeatured = undefined,
       isOffer = undefined
     } = options
@@ -36,7 +38,13 @@ export class PrismaProductRepository implements ProductRepository {
         }
       }
     }
-    if (onlyActive) where.isActive = true
+    
+    // Si se especifica isActive, tiene prioridad sobre onlyActive
+    if (isActive !== undefined) {
+      where.isActive = isActive
+    } else if (onlyActive) {
+      where.isActive = true
+    }
     if (isFeatured !== undefined) where.isFeatured = isFeatured
     if (isOffer !== undefined) where.isOffer = isOffer
     if (search) {
@@ -96,8 +104,9 @@ export class PrismaProductRepository implements ProductRepository {
     })
   }
 
-  async create(data: any) {
-    return prisma.product.create({
+  async create(data: any, tx?: any) {
+    const client = tx || prisma
+    return client.product.create({
       data,
       include: { 
         categories: true,
@@ -108,8 +117,9 @@ export class PrismaProductRepository implements ProductRepository {
     })
   }
 
-  async update(id: string, data: any) {
-    return prisma.product.update({
+  async update(id: string, data: any, tx?: any) {
+    const client = tx || prisma
+    return client.product.update({
       where: { id },
       data,
       include: { 
@@ -121,8 +131,9 @@ export class PrismaProductRepository implements ProductRepository {
     })
   }
 
-  async delete(id: string) {
-    await prisma.product.delete({
+  async delete(id: string, tx?: any) {
+    const client = tx || prisma
+    await client.product.delete({
       where: { id },
     })
   }
@@ -153,7 +164,8 @@ export class PrismaProductRepository implements ProductRepository {
     return prisma.product.count({ where })
   }
 
-  async deleteImages(productId: string) {
-    await prisma.productImage.deleteMany({ where: { productId } })
+  async deleteImages(productId: string, tx?: any) {
+    const client = tx || prisma
+    await client.productImage.deleteMany({ where: { productId } })
   }
 }

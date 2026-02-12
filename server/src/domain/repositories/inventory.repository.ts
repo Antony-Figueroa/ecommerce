@@ -71,21 +71,21 @@ export interface CategoryRepository {
   findById(id: string): Promise<Category | null>
   findBySlug(slug: string): Promise<Category | null>
   findByName(name: string): Promise<Category | null>
-  create(data: any): Promise<Category>
-  update(id: string, data: any): Promise<Category>
-  delete(id: string): Promise<void>
-  upsert(slug: string, data: any): Promise<Category>
+  create(data: any, tx?: any): Promise<Category>
+  update(id: string, data: any, tx?: any): Promise<Category>
+  delete(id: string, tx?: any): Promise<void>
+  upsert(slug: string, data: any, tx?: any): Promise<Category>
 }
 
 export interface BrandRepository {
   findAll(): Promise<Brand[]>
   findById(id: string): Promise<Brand | null>
   findByName(name: string): Promise<Brand | null>
-  upsert(name: string): Promise<Brand>
+  upsert(name: string, tx?: any): Promise<Brand>
 }
 
 export interface InventoryLogRepository {
-  create(data: any): Promise<InventoryLog>
+  create(data: any, tx?: any): Promise<InventoryLog>
   findAll(productId?: string): Promise<InventoryLog[]>
 }
 

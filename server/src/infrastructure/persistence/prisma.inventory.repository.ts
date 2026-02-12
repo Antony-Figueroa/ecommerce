@@ -37,23 +37,27 @@ export class PrismaCategoryRepository implements CategoryRepository {
     return category as unknown as Category | null
   }
 
-  async create(data: any): Promise<Category> {
-    const category = await prisma.category.create({ data })
+  async create(data: any, tx?: any): Promise<Category> {
+    const client = tx || prisma
+    const category = await client.category.create({ data })
     return category as unknown as Category
   }
 
-  async update(id: string, data: any): Promise<Category> {
-    const category = await prisma.category.update({ where: { id }, data })
+  async update(id: string, data: any, tx?: any): Promise<Category> {
+    const client = tx || prisma
+    const category = await client.category.update({ where: { id }, data })
     return category as unknown as Category
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.category.delete({ where: { id } })
+  async delete(id: string, tx?: any): Promise<void> {
+    const client = tx || prisma
+    await client.category.delete({ where: { id } })
   }
 
-  async upsert(slug: string, data: any): Promise<Category> {
+  async upsert(slug: string, data: any, tx?: any): Promise<Category> {
+    const client = tx || prisma
     const { name, ...rest } = data
-    const category = await prisma.category.upsert({
+    const category = await client.category.upsert({
       where: { slug },
       update: rest,
       create: { slug, name, ...rest },
@@ -81,8 +85,9 @@ export class PrismaBrandRepository implements BrandRepository {
     return brand as unknown as Brand | null
   }
 
-  async upsert(name: string): Promise<Brand> {
-    const brand = await prisma.brand.upsert({
+  async upsert(name: string, tx?: any): Promise<Brand> {
+    const client = tx || prisma
+    const brand = await client.brand.upsert({
       where: { name },
       update: {},
       create: { name },
@@ -92,8 +97,9 @@ export class PrismaBrandRepository implements BrandRepository {
 }
 
 export class PrismaInventoryLogRepository implements InventoryLogRepository {
-  async create(data: any): Promise<InventoryLog> {
-    const log = await prisma.inventoryLog.create({ data })
+  async create(data: any, tx?: any): Promise<InventoryLog> {
+    const client = tx || prisma
+    const log = await client.inventoryLog.create({ data })
     return log as unknown as InventoryLog
   }
 
