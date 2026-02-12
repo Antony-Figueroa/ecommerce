@@ -72,8 +72,8 @@ export function LoginPage() {
     try {
       const validatedData = loginSchema.parse({ email, password })
       await login(validatedData.email, validatedData.password)
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/"
-      navigate(from, { replace: true })
+      // Redirigir siempre al home de cliente como se solicitó
+      navigate("/", { replace: true })
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error al iniciar sesión"
       setError(errorMessage)
@@ -130,8 +130,8 @@ export function LoginPage() {
           state: { googleData: result.googleData } 
         })
       } else {
-        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/"
-        navigate(from, { replace: true })
+        // Redirigir siempre al home de cliente como se solicitó
+        navigate("/", { replace: true })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión con Google")

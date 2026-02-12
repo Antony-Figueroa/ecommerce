@@ -84,7 +84,7 @@ export class AuthService {
       name,
       username,
       emailVerified: true,
-      role: 'USER'
+      role: 'CUSTOMER'
     })
 
     await this.auditService.logAction({
@@ -191,7 +191,7 @@ export class AuthService {
         avatarUrl,
         passwordHash,
         emailVerified: true,
-        role: 'USER'
+        role: 'CUSTOMER'
       })
     }
 

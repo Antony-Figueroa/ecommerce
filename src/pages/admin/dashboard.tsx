@@ -12,9 +12,9 @@ import {
   ChevronRight,
   Plus,
   Loader2,
-  Package
+  Package,
+  Users
 } from 'lucide-react';
-import { AdminPageHeader } from '@/components/admin/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -185,13 +185,14 @@ export function AdminDashboard() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-12"
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-6 mb-12"
           role="region"
           aria-label="Resumen de estadísticas clave"
         >
           {[
             { title: 'Ingresos Totales', value: formatUSD(stats.totalRevenue), growth: mockGrowth.revenueGrowth, icon: DollarSign, trend: 'up', label: 'Crecimiento de ingresos' },
             { title: 'Pedidos Totales', value: stats.totalOrders, growth: mockGrowth.orderGrowth, icon: ShoppingCart, trend: 'up', label: 'Aumento de pedidos' },
+            { title: 'Clientes Totales', value: stats.totalCustomers, growth: mockGrowth.customerGrowth, icon: Users, trend: 'up', label: 'Nuevos clientes' },
             { title: 'Pedidos Pendientes', value: stats.pendingOrders, growth: 0, icon: ArrowDownRight, trend: 'down', label: 'Pedidos por procesar' },
             { title: 'Productos Críticos', value: stats.lowStockProducts, growth: 0, icon: Package, trend: 'down', label: 'Bajo inventario' },
             { title: 'Ticket Promedio', value: formatUSD(mockGrowth.averageOrderValue), growth: mockGrowth.aovGrowth, icon: TrendingUp, trend: 'down', label: 'Cambio en valor promedio' }

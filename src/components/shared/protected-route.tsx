@@ -24,8 +24,8 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
   }
 
   if (adminOnly && user.role !== "ADMIN") {
-    // Si la ruta es solo para admin y el usuario no lo es, redirigir al catálogo
-    return <Navigate to="/productos" replace />
+    // Si la ruta es solo para admin y el usuario no lo es, redirigir al home de cliente
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

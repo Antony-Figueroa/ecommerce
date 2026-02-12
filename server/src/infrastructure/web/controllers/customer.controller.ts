@@ -5,8 +5,9 @@ import { NotFoundError } from '../../../shared/errors/app.errors.js'
 export const getCustomers = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 10
+    const limit = Number(req.query.limit) || 50
     const search = req.query.search as string | undefined
+    const role = req.query.role as string | undefined
     
     // El ID del usuario que realiza la consulta (admin)
     const adminId = (req as any).user?.id
@@ -14,7 +15,7 @@ export const getCustomers = async (req: Request, res: Response): Promise<void> =
     const userAgent = req.get('User-Agent')
 
     const result = await userService.getCustomers(
-      { page, limit, search },
+      { page, limit, search, role },
       adminId,
       ipAddress,
       userAgent

@@ -51,13 +51,14 @@ export class UserService {
   }
 
   async updateCustomer(id: string, data: any, userId?: string, ipAddress?: string, userAgent?: string) {
-    const { email, name, phone, isActive } = data
+    const { email, name, phone, isActive, role } = data
 
     const customer = await this.userRepo.update(id, {
       ...(email && { email }),
       ...(name && { name }),
       ...(phone && { phone }),
       ...(isActive !== undefined && { isActive }),
+      ...(role && { role }),
     })
 
     await this.auditService.logAction({
@@ -100,15 +101,21 @@ export class UserService {
   }
 
   async getCustomers(options: any, userId?: string, ipAddress?: string, userAgent?: string) {
-    const { page = 1, limit = 10, search } = options
+    const { page = 1, limit = 50, search, role } = options
     const skip = (page - 1) * limit
 
     const where: any = {}
+    
+    if (role) {
+      where.role = role
+    }
+
     if (search) {
       where.OR = [
         { email: { contains: search } },
         { name: { contains: search } },
         { phone: { contains: search } },
+        { username: { contains: search } }
       ]
     }
 

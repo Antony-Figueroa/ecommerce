@@ -4,32 +4,32 @@ import { jest } from '@jest/globals'
 jest.mock('bcryptjs', () => ({
   __esModule: true,
   default: {
-    compare: jest.fn().mockResolvedValue(true),
-    hash: jest.fn().mockResolvedValue('hashed_password'),
+    compare: jest.fn<any>().mockResolvedValue(true),
+    hash: jest.fn<any>().mockResolvedValue('hashed_password'),
   },
-  compare: jest.fn().mockResolvedValue(true),
-  hash: jest.fn().mockResolvedValue('hashed_password'),
+  compare: jest.fn<any>().mockResolvedValue(true),
+  hash: jest.fn<any>().mockResolvedValue('hashed_password'),
 }))
 
 jest.mock('jsonwebtoken', () => ({
   __esModule: true,
   default: {
-    sign: jest.fn().mockReturnValue('mock_token'),
-    verify: jest.fn().mockReturnValue({}),
+    sign: jest.fn<any>().mockReturnValue('mock_token'),
+    verify: jest.fn<any>().mockReturnValue({}),
   },
-  sign: jest.fn().mockReturnValue('mock_token'),
-  verify: jest.fn().mockReturnValue({}),
+  sign: jest.fn<any>().mockReturnValue('mock_token'),
+  verify: jest.fn<any>().mockReturnValue({}),
 }))
 
 jest.mock('crypto', () => ({
   __esModule: true,
   default: {
-    randomBytes: jest.fn(() => ({
-      toString: jest.fn(() => 'mocked_hex_token')
+    randomBytes: jest.fn<any>(() => ({
+      toString: jest.fn<any>(() => 'mocked_hex_token')
     })),
   },
-  randomBytes: jest.fn(() => ({
-    toString: jest.fn(() => 'mocked_hex_token')
+  randomBytes: jest.fn<any>(() => ({
+    toString: jest.fn<any>(() => 'mocked_hex_token')
   })),
 }))
 
@@ -40,21 +40,21 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 
 const mockUserRepo = {
-  findByEmail: jest.fn(),
-  findByUsername: jest.fn(),
-  findById: jest.fn(),
-  findFirst: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
+  findByEmail: jest.fn<any>(),
+  findByUsername: jest.fn<any>(),
+  findById: jest.fn<any>(),
+  findFirst: jest.fn<any>(),
+  create: jest.fn<any>(),
+  update: jest.fn<any>(),
 }
 
 const mockEmailService = {
-  sendVerificationEmail: jest.fn(),
-  sendPasswordResetEmail: jest.fn(),
+  sendVerificationEmail: jest.fn<any>(),
+  sendPasswordResetEmail: jest.fn<any>(),
 }
 
 const mockAuditService = {
-  logAction: jest.fn(),
+  logAction: jest.fn<any>(),
 }
 
 describe('AuthService', () => {
@@ -71,13 +71,13 @@ describe('AuthService', () => {
         id: '1',
         email: 'test@example.com',
         passwordHash: 'hashed_password',
-        role: 'USER',
+        role: 'CUSTOMER',
       }
       mockUserRepo.findByEmail.mockResolvedValue(mockUser)
       
       // Accessing the mocked functions
-      const compareMock = (bcrypt.compare || (bcrypt as any).default.compare) as jest.Mock
-      const signMock = (jwt.sign || (jwt as any).default.sign) as jest.Mock
+      const compareMock = (bcrypt.compare || (bcrypt as any).default.compare) as any
+      const signMock = (jwt.sign || (jwt as any).default.sign) as any
       
       compareMock.mockResolvedValue(true)
       signMock.mockReturnValue('mock_token')
@@ -109,9 +109,9 @@ describe('AuthService', () => {
     it('should register a new user and log action', async () => {
       const userData = { email: 'new@example.com', password: 'password', name: 'New' }
       mockUserRepo.findByEmail.mockResolvedValue(null)
-      const hashMock = (bcrypt.hash || (bcrypt as any).default.hash) as jest.Mock
+      const hashMock = (bcrypt.hash || (bcrypt as any).default.hash) as any
       hashMock.mockResolvedValue('hashed_password')
-      mockUserRepo.create.mockResolvedValue({ ...userData, id: '2', role: 'USER', emailVerified: true })
+      mockUserRepo.create.mockResolvedValue({ ...userData, id: '2', role: 'CUSTOMER', emailVerified: true })
 
       const result = await authService.register(userData, '127.0.0.1', 'test-agent')
 

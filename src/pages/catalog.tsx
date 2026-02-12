@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react"
-import { Link, useParams, useNavigate } from "react-router-dom"
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, Grid, List, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -34,6 +34,7 @@ interface CatalogPageProps {
 
 export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
@@ -55,6 +56,18 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const catalogHeaderRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (catalogHeaderRef.current) {
+      const headerBottom = catalogHeaderRef.current.getBoundingClientRect().bottom + window.scrollY;
+      window.scrollTo({
+        top: headerBottom - 100, // Offset for sticky headers or better positioning
+        behavior: 'smooth'
+      });
+    }
+  }, [currentPage])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -91,6 +104,21 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
   const { slug } = useParams<{ slug?: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // Sincronizar filtros con URL (incluyendo parámetros de búsqueda del Quiz)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const search = params.get('search')
+    const tags = params.getAll('tags')
+
+    if (search) {
+      setSearchQuery(search)
+    }
+    if (tags.length > 0) {
+      setSelectedTags(tags)
+    }
+  }, [location.search])
 
   // Evitar efectos innecesarios para estados derivados (rerender-derived-state-no-effect)
   useEffect(() => {
@@ -113,8 +141,11 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     handleCategoryChange(null)
     setSelectedBrands([])
     setPriceRange(null)
+    setSearchQuery("")
+    setSelectedTags([])
     setCurrentPage(1)
-  }, [handleCategoryChange])
+    navigate('/productos', { replace: true })
+  }, [handleCategoryChange, navigate])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -162,13 +193,17 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          product.category?.name.toLowerCase().includes(searchQuery.toLowerCase())
+                          product.category?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (selectedTags.length > 0 && selectedTags.some(tag => 
+                            product.name.toLowerCase().includes(tag.toLowerCase()) || 
+                            product.description?.toLowerCase().includes(tag.toLowerCase())
+                          ))
       const matchesCategory = !selectedCategory || product.category?.slug === selectedCategory
       const matchesBrands = selectedBrands.length === 0 || (product.brand && selectedBrands.includes(product.brand))
       const matchesPrice = !priceRange || (product.price >= priceRange[0] && product.price <= priceRange[1])
       const matchesOffers = !offersOnly || product.isOffer
 
-      return matchesSearch && matchesCategory && matchesBrands && matchesPrice && matchesOffers
+      return (matchesSearch || (selectedTags.length > 0 && matchesSearch)) && matchesCategory && matchesBrands && matchesPrice && matchesOffers
     }).sort((a, b) => {
       if (sortBy === "price-low") return a.price - b.price
       if (sortBy === "price-high") return b.price - a.price
@@ -182,8 +217,6 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   )
-
-  const activeFiltersCount = (selectedBrands.length > 0 ? 1 : 0) + (priceRange ? 1 : 0)
 
   if (loading) {
     return (
@@ -212,7 +245,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Dynamic Header - Vitality Zen Style */}
-      <div className="bg-white dark:bg-card border-b border-slate-100 dark:border-border py-16 relative overflow-hidden">
+      <div className="bg-white dark:bg-card border-b border-slate-100 dark:border-border py-16 relative overflow-hidden" ref={catalogHeaderRef}>
         <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4" />
         <div className="container mx-auto px-4 relative z-10">
           <motion.nav 
@@ -367,7 +400,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
               </div>
 
               {/* Active Badges */}
-              {(selectedCategory || selectedBrands.length > 0 || activeFiltersCount > 0) && (
+              {(selectedCategory || selectedBrands.length > 0 || selectedTags.length > 0 || searchQuery !== "" || priceRange) && (
                 <div className="flex flex-wrap items-center gap-2">
                   <AnimatePresence>
                     {selectedCategory && (
@@ -383,6 +416,14 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                         <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
                           <span className="text-[10px] font-black uppercase tracking-widest">{brand}</span>
                           <button className="hover:text-primary transition-colors" onClick={() => setSelectedBrands(selectedBrands.filter((b) => b !== brand))}>×</button>
+                        </Badge>
+                      </motion.div>
+                    ))}
+                    {selectedTags.map((tag) => (
+                      <motion.div key={tag} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
+                        <Badge className="h-8 bg-primary/10 border border-primary/20 text-primary px-3 rounded-lg gap-2 shadow-sm">
+                          <span className="text-[10px] font-black uppercase tracking-widest">Tag: {tag}</span>
+                          <button className="hover:text-primary transition-colors" onClick={() => setSelectedTags(selectedTags.filter((t) => t !== tag))}>×</button>
                         </Badge>
                       </motion.div>
                     ))}

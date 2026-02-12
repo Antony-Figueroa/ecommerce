@@ -50,7 +50,15 @@ export const ProductCarousel = memo(function ProductCarousel({
     }
   }
 
-  if (!products || products.length === 0) return null
+  if (!products || products.length === 0) {
+    return (
+      <section className="py-16 bg-slate-50/50 dark:bg-slate-900/20">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-muted-foreground italic">No hay productos destacados disponibles en este momento.</p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-16 overflow-hidden bg-slate-50/50 dark:bg-slate-900/20">

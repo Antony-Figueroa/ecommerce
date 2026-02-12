@@ -93,7 +93,7 @@ export function Hero() {
                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                  className="absolute inset-0 flex items-center justify-center"
                >
-                <div className="w-full max-w-[600px] aspect-[3/4] bg-gradient-to-br from-card to-secondary/20 rounded-[4rem] shadow-2xl flex items-center justify-center p-6 border border-border/50 backdrop-blur-md overflow-hidden group relative">
+                <div className="w-full max-w-[500px] aspect-[3/4] bg-gradient-to-br from-card to-secondary/20 rounded-[4rem] shadow-2xl flex items-center justify-center p-5 border border-border/50 backdrop-blur-md overflow-hidden group relative">
                     <img 
                       src="https://images.pexels.com/photos/29107673/pexels-photo-29107673.jpeg" 
                       alt="Suplementos de Alta Calidad"

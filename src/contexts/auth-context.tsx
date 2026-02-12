@@ -82,14 +82,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const result = await api.login(email, password)
-    if (result.success) {
+    if (result.success || result.user) {
       setUser(result.user)
     }
   }
 
   const loginWithGoogle = async (credential: string) => {
     const result = await api.googleAuth(credential)
-    if (result.success && result.token) {
+    if ((result.success || result.user) && result.token) {
       setUser(result.user)
     }
     return {
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password?: string;
   }) => {
     const result = await api.googleRegister(data)
-    if (result.success) {
+    if (result.success || result.user) {
       setUser(result.user)
     }
   }

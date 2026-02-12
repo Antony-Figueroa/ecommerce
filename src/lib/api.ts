@@ -838,7 +838,7 @@ class ApiClient {
     return this.request<{ orders: any[] }>(`/admin/customers/${customerId}/orders`)
   }
 
-  async updateCustomer(id: string, data: { name?: string; email?: string; phone?: string; isActive?: boolean }) {
+  async updateCustomer(id: string, data: { name?: string; email?: string; phone?: string; isActive?: boolean; role?: string }) {
     return this.request(`/admin/customers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

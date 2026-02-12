@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { ProductCard } from "@/components/shop/product-card"
 import { ProductCarousel } from "@/components/shop/ProductCarousel"
+import { GoalSelector } from "@/components/shop/goal-selector"
 import { Hero, FeatureBanner } from "@/components/shared/hero"
 import { Newsletter } from "@/components/shared/newsletter"
 import { api } from "@/lib/api"
@@ -105,6 +106,9 @@ export function HomePage() {
     )
   }
 
+  // Debug: Verificar productos destacados en consola
+  console.log("Featured Products:", featuredProducts);
+
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20 selection:text-primary overflow-x-hidden">
       {/* Hero Section */}
@@ -113,6 +117,9 @@ export function HomePage() {
       {/* Feature Banner */}
       <FeatureBanner />
 
+      {/* Selector por Objetivos - Health Goal Navigator */}
+      <GoalSelector />
+
       {/* Carrusel de Productos Destacados - Reemplaza Categorías */}
       <ProductCarousel 
         products={featuredProducts} 
@@ -120,43 +127,6 @@ export function HomePage() {
         title="Productos Destacados"
         subtitle="Nuestra selección premium para potenciar tu bienestar diario."
       />
-
-      {/* Productos Destacados - Los Más Vendidos */}
-      <motion.section 
-        className="container mx-auto px-4 py-24 relative bg-card rounded-[4rem] shadow-sm border border-border/30"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, margin: "-100px" }}
-        variants={staggerContainer}
-      >
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 px-4">
-          <div className="space-y-4">
-            <h2 className="text-5xl font-black tracking-tighter text-foreground italic leading-none">
-              Los <span className="text-primary not-italic">Más Vendidos</span>
-            </h2>
-            <p className="text-muted-foreground font-bold text-lg max-w-2xl italic">
-              Nuestra selección premium de suplementos para tu bienestar.
-            </p>
-          </div>
-          <Button variant="outline" className="rounded-2xl border-2 border-border font-black uppercase tracking-widest hover:border-primary hover:text-primary transition-all group h-14 px-8" asChild>
-            <Link to="/productos">
-              Ver Catálogo
-              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
-        </div>
-
-        <motion.div 
-          variants={staggerContainer}
-          className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 px-4"
-        >
-          {featuredProducts.slice(0, 8).map((product) => (
-            <motion.div key={product.id} variants={scaleIn}>
-              <ProductCard product={product} bcvRate={bcvRate} />
-            </motion.div>
-          ))}
-        </motion.div>
-      </motion.section>
 
       {/* Trust Badges Section - Zen Style */}
       <motion.section 

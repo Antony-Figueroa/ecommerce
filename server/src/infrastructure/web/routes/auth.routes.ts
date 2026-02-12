@@ -148,7 +148,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
       req.ip, 
       req.get('User-Agent')
     )
-    res.json(result)
+    res.json({ success: true, ...result })
   } catch (error) {
     next(error)
   }
