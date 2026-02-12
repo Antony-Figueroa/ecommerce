@@ -184,7 +184,7 @@ export function RegisterPage() {
                   useOneTap
                   theme="outline"
                   size="large"
-                  width="100%"
+                  width="400"
                   text="signup_with"
                   shape="pill"
                 />
