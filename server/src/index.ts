@@ -31,7 +31,7 @@ import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
 import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
-import { notificationService, bcvUpdaterService, cartService } from './shared/container.js'
+import { notificationService, bcvUpdaterService, cartService, backupService } from './shared/container.js'
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
 import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
@@ -46,6 +46,8 @@ const httpServer = createServer(app)
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
   'http://localhost:3000',
   'http://127.0.0.1:3000'
 ];
@@ -198,6 +200,14 @@ if (RUN_TASKS) {
     cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
   }, 6 * 60 * 60 * 1000)
 
+  // Respaldo diario de la base de datos (cada 24 horas)
+  setInterval(() => {
+    backupService.createBackup().catch(err => console.error('Error en respaldo diario:', err))
+  }, 24 * 60 * 60 * 1000)
+
+  // Ejecutar un respaldo inicial al arrancar
+  backupService.createBackup().catch(err => console.error('Error en respaldo inicial:', err))
+}
   // Ejecución inicial después de un retraso
   setTimeout(() => {
     console.log('Ejecutando tareas iniciales de segundo plano...')
@@ -206,7 +216,6 @@ if (RUN_TASKS) {
     bcvUpdaterService.updateRate().catch(err => console.error('Error en updateRate:', err))
     cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
   }, 30000)
-}
 
 httpServer.listen(config.port, () => {
   console.log(`

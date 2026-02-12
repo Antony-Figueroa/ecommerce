@@ -131,11 +131,11 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
   const handleCategoryChange = useCallback((categorySlug: string | null) => {
     if (categorySlug) {
-      navigate(`/productos/${categorySlug}`)
+      navigate(`/productos/${categorySlug}${location.search}`)
     } else {
-      navigate('/productos')
+      navigate(`/productos${location.search}`)
     }
-  }, [navigate])
+  }, [navigate, location.search])
 
   const handleClearFilters = useCallback(() => {
     handleCategoryChange(null)

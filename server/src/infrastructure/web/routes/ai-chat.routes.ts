@@ -16,8 +16,8 @@ router.post('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const response = await aiChatService.chat(message, history || [])
-    res.json({ response })
+    const result = await aiChatService.chat(message, history || [])
+    res.json(result)
   } catch (error) {
     console.error('Error in chat route:', error)
     res.status(500).json({ error: 'Failed to process chat message' })

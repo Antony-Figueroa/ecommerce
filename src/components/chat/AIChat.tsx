@@ -128,12 +128,26 @@ export const AIChat: React.FC = () => {
     window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, "_blank")
   }
 
-  // Guardar historial cuando cambien las conversaciones
+  const saveConversations = (updated: ChatConversation[]) => {
+    localStorage.setItem(currentStorageKey, JSON.stringify(updated))
+  }
+
+  // Guardar conversaciones cuando cambien los mensajes del chat activo
   useEffect(() => {
-    if (conversations.length > 0) {
-      localStorage.setItem(currentStorageKey, JSON.stringify(conversations))
+    if (activeId && messages.length > 0) {
+      setConversations(prev => {
+        const updated = prev.map(c => 
+          c.id === activeId ? { ...c, messages: messages.map(m => ({
+            role: m.role,
+            parts: m.parts.map(p => ({ text: String(p.text || '') })),
+            usage: m.usage
+          })) } : c
+        )
+        saveConversations(updated)
+        return updated
+      })
     }
-  }, [conversations, currentStorageKey])
+  }, [messages, activeId])
 
   // Actualizar mensajes cuando cambie la conversación activa
   useEffect(() => {
@@ -146,15 +160,6 @@ export const AIChat: React.FC = () => {
       setMessages([])
     }
   }, [activeId])
-
-  // Sincronizar mensajes actuales con la conversación activa en la lista
-  useEffect(() => {
-    if (activeId && messages.length > 0) {
-      setConversations(prev => prev.map(c => 
-        c.id === activeId ? { ...c, messages } : c
-      ))
-    }
-  }, [messages, activeId])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -190,11 +195,11 @@ export const AIChat: React.FC = () => {
 
   const handleSend = async (textOverride?: string, staticResponse?: string) => {
     const textToSend = textOverride || input
-    if (!textToSend.trim() || isLoading) return
+    if (!textToSend || (typeof textToSend === 'string' && !textToSend.trim()) || isLoading) return
 
     const userMessage: Message = {
       role: 'user',
-      parts: [{ text: textToSend }]
+      parts: [{ text: String(textToSend) }]
     }
 
     let currentActiveId = activeId
@@ -245,7 +250,17 @@ export const AIChat: React.FC = () => {
   }
 
   const renderMessageContent = (msg: Message) => {
-    const text = msg.parts[0].text
+    let text = msg.parts[0]?.text || ''
+    
+    // Si el texto es un objeto (no debería pasar tras el fix de tipos), intentar stringificarlo
+    if (typeof text !== 'string') {
+      try {
+        text = JSON.stringify(text)
+      } catch (e) {
+        text = 'Error: Contenido no procesable'
+      }
+    }
+
     // Extraer productos marcados con [[Nombre]]
     const parts = text.split(/(\[\[.*?\]\])/g)
     const products: string[] = []
@@ -281,7 +296,8 @@ export const AIChat: React.FC = () => {
                 size="sm"
                 className="text-[10px] h-7 gap-1.5 border-primary/30 hover:border-primary hover:bg-primary/5 text-primary"
                 onClick={() => {
-                  navigate(`/catalog?search=${encodeURIComponent(product)}`)
+                  navigate(`/productos?search=${encodeURIComponent(product)}`)
+                  if (window.innerWidth < 768) setIsOpen(false)
                 }}
               >
                 <ExternalLink className="w-3 h-3" />

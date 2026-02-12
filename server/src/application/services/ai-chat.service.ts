@@ -72,7 +72,7 @@ ESTILO:
   async chat(message: string, history: ChatMessage[] = []) {
     if (!config.googleAiKey) {
       return {
-        text: "Lo siento, el servicio de chat no está configurado correctamente (falta la API Key).",
+        response: "Lo siento, el servicio de chat no está configurado correctamente (falta la API Key).",
         usage: { promptLength: 0, responseLength: 0 }
       }
     }
@@ -86,7 +86,7 @@ ESTILO:
       // Usamos systemInstruction para inyectar el prompt de sistema de forma robusta
       // Simplificamos a string para evitar problemas de tipos/roles
       const modelWithSystem = this.genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
+        model: 'gemini-flash-latest',
         systemInstruction: systemPrompt
       })
       
