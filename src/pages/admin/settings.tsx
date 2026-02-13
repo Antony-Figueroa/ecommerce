@@ -6,7 +6,14 @@ import {
   RotateCcw,
   Loader2,
   Settings,
-  CheckCircle2
+  CheckCircle2,
+  Database,
+  ShieldCheck,
+  Trash2,
+  Clock,
+  Download,
+  FileCode,
+  HardDrive
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
@@ -54,6 +61,18 @@ export function AdminSettingsPage() {
   const [history, setHistory] = useState<SettingHistory[]>([])
   const [updateReason, setUpdateReason] = useState("")
   const [showConfirm, setShowConfirm] = useState(false)
+  
+  // Backup States
+  const [backups, setBackups] = useState<any[]>([])
+  const [loadingBackups, setLoadingBackups] = useState(false)
+  const [showBackupAuth, setShowBackupAuth] = useState(false)
+  const [backupPassword, setBackupPassword] = useState("")
+  const [backupAction, setBackupAction] = useState<{
+    type: 'create' | 'restore' | 'delete',
+    filename?: string
+  } | null>(null)
+  const [processingBackup, setProcessingBackup] = useState(false)
+  
   const { toast } = useToast()
 
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -102,11 +121,78 @@ export function AdminSettingsPage() {
 
   useEffect(() => {
     fetchSettings()
+    fetchBackups()
   }, [])
 
   useEffect(() => {
     document.title = "Configuración | Ana's Supplements Admin"
   }, [])
+
+  const fetchBackups = async () => {
+    try {
+      setLoadingBackups(true)
+      const data = await api.getBackups()
+      setBackups(data)
+    } catch (error) {
+      console.error("Error fetching backups:", error)
+    } finally {
+      setLoadingBackups(false)
+    }
+  }
+
+  const handleBackupAuth = (type: 'create' | 'restore' | 'delete', filename?: string) => {
+    setBackupAction({ type, filename })
+    setShowBackupAuth(true)
+    setBackupPassword("")
+  }
+
+  const executeBackupAction = async () => {
+    if (!backupAction || !backupPassword) return
+
+    setProcessingBackup(true)
+    try {
+      if (backupAction.type === 'create') {
+        await api.createBackup(backupPassword)
+        toast({
+          title: "Éxito",
+          description: "Respaldo creado correctamente",
+        })
+      } else if (backupAction.type === 'restore' && backupAction.filename) {
+        await api.restoreBackup(backupAction.filename, backupPassword)
+        toast({
+          title: "Éxito",
+          description: "Base de datos restaurada correctamente. El sistema puede requerir reiniciar la sesión.",
+        })
+      } else if (backupAction.type === 'delete' && backupAction.filename) {
+        await api.deleteBackup(backupAction.filename, backupPassword)
+        toast({
+          title: "Éxito",
+          description: "Respaldo eliminado correctamente",
+        })
+      }
+      
+      setShowBackupAuth(false)
+      setBackupAction(null)
+      setBackupPassword("")
+      fetchBackups()
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error al procesar la acción de respaldo",
+        variant: "destructive"
+      })
+    } finally {
+      setProcessingBackup(false)
+    }
+  }
+
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  }
 
   const fetchSettings = async () => {
     try {
@@ -241,7 +327,7 @@ export function AdminSettingsPage() {
           }}
         />
 
-        <Tabs defaultValue={groups[0]} className="w-full">
+        <Tabs defaultValue={groups[0] || "general"} className="w-full">
           <TabsList className="inline-flex w-max md:w-auto bg-slate-100/50 dark:bg-muted/20 p-1.5 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm mb-6">
             {groups.map(group => (
               <TabsTrigger 
@@ -252,6 +338,13 @@ export function AdminSettingsPage() {
                 <span className="whitespace-nowrap">{group.charAt(0).toUpperCase() + group.slice(1)}</span>
               </TabsTrigger>
             ))}
+            <TabsTrigger 
+              value="backups"
+              className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+            >
+              <Database className="h-4 w-4 mr-1" />
+              <span className="whitespace-nowrap">Respaldos</span>
+            </TabsTrigger>
           </TabsList>
 
           {groups.map(group => (
@@ -340,7 +433,179 @@ export function AdminSettingsPage() {
               </div>
             </TabsContent>
           ))}
+
+          <TabsContent value="backups" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card className="border-border/50 shadow-sm">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                      <Database className="h-6 w-6 text-primary" />
+                      Gestión de Respaldos
+                    </CardTitle>
+                    <CardDescription>
+                      Crea y restaura copias de seguridad de la base de datos. Requiere contraseña de administrador.
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    onClick={() => handleBackupAuth('create')}
+                    className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Crear Nuevo Respaldo
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingBackups ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                    <p className="text-sm text-muted-foreground font-medium">Obteniendo respaldos...</p>
+                  </div>
+                ) : backups.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-xl bg-muted/30">
+                    <HardDrive className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                    <p className="text-muted-foreground font-medium">No se han encontrado respaldos</p>
+                    <p className="text-xs text-muted-foreground/60">Los respaldos creados aparecerán aquí</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {backups.map((backup) => (
+                      <div 
+                        key={backup.filename}
+                        className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-secondary/10 transition-all group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <FileCode className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-sm">{backup.filename}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="flex items-center text-[10px] text-muted-foreground">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {new Date(backup.createdAt).toLocaleString()}
+                              </span>
+                              <span className="flex items-center text-[10px] text-muted-foreground font-mono">
+                                <HardDrive className="h-3 w-3 mr-1" />
+                                {formatSize(backup.size)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-8 text-[10px] font-bold border-primary/20 hover:bg-primary/5 hover:text-primary"
+                            onClick={() => handleBackupAuth('restore', backup.filename)}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                            Restaurar
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => handleBackupAuth('delete', backup.filename)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="bg-muted/30 border-t border-border/50 px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-amber-700 dark:text-amber-500">Advertencia de Seguridad</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      La restauración de un respaldo reemplazará completamente la base de datos actual. 
+                      Asegúrate de haber creado un respaldo reciente antes de proceder con una restauración. 
+                      Esta acción es irreversible una vez completada.
+                    </p>
+                  </div>
+                </div>
+              </CardFooter>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        {/* Dialogo de Autenticación para Respaldos */}
+        <Dialog open={showBackupAuth} onOpenChange={setShowBackupAuth}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+                Validación de Administrador
+              </DialogTitle>
+              <DialogDescription>
+                Esta acción requiere confirmar tu identidad con la contraseña especial de administrador.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 my-4">
+              <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">Confirmar Operación</p>
+                  <p className="text-[11px] text-amber-700/80 dark:text-amber-500/80 leading-relaxed font-medium">
+                    {backupAction?.type === 'create' ? "Estás a punto de crear una copia de seguridad del estado actual del sistema." : 
+                     backupAction?.type === 'restore' ? "ATENCIÓN: Se sobrescribirán todos los datos actuales con la versión del respaldo seleccionado." :
+                     "Se eliminará permanentemente este archivo de respaldo."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="backup-password text-xs font-bold uppercase tracking-wider">Contraseña de Administrador</Label>
+                <Input 
+                  id="backup-password"
+                  type="password"
+                  placeholder="Ingrese contraseña maestra..."
+                  value={backupPassword}
+                  onChange={(e) => setBackupPassword(e.target.value)}
+                  className="bg-secondary/20 focus:bg-background font-bold"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && backupPassword && !processingBackup) {
+                      executeBackupAction();
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="ghost" onClick={() => setShowBackupAuth(false)} disabled={processingBackup}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={executeBackupAction} 
+                disabled={!backupPassword || processingBackup}
+                variant={backupAction?.type === 'delete' ? "destructive" : "default"}
+                className="font-bold min-w-[120px]"
+              >
+                {processingBackup ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    {backupAction?.type === 'create' && <Download className="h-4 w-4 mr-2" />}
+                    {backupAction?.type === 'restore' && <RotateCcw className="h-4 w-4 mr-2" />}
+                    {backupAction?.type === 'delete' && <Trash2 className="h-4 w-4 mr-2" />}
+                    {backupAction?.type === 'create' ? "Crear" : backupAction?.type === 'restore' ? "Restaurar" : "Eliminar"}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Dialogo de Confirmación de Cambios */}
         <Dialog open={showConfirm} onOpenChange={(open) => {

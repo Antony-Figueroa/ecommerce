@@ -126,7 +126,8 @@ export class AIChatService {
   private async getProductContext() {
     try {
       console.log('[AIChatService] Fetching product context...');
-      const products = await this.inventoryService.getPublicProducts({ limit: 500 })
+      // Reducimos el límite para evitar exceder la cuota de tokens en modelos gratuitos
+      const products = await this.inventoryService.getPublicProducts({ limit: 50 })
       
       if (!products || products.length === 0) {
         console.warn('[AIChatService] No products found in database for context.')
@@ -136,8 +137,8 @@ export class AIChatService {
       console.log(`[AIChatService] Found ${products.length} products for context.`) 
 
       const context = (products as any[]).map((p: any) => {
-        const categories = p.categories?.map((c: any) => c.name).join(', ') || 'N/A'
-        return `- ${p.name}: Marca: ${p.brand}. Precio: $${p.price}. Categorías: ${categories}. Descripción: ${p.description.substring(0, 150)}.`
+        // Formato ultra-compacto: Nombre (Marca) $Precio
+        return `- ${p.name} (${p.brand}): $${p.price}`
       }).join('\n')
 
       return context
@@ -193,7 +194,7 @@ ESTILO:
 - Sé EXTREMADAMENTE CONCISO (máximo 2-3 frases).
 - No saludes de forma larga.
 - No des consejos médicos profundos, solo menciona el producto y su uso básico.
-- Finaliza siempre con: "_Consulte a su médico._".
+- Agrega "_Consulte a su médico._" al final SOLO si estás recomendando un producto o dando información sobre su uso. No lo incluyas en saludos o respuestas triviales.
 - Responde siempre en español.
 - IMPORTANTE: Cuando recomiendes un producto del catálogo, ponlo entre corchetes dobles como [[Nombre del Producto]] para que el usuario pueda verlo resaltado.
 - IMPORTANTE: No uses comillas invertidas extrañas para envolver el texto.`
@@ -436,20 +437,56 @@ ESTILO:
       
       // Fallback para herramientas: Gemma 3 no soporta tools via OpenAI shim todavía
       if (tools && model.includes('gemma')) {
-        console.log(`[AIChatService] Switching from ${model} to models/gemini-flash-latest for tool support`)
-        model = 'models/gemini-flash-latest'
+        console.log(`[AIChatService] Switching from ${model} to gemini-1.5-flash for tool support`)
+        model = 'gemini-1.5-flash'
+      }
+
+      // Si es una consulta simple (sin tools) y el modelo es Gemma, forzamos Gemini Flash para mayor estabilidad
+      if (!tools && model.includes('gemma')) {
+        model = 'gemini-1.5-flash'
       }
 
       console.log(`[AIChatService] Calling ${model} at ${config.aiBaseUrl}...`)
 
-      let response = await this.openai.chat.completions.create({
-        model: model,
-        messages,
-        tools,
-        tool_choice: tools ? 'auto' : undefined
-      })
+      let response;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while (attempts < maxAttempts) {
+        try {
+          response = await this.openai.chat.completions.create({
+            model: model,
+            messages,
+            tools,
+            tool_choice: tools ? 'auto' : undefined,
+            temperature: 0.7,
+          })
+          break; // Si tiene éxito, salir del bucle
+        } catch (error: any) {
+          attempts++;
+          const isQuotaError = error.status === 429 || error.message?.includes('429') || error.message?.includes('quota');
+          
+          if (isQuotaError && attempts < maxAttempts) {
+            const delay = attempts * 2000; // 2s, 4s...
+            console.warn(`[AIChatService] Quota exceeded (429). Retrying in ${delay}ms... (Attempt ${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            // En el segundo intento, si falló con Gemma, forzar Gemini Flash que suele tener más cuota
+            if (model.includes('gemma')) {
+              console.log('[AIChatService] Retrying with gemini-1.5-flash for better quota');
+              model = 'gemini-1.5-flash';
+            }
+            continue;
+          }
+          throw error; // Si no es error de cuota o ya agotamos intentos, lanzar el error
+        }
+      }
 
       console.log('[AIChatService] API response received successfully')
+
+      if (!response) {
+        throw new Error('No se pudo obtener respuesta de la API tras varios intentos');
+      }
 
       let responseMessage = response.choices[0].message
       let maxIterations = 5
@@ -471,16 +508,40 @@ ESTILO:
           } as any)
         }
 
-        response = await this.openai.chat.completions.create({
-          model: model,
-          messages,
-          tools
-        })
+        let secondAttempts = 0;
+        while (secondAttempts < maxAttempts) {
+          try {
+            response = await this.openai.chat.completions.create({
+              model: model,
+              messages,
+              tools,
+              temperature: 0.7
+            })
+            break;
+          } catch (error: any) {
+            secondAttempts++;
+            const isQuotaError = error.status === 429 || error.message?.includes('429') || error.message?.includes('quota');
+            if (isQuotaError && secondAttempts < maxAttempts) {
+              const delay = secondAttempts * 2000;
+              console.warn(`[AIChatService] Quota exceeded (429) in tool loop. Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+            throw error;
+          }
+        }
+        
+        if (!response) {
+          throw new Error('No se pudo obtener respuesta de la API en el bucle de herramientas');
+        }
+
         responseMessage = response.choices[0].message
         maxIterations--
       }
 
       const text = responseMessage.content || ''
+      
+      console.log('[AIChatService] Final response length:', text.length)
       
       return {
         response: text,

@@ -129,7 +129,9 @@ export const bcvUpdaterService = new BCVUpdaterService(
   inventoryService
 )
 
-export const settingsService = new SettingsService(settingsRepo, auditService)
+export const backupService = new BackupService()
+
+export const settingsService = new SettingsService(settingsRepo, auditService, backupService, userRepo)
 
 export const paymentService = new PaymentService(
   paymentRepo,
@@ -180,4 +182,3 @@ export const favoriteService = new FavoriteService(favoriteRepo, notificationSer
 export const cartService = new CartService(cartRepo, notificationService, emailService)
 export const userService = new UserService(userRepo, auditService)
 export const aiChatService = new AIChatService(inventoryService)
-export const backupService = new BackupService()

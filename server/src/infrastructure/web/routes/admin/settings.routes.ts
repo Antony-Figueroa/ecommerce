@@ -50,6 +50,66 @@ router.patch('/', validate(updateBulkSchema), async (req: Request, res: Response
 })
 
 /**
+ * GET /api/admin/settings/backups
+ * Lista todos los respaldos
+ */
+router.get('/backups', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const backups = await settingsService.listBackups(userId)
+    res.json(backups)
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al listar respaldos' })
+  }
+})
+
+/**
+ * POST /api/admin/settings/backups
+ * Crea un nuevo respaldo (requiere contraseña)
+ */
+router.post('/backups', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const { password } = req.body
+    const backup = await settingsService.createBackup(userId, password)
+    res.json(backup)
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al crear respaldo' })
+  }
+})
+
+/**
+ * POST /api/admin/settings/backups/restore
+ * Restaura un respaldo (requiere contraseña)
+ */
+router.post('/backups/restore', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const { filename, password } = req.body
+    const result = await settingsService.restoreBackup(userId, filename, password)
+    res.json(result)
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al restaurar respaldo' })
+  }
+})
+
+/**
+ * DELETE /api/admin/settings/backups/:filename
+ * Elimina un respaldo (requiere contraseña)
+ */
+router.delete('/backups/:filename', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const { filename } = req.params
+    const { password } = req.body // Recibido en el cuerpo de la petición DELETE
+    const result = await settingsService.deleteBackup(userId, filename, password)
+    res.json(result)
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al eliminar respaldo' })
+  }
+})
+
+/**
  * GET /api/admin/settings/:key/history
  * Obtiene el historial de una configuración
  */

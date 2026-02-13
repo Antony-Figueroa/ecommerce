@@ -1,6 +1,9 @@
-import { ValidationError } from '../../shared/errors/app.errors.js'
+import { ValidationError, AuthenticationError } from '../../shared/errors/app.errors.js'
 import { SettingsRepository } from '../../domain/repositories/settings.repository.js'
 import { AuditService } from './audit.service.js'
+import { BackupService } from './backup.service.js'
+import { UserRepository } from '../../domain/repositories/user.repository.js'
+import bcrypt from 'bcryptjs'
 
 export interface UpdateSettingInput {
   key: string
@@ -11,8 +14,94 @@ export interface UpdateSettingInput {
 export class SettingsService {
   constructor(
     private settingsRepo: SettingsRepository,
-    private auditService: AuditService
+    private auditService: AuditService,
+    private backupService: BackupService,
+    private userRepo: UserRepository
   ) {}
+
+  /**
+   * Verifica la contraseña especial del administrador
+   */
+  async verifyAdminPassword(userId: string, password: string) {
+    const user = await this.userRepo.findById(userId)
+    if (!user || user.role !== 'ADMIN' || !user.passwordHash) {
+      throw new AuthenticationError('Acceso denegado')
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash)
+    if (!isMatch) {
+      throw new AuthenticationError('Contraseña de administrador incorrecta')
+    }
+
+    return true
+  }
+
+  /**
+   * Crea un respaldo de la base de datos
+   */
+  async createBackup(userId: string, password?: string) {
+    if (password) {
+      await this.verifyAdminPassword(userId, password)
+    }
+
+    const backup = await this.backupService.createBackup()
+    
+    await this.auditService.logAction({
+      entityType: 'SETTINGS',
+      action: 'BACKUP_CREATE',
+      userId,
+      details: { filename: backup.filename }
+    })
+
+    return backup
+  }
+
+  /**
+   * Lista los respaldos disponibles
+   */
+  async listBackups(userId: string) {
+    return await this.backupService.listBackups()
+  }
+
+  /**
+   * Restaura un respaldo de la base de datos
+   */
+  async restoreBackup(userId: string, filename: string, password?: string) {
+    if (password) {
+      await this.verifyAdminPassword(userId, password)
+    }
+
+    await this.backupService.restoreBackup(filename)
+    
+    await this.auditService.logAction({
+      entityType: 'SETTINGS',
+      action: 'BACKUP_RESTORE',
+      userId,
+      details: { filename }
+    })
+
+    return { message: 'Base de datos restaurada con éxito' }
+  }
+
+  /**
+   * Elimina un respaldo
+   */
+  async deleteBackup(userId: string, filename: string, password?: string) {
+    if (password) {
+      await this.verifyAdminPassword(userId, password)
+    }
+
+    await this.backupService.deleteBackup(filename)
+    
+    await this.auditService.logAction({
+      entityType: 'SETTINGS',
+      action: 'BACKUP_DELETE',
+      userId,
+      details: { filename }
+    })
+
+    return { message: 'Respaldo eliminado con éxito' }
+  }
 
   /**
    * Obtiene todas las configuraciones agrupadas

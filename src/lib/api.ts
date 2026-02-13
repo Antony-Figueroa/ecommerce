@@ -264,6 +264,32 @@ class ApiClient {
     })
   }
 
+  // Backups
+  async getBackups() {
+    return this.request<any[]>('/admin/settings/backups')
+  }
+
+  async createBackup(password: string) {
+    return this.request<any>('/admin/settings/backups', {
+      method: 'POST',
+      body: JSON.stringify({ password })
+    })
+  }
+
+  async restoreBackup(filename: string, password: string) {
+    return this.request<any>('/admin/settings/backups/restore', {
+      method: 'POST',
+      body: JSON.stringify({ filename, password })
+    })
+  }
+
+  async deleteBackup(filename: string, password: string) {
+    return this.request<any>(`/admin/settings/backups/${filename}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ password })
+    })
+  }
+
   // Auth
   async getMe() {
     return this.request<{
