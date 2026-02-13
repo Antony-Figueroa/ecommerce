@@ -139,8 +139,33 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }))
-        const error = new Error(errorData.error || `HTTP ${response.status}`)
-        ;(error as any).quotaExceeded = errorData.quotaExceeded
+        
+        // Intentar extraer el mensaje de error de varias estructuras posibles
+        let errorMessage = 'Error desconocido';
+        let errorCode = undefined;
+        let errorDetails = undefined;
+
+        if (errorData.error) {
+          if (typeof errorData.error === 'object') {
+            errorMessage = errorData.error.message || `HTTP ${response.status}`;
+            errorCode = errorData.error.code;
+            errorDetails = errorData.error.details;
+          } else {
+            errorMessage = errorData.error;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+          errorCode = errorData.code;
+          errorDetails = errorData.details;
+        } else {
+          errorMessage = `HTTP ${response.status}`;
+        }
+          
+        const error = new Error(errorMessage)
+        if (errorCode) (error as any).code = errorCode;
+        if (errorDetails) (error as any).details = errorDetails;
+        if (errorData.quotaExceeded) (error as any).quotaExceeded = errorData.quotaExceeded;
+        
         throw error
       }
 
@@ -634,7 +659,7 @@ class ApiClient {
 
   async updateBatch(id: string, data: any) {
     return this.request(`/admin/batches/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(data),
     })
   }

@@ -155,8 +155,20 @@ export class PrismaProviderRepository implements ProviderRepository {
 
 export class PrismaInventoryBatchRepository implements InventoryBatchRepository {
   async findAll(options?: any) {
-    return prisma.inventoryBatch.findMany({
-      ...options,
+    const { search, limit } = options || {}
+    const where: any = {}
+
+    if (search) {
+      where.OR = [
+        { code: { contains: search } },
+        { notes: { contains: search } },
+        { provider: { name: { contains: search } } }
+      ]
+    }
+
+    const findOptions: any = {
+      where,
+      take: limit || undefined,
       include: {
         provider: true,
         items: {
@@ -166,8 +178,10 @@ export class PrismaInventoryBatchRepository implements InventoryBatchRepository 
           orderBy: { entryDate: 'asc' }
         }
       },
-      orderBy: options?.orderBy || { createdAt: 'desc' },
-    })
+      orderBy: { createdAt: 'desc' },
+    }
+
+    return prisma.inventoryBatch.findMany(findOptions)
   }
 
   async findById(id: string) {
@@ -222,6 +236,14 @@ export class PrismaInventoryBatchRepository implements InventoryBatchRepository 
     return prisma.inventoryBatchItem.update({
       where: { id },
       data
+    })
+  }
+
+  async delete(id: string) {
+    // Eliminar el lote y sus items (Prisma maneja el borrado en cascada si está configurado, 
+    // pero aquí lo hacemos explícito o confiamos en el esquema)
+    await prisma.inventoryBatch.delete({
+      where: { id }
     })
   }
 }

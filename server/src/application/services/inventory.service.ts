@@ -247,6 +247,14 @@ export class InventoryService {
     return this.batchManager.createBatch(data, userId, ipAddress, userAgent)
   }
 
+  async updateBatch(id: string, data: any, userId?: string, ipAddress?: string, userAgent?: string) {
+    return this.batchManager.updateBatch(id, data, userId, ipAddress, userAgent)
+  }
+
+  async deleteBatch(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    return this.batchManager.deleteBatch(id, userId, ipAddress, userAgent)
+  }
+
   async getInventoryReport(userId?: string, ipAddress?: string, userAgent?: string) {
     await this.auditService.logAction({
       entityType: 'REPORT',

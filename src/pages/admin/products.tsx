@@ -571,7 +571,7 @@ export function AdminProductsPage() {
           const updateData = {
             batch: {
               batchNumber: batchFormData.batchNumber,
-              expirationDate: batchFormData.expirationDate,
+              expirationDate: new Date().toISOString().split('T')[0], // Guardamos la fecha actual como registro
               purchasePrice: batchFormData.purchasePrice,
               salePrice: batchFormData.salePrice,
               stock: batchFormData.stock
@@ -1180,26 +1180,18 @@ export function AdminProductsPage() {
                 Añade un nuevo lote para <strong>{productToAddStock?.name}</strong>.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Nro Lote</label>
-                  <Input
-                    value={batchFormData.batchNumber}
-                    onChange={(e) => setBatchFormData({ ...batchFormData, batchNumber: e.target.value })}
-                    placeholder="Ej: LOTE-2024"
-                  />
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="grid gap-2">
+                    <label className="text-sm font-medium">Nro Lote</label>
+                    <Input
+                      value={batchFormData.batchNumber}
+                      onChange={(e) => setBatchFormData({ ...batchFormData, batchNumber: e.target.value })}
+                      placeholder="Ej: LOTE-2024"
+                    />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Vencimiento</label>
-                  <Input
-                    type="date"
-                    value={batchFormData.expirationDate}
-                    onChange={(e) => setBatchFormData({ ...batchFormData, expirationDate: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <label className="text-sm font-medium">Costo Compra</label>
                   <Input
@@ -1231,7 +1223,7 @@ export function AdminProductsPage() {
                 type="button"
                 variant="default"
                 onClick={handleAddStock}
-                disabled={!batchFormData.batchNumber || !batchFormData.expirationDate || batchFormData.stock <= 0}
+                disabled={!batchFormData.batchNumber || batchFormData.stock <= 0}
               >
                 Registrar Lote y Stock
               </Button>

@@ -9,18 +9,17 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
+  CheckCircle2,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   AreaChart,
   Area,
@@ -38,7 +37,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
  
-import { cn, formatUSD } from "@/lib/utils"
+import { formatUSD } from "@/lib/utils"
 import { api } from "@/lib/api"
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4']
@@ -430,33 +429,40 @@ export function AdminAnalyticsPage() {
   </div>
       </div>
 
-      <AlertDialog open={confirmConfig.open} onOpenChange={(open: boolean) => setConfirmConfig(prev => ({ ...prev, open }))}>
-        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold flex items-center gap-2">
-              {confirmConfig.variant === "destructive" && <AlertTriangle className="h-5 w-5 text-destructive" />}
-              {confirmConfig.title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-medium">
-              {confirmConfig.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl font-bold border-slate-200">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmConfig.onConfirm}
-              className={cn(
-                "rounded-xl font-bold",
-                confirmConfig.variant === "destructive" 
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+      <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {confirmConfig.variant === "destructive" ? (
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5 text-primary" />
               )}
+              {confirmConfig.title}
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              {confirmConfig.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant={confirmConfig.variant || "default"}
+              onClick={() => {
+                confirmConfig.onConfirm();
+                setConfirmConfig({ ...confirmConfig, open: false });
+              }}
             >
               {confirmConfig.confirmText || "Confirmar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

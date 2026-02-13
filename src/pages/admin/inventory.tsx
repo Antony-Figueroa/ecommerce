@@ -14,6 +14,7 @@ import {
   ArrowDownRight,
   CheckCircle2,
   Trash2,
+  Edit2,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -41,6 +42,7 @@ import {
 import { formatUSD, formatBS, cn } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import { MultiSelect } from "@/components/ui/multi-select"
 import { motion } from "framer-motion"
 
 interface InventoryItem {
@@ -72,13 +74,25 @@ interface InventoryAdjustment {
   interface Provider {
   id: string
   name: string
-  country: string
-  address: string
-  phone?: string
-  email?: string
+  country: string | null
+  address: string | null
+  createdAt?: string
+  updatedAt?: string
   _count?: {
     batches: number
   }
+}
+
+interface ProviderFormData {
+  name: string
+  country: string
+  address: string
+}
+
+interface ProviderErrors {
+  name?: string
+  country?: string
+  address?: string
 }
 
 interface BatchProductItem {
@@ -92,6 +106,12 @@ interface BatchProductItem {
   entryDate: string
   discounted?: boolean
   discountPercent?: number
+  // Nuevos campos para gestión de inventario mejorada
+  unitCostBCV?: number
+  unitSaleBCV?: number
+  profitUSD?: number
+  profitBCV?: number
+  markupPercent?: number
 }
 
 interface Batch {
@@ -124,21 +144,41 @@ export function AdminInventoryPage() {
   const [showProviderDialog, setShowProviderDialog] = useState(false)
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null)
   const [batchForm, setBatchForm] = useState({ code: "", providerId: "", notes: "" })
-  const [batchItems, setBatchItems] = useState<BatchProductItem[]>([
-    {
-      productId: "",
-      productName: "",
-      productCode: "",
-      quantity: 1,
-      soldQuantity: 0,
-      unitCostUSD: 0,
-      unitSaleUSD: 0,
-      entryDate: new Date().toISOString().split("T")[0],
+  const [batchItems, setBatchItems] = useState<BatchProductItem[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
+
+  // Helper para calcular precios y ganancias
+  const calculateItemMetrics = (item: Partial<BatchProductItem>, rate: number) => {
+    const costUSD = Number(item.unitCostUSD) || 0
+    const saleUSD = Number(item.unitSaleUSD) || 0
+    const qty = Number(item.quantity) || 0
+    
+    const costBCV = costUSD * rate
+    const saleBCV = saleUSD * rate
+    const profitUSD = (saleUSD - costUSD) * qty
+    const profitBCV = profitUSD * rate
+    const markup = costUSD > 0 ? ((saleUSD - costUSD) / costUSD) * 100 : 0
+
+    return {
+      unitCostBCV: costBCV,
+      unitSaleBCV: saleBCV,
+      profitUSD,
+      profitBCV,
+      markupPercent: markup
     }
-  ])
-  const [providerForm, setProviderForm] = useState({ name: "", country: "", address: "", phone: "", email: "" })
+  }
+  const [providerForm, setProviderForm] = useState<ProviderFormData>({ name: "", country: "", address: "" })
+  const [providerErrors, setProviderErrors] = useState<ProviderErrors>({})
+  const [savingProvider, setSavingProvider] = useState(false)
   const [bcvRate, setBcvRate] = useState(0)
   
+  const [editingBatch, setEditingBatch] = useState<Batch | null>(null)
+  const [showEditBatchDialog, setShowEditBatchDialog] = useState(false)
+  const [editBatchForm, setEditBatchForm] = useState({ providerId: "", notes: "" })
+  const [editBatchItems, setEditBatchItems] = useState<BatchProductItem[]>([])
+  const [isUpdatingBatch, setIsUpdatingBatch] = useState(false)
+
   const [confirmConfig, setConfirmConfig] = useState<{
     open: boolean;
     title: string;
@@ -158,11 +198,11 @@ export function AdminInventoryPage() {
   }
 
   const hasBatchChanges = () => {
-    return batchForm.code !== "" || batchForm.providerId !== "" || batchForm.notes !== "" || (batchItems.length > 0 && (batchItems[0].productId !== "" || batchItems[0].quantity !== 1 || batchItems.length > 1))
+    return batchForm.code !== "" || batchForm.providerId !== "" || batchForm.notes !== "" || batchItems.length > 0
   }
 
   const hasProviderChanges = () => {
-    return providerForm.name !== "" || providerForm.country !== "" || providerForm.address !== "" || providerForm.phone !== "" || providerForm.email !== ""
+    return providerForm.name !== "" || providerForm.country !== "" || providerForm.address !== ""
   }
 
   const hasAdjustChanges = () => {
@@ -179,16 +219,7 @@ export function AdminInventoryPage() {
         onConfirm: () => {
           setShowBatchDialog(false)
           setBatchForm({ code: "", providerId: "", notes: "" })
-          setBatchItems([{
-            productId: "",
-            productName: "",
-            productCode: "",
-            quantity: 1,
-            soldQuantity: 0,
-            unitCostUSD: 0,
-            unitSaleUSD: 0,
-            entryDate: new Date().toISOString().split("T")[0],
-          }])
+          setBatchItems([])
         }
       })
     } else {
@@ -205,11 +236,13 @@ export function AdminInventoryPage() {
         variant: "destructive",
         onConfirm: () => {
           setShowProviderDialog(false)
-          setProviderForm({ name: "", country: "", address: "", phone: "", email: "" })
+          setProviderForm({ name: "", country: "", address: "" })
+          setProviderErrors({})
         }
       })
     } else {
       setShowProviderDialog(false)
+      setProviderErrors({})
     }
   }
 
@@ -302,8 +335,28 @@ export function AdminInventoryPage() {
   const fetchBatches = async () => {
     try {
       const res = await api.getBatches({ limit: 100 })
-      setBatches(res.batches || [])
-      writeLocalData(batchStorageKey, res.batches || [])
+      const mappedBatches: Batch[] = (res.batches || []).map((b: any) => ({
+        id: b.id,
+        code: b.code,
+        providerId: b.providerId,
+        providerName: b.provider?.name,
+        createdAt: b.createdAt,
+        notes: b.notes,
+        products: (b.items || []).map((i: any) => ({
+          productId: i.productId,
+          productName: i.product?.name || "Producto desconocido",
+          productCode: i.product?.sku || i.product?.productCode,
+          quantity: i.quantity,
+          soldQuantity: i.soldQuantity,
+          unitCostUSD: i.unitCostUSD,
+          unitSaleUSD: i.unitSaleUSD,
+          entryDate: i.entryDate,
+          discounted: i.discounted,
+          discountPercent: i.discountPercent,
+        }))
+      }))
+      setBatches(mappedBatches)
+      writeLocalData(batchStorageKey, mappedBatches)
     } catch (error) {
       const local = readLocalData<Batch[]>(batchStorageKey, [])
       setBatches(local)
@@ -351,56 +404,120 @@ export function AdminInventoryPage() {
     }
   }
 
-  const handleCreateProvider = async () => {
-    if (!providerForm.name.trim() || !providerForm.country.trim() || !providerForm.address.trim()) {
-      toast({
-        title: "Campos requeridos",
-        description: "El nombre, país y dirección son obligatorios.",
-        variant: "destructive",
-      })
-      return
+  const validateProviderForm = (): boolean => {
+    const newErrors: ProviderErrors = {}
+    let isValid = true
+
+    if (!providerForm.name.trim()) {
+      newErrors.name = "El nombre es obligatorio"
+      isValid = false
+    } else if (providerForm.name.trim().length < 2) {
+      newErrors.name = "El nombre debe tener al menos 2 caracteres"
+      isValid = false
     }
+
+    if (!providerForm.country.trim()) {
+      newErrors.country = "El país es obligatorio"
+      isValid = false
+    } else if (providerForm.country.trim().length < 2) {
+      newErrors.country = "El país debe tener al menos 2 caracteres"
+      isValid = false
+    }
+
+    if (!providerForm.address.trim()) {
+      newErrors.address = "La dirección es obligatoria"
+      isValid = false
+    } else if (providerForm.address.trim().length < 5) {
+      newErrors.address = "La dirección debe tener al menos 5 caracteres"
+      isValid = false
+    }
+
+    setProviderErrors(newErrors)
+    return isValid
+  }
+
+  const handleCreateProvider = async () => {
+    if (!validateProviderForm()) return
     
     confirmAction({
       title: "¿Registrar nuevo proveedor?",
-      description: `¿Estás seguro de que deseas registrar a "${providerForm.name}" como nuevo proveedor?`,
-      confirmText: "Registrar Proveedor",
+      description: `¿Estás seguro de que deseas registrar al proveedor "${providerForm.name}"?`,
+      confirmText: "Crear proveedor",
       onConfirm: async () => {
+        setSavingProvider(true)
         try {
           const payload = {
             name: providerForm.name.trim(),
             country: providerForm.country.trim(),
             address: providerForm.address.trim(),
-            phone: providerForm.phone.trim() || undefined,
-            email: providerForm.email.trim() || undefined,
           }
           await api.createProvider(payload)
+          toast({
+            title: "Éxito",
+            description: "Proveedor creado correctamente",
+          })
+          setProviderForm({ name: "", country: "", address: "" })
+          setProviderErrors({})
+          setShowProviderDialog(false)
+          fetchProviders()
         } catch (error: any) {
+          console.error("Error saving provider:", error)
           const localProviders = readLocalData<Provider[]>(providerStorageKey, [])
           const newProvider: Provider = {
             id: generateId(),
             name: providerForm.name.trim(),
             country: providerForm.country.trim(),
             address: providerForm.address.trim(),
-            phone: providerForm.phone.trim() || undefined,
-            email: providerForm.email.trim() || undefined,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           }
           const updated = [...localProviders, newProvider]
           writeLocalData(providerStorageKey, updated)
           setProviders(updated)
+          
+          setProviderForm({ name: "", country: "", address: "" })
+          setProviderErrors({})
+          setShowProviderDialog(false)
+          toast({
+            title: "Proveedor guardado localmente",
+            description: "No se pudo sincronizar con el servidor, pero el proveedor se guardó localmente.",
+          })
+        } finally {
+          setSavingProvider(false)
         }
-        setProviderForm({ name: "", country: "", address: "", phone: "", email: "" })
-        setShowProviderDialog(false)
-        toast({
-          title: "Proveedor creado",
-          description: "El proveedor fue registrado correctamente.",
-        })
       }
     })
   }
 
   const handleCreateBatch = async () => {
-    if (!batchForm.code.trim()) return
+    if (!batchForm.code.trim()) {
+      toast({
+        title: "Error",
+        description: "El código de lote es obligatorio.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (batchItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes añadir al menos un producto al lote.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Validar que todos los items tengan cantidad > 0
+    const invalidItems = batchItems.filter(item => (Number(item.quantity) || 0) <= 0)
+    if (invalidItems.length > 0) {
+      toast({
+        title: "Error",
+        description: "Todos los productos deben tener una cantidad mayor a 0.",
+        variant: "destructive"
+      })
+      return
+    }
 
     confirmAction({
       title: "¿Crear nuevo lote?",
@@ -417,76 +534,228 @@ export function AdminInventoryPage() {
             unitCostUSD: Number(item.unitCostUSD) || 0,
             unitSaleUSD: Number(item.unitSaleUSD) || 0,
             entryDate: item.entryDate,
+            discounted: !!item.discounted,
+            discountPercent: Number(item.discountPercent) || 0,
           }))
         }
+        
         try {
           await api.createBatch(payload)
+          toast({
+            title: "Lote creado",
+            description: "El lote fue registrado correctamente en el servidor.",
+          })
+          setShowBatchDialog(false)
+          setBatchForm({ code: "", providerId: "", notes: "" })
+          setBatchItems([])
+          // Recargar datos para ver los cambios
+          await Promise.all([
+            fetchBatches(),
+            fetchInventory()
+          ])
         } catch (error: any) {
-          const localBatches = readLocalData<Batch[]>(batchStorageKey, [])
-          const providerName = providers.find(p => p.id === batchForm.providerId)?.name
-          const newBatch: Batch = {
-            id: generateId(),
-            code: batchForm.code.trim(),
-            providerId: batchForm.providerId || undefined,
-            providerName,
-            createdAt: new Date().toISOString(),
-            notes: batchForm.notes.trim() || undefined,
-            products: batchItems.map(item => ({
-              ...item,
-              productName: item.productName,
-              productCode: item.productCode,
-              quantity: Number(item.quantity) || 0,
-              soldQuantity: Number(item.soldQuantity) || 0,
-              unitCostUSD: Number(item.unitCostUSD) || 0,
-              unitSaleUSD: Number(item.unitSaleUSD) || 0,
-              entryDate: item.entryDate,
-            }))
+          console.error("Error al crear lote:", error)
+          
+          // Solo guardamos localmente si el error parece ser de red o servidor caído
+          const isNetworkError = !error.status || error.message?.includes("fetch") || error.message?.includes("Network");
+          
+          if (isNetworkError) {
+            const localBatches = readLocalData<Batch[]>(batchStorageKey, [])
+            const providerName = providers.find(p => p.id === batchForm.providerId)?.name
+            const newBatch: Batch = {
+              id: generateId(),
+              code: batchForm.code.trim(),
+              providerId: batchForm.providerId || undefined,
+              providerName,
+              createdAt: new Date().toISOString(),
+              notes: batchForm.notes.trim() || undefined,
+              products: batchItems.map(item => ({
+                ...item,
+                quantity: Number(item.quantity) || 0,
+                soldQuantity: 0,
+                unitCostUSD: Number(item.unitCostUSD) || 0,
+                unitSaleUSD: Number(item.unitSaleUSD) || 0,
+              }))
+            }
+            const updated = [newBatch, ...localBatches]
+            writeLocalData(batchStorageKey, updated)
+            setBatches(updated)
+            
+            toast({
+              title: "Lote guardado localmente",
+              description: "No se pudo sincronizar con el servidor, pero el lote se guardó de forma local.",
+              variant: "destructive"
+            })
+            
+            setShowBatchDialog(false)
+            setBatchForm({ code: "", providerId: "", notes: "" })
+            setBatchItems([])
+          } else {
+            // Error de validación o del servidor (4xx, 5xx)
+            toast({
+              title: "Error al crear lote",
+              description: error.message || "Ocurrió un error inesperado en el servidor.",
+              variant: "destructive"
+            })
           }
-          const updated = [newBatch, ...localBatches]
-          writeLocalData(batchStorageKey, updated)
-          setBatches(updated)
         }
-        setShowBatchDialog(false)
-        setBatchForm({ code: "", providerId: "", notes: "" })
-        setBatchItems([
-          {
-            productId: "",
-            productName: "",
-            productCode: "",
-            quantity: 1,
-            soldQuantity: 0,
-            unitCostUSD: 0,
-            unitSaleUSD: 0,
-            entryDate: new Date().toISOString().split("T")[0],
-          }
-        ])
-        toast({
-          title: "Lote creado",
-          description: "El lote fue registrado correctamente.",
-        })
-        fetchBatches()
       }
     })
   }
 
-  const addBatchItem = () => {
-    setBatchItems(prev => [
-      ...prev,
-      {
-        productId: "",
-        productName: "",
-        productCode: "",
+  const handleUpdateBatch = async () => {
+    if (!editingBatch) return
+
+    // Validar que si hay productos, todos tengan cantidad > 0
+    const hasSales = editingBatch.products?.some(p => p.soldQuantity > 0)
+    if (!hasSales && editBatchItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debes añadir al menos un producto al lote.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!hasSales) {
+      const invalidItems = editBatchItems.filter(item => (Number(item.quantity) || 0) <= 0)
+      if (invalidItems.length > 0) {
+        toast({
+          title: "Error",
+          description: "Todos los productos deben tener una cantidad mayor a 0.",
+          variant: "destructive"
+        })
+        return
+      }
+    }
+
+    setIsUpdatingBatch(true)
+    try {
+      const payload: any = {
+        providerId: editBatchForm.providerId || undefined,
+        notes: editBatchForm.notes.trim() || undefined
+      }
+
+      // Solo enviar productos si el lote no tiene ventas
+      if (!hasSales) {
+        payload.products = editBatchItems.map(item => ({
+          productId: item.productId,
+          quantity: Number(item.quantity) || 0,
+          unitCostUSD: Number(item.unitCostUSD) || 0,
+          unitSaleUSD: Number(item.unitSaleUSD) || 0,
+          entryDate: item.entryDate,
+          discounted: !!item.discounted,
+          discountPercent: Number(item.discountPercent) || 0,
+        }))
+      }
+
+      await api.updateBatch(editingBatch.id, payload)
+
+      toast({
+        title: "Lote actualizado",
+        description: "Los cambios se guardaron correctamente.",
+      })
+
+      setShowEditBatchDialog(false)
+      setEditingBatch(null)
+      setEditBatchItems([])
+      
+      // Recargar todo para sincronizar stock
+      await Promise.all([
+        fetchBatches(),
+        fetchInventory()
+      ])
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo actualizar el lote.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUpdatingBatch(false)
+    }
+  }
+
+  const handleSelectEditProducts = (selectedIds: string[]) => {
+    // Mantener los items que ya estaban y añadir los nuevos
+    const currentIds = editBatchItems.map(item => item.productId)
+    
+    // Items a mantener (que siguen seleccionados)
+    const itemsToKeep = editBatchItems.filter(item => selectedIds.includes(item.productId))
+    
+    // Nuevos items a añadir
+    const newIds = selectedIds.filter(id => !currentIds.includes(id))
+    const newItems = newIds.map(id => {
+      const product = products.find(p => p.id === id)
+      const baseItem = {
+        productId: id,
+        productName: product?.name || "",
+        productCode: product?.sku || product?.code || "",
         quantity: 1,
         soldQuantity: 0,
-        unitCostUSD: 0,
-        unitSaleUSD: 0,
+        unitCostUSD: product?.purchasePrice || 0,
+        unitSaleUSD: product?.price || 0,
         entryDate: new Date().toISOString().split("T")[0],
       }
-    ])
+      const metrics = calculateItemMetrics(baseItem, bcvRate)
+      return { ...baseItem, ...metrics }
+    })
+
+    setEditBatchItems([...itemsToKeep, ...newItems])
+  }
+
+  const updateEditBatchItem = (index: number, patch: Partial<BatchProductItem>) => {
+    setEditBatchItems(prev => prev.map((item, idx) => {
+      if (idx === index) {
+        const updatedItem = { ...item, ...patch }
+        const metrics = calculateItemMetrics(updatedItem, bcvRate)
+        return { ...updatedItem, ...metrics }
+      }
+      return item
+    }))
+  }
+
+  const removeEditBatchItem = (index: number) => {
+    setEditBatchItems(prev => prev.filter((_, idx) => idx !== index))
+  }
+
+  const handleSelectProducts = (selectedIds: string[]) => {
+    // Mantener los items que ya estaban y añadir los nuevos
+    const currentIds = batchItems.map(item => item.productId)
+    
+    // Items a mantener (que siguen seleccionados)
+    const itemsToKeep = batchItems.filter(item => selectedIds.includes(item.productId))
+    
+    // Nuevos items a añadir
+    const newIds = selectedIds.filter(id => !currentIds.includes(id))
+    const newItems = newIds.map(id => {
+      const product = products.find(p => p.id === id)
+      const baseItem = {
+        productId: id,
+        productName: product?.name || "",
+        productCode: product?.sku || product?.code || "",
+        quantity: 1,
+        soldQuantity: 0,
+        unitCostUSD: product?.price || 0, // Por defecto el precio actual como costo? O mejor 0
+        unitSaleUSD: (product?.price || 0) * 1.3, // 30% por encima por defecto
+        entryDate: new Date().toISOString().split("T")[0],
+      }
+      const metrics = calculateItemMetrics(baseItem, bcvRate)
+      return { ...baseItem, ...metrics }
+    })
+
+    setBatchItems([...itemsToKeep, ...newItems])
   }
 
   const updateBatchItem = (index: number, patch: Partial<BatchProductItem>) => {
-    setBatchItems(prev => prev.map((item, idx) => idx === index ? { ...item, ...patch } : item))
+    setBatchItems(prev => prev.map((item, idx) => {
+      if (idx === index) {
+        const updatedItem = { ...item, ...patch }
+        const metrics = calculateItemMetrics(updatedItem, bcvRate)
+        return { ...updatedItem, ...metrics }
+      }
+      return item
+    }))
   }
 
   const removeBatchItem = (index: number) => {
@@ -598,6 +867,10 @@ export function AdminInventoryPage() {
     })
   }
 
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, sortBy, sortOrder])
+
   const filteredInventory = useMemo(() => {
     return inventory
       .filter(item =>
@@ -613,6 +886,13 @@ export function AdminInventoryPage() {
         return sortOrder === "asc" ? comparison : -comparison
       })
   }, [inventory, searchTerm, sortBy, sortOrder])
+
+  const paginatedInventory = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredInventory.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [filteredInventory, currentPage])
+
+  const totalPages = Math.ceil(filteredInventory.length / ITEMS_PER_PAGE)
 
   const stats = useMemo(() => {
     const totalItems = inventory.length
@@ -675,6 +955,244 @@ export function AdminInventoryPage() {
             icon: History
           }}
         />
+
+        {/* Gestión por Lotes */}
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Gestión por Lotes</p>
+              <p className="text-lg font-bold text-slate-800">Lotes, proveedores y reporte detallado</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowBatchDialog(true)} className="font-bold">
+                Nuevo Lote
+              </Button>
+              <Button variant="outline" onClick={() => setShowProviderDialog(true)} className="font-bold">
+                Proveedores
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-slate-800">Listado de lotes</p>
+                  <span className="text-xs text-slate-400">{batches.length} total</span>
+                </div>
+                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                  {batches.map(batch => (
+                    <div key={batch.id} className="relative group">
+                      <button
+                        onClick={() => setSelectedBatch(batch)}
+                        className={`w-full text-left p-4 rounded-xl border transition-all ${
+                          selectedBatch?.id === batch.id ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40"
+                        }`}
+                        aria-label={`Seleccionar lote ${batch.code} del proveedor ${batch.providerName || "desconocido"}`}
+                        aria-pressed={selectedBatch?.id === batch.id}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-slate-800">{batch.code}</p>
+                          <span className="text-[10px] uppercase tracking-widest text-slate-400 absolute bottom-4 right-4">
+                            {new Date(batch.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Proveedor: {batch.providerName || "Sin proveedor"}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1 mb-2">
+                          Productos: {batch.products?.length || 0}
+                        </p>
+                      </button>
+
+                      {/* Acciones del lote */}
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditingBatch(batch)
+                            setEditBatchForm({
+                              providerId: batch.providerId || "",
+                              notes: batch.notes || ""
+                            })
+                            // Mapear los items del lote para la edición, incluyendo métricas
+                            const mappedItems = (batch.products || []).map(p => {
+                              const metrics = calculateItemMetrics(p, bcvRate)
+                              return { ...p, ...metrics }
+                            })
+                            setEditBatchItems(mappedItems)
+                            setShowEditBatchDialog(true)
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+
+                        {batch.products?.some(p => p.soldQuantity > 0) ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="cursor-not-allowed">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground/30"
+                                    disabled
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="bg-destructive text-destructive-foreground border-none">
+                                <p className="text-xs font-bold flex items-center gap-1">
+                                  No se puede eliminar: tiene unidades vendidas
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              confirmAction({
+                                title: "¿Eliminar lote?",
+                                description: `¿Estás seguro de que deseas eliminar el lote "${batch.code}"? Esta acción no se puede deshacer y revertirá el stock de los productos.`,
+                                confirmText: "Eliminar",
+                                variant: "destructive",
+                                onConfirm: async () => {
+                                  try {
+                                    await api.deleteBatch(batch.id)
+                                    toast({
+                                      title: "Lote eliminado",
+                                      description: "El lote fue eliminado y el stock revertido.",
+                                    })
+                                    if (selectedBatch?.id === batch.id) {
+                                      setSelectedBatch(null)
+                                    }
+                                    await Promise.all([
+                                      fetchBatches(),
+                                      fetchInventory()
+                                    ])
+                                  } catch (error: any) {
+                                    toast({
+                                      title: "Error",
+                                      description: error.message || "No se pudo eliminar el lote.",
+                                      variant: "destructive",
+                                    })
+                                  }
+                                }
+                              })
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {batches.length === 0 && (
+                    <div className="p-8 text-center text-sm text-slate-400">
+                      No hay lotes registrados.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm rounded-2xl">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-slate-800">Reporte del lote</p>
+                  <span className="text-xs text-slate-400">{selectedBatch?.code || "Selecciona un lote"}</span>
+                </div>
+                {selectedBatch ? (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Costo vendido (USD)</p>
+                        <p className="text-lg font-bold text-slate-800">{formatUSD(selectedBatchTotals?.totalCost || 0)}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Ventas (USD)</p>
+                        <p className="text-lg font-bold text-slate-800">{formatUSD(selectedBatchTotals?.totalRevenue || 0)}</p>
+                        <p className="text-[10px] text-slate-400">Bs: {formatBS(selectedBatchTotals?.totalRevenueBs || 0)}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Ganancia (USD)</p>
+                        <p className="text-lg font-bold text-emerald-600">{formatUSD(selectedBatchTotals?.totalProfit || 0)}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Ganancia %</p>
+                        <p className="text-lg font-bold text-emerald-600">{(selectedBatchTotals?.profitPercent || 0).toFixed(2)}%</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                      {selectedBatch.products.map((item, index) => {
+                        const unsold = Math.max(0, (Number(item.quantity) || 0) - (Number(item.soldQuantity) || 0))
+                        const entry = item.entryDate ? new Date(item.entryDate).getTime() : Date.now()
+                        const ageDays = Math.max(0, Math.floor((Date.now() - entry) / (1000 * 60 * 60 * 24)))
+                        const discount = item.discounted ? (Number(item.discountPercent) || 0) : 0
+                        const unitCost = (Number(item.unitCostUSD) || 0)
+                        const saleUnit = (Number(item.unitSaleUSD) || 0) * (1 - discount / 100)
+                        const soldUnits = Number(item.soldQuantity) || 0
+                        const revenue = saleUnit * soldUnits
+                        const costSold = unitCost * soldUnits
+                        const profit = revenue - costSold
+                        const profitPercent = costSold > 0 ? (profit / costSold) * 100 : 0
+                        return (
+                          <div key={`${item.productId}-${index}`} className="p-4 rounded-xl border border-slate-200 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-slate-800">{item.productName}</p>
+                                <p className="text-xs text-slate-400">Código: {item.productCode || "N/A"}</p>
+                              </div>
+                              <Button variant="outline" size="sm" className="h-8" onClick={() => toggleDiscount(index)}>
+                                {item.discounted ? "Quitar descuento" : "Enviar a descuento"}
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
+                              <div>Cantidad: <span className="font-bold text-slate-700">{item.quantity}</span></div>
+                              <div>Vendido: <span className="font-bold text-slate-700">{item.soldQuantity}</span></div>
+                              <div>No vendido: <span className="font-bold text-slate-700">{unsold}</span></div>
+                              <div>Antigüedad: <span className={`${ageDays > 90 ? "text-amber-600 font-bold" : "text-slate-700 font-bold"}`}>{ageDays} días</span></div>
+                              <div>Costo U: <span className="font-bold text-slate-700">{formatUSD(item.unitCostUSD)}</span></div>
+                              <div>Precio U: <span className="font-bold text-slate-700">{formatUSD(item.unitSaleUSD)}</span></div>
+                              <div>Ingreso: <span className="font-bold text-slate-700">{item.entryDate}</span></div>
+                              <div>Venta USD: <span className="font-bold text-slate-700">{formatUSD(revenue)}</span></div>
+                              <div>Venta Bs: <span className="font-bold text-slate-700">{formatBS(revenue * (Number(bcvRate) || 0))}</span></div>
+                              <div>Ganancia: <span className="font-bold text-emerald-600">{formatUSD(profit)}</span></div>
+                              <div>Ganancia %: <span className="font-bold text-emerald-600">{profitPercent.toFixed(2)}%</span></div>
+                            </div>
+                            {item.discounted && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-500">Descuento %</span>
+                                <Input
+                                  type="number"
+                                  value={discount}
+                                  onChange={(e) => updateSelectedBatchItem(index, { discountPercent: parseFloat(e.target.value) || 0 })}
+                                  className="h-8 w-24"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-10 text-center text-sm text-slate-400">
+                    Selecciona un lote para ver su reporte.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Stats Grid - Nature Serena Palette */}
         <div className="grid gap-4 grid-cols-2 md:grid-cols-6">
@@ -793,7 +1311,7 @@ export function AdminInventoryPage() {
                   aria-live="polite"
                   aria-busy={false}
                 >
-                  {filteredInventory.map((item) => {
+                  {paginatedInventory.map((item) => {
                     const status = getStatusConfig(item.status)
                     return (
                       <motion.tr 
@@ -894,6 +1412,36 @@ export function AdminInventoryPage() {
                 </motion.tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-4 border-t border-border/60 bg-muted/20">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Página <span className="text-foreground">{currentPage}</span> de <span className="text-foreground">{totalPages}</span>
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="h-8 rounded-lg font-bold text-[10px] uppercase tracking-widest"
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="h-8 rounded-lg font-bold text-[10px] uppercase tracking-widest"
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {filteredInventory.length === 0 && (
               <div className="p-16 text-center">
                 <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -904,218 +1452,6 @@ export function AdminInventoryPage() {
             )}
           </CardContent>
         </Card>
-
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Gestión por Lotes</p>
-              <p className="text-lg font-bold text-slate-800">Lotes, proveedores y reporte detallado</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => setShowBatchDialog(true)} className="font-bold">
-                Nuevo Lote
-              </Button>
-              <Button variant="outline" onClick={() => setShowProviderDialog(true)} className="font-bold">
-                Proveedores
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-slate-800">Listado de lotes</p>
-                  <span className="text-xs text-slate-400">{batches.length} total</span>
-                </div>
-                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                  {batches.map(batch => (
-                    <div key={batch.id} className="relative group">
-                      <button
-                        onClick={() => setSelectedBatch(batch)}
-                        className={`w-full text-left p-4 rounded-xl border transition-all ${
-                          selectedBatch?.id === batch.id ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40"
-                        }`}
-                        aria-label={`Seleccionar lote ${batch.code} del proveedor ${batch.providerName || "desconocido"}`}
-                        aria-pressed={selectedBatch?.id === batch.id}
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold text-slate-800">{batch.code}</p>
-                          <span className="text-[10px] uppercase tracking-widest text-slate-400">
-                            {new Date(batch.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Proveedor: {batch.providerName || "Sin proveedor"}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Productos: {batch.products?.length || 0}
-                        </p>
-                      </button>
-
-                      {/* Botón de eliminar con restricción */}
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {batch.products?.some(p => p.soldQuantity > 0) ? (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="cursor-not-allowed">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground/50"
-                                    disabled
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="left" className="bg-destructive text-destructive-foreground border-none">
-                                <p className="text-xs font-bold flex items-center gap-1">
-                                  No se puede eliminar: tiene unidades vendidas
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              confirmAction({
-                                title: "¿Eliminar lote?",
-                                description: `¿Estás seguro de que deseas eliminar el lote "${batch.code}"? Esta acción no se puede deshacer.`,
-                                confirmText: "Eliminar",
-                                variant: "destructive",
-                                onConfirm: async () => {
-                                  try {
-                                    await api.deleteBatch(batch.id)
-                                    toast({
-                                      title: "Lote eliminado",
-                                      description: "El lote fue eliminado correctamente.",
-                                    })
-                                    if (selectedBatch?.id === batch.id) {
-                                      setSelectedBatch(null)
-                                    }
-                                    fetchBatches()
-                                    fetchInventory()
-                                  } catch (error) {
-                                    toast({
-                                      title: "Error",
-                                      description: "No se pudo eliminar el lote.",
-                                      variant: "destructive",
-                                    })
-                                  }
-                                }
-                              })
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {batches.length === 0 && (
-                    <div className="p-8 text-center text-sm text-slate-400">
-                      No hay lotes registrados.
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-sm rounded-2xl">
-              <CardContent className="p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-slate-800">Reporte del lote</p>
-                  <span className="text-xs text-slate-400">{selectedBatch?.code || "Selecciona un lote"}</span>
-                </div>
-                {selectedBatch ? (
-                  <>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Costo vendido (USD)</p>
-                        <p className="text-lg font-bold text-slate-800">{formatUSD(selectedBatchTotals?.totalCost || 0)}</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Ventas (USD)</p>
-                        <p className="text-lg font-bold text-slate-800">{formatUSD(selectedBatchTotals?.totalRevenue || 0)}</p>
-                        <p className="text-[10px] text-slate-400">Bs: {formatBS(selectedBatchTotals?.totalRevenueBs || 0)}</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Ganancia (USD)</p>
-                        <p className="text-lg font-bold text-emerald-600">{formatUSD(selectedBatchTotals?.totalProfit || 0)}</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400">Ganancia %</p>
-                        <p className="text-lg font-bold text-emerald-600">{(selectedBatchTotals?.profitPercent || 0).toFixed(2)}%</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1">
-                      {selectedBatch.products.map((item, index) => {
-                        const unsold = Math.max(0, (Number(item.quantity) || 0) - (Number(item.soldQuantity) || 0))
-                        const entry = item.entryDate ? new Date(item.entryDate).getTime() : Date.now()
-                        const ageDays = Math.max(0, Math.floor((Date.now() - entry) / (1000 * 60 * 60 * 24)))
-                        const discount = item.discounted ? (Number(item.discountPercent) || 0) : 0
-                        const unitCost = (Number(item.unitCostUSD) || 0)
-                        const saleUnit = (Number(item.unitSaleUSD) || 0) * (1 - discount / 100)
-                        const soldUnits = Number(item.soldQuantity) || 0
-                        const revenue = saleUnit * soldUnits
-                        const costSold = unitCost * soldUnits
-                        const profit = revenue - costSold
-                        const profitPercent = costSold > 0 ? (profit / costSold) * 100 : 0
-                        return (
-                          <div key={`${item.productId}-${index}`} className="p-4 rounded-xl border border-slate-200 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-bold text-slate-800">{item.productName}</p>
-                                <p className="text-xs text-slate-400">Código: {item.productCode || "N/A"}</p>
-                              </div>
-                              <Button variant="outline" size="sm" className="h-8" onClick={() => toggleDiscount(index)}>
-                                {item.discounted ? "Quitar descuento" : "Enviar a descuento"}
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
-                              <div>Cantidad: <span className="font-bold text-slate-700">{item.quantity}</span></div>
-                              <div>Vendido: <span className="font-bold text-slate-700">{item.soldQuantity}</span></div>
-                              <div>No vendido: <span className="font-bold text-slate-700">{unsold}</span></div>
-                              <div>Antigüedad: <span className={`${ageDays > 90 ? "text-amber-600 font-bold" : "text-slate-700 font-bold"}`}>{ageDays} días</span></div>
-                              <div>Costo U: <span className="font-bold text-slate-700">{formatUSD(item.unitCostUSD)}</span></div>
-                              <div>Precio U: <span className="font-bold text-slate-700">{formatUSD(item.unitSaleUSD)}</span></div>
-                              <div>Ingreso: <span className="font-bold text-slate-700">{item.entryDate}</span></div>
-                              <div>Venta USD: <span className="font-bold text-slate-700">{formatUSD(revenue)}</span></div>
-                              <div>Venta Bs: <span className="font-bold text-slate-700">{formatBS(revenue * (Number(bcvRate) || 0))}</span></div>
-                              <div>Ganancia: <span className="font-bold text-emerald-600">{formatUSD(profit)}</span></div>
-                              <div>Ganancia %: <span className="font-bold text-emerald-600">{profitPercent.toFixed(2)}%</span></div>
-                            </div>
-                            {item.discounted && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-slate-500">Descuento %</span>
-                                <Input
-                                  type="number"
-                                  value={discount}
-                                  onChange={(e) => updateSelectedBatchItem(index, { discountPercent: parseFloat(e.target.value) || 0 })}
-                                  className="h-8 w-24"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <div className="p-10 text-center text-sm text-slate-400">
-                    Selecciona un lote para ver su reporte.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
 
         {/* Adjustment Dialog - Warm Style */}
         <Dialog open={showAdjustDialog} onOpenChange={(open) => {
@@ -1368,87 +1704,124 @@ export function AdminInventoryPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold">Productos del lote</p>
-                  <Button variant="outline" size="sm" onClick={addBatchItem} aria-label="Añadir producto al lote">
-                    Añadir producto
-                  </Button>
+                  <p className="text-sm font-bold">Seleccionar productos registrados</p>
                 </div>
-                {batchItems.map((item, index) => (
-                  <div key={`${item.productId}-${index}`} className="grid grid-cols-6 gap-3 p-3 border rounded-xl" role="group" aria-label={`Producto ${index + 1} del lote`}>
-                    <div className="col-span-2">
-                      <label htmlFor={`product-${index}`} className="text-xs font-medium">Producto</label>
-                      <Select
-                        value={item.productId}
-                        onValueChange={(val) => {
-                          const product = products.find(p => p.id === val)
-                          updateBatchItem(index, {
-                            productId: val,
-                            productName: product?.name || "",
-                            productCode: product?.productCode || product?.code || product?.sku || "",
-                          })
-                        }}
-                      >
-                        <SelectTrigger id={`product-${index}`} aria-label={`Seleccionar producto ${index + 1}`}>
-                          <SelectValue placeholder="Seleccionar" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {products.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label htmlFor={`quantity-${index}`} className="text-xs font-medium">Cantidad</label>
-                      <Input
-                        id={`quantity-${index}`}
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => updateBatchItem(index, { quantity: parseInt(e.target.value) || 0 })}
-                        aria-label={`Cantidad del producto ${index + 1}`}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`cost-${index}`} className="text-xs font-medium">Costo U</label>
-                      <Input
-                        id={`cost-${index}`}
-                        type="number"
-                        step="0.01"
-                        value={item.unitCostUSD}
-                        onChange={(e) => updateBatchItem(index, { unitCostUSD: parseFloat(e.target.value) || 0 })}
-                        aria-label={`Costo unitario del producto ${index + 1}`}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`sale-${index}`} className="text-xs font-medium">Venta U</label>
-                      <Input
-                        id={`sale-${index}`}
-                        type="number"
-                        step="0.01"
-                        value={item.unitSaleUSD}
-                        onChange={(e) => updateBatchItem(index, { unitSaleUSD: parseFloat(e.target.value) || 0 })}
-                        aria-label={`Precio de venta unitario del producto ${index + 1}`}
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor={`entry-${index}`} className="text-xs font-medium">Ingreso</label>
-                      <Input
-                        id={`entry-${index}`}
-                        type="date"
-                        value={item.entryDate}
-                        onChange={(e) => updateBatchItem(index, { entryDate: e.target.value })}
-                        aria-label={`Fecha de ingreso del producto ${index + 1}`}
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button variant="outline" size="sm" onClick={() => removeBatchItem(index)} className="w-full" aria-label={`Quitar producto ${index + 1} del lote`}>
-                        Quitar
-                      </Button>
+                <MultiSelect
+                  options={products.map(p => ({ label: p.name, value: p.id }))}
+                  selected={batchItems.map(item => item.productId)}
+                  onChange={handleSelectProducts}
+                  placeholder="Buscar productos..."
+                />
+                
+                {batchItems.length > 0 && (
+                  <div className="mt-6 space-y-4">
+                    <p className="text-sm font-bold border-b pb-2">Detalle de productos en lote</p>
+                    <div className="grid grid-cols-1 gap-4">
+                      {batchItems.map((item, index) => (
+                        <div key={`${item.productId}-${index}`} className="p-4 border rounded-2xl bg-slate-50/50 space-y-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                <Package className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800">{item.productName}</p>
+                                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">SKU: {item.productCode || 'N/A'}</p>
+                              </div>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={() => removeBatchItem(index)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Cantidad</label>
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) => updateBatchItem(index, { quantity: parseInt(e.target.value) || 0 })}
+                                className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                              />
+                            </div>
+                            
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Costo ($)</label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.unitCostUSD}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value) || 0
+                                  updateBatchItem(index, { 
+                                    unitCostUSD: val,
+                                    unitSaleUSD: val * 1.3 // Sugerir 30% al cambiar costo
+                                  })
+                                }}
+                                className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                              />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Costo (BCV)</label>
+                              <div className="h-10 px-3 flex items-center bg-slate-100/80 border border-slate-200 rounded-xl text-xs font-bold text-slate-600">
+                                {formatBS(item.unitCostBCV || 0)}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Venta ($)</label>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={item.unitSaleUSD}
+                                onChange={(e) => updateBatchItem(index, { unitSaleUSD: parseFloat(e.target.value) || 0 })}
+                                className="h-10 bg-white border-primary/20 focus:border-primary rounded-xl font-bold text-primary"
+                              />
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia ($)</label>
+                              <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                                +{formatUSD(item.profitUSD || 0)}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia (BCV)</label>
+                              <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                                +{formatBS(item.profitBCV || 0)}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <div className="flex items-center gap-4">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                Margen sugerido: <span className="text-slate-600">30%</span>
+                              </span>
+                              <span className={cn(
+                                "text-[10px] font-bold uppercase tracking-widest",
+                                (item.markupPercent || 0) >= 30 ? "text-emerald-600" : "text-amber-600"
+                              )}>
+                                Margen actual: {(item.markupPercent || 0).toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Fecha ingreso:</label>
+                              <Input
+                                type="date"
+                                value={item.entryDate}
+                                onChange={(e) => updateBatchItem(index, { entryDate: e.target.value })}
+                                className="h-8 w-36 bg-white border-slate-200 rounded-lg text-xs font-bold"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -1462,123 +1835,331 @@ export function AdminInventoryPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showProviderDialog} onOpenChange={(open) => {
-          if (!open) handleCloseProviderModal()
-          else setShowProviderDialog(true)
-        }}>
-          <DialogContent className="sm:max-w-[520px]">
+        {/* Edit Batch Dialog */}
+        <Dialog open={showEditBatchDialog} onOpenChange={setShowEditBatchDialog}>
+          <DialogContent className={cn(
+            "max-h-[90vh] overflow-y-auto transition-all duration-300",
+            editingBatch?.products?.some(p => p.soldQuantity > 0) ? "sm:max-w-[500px]" : "sm:max-w-[900px]"
+          )}>
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">Nuevo proveedor</DialogTitle>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <Edit2 className="h-5 w-5 text-blue-500" />
+                Editar Lote: {editingBatch?.code}
+              </DialogTitle>
               <DialogDescription>
-                Registra un proveedor para asociarlo a los lotes de inventario.
+                {editingBatch?.products?.some(p => p.soldQuantity > 0) 
+                  ? "Actualiza el proveedor o las notas del lote."
+                  : "Actualiza los datos del lote y sus productos."
+                }
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Nombre *</label>
-                  <Input
-                    value={providerForm.name}
-                    onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
-                    placeholder="Nombre del proveedor"
-                  />
+                  <label className="text-sm font-medium">Proveedor</label>
+                  <Select
+                    value={editBatchForm.providerId}
+                    onValueChange={(val) => setEditBatchForm({ ...editBatchForm, providerId: val })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar proveedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {providers.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">País *</label>
-                  <Input
-                    value={providerForm.country}
-                    onChange={(e) => setProviderForm({ ...providerForm, country: e.target.value })}
-                    placeholder="Ej: Venezuela"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Dirección *</label>
-                <Textarea
-                  value={providerForm.address}
-                  onChange={(e) => setProviderForm({ ...providerForm, address: e.target.value })}
-                  placeholder="Dirección fiscal o de oficina"
-                  className="min-h-[80px]"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Teléfono</label>
-                  <Input
-                    value={providerForm.phone}
-                    onChange={(e) => setProviderForm({ ...providerForm, phone: e.target.value })}
-                    placeholder="Opcional"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Correo</label>
-                  <Input
-                    type="email"
-                    value={providerForm.email}
-                    onChange={(e) => setProviderForm({ ...providerForm, email: e.target.value })}
-                    placeholder="Opcional"
+                  <label className="text-sm font-medium">Notas</label>
+                  <Textarea
+                    value={editBatchForm.notes}
+                    onChange={(e) => setEditBatchForm({ ...editBatchForm, notes: e.target.value })}
+                    placeholder="Notas adicionales sobre el lote..."
+                    className="min-h-[80px]"
                   />
                 </div>
               </div>
+
+              {editingBatch?.products?.some(p => p.soldQuantity > 0) ? (
+                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />
+                  <p className="text-[11px] text-amber-700 leading-tight">
+                    <strong>Nota:</strong> Este lote ya tiene ventas registradas. Solo se permite editar el proveedor y las notas para mantener la integridad del inventario.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold">Editar productos del lote</p>
+                  </div>
+                  
+                  <MultiSelect
+                    options={products.map(p => ({ label: p.name, value: p.id }))}
+                    selected={editBatchItems.map(item => item.productId)}
+                    onChange={handleSelectEditProducts}
+                    placeholder="Buscar productos..."
+                  />
+
+                  <div className="space-y-4">
+                    {editBatchItems.map((item, index) => (
+                      <div key={`${item.productId}-${index}`} className="p-4 border rounded-2xl bg-slate-50/50 space-y-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <Package className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800 text-sm">{item.productName}</p>
+                              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">SKU: {item.productCode || 'N/A'}</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => removeEditBatchItem(index)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Cantidad</label>
+                            <Input
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateEditBatchItem(index, { quantity: parseInt(e.target.value) || 0 })}
+                              className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                            />
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Costo ($)</label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.unitCostUSD}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0
+                                updateEditBatchItem(index, { 
+                                  unitCostUSD: val,
+                                  unitSaleUSD: val * 1.3
+                                })
+                              }}
+                              className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Costo (BCV)</label>
+                            <div className="h-10 px-3 flex items-center bg-slate-100/80 border border-slate-200 rounded-xl text-xs font-bold text-slate-600">
+                              {formatBS(item.unitCostBCV || 0)}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Venta ($)</label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.unitSaleUSD}
+                              onChange={(e) => updateEditBatchItem(index, { unitSaleUSD: parseFloat(e.target.value) || 0 })}
+                              className="h-10 bg-white border-primary/20 focus:border-primary rounded-xl font-bold text-primary"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia ($)</label>
+                            <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                              +{formatUSD(item.profitUSD || 0)}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia (BCV)</label>
+                            <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                              +{formatBS(item.profitBCV || 0)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={handleCloseProviderModal}>
+              <Button variant="outline" onClick={() => setShowEditBatchDialog(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreateProvider}>
-                Guardar proveedor
+              <Button 
+                onClick={handleUpdateBatch} 
+                disabled={isUpdatingBatch}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isUpdatingBatch ? "Guardando..." : "Guardar cambios"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Confirmation Dialog */}
-        <Dialog open={confirmConfig.open} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, open }))}>
-          <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className={cn(
-                "h-16 w-16 rounded-full flex items-center justify-center animate-in zoom-in-50 duration-300",
-                confirmConfig.variant === "destructive" 
-                  ? "bg-destructive/10 text-destructive" 
-                  : "bg-primary/10 text-primary"
-              )}>
-                {confirmConfig.variant === "destructive" ? (
-                  <AlertTriangle className="h-8 w-8" />
-                ) : (
-                  <CheckCircle2 className="h-8 w-8" />
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <DialogTitle className="text-xl font-black">{confirmConfig.title}</DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground font-medium px-2">
-                  {confirmConfig.description}
+        <Dialog open={showProviderDialog} onOpenChange={(open) => {
+          if (!open) handleCloseProviderModal()
+          else setShowProviderDialog(true)
+        }}>
+          <DialogContent className="sm:max-w-[520px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 border-b border-primary/10">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-black text-primary flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Plus className="h-6 w-6 text-primary" />
+                  </div>
+                  Nuevo Proveedor
+                </DialogTitle>
+                <DialogDescription className="text-slate-500 font-medium ml-13">
+                  Completa los datos del proveedor para gestionar tus productos.
                 </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            <div className="p-6 space-y-6 bg-background">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                    Nombre del Proveedor
+                    <span className="text-primary">*</span>
+                  </label>
+                  <Input
+                    placeholder="Ej. Distribuidora Salud C.A."
+                    value={providerForm.name}
+                    onChange={(e) => {
+                      setProviderForm({ ...providerForm, name: e.target.value })
+                      if (providerErrors.name) setProviderErrors({ ...providerErrors, name: undefined })
+                    }}
+                    className={cn(
+                      "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                      providerErrors.name && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
+                    )}
+                  />
+                  {providerErrors.name && (
+                    <p className="text-[11px] font-bold text-destructive ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {providerErrors.name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                    País de Origen
+                    <span className="text-primary">*</span>
+                  </label>
+                  <Input
+                    placeholder="Ej. Venezuela"
+                    value={providerForm.country}
+                    onChange={(e) => {
+                      setProviderForm({ ...providerForm, country: e.target.value })
+                      if (providerErrors.country) setProviderErrors({ ...providerErrors, country: undefined })
+                    }}
+                    className={cn(
+                      "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                      providerErrors.country && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
+                    )}
+                  />
+                  {providerErrors.country && (
+                    <p className="text-[11px] font-bold text-destructive ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {providerErrors.country}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                    Dirección Fiscal
+                    <span className="text-primary">*</span>
+                  </label>
+                  <Textarea
+                    placeholder="Dirección completa del proveedor..."
+                    value={providerForm.address}
+                    onChange={(e) => {
+                      setProviderForm({ ...providerForm, address: e.target.value })
+                      if (providerErrors.address) setProviderErrors({ ...providerErrors, address: undefined })
+                    }}
+                    className={cn(
+                      "min-h-[100px] bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all resize-none",
+                      providerErrors.address && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
+                    )}
+                  />
+                  {providerErrors.address && (
+                    <p className="text-[11px] font-bold text-destructive ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {providerErrors.address}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div className="flex w-full gap-3 mt-4">
+              <div className="flex gap-3 pt-2">
                 <Button 
                   variant="outline" 
-                  className="flex-1 rounded-xl font-bold h-11"
-                  onClick={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
+                  onClick={handleCloseProviderModal}
+                  className="flex-1 h-12 rounded-xl font-bold border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
                 >
                   Cancelar
                 </Button>
                 <Button 
-                  variant={confirmConfig.variant || "default"}
-                  className={cn(
-                    "flex-1 rounded-xl font-bold h-11 shadow-sm",
-                    confirmConfig.variant !== "destructive" && "bg-primary hover:bg-primary/90"
-                  )}
-                  onClick={() => {
-                    confirmConfig.onConfirm()
-                    setConfirmConfig(prev => ({ ...prev, open: false }))
-                  }}
+                  onClick={handleCreateProvider}
+                  disabled={savingProvider}
+                  className="flex-[2] h-12 rounded-xl font-black bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-70"
                 >
-                  {confirmConfig.confirmText || "Confirmar"}
+                  {savingProvider ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Guardando...
+                    </div>
+                  ) : (
+                    "Guardar Proveedor"
+                  )}
                 </Button>
               </div>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {confirmConfig.variant === "destructive" ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                )}
+                {confirmConfig.title}
+              </DialogTitle>
+              <DialogDescription className="pt-2 text-base">
+                {confirmConfig.description}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4 gap-2 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant={confirmConfig.variant || "default"}
+                onClick={() => {
+                  confirmConfig.onConfirm();
+                  setConfirmConfig({ ...confirmConfig, open: false });
+                }}
+              >
+                {confirmConfig.confirmText || "Confirmar"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

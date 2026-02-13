@@ -8,8 +8,7 @@ import {
   MapPin,
   Truck,
   User,
-  X,
-  CheckCircle,
+  CheckCircle2,
   AlertTriangle,
   Info,
 } from "lucide-react"
@@ -17,6 +16,8 @@ import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -163,10 +164,16 @@ export function AdminProvidersPage() {
     if (!formData.country.trim()) {
       newErrors.country = "El país es obligatorio"
       isValid = false
+    } else if (formData.country.trim().length < 2) {
+      newErrors.country = "El país debe tener al menos 2 caracteres"
+      isValid = false
     }
 
     if (!formData.address.trim()) {
       newErrors.address = "La dirección es obligatoria"
+      isValid = false
+    } else if (formData.address.trim().length < 5) {
+      newErrors.address = "La dirección debe tener al menos 5 caracteres"
       isValid = false
     }
 
@@ -389,62 +396,124 @@ export function AdminProvidersPage() {
         if (!open) handleCloseModal()
         else setShowAddDialog(true)
       }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle>{editingProvider ? "Editar Proveedor" : "Nuevo Proveedor"}</DialogTitle>
-              <Button variant="ghost" size="icon" onClick={handleCloseModal}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <DialogDescription>
-              Completa los datos del proveedor para gestionar tus productos.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nombre del Proveedor</label>
-              <Input
-                placeholder="Ej. Distribuidora Salud C.A."
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={errors.name ? "border-red-500" : ""}
-              />
-              {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">País</label>
-              <Input
-                placeholder="Ej. Venezuela"
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                className={errors.country ? "border-red-500" : ""}
-              />
-              {errors.country && <p className="text-xs text-red-500">{errors.country}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Dirección</label>
-              <Input
-                placeholder="Ej. Av. Principal, Edif. Salud, Caracas"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className={errors.address ? "border-red-500" : ""}
-              />
-              {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
-            </div>
+        <DialogContent className="sm:max-w-[520px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
+          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background p-6 border-b border-primary/10">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-primary flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  {editingProvider ? <Edit className="h-6 w-6 text-primary" /> : <Plus className="h-6 w-6 text-primary" />}
+                </div>
+                {editingProvider ? "Editar Proveedor" : "Nuevo Proveedor"}
+              </DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium ml-13">
+                Completa los datos del proveedor para gestionar tus productos.
+              </DialogDescription>
+            </DialogHeader>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseModal} disabled={saving}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Guardando..." : editingProvider ? "Guardar Cambios" : "Crear Proveedor"}
-            </Button>
-          </DialogFooter>
+          <div className="p-6 space-y-6 bg-background">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                  Nombre del Proveedor
+                  <span className="text-primary">*</span>
+                </label>
+                <Input
+                  placeholder="Ej. Distribuidora Salud C.A."
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value })
+                    if (errors.name) setErrors({ ...errors, name: undefined })
+                  }}
+                  className={cn(
+                    "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                    errors.name && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
+                  )}
+                />
+                {errors.name && (
+                  <p className="text-[11px] font-bold text-destructive ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                  País de Origen
+                  <span className="text-primary">*</span>
+                </label>
+                <Input
+                  placeholder="Ej. Venezuela"
+                  value={formData.country}
+                  onChange={(e) => {
+                    setFormData({ ...formData, country: e.target.value })
+                    if (errors.country) setErrors({ ...errors, country: undefined })
+                  }}
+                  className={cn(
+                    "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                    errors.country && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
+                  )}
+                />
+                {errors.country && (
+                  <p className="text-[11px] font-bold text-destructive ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {errors.country}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                  Dirección Fiscal
+                  <span className="text-primary">*</span>
+                </label>
+                <Textarea
+                  placeholder="Dirección completa del proveedor..."
+                  value={formData.address}
+                  onChange={(e) => {
+                    setFormData({ ...formData, address: e.target.value })
+                    if (errors.address) setErrors({ ...errors, address: undefined })
+                  }}
+                  className={cn(
+                    "min-h-[100px] bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all resize-none",
+                    errors.address && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
+                  )}
+                />
+                {errors.address && (
+                  <p className="text-[11px] font-bold text-destructive ml-1 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {errors.address}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={handleCloseModal}
+                disabled={saving}
+                className="flex-1 h-12 rounded-xl font-bold border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-[2] h-12 rounded-xl font-black bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-70"
+              >
+                {saving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Guardando...
+                  </div>
+                ) : (
+                  editingProvider ? "Guardar Cambios" : "Crear Proveedor"
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -456,7 +525,7 @@ export function AdminProvidersPage() {
               {confirmConfig.variant === "destructive" ? (
                 <AlertTriangle className="h-5 w-5 text-destructive" />
               ) : (
-                <CheckCircle className="h-5 w-5 text-primary" />
+                <CheckCircle2 className="h-5 w-5 text-primary" />
               )}
               {confirmConfig.title}
             </DialogTitle>

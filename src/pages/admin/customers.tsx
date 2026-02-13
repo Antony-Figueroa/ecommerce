@@ -700,52 +700,38 @@ export function AdminCustomersPage() {
     </Dialog>
 
     {/* Confirmation Dialog */}
-    <Dialog open={confirmConfig.open} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, open }))}>
-      <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
-        <div className="flex flex-col items-center text-center gap-4">
-          <div className={cn(
-            "h-16 w-16 rounded-full flex items-center justify-center animate-in zoom-in-50 duration-300",
-            confirmConfig.variant === "destructive" 
-              ? "bg-destructive/10 text-destructive" 
-              : "bg-primary/10 text-primary"
-          )}>
+    <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             {confirmConfig.variant === "destructive" ? (
-              <AlertTriangle className="h-8 w-8" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             ) : (
-              <CheckCircle2 className="h-8 w-8" />
+              <CheckCircle2 className="h-5 w-5 text-primary" />
             )}
-          </div>
-          
-          <div className="space-y-2">
-            <DialogTitle className="text-xl font-black">{confirmConfig.title}</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground font-medium px-2">
-              {confirmConfig.description}
-            </DialogDescription>
-          </div>
-
-          <div className="flex w-full gap-3 mt-4">
-            <Button 
-              variant="outline" 
-              className="flex-1 rounded-xl font-bold h-11"
-              onClick={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              variant={confirmConfig.variant || "default"}
-              className={cn(
-                "flex-1 rounded-xl font-bold h-11 shadow-sm",
-                confirmConfig.variant !== "destructive" && "bg-primary hover:bg-primary/90"
-              )}
-              onClick={() => {
-                confirmConfig.onConfirm()
-                setConfirmConfig(prev => ({ ...prev, open: false }))
-              }}
-            >
-              {confirmConfig.confirmText || "Confirmar"}
-            </Button>
-          </div>
-        </div>
+            {confirmConfig.title}
+          </DialogTitle>
+          <DialogDescription className="pt-2 text-base">
+            {confirmConfig.description}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="mt-4 gap-2 sm:gap-0">
+          <Button 
+            variant="outline" 
+            onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+          >
+            Cancelar
+          </Button>
+          <Button 
+            variant={confirmConfig.variant || "default"}
+            onClick={() => {
+              confirmConfig.onConfirm();
+              setConfirmConfig({ ...confirmConfig, open: false });
+            }}
+          >
+            {confirmConfig.confirmText || "Confirmar"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   </div>
