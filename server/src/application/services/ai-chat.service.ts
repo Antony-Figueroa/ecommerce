@@ -1,52 +1,89 @@
-import { GoogleGenerativeAI, ChatSession } from '@google/generative-ai'
+import OpenAI from 'openai'
 import { config } from '../../shared/config/index.js'
 import { InventoryService } from './inventory.service.js'
 
 export interface ChatMessage {
-  role: 'user' | 'model'
-  parts: { text: string; functionCall?: any; functionResponse?: any }[]
+  role: 'user' | 'assistant' | 'system' | 'tool'
+  content: string | null
+  tool_calls?: any[]
+  tool_call_id?: string
+  name?: string
 }
 
 export class AIChatService {
-  private genAI: GoogleGenerativeAI
-  private model: any
+  private openai: OpenAI
   private inventoryService: InventoryService
 
   constructor(inventoryService: InventoryService) {
     this.inventoryService = inventoryService
-    console.log('[AIChatService] Initializing with API Key:', config.googleAiKey ? 'PRESENT' : 'MISSING')
-    this.genAI = new GoogleGenerativeAI(config.googleAiKey)
-    this.model = this.genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-001',
+    console.log(`[AIChatService] Initializing with ${config.aiModel} (OpenAI Compatible API)`)
+    console.log('[AIChatService] Base URL:', config.aiBaseUrl)
+    console.log('[AIChatService] Model:', config.aiModel)
+    console.log('[AIChatService] API Key defined:', !!config.aiApiKey)
+    if (config.aiApiKey) {
+      console.log('[AIChatService] API Key prefix:', config.aiApiKey.substring(0, 7) + '...')
+    }
+    
+    this.openai = new OpenAI({
+      apiKey: config.aiApiKey,
+      baseURL: config.aiBaseUrl
     })
   }
 
-  private async getTools() {
+  async createChatCompletion(messages: any[]) {
+    try {
+      console.log('[AIChatService] Making request to:', config.aiBaseUrl)
+      console.log('[AIChatService] With model:', config.aiModel)
+      
+      const response = await this.openai.chat.completions.create({
+        model: config.aiModel,
+        messages: messages,
+        temperature: 0.7,
+      })
+
+      console.log('[AIChatService] Success! Usage:', response.usage)
+      return response.choices[0].message.content
+    } catch (error: any) {
+      console.error('[AIChatService] Error in createChatCompletion:')
+      if (error.status) {
+        console.error('[AIChatService] HTTP Status:', error.status)
+      }
+      if (error.response) {
+        console.error('[AIChatService] Response Data:', JSON.stringify(error.response.data || error.response, null, 2))
+      }
+      console.error('[AIChatService] Error Message:', error.message)
+      throw error
+    }
+  }
+
+  private getTools(): OpenAI.Chat.ChatCompletionTool[] {
     return [
       {
-        functionDeclarations: [
-          {
-            name: "create_product",
-            description: "Registra un nuevo producto en el catálogo. Requiere confirmación previa del usuario con la tabla de datos.",
-            parameters: {
-              type: "object",
-              properties: {
-                name: { type: "string", description: "Nombre completo" },
-                brand: { type: "string", description: "Marca" },
-                description: { type: "string", description: "Descripción técnica" },
-                format: { type: "string", description: "Polvo, Cápsulas, etc." },
-                weight: { type: "string", description: "Peso (ej: 300g)" },
-                categoryIds: { type: "array", items: { type: "string" } }
-              },
-              required: ["name", "brand", "description", "format"]
-            }
-          },
-          {
-            name: "get_categories",
-            description: "Obtiene IDs de categorías.",
-            parameters: { type: "object", properties: {} }
+        type: "function",
+        function: {
+          name: "create_product",
+          description: "Registra un nuevo producto en el catálogo. Requiere confirmación previa del usuario con la tabla de datos.",
+          parameters: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Nombre completo" },
+              brand: { type: "string", description: "Marca" },
+              description: { type: "string", description: "Descripción técnica" },
+              format: { type: "string", description: "Polvo, Cápsulas, etc." },
+              weight: { type: "string", description: "Peso (ej: 300g)" },
+              categoryIds: { type: "array", items: { type: "string" } }
+            },
+            required: ["name", "brand", "description", "format"]
           }
-        ]
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "get_categories",
+          description: "Obtiene IDs de categorías.",
+          parameters: { type: "object", properties: {} }
+        }
       }
     ]
   }
@@ -55,7 +92,6 @@ export class AIChatService {
     console.log(`[AIChatService] Executing function: ${name}`, args)
     try {
       if (name === 'create_product') {
-        // Si no vienen categorías, intentamos buscar la de 'Vitaminas y Suplementos' o 'Deporte y Energía'
         if (!args.categoryIds || args.categoryIds.length === 0) {
           const { categories } = await (this.inventoryService as any).categoryRepo.findAll()
           const defaultCat = categories.find((c: any) => 
@@ -74,7 +110,7 @@ export class AIChatService {
       }
 
       if (name === 'get_categories') {
-        const { categories } = await (this.inventoryService as any).categoryRepo.findAll()
+        const categories = await (this.inventoryService as any).categoryRepo.findAll()
         return { 
           categories: categories.map((c: any) => ({ id: c.id, name: c.name }))
         }
@@ -89,7 +125,7 @@ export class AIChatService {
 
   private async getProductContext() {
     try {
-      // Obtenemos todos los productos activos sin límite estricto para tener contexto completo
+      console.log('[AIChatService] Fetching product context...');
       const products = await this.inventoryService.getPublicProducts({ limit: 500 })
       
       if (!products || products.length === 0) {
@@ -99,7 +135,6 @@ export class AIChatService {
 
       console.log(`[AIChatService] Found ${products.length} products for context.`) 
 
-      // Mapeo detallado para que la IA tenga toda la info necesaria
       const context = (products as any[]).map((p: any) => {
         const categories = p.categories?.map((c: any) => c.name).join(', ') || 'N/A'
         return `- ${p.name}: Marca: ${p.brand}. Precio: $${p.price}. Categorías: ${categories}. Descripción: ${p.description.substring(0, 150)}.`
@@ -107,7 +142,7 @@ export class AIChatService {
 
       return context
     } catch (error) {
-      console.error('Error fetching product context for AI:', error)
+      console.error('[AIChatService] Error fetching product context for AI:', error)
       return 'ERROR AL CARGAR EL CATÁLOGO.'
     }
   }
@@ -122,8 +157,8 @@ REGLAS PARA EL ADMINISTRADOR:
 1. Eres el "Analista de Inteligencia Operativa".
 2. Tu misión es AUTOMATIZAR el registro. NUNCA pidas al administrador datos que puedas encontrar tú mismo.
 3. FLUJO DE REGISTRO CON IMAGEN (CRÍTICO):
-      - Si recibes un mensaje con el prefijo '[CONTEXTO DE ANÁLISIS PREVIO DE IMAGEN: ...]', úsalo como tu fuente primaria de datos.
-      - TU DEBER es identificar el producto y USAR GOOGLE SEARCH de inmediato si falta algún dato.
+      - Si recibes un mensaje con el prefijo '[REGISTRO POR IMAGEN]', úsalo como tu fuente primaria de datos.
+      - TU DEBER es identificar el producto y buscar información si falta algún dato.
       - ESTÁ PROHIBIDO responder: "Por favor proporcione los datos técnicos", "Dime la marca", etc. 
       - TÚ debes encontrar: Marca, Nombre exacto, Formato (polvo/caps), Peso/Contenido y Beneficios.
       - Una vez encontrados, presenta OBLIGATORIAMENTE la **TABLA DE PRE-REGISTRO**:
@@ -136,7 +171,9 @@ REGLAS PARA EL ADMINISTRADOR:
         | Descripción | (Resumen de beneficios) |
       - Al final de la tabla, pregunta: "¿Deseas que registre este producto con estos datos?".
 4. SOLO ejecuta 'create_product' cuando el usuario diga "Sí", "Confirmo", "Dale", etc.
-5. ESTILO: Directo, ejecutivo, sin saludos innecesarios. Usa tablas Markdown para todo.`
+5. ESTILO: Directo, ejecutivo, sin saludos innecesarios. Usa tablas Markdown para todo.
+      - IMPORTANTE: Cuando menciones un producto del catálogo, ponlo entre corchetes dobles como [[Nombre del Producto]] para que el sistema lo resalte.
+      - IMPORTANTE: No uses comillas invertidas extrañas para envolver las tablas o el texto.`
     }
 
     return `CATÁLOGO REAL DE PRODUCTOS (TU ÚNICA FUENTE DE VERDAD):
@@ -157,74 +194,146 @@ ESTILO:
 - No saludes de forma larga.
 - No des consejos médicos profundos, solo menciona el producto y su uso básico.
 - Finaliza siempre con: "_Consulte a su médico._".
-- Responde siempre en español.`
+- Responde siempre en español.
+- IMPORTANTE: Cuando recomiendes un producto del catálogo, ponlo entre corchetes dobles como [[Nombre del Producto]] para que el usuario pueda verlo resaltado.
+- IMPORTANTE: No uses comillas invertidas extrañas para envolver el texto.`
   }
 
   async analyzeProductImage(image: string) {
-    if (!config.googleAiKey) throw new Error('API Key missing')
+    if (!config.aiApiKey) throw new Error('API Key missing')
     
     try {
-      const model = this.genAI.getGenerativeModel({ 
-        model: 'gemini-2.0-flash-001'
-      })
-
-      let mimeType = 'image/jpeg'
-      let data = image
+      // Gemma 3 is multimodal and supports vision directly
+      const visionModel = config.aiModel || 'gemma-3-27b-it'
+      
+      let base64Image = image
       if (image.includes(';base64,')) {
-        const parts = image.split(';base64,')
-        mimeType = parts[0].split(':')[1] || 'image/jpeg'
-        data = parts[1]
+        base64Image = image.split(';base64,')[1]
       }
 
-      const prompt = `
-      ANALIZA ESTA IMAGEN DE PRODUCTO PARA REGISTRO EN UN ECOMMERCE DE SUPLEMENTOS Y BIENESTAR.
-      
-      TAREA 1: Determina si la imagen es un suplemento, vitamina, proteína, producto deportivo o de salud/bienestar.
-      TAREA 2: Si es válido, extrae toda la información técnica visible o conocida sobre este producto.
-      
-      RETORNA EXCLUSIVAMENTE UN OBJETO JSON CON ESTA ESTRUCTURA:
-      {
-        "isValid": true o false (false si es comida chatarra, ropa, gadgets, mascotas, personas sin producto, etc.),
-        "rejectionReason": "Breve explicación si isValid es false",
-        "name": "Nombre completo",
-        "brand": "Marca",
-        "format": "Polvo/Cápsulas/etc",
-        "weight": "Peso/Contenido",
-        "description": "Descripción técnica breve",
-        "benefits": ["beneficio 1", "beneficio 2"]
-      }
-      `;
+      console.log('[AIChatService] Analyzing image with Vision model:', visionModel)
 
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { mimeType, data } }
-      ])
-      
-      const responseText = result.response.text()
-      // Extraer JSON si hay markdown
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/)
-      return JSON.parse(jsonMatch ? jsonMatch[0] : responseText)
-    } catch (error: any) {
-      console.error('[AIChatService] Error analyzing image:', {
-        message: error.message,
-        stack: error.stack,
-        details: error.errorDetails || error.details,
-        status: error.status,
-        statusText: error.statusText
+      const response = await this.openai.chat.completions.create({
+        model: visionModel,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `
+                ANALIZA ESTA IMAGEN DE PRODUCTO PARA REGISTRO EN UN ECOMMERCE DE SUPLEMENTOS Y BIENESTAR.
+                
+                TAREA 1: Determina si la imagen es un suplemento, vitamina, proteína, producto deportivo o de salud/bienestar.
+                TAREA 2: Si es válido, extrae toda la información técnica visible o conocida sobre este producto.
+                
+                RETORNA EXCLUSIVAMENTE UN OBJETO JSON CON ESTA ESTRUCTURA:
+                {
+                  "isValid": true,
+                  "rejectionReason": "Breve explicación si isValid es false",
+                  "name": "Nombre completo",
+                  "brand": "Marca",
+                  "format": "Polvo/Cápsulas/etc",
+                  "weight": "Peso/Contenido",
+                  "description": "Descripción técnica breve",
+                  "benefits": ["beneficio 1", "beneficio 2"]
+                }` },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`,
+                },
+              },
+            ],
+          },
+        ],
+        // Google AI Studio OpenAI endpoint might not support response_format: { type: "json_object" } yet for all models
+        // but we can try or just rely on the prompt instructions.
       })
-      
-      // Manejo específico de errores de cuota
-      if (error.status === 429) {
-        throw new Error('Has alcanzado el límite de uso de la API de Gemini. Por favor, espera unos minutos antes de intentar nuevamente.')
+
+      const responseText = response.choices[0].message.content || '{}'
+      console.log('[AIChatService] Vision analysis response received')
+      return JSON.parse(responseText)
+    } catch (error: any) {
+      console.error('[AIChatService] Error in analyzeProductImage:', error.message)
+      // Fallback simple si Vision falla
+      return {
+        isValid: false,
+        rejectionReason: "Error al procesar la imagen con el servicio de IA: " + error.message,
+        name: "",
+        brand: "",
+        format: "",
+        weight: "",
+        description: "",
+        benefits: []
       }
+    }
+  }
+
+  async processChat(messages: ChatMessage[], isAdmin: boolean = false, userId?: string) {
+    try {
+      console.log(`[AIChatService] Processing chat (isAdmin: ${isAdmin})`)
+      const productContext = await this.getProductContext()
+      const systemPrompt = this.getSystemPrompt(productContext, isAdmin)
       
+      const fullMessages = [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ]
+
+      console.log('[AIChatService] Calling Chat Completion API...')
+      const response = await this.openai.chat.completions.create({
+        model: config.aiModel,
+        messages: fullMessages as any,
+        tools: isAdmin ? this.getTools() : undefined,
+        tool_choice: isAdmin ? "auto" : undefined,
+        temperature: 0.7,
+      })
+
+      let assistantMessage = response.choices[0].message
+      
+      // Manejar llamadas a funciones (tools)
+      if (isAdmin && assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+        console.log(`[AIChatService] Tool calls detected: ${assistantMessage.tool_calls.length}`)
+        const toolMessages = [...fullMessages]
+        toolMessages.push(assistantMessage as any)
+
+        for (const toolCall of assistantMessage.tool_calls) {
+          if (toolCall.type !== 'function') continue;
+          
+          const functionName = toolCall.function.name
+          const functionArgs = JSON.parse(toolCall.function.arguments)
+          
+          const result = await this.executeFunction(functionName, functionArgs, userId)
+          
+          toolMessages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            name: functionName,
+            content: JSON.stringify(result)
+          } as any)
+        }
+
+        console.log('[AIChatService] Calling Chat Completion API again with tool results...')
+        const secondResponse = await this.openai.chat.completions.create({
+          model: config.aiModel,
+          messages: toolMessages as any,
+          temperature: 0.7,
+        })
+
+        return secondResponse.choices[0].message.content
+      }
+
+      return assistantMessage.content
+    } catch (error: any) {
+      console.error('[AIChatService] Error in processChat:', error.message)
       throw error
     }
   }
 
-  async chat(message: string, history: ChatMessage[] = [], isAdmin: boolean = false, userId?: string, image?: string) {
+  async chat(message: string, history: any[] = [], isAdmin: boolean = false, userId?: string, image?: string) {
     console.log('[AIChatService] Chat request:', { message: message?.substring(0, 50), historyLength: history.length, isAdmin, hasImage: !!image });
-    if (!config.googleAiKey) {
+    console.log('[AIChatService] Using API Key:', config.aiApiKey ? `${config.aiApiKey.substring(0, 10)}...` : 'MISSING');
+    
+    if (!config.aiApiKey) {
       return {
         response: "Lo siento, el servicio de chat no está configurado correctamente (falta la API Key).",
         usage: { promptLength: 0, responseLength: 0 }
@@ -232,178 +341,146 @@ ESTILO:
     }
 
     try {
+      console.log('[AIChatService] Preparing chat messages...')
       const productContext = await this.getProductContext()
       const systemPrompt = this.getSystemPrompt(productContext, isAdmin)
-      const tools = isAdmin ? await this.getTools() : []
-
-      console.log('[AIChatService] Prompt generated. Context length:', productContext.length, 'Admin mode:', isAdmin, 'Has image:', !!image)
-
-      const modelWithSystem = this.genAI.getGenerativeModel({ 
-        model: 'gemini-2.0-flash-001',
-        systemInstruction: systemPrompt,
-        tools: (isAdmin && !image) ? tools as any : undefined
-      })
+      const isGoogleAI = config.aiBaseUrl?.includes('generativelanguage.googleapis.com');
       
-      console.log('[AIChatService] Model instance created. Admin:', isAdmin, 'Has image:', !!image, 'Tools applied:', (isAdmin && !image) ? 'YES' : 'NO')
+      // Convertir historial al formato estándar de OpenAI
+      const messages: any[] = []
       
-      const validHistory = history.filter(msg => 
-        (msg.role === 'user' || msg.role === 'model') && 
-        msg.parts && msg.parts.length > 0
-      ).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: msg.parts.map((p: any) => {
-          if (p.text) return { text: p.text };
-          if (p.functionCall) return { functionCall: p.functionCall };
-          if (p.functionResponse) return { functionResponse: p.functionResponse };
-          return null;
-        }).filter(Boolean) as any[]
-      }));
-
-      if (validHistory.length > 0 && validHistory[0].role !== 'user') {
-        validHistory.shift()
+      if (!isGoogleAI) {
+        messages.push({ role: 'system', content: systemPrompt })
       }
-
-      // IMPORTANTE: Si hay una imagen, Gemini no permite usar chatSession.sendMessage con imágenes
-      // si la sesión de chat ya tiene historial (a veces da error de "multimodal not supported in chat").
-      // Para registros de productos con imagen, lo mejor es usar generateContent directamente o
-      // asegurar que el mensaje inicial incluya la imagen.
       
-      if (image) {
-        console.log('[AIChatService] Multimodal request detected. Processing image...')
-        const messageParts: any[] = []
+      console.log('[AIChatService] System prompt length:', systemPrompt.length)
+
+      history.forEach(msg => {
+        // Mapeo de roles a formato OpenAI
+        const role = (msg.role === 'model' || msg.role === 'assistant') ? 'assistant' : msg.role
         
-        try {
-          let mimeType = 'image/jpeg'
-          let data = image
-
-          if (image.includes(';base64,')) {
-            const parts = image.split(';base64,')
-            mimeType = parts[0].split(':')[1] || 'image/jpeg'
-            data = parts[1]
-          }
-          
-          console.log('[AIChatService] IMAGE_DATA_DIAGNOSTIC:', {
-            mimeType,
-            dataPrefix: data.substring(0, 50),
-            dataLength: data.length,
-            isPureBase64: /^[A-Za-z0-9+/=]+$/.test(data.substring(0, 100).replace(/\s/g, ''))
-          })
-
-          messageParts.push({
-            inlineData: { mimeType, data }
-          })
-        } catch (e) {
-          console.error('[AIChatService] Error parsing image:', e)
-        }
-
-        // Instrucción radicalmente directa para forzar el análisis
-        const multimodalPrompt = `
-        [INSTRUCCIÓN CRÍTICA: REGISTRO DE PRODUCTO POR IMAGEN]
-        ESTÁS VIENDO UNA IMAGEN REAL DE UN PRODUCTO. NO DIGAS QUE NO PUEDES VERLA.
-        
-        PROTOCOLO OBLIGATORIO:
-        1. MIRA la imagen. Extrae el nombre y la marca.
-        2. MUESTRA esta tabla Markdown con los datos propuestos:
-           | Campo | Valor Propuesto |
-           | :--- | :--- |
-           | **Nombre** | [Nombre detectado] |
-           | **Marca** | [Marca detectada] |
-           | **Formato** | [Polvo/Cápsulas/etc] |
-           | **Peso** | [Ej: 500g] |
-           | **Descripción** | [Resumen técnico] |
-        
-        3. PREGUNTA: "¿Deseas registrar este producto?".
-        
-        ADVERTENCIA: NUNCA digas "no puedo procesar imágenes" o "indícame el nombre". Tienes la imagen delante de ti. ÚSALA.
-        
-        MENSAJE DEL USUARIO: ${message || "Registra este producto."}
-        `;
-        
-        messageParts.push({ text: multimodalPrompt })
-
-        // Para multimodal, limpiamos el historial para evitar confusiones de capacidades
-        const contents = [
-          { role: 'user', parts: messageParts }
-        ]
-
-        console.log('[AIChatService] Sending generateContent (Fresh Context Multimodal).')
-        let result = await modelWithSystem.generateContent({ contents })
-        let response = await result.response
-        
-        // Manejar funciones (mismo loop)
-        let maxIterations = 5
-        while (response.candidates?.[0]?.content?.parts?.some((p: any) => p.functionCall) && maxIterations > 0) {
-          const functionCalls = response.candidates[0].content.parts.filter((p: any) => p.functionCall)
-          const functionResponses = []
-
-          const sessionForFunctions = modelWithSystem.startChat({
-            history: [
-              ...contents,
-              { role: 'model', parts: response.candidates[0].content.parts }
-            ]
-          })
-
-          for (const call of functionCalls) {
-            const fc = (call as any).functionCall
-            const { name, args } = fc
-            const functionResult = await this.executeFunction(name, args, userId)
-            functionResponses.push({
-              functionResponse: { name, response: functionResult }
-            })
-          }
-
-          const resultFn = await sessionForFunctions.sendMessage(functionResponses)
-          response = await resultFn.response
-          maxIterations--
-        }
-
-        const text = response.text()
-        return {
-          response: text,
-          usage: { promptLength: systemPrompt.length + (message?.length || 0), responseLength: text.length }
-        }
-      }
-
-      // Si no hay imagen, procedemos con el chat normal
-      const chatSession = modelWithSystem.startChat({
-        history: validHistory.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: msg.parts
-        })),
-      })
-
-      const messageParts: any[] = [{ text: message }]
-      
-      // LOG DE DIAGNÓSTICO PARA CHAT NORMAL
-      console.log('[AIChatService] Sending sendMessage (Normal Chat). History length:', validHistory.length)
-      
-      let result = await chatSession.sendMessage(messageParts)
-      let response = await result.response
-      
-      // Manejar múltiples llamadas a funciones si es necesario (loop de razonamiento)
-      let maxIterations = 5
-      while (response.candidates?.[0]?.content?.parts?.some((p: any) => p.functionCall) && maxIterations > 0) {
-        const functionCalls = response.candidates[0].content.parts.filter((p: any) => p.functionCall)
-        const functionResponses = []
-
-        for (const call of functionCalls) {
-          const fc = (call as any).functionCall
-          const { name, args } = fc
-          const functionResult = await this.executeFunction(name, args, userId)
-          functionResponses.push({
-            functionResponse: {
-              name,
-              response: functionResult
+        // Manejar estructura de mensajes (soporte para historial previo y estándar OpenAI)
+        if (msg.parts && Array.isArray(msg.parts)) {
+          msg.parts.forEach((p: any) => {
+            if (p.text) messages.push({ role, content: p.text })
+            // Soporte para llamadas a funciones en el historial
+            if (p.functionCall) {
+              const callId = p.functionCall.id || `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              messages.push({
+                role: 'assistant',
+                content: null,
+                tool_calls: [{
+                  id: callId,
+                  type: 'function',
+                  function: {
+                    name: p.functionCall.name,
+                    arguments: typeof p.functionCall.args === 'string' ? p.functionCall.args : JSON.stringify(p.functionCall.args)
+                  }
+                }]
+              })
+            }
+            if (p.functionResponse) {
+              messages.push({
+                role: 'tool',
+                tool_call_id: p.functionResponse.id || `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                content: typeof p.functionResponse.response === 'string' ? p.functionResponse.response : JSON.stringify(p.functionResponse.response)
+              })
             }
           })
+        } else if (msg.content) {
+          // Formato estándar OpenAI
+          messages.push({ role, content: msg.content })
+        }
+      })
+
+      // Agregar mensaje actual
+      if (image) {
+        let base64Image = image
+        if (image.includes(';base64,')) {
+          base64Image = image.split(';base64,')[1]
+        }
+        
+        messages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: `[REGISTRO POR IMAGEN] ${message || 'Analiza este producto'}` },
+            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+          ]
+        })
+      } else {
+        messages.push({ role: 'user', content: message })
+      }
+
+      // Si es Google AI, inyectar el system prompt en el primer mensaje de usuario
+      if (isGoogleAI) {
+        const firstUserMsgIndex = messages.findIndex(m => m.role === 'user');
+        if (firstUserMsgIndex !== -1) {
+          const firstUserMsg = messages[firstUserMsgIndex];
+          const systemPrefix = `[INSTRUCCIONES DE SISTEMA]\n${systemPrompt}\n\n[MENSAJE DE USUARIO]\n`;
+          
+          if (typeof firstUserMsg.content === 'string') {
+            firstUserMsg.content = systemPrefix + firstUserMsg.content;
+          } else if (Array.isArray(firstUserMsg.content)) {
+            const textPart = firstUserMsg.content.find((p: any) => p.type === 'text');
+            if (textPart) {
+              textPart.text = systemPrefix + textPart.text;
+            } else {
+              firstUserMsg.content.unshift({ type: 'text', text: systemPrefix });
+            }
+          }
+        }
+      }
+
+      const tools = isAdmin ? this.getTools() : undefined
+      let model = config.aiModel || 'gemma-3-27b-it'
+      
+      // Fallback para herramientas: Gemma 3 no soporta tools via OpenAI shim todavía
+      if (tools && model.includes('gemma')) {
+        console.log(`[AIChatService] Switching from ${model} to models/gemini-flash-latest for tool support`)
+        model = 'models/gemini-flash-latest'
+      }
+
+      console.log(`[AIChatService] Calling ${model} at ${config.aiBaseUrl}...`)
+
+      let response = await this.openai.chat.completions.create({
+        model: model,
+        messages,
+        tools,
+        tool_choice: tools ? 'auto' : undefined
+      })
+
+      console.log('[AIChatService] API response received successfully')
+
+      let responseMessage = response.choices[0].message
+      let maxIterations = 5
+
+      while (responseMessage.tool_calls && responseMessage.tool_calls.length > 0 && maxIterations > 0) {
+        messages.push(responseMessage as any)
+        
+        for (const toolCall of responseMessage.tool_calls) {
+          if (toolCall.type !== 'function') continue;
+
+          const functionName = toolCall.function.name
+          const functionArgs = JSON.parse(toolCall.function.arguments)
+          const functionResponse = await this.executeFunction(functionName, functionArgs, userId)
+          
+          messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(functionResponse)
+          } as any)
         }
 
-        result = await chatSession.sendMessage(functionResponses)
-        response = await result.response
+        response = await this.openai.chat.completions.create({
+          model: model,
+          messages,
+          tools
+        })
+        responseMessage = response.choices[0].message
         maxIterations--
       }
 
-      const text = response.text()
+      const text = responseMessage.content || ''
       
       return {
         response: text,
@@ -412,24 +489,27 @@ ESTILO:
           responseLength: text.length
         }
       }
-    } catch (error: any) {
-      console.error('[AIChatService] Error in chat:', {
-        message: error.message,
-        details: error.errorDetails || error.details,
-        status: error.status
-      })
 
-      // Manejo de cuota para el chat normal
+    } catch (error: any) {
+      console.error('[AIChatService] Error in chat:', error)
+
       if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota')) {
         return {
-          response: "Has alcanzado el límite de uso de la API de Gemini. Por favor, espera unos minutos antes de intentar nuevamente.",
+          response: "Lo siento, el servicio de IA está experimentando una alta demanda en este momento. Por favor, intenta de nuevo en unos minutos.",
           usage: { promptLength: 0, responseLength: 0 },
           quotaExceeded: true
         }
       }
 
+      if (error.status === 403 || error.message?.includes('Access denied')) {
+        return {
+          response: `Error de acceso a la API (403). Es posible que el servicio esté bloqueando la conexión desde este servidor. Por favor verifica tu API Key o intenta más tarde.`,
+          usage: { promptLength: 0, responseLength: 0 }
+        }
+      }
+
       return {
-        response: "Hubo un error procesando tu solicitud. Por favor intenta de nuevo.",
+        response: `Hubo un error procesando tu solicitud con ${config.aiModel}. Por favor intenta de nuevo.`,
         usage: { promptLength: 0, responseLength: 0 }
       }
     }

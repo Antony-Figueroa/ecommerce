@@ -50,7 +50,7 @@ router.post('/admin', authenticate, authorize('ADMIN'), async (req: Request, res
     // Si hay contexto de análisis previo, lo inyectamos en el mensaje
     let finalMessage = message || ''
     if (analysisContext) {
-      finalMessage = `[CONTEXTO DE ANÁLISIS PREVIO DE IMAGEN: ${JSON.stringify(analysisContext)}]\n\n${finalMessage}`
+      finalMessage = `[REGISTRO POR IMAGEN] ${JSON.stringify(analysisContext)}\n\n${finalMessage}`
     }
 
     const result = await aiChatService.chat(finalMessage, history || [], true, userId, image)

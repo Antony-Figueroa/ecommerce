@@ -102,7 +102,7 @@ export interface ProviderRepository {
 }
 
 export interface InventoryBatchRepository {
-  findMany(options?: any): Promise<any[]>
+  findAll(options?: any): Promise<any[]>
   findById(id: string): Promise<any | null>
   create(data: any): Promise<any>
   update(id: string, data: any): Promise<any>

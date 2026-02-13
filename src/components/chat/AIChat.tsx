@@ -232,6 +232,16 @@ export const AIChat: React.FC = () => {
         : [] // Para un chat nuevo, el historial previo es vacío
 
       const res = await api.chat(textToSend, historyForApi)
+      
+      // Manejar errores de cuota o límite
+      if (res.error && (res.error.includes('limit') || res.error.includes('quota') || res.error.includes('límite'))) {
+        setMessages(prev => [...prev, {
+          role: 'model',
+          parts: [{ text: 'Has alcanzado el límite de uso de la API. Por favor, espera unos minutos antes de intentar nuevamente.' }]
+        }])
+        return
+      }
+
       const botMessage: Message = {
         role: 'model',
         parts: [{ text: res.response }],

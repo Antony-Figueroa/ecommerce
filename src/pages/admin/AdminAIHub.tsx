@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Terminal, 
@@ -40,6 +41,7 @@ interface ChatConversation {
 }
 
 export function AdminAIHub() {
+  const navigate = useNavigate();
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
@@ -163,7 +165,7 @@ export function AdminAIHub() {
           
           // Manejo específico de errores de cuota
           if (error.quotaExceeded || error.message?.includes('límite') || error.message?.includes('quota')) {
-            alert('Has alcanzado el límite de uso de la API de Gemini. Por favor, espera unos minutos antes de intentar nuevamente.');
+            alert('Has alcanzado el límite de uso del servicio de IA. Por favor, espera unos minutos antes de intentar nuevamente.');
           } else {
             alert('Error al analizar la imagen. Por favor, intenta nuevamente.');
           }
@@ -236,6 +238,18 @@ export function AdminAIHub() {
 
       const res = await api.adminChat(textToSend, historyForApi, imageToSend, currentAnalysis);
       
+      // Manejar errores de cuota o límite retornados por la API
+      if (res.error && (res.error.includes('limit') || res.error.includes('quota') || res.error.includes('límite'))) {
+        const quotaMsg: Message = {
+          role: 'model',
+          parts: [{ text: 'Has alcanzado el límite de uso del servicio de IA. Por favor, espera unos minutos antes de intentar nuevamente.' }],
+          timestamp: Date.now(),
+          type: 'action'
+        };
+        setMessages(prev => [...prev, quotaMsg]);
+        return;
+      }
+
       if (!res.response) {
         throw new Error('Respuesta vacía del servidor');
       }
@@ -409,9 +423,44 @@ export function AdminAIHub() {
                       />
                     </div>
                   )}
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.parts[0]?.text || ''}
-                  </ReactMarkdown>
+                  {(() => {
+                    let text = msg.parts[0]?.text || '';
+                    const parts = text.split(/(\[\[.*?\]\])/g);
+                    const products: string[] = [];
+
+                    const cleanText = parts.map(part => {
+                      if (part.startsWith('[[') && part.endsWith(']]')) {
+                        const productName = part.slice(2, -2);
+                        products.push(productName);
+                        return `**${productName}**`;
+                      }
+                      return part;
+                    }).join('');
+
+                    return (
+                      <div className="space-y-4">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {cleanText}
+                        </ReactMarkdown>
+                        {products.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200 dark:border-emerald-900/20">
+                            {products.map((product, idx) => (
+                              <Button
+                                key={idx}
+                                variant="outline"
+                                size="sm"
+                                className="text-[10px] h-7 gap-1.5 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-500/5 text-emerald-600 dark:text-emerald-400"
+                                onClick={() => navigate(`/admin/inventario?search=${encodeURIComponent(product)}`)}
+                              >
+                                <Bot className="w-3 h-3" />
+                                Gestionar {product}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {msg.role === 'user' && (

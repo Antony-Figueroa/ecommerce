@@ -154,7 +154,7 @@ export class PrismaProviderRepository implements ProviderRepository {
 }
 
 export class PrismaInventoryBatchRepository implements InventoryBatchRepository {
-  async findMany(options?: any) {
+  async findAll(options?: any) {
     return prisma.inventoryBatch.findMany({
       ...options,
       include: {

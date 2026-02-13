@@ -31,6 +31,11 @@ export const config = {
   // Google AI (Gemini)
   googleAiKey: process.env.GOOGLE_AI_KEY || '',
 
+  // AI Chat (Google AI / Gemma 3)
+  aiApiKey: process.env.AI_API_KEY || process.env.GOOGLE_AI_KEY || '',
+  aiBaseUrl: process.env.AI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai/',
+  aiModel: process.env.AI_MODEL || 'gemma-3-27b-it',
+
   // Rate Limiting
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10), // 1 minuto
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10), // Default limit
