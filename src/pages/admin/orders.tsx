@@ -1054,11 +1054,6 @@ export function AdminOrdersPage() {
         title="Gestión de Ventas"
         subtitle="Supervisa y procesa los pedidos de tus clientes en tiempo real."
         icon={ShoppingBag}
-        action={{
-          label: "Nuevo Pedido",
-          onClick: () => window.open('/admin/orders/new', '_blank'),
-          icon: PlusCircle
-        }}
       />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex flex-col gap-1 md:hidden">
@@ -1088,14 +1083,6 @@ export function AdminOrdersPage() {
           >
             <Clock className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span className="hidden sm:inline">Actualizar</span>
-          </Button>
-          <Button 
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 rounded-xl font-bold px-6 h-11 transition-all hover:scale-[1.02] active:scale-[0.98] gap-2"
-            onClick={() => window.open('/admin/orders/new', '_blank')}
-            aria-label="Crear nuevo pedido manual"
-          >
-            <PlusCircle className="h-5 w-5" aria-hidden="true" />
-            Nuevo Pedido
           </Button>
         </div>
       </div>

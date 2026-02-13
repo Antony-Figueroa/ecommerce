@@ -1,4 +1,4 @@
-import { startOfDay, isBefore, format } from "date-fns"
+import { startOfDay, isBefore, format, isWithinInterval, parseISO } from "date-fns"
 import { es } from "date-fns/locale"
 import { useState, useEffect, useMemo } from "react"
 import {
@@ -14,7 +14,8 @@ import {
   History,
   Settings,
   RefreshCw,
-  X
+  X,
+  Download
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { BusinessEventsCalendar, type BusinessEvent } from "@/components/admin/business-events-calendar"
@@ -28,6 +29,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn, formatUSD, formatBS } from "@/lib/utils"
 import { api, API_BASE } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import {
+  generateInventoryReport,
+  generateSalesReport,
+  generateFinancialReport
+} from "@/lib/report-utils"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,6 +97,10 @@ export function FinancialDashboard() {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false)
   const [editingEventId, setEditingEventId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [reportDates, setReportDates] = useState({
+    start: '',
+    end: ''
+  })
   const [newEvent, setNewEvent] = useState({
     type: 'CUSTOM',
     title: '',
@@ -151,16 +161,56 @@ export function FinancialDashboard() {
   }, [])
 
   const handleGenerateReport = (type: string) => {
+    // Validar si es personalizado que tenga fechas
+    if (type === "Personalizado" && (!reportDates.start || !reportDates.end)) {
+      toast({
+        title: "Fechas requeridas",
+        description: "Por favor selecciona un rango de fechas para el reporte personalizado.",
+        variant: "destructive"
+      })
+      return
+    }
+
     confirmAction({
       title: "Generar Reporte",
-      description: `¿Estás seguro de que deseas generar un reporte de ${type} para el rango de fechas seleccionado?`,
+      description: `¿Estás seguro de que deseas generar un reporte de ${type}?`,
       confirmText: "Generar",
-      onConfirm: () => {
-        toast({
-          title: "Generando reporte",
-          description: `El reporte de ${type} se está procesando y se descargará pronto.`,
-        })
-        // Aquí iría la lógica real de generación y descarga
+      onConfirm: async () => {
+        try {
+          toast({
+            title: "Generando reporte",
+            description: `El reporte de ${type} se está procesando...`,
+          })
+
+          if (type === "Inventario") {
+            generateInventoryReport(products)
+          } else if (type === "Ventas") {
+            generateSalesReport(sales)
+          } else if (type === "Financiero") {
+            generateFinancialReport(sales, products)
+          } else if (type === "Personalizado") {
+            const filteredSales = sales.filter(s => {
+              const saleDate = parseISO(s.createdAt)
+              return isWithinInterval(saleDate, {
+                start: startOfDay(new Date(reportDates.start)),
+                end: startOfDay(new Date(reportDates.end))
+              })
+            })
+            generateSalesReport(filteredSales, reportDates.start, reportDates.end)
+          }
+
+          toast({
+            title: "Reporte generado",
+            description: "El documento se ha descargado correctamente.",
+          })
+        } catch (error) {
+          console.error("Error generating report:", error)
+          toast({
+            title: "Error",
+            description: "No se pudo generar el reporte. Inténtalo de nuevo.",
+            variant: "destructive"
+          })
+        }
       }
     })
   }
@@ -1290,17 +1340,28 @@ export function FinancialDashboard() {
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Fecha Inicio</label>
-                    <Input type="date" className="h-11 font-medium" />
+                    <Input 
+                      type="date" 
+                      className="h-11 font-medium" 
+                      value={reportDates.start}
+                      onChange={(e) => setReportDates(prev => ({ ...prev, start: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Fecha Fin</label>
-                    <Input type="date" className="h-11 font-medium" />
+                    <Input 
+                      type="date" 
+                      className="h-11 font-medium" 
+                      value={reportDates.end}
+                      onChange={(e) => setReportDates(prev => ({ ...prev, end: e.target.value }))}
+                    />
                   </div>
                   <div className="flex items-end">
                     <Button 
-                      className="w-full h-11 font-black text-sm shadow-lg shadow-primary/20"
+                      className="w-full h-11 font-black text-sm shadow-lg shadow-primary/20 gap-2"
                       onClick={() => handleGenerateReport("Personalizado")}
                     >
+                      <Download className="h-4 w-4" />
                       GENERAR REPORTE
                     </Button>
                   </div>
