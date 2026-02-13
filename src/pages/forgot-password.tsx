@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react"
 import { api } from "@/lib/api"
-import { cn } from "@/lib/utils"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")

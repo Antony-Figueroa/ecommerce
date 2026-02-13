@@ -116,18 +116,25 @@ export class PrismaInventoryLogRepository implements InventoryLogRepository {
 export class PrismaProviderRepository implements ProviderRepository {
   async findAll(): Promise<Provider[]> {
     const providers = await prisma.provider.findMany({
+      include: { _count: { select: { batches: true } } },
       orderBy: { name: 'asc' },
     })
     return providers as unknown as Provider[]
   }
 
   async findByName(name: string): Promise<Provider | null> {
-    const provider = await prisma.provider.findFirst({ where: { name } })
+    const provider = await prisma.provider.findFirst({ 
+      where: { name },
+      include: { _count: { select: { batches: true } } }
+    })
     return provider as unknown as Provider | null
   }
 
   async findById(id: string): Promise<Provider | null> {
-    const provider = await prisma.provider.findUnique({ where: { id } })
+    const provider = await prisma.provider.findUnique({ 
+      where: { id },
+      include: { _count: { select: { batches: true } } }
+    })
     return provider as unknown as Provider | null
   }
 

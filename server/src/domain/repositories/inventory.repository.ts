@@ -41,6 +41,9 @@ export interface Provider {
   address?: string | null
   createdAt: Date
   updatedAt: Date
+  _count?: {
+    batches: number
+  }
 }
 
 export interface InventoryBatch {

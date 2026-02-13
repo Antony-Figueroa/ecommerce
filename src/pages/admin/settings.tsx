@@ -5,7 +5,8 @@ import {
   AlertTriangle, 
   RotateCcw,
   Loader2,
-  Settings
+  Settings,
+  CheckCircle2
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
@@ -19,8 +20,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
  
-
 interface Setting {
   id: string
   key: string
@@ -51,9 +52,53 @@ export function AdminSettingsPage() {
   const [modifiedSettings, setModifiedSettings] = useState<Record<string, string>>({})
   const [historyKey, setHistoryKey] = useState<string | null>(null)
   const [history, setHistory] = useState<SettingHistory[]>([])
-  const [showConfirm, setShowConfirm] = useState(false)
   const [updateReason, setUpdateReason] = useState("")
+  const [showConfirm, setShowConfirm] = useState(false)
   const { toast } = useToast()
+
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  const hasChanges = () => {
+    return Object.keys(modifiedSettings).length > 0 || updateReason !== ""
+  }
+
+  const handleCloseConfirmModal = () => {
+    if (hasChanges()) {
+      confirmAction({
+        title: "¿Descartar cambios?",
+        description: "Tienes cambios sin guardar. ¿Estás seguro de que deseas salir?",
+        confirmText: "Descartar y Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setModifiedSettings({})
+          setUpdateReason("")
+          setShowConfirm(false)
+        }
+      })
+    } else {
+      setShowConfirm(false)
+    }
+  }
+
+  const handleCloseHistoryModal = () => {
+    setHistoryKey(null)
+  }
 
   useEffect(() => {
     fetchSettings()
@@ -95,34 +140,41 @@ export function AdminSettingsPage() {
   }
 
   const handleConfirmSave = async () => {
-    setSaving(true)
-    try {
-      const updates = Object.entries(modifiedSettings).map(([key, value]) => ({
-        key,
-        value,
-        reason: updateReason
-      }))
+    confirmAction({
+      title: "¿Guardar cambios?",
+      description: `Se aplicarán ${Object.keys(modifiedSettings).length} cambios en la configuración global.`,
+      confirmText: "Guardar Cambios",
+      onConfirm: async () => {
+        setSaving(true)
+        try {
+          const updates = Object.entries(modifiedSettings).map(([key, value]) => ({
+            key,
+            value,
+            reason: updateReason
+          }))
 
-      await api.updateSettingsBulk(updates)
-      
-      toast({
-        title: "Éxito",
-        description: "Configuraciones actualizadas correctamente",
-      })
-      
-      setModifiedSettings({})
-      setUpdateReason("")
-      setShowConfirm(false)
-      fetchSettings()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al actualizar configuraciones",
-        variant: "destructive"
-      })
-    } finally {
-      setSaving(false)
-    }
+          await api.updateSettingsBulk(updates)
+          
+          toast({
+            title: "Éxito",
+            description: "Configuraciones actualizadas correctamente",
+          })
+          
+          setModifiedSettings({})
+          setUpdateReason("")
+          setShowConfirm(false)
+          fetchSettings()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Error al actualizar configuraciones",
+            variant: "destructive"
+          })
+        } finally {
+          setSaving(false)
+        }
+      }
+    })
   }
 
   const viewHistory = async (key: string) => {
@@ -140,21 +192,28 @@ export function AdminSettingsPage() {
   }
 
   const handleRevert = async (historyId: string) => {
-    try {
-      await api.revertSetting(historyId)
-      toast({
-        title: "Éxito",
-        description: "Configuración revertida correctamente",
-      })
-      fetchSettings()
-      if (historyKey) viewHistory(historyKey)
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al revertir",
-        variant: "destructive"
-      })
-    }
+    confirmAction({
+      title: "¿Revertir configuración?",
+      description: "¿Estás seguro de que deseas revertir esta configuración a este valor anterior?",
+      confirmText: "Revertir",
+      onConfirm: async () => {
+        try {
+          await api.revertSetting(historyId)
+          toast({
+            title: "Éxito",
+            description: "Configuración revertida correctamente",
+          })
+          fetchSettings()
+          if (historyKey) viewHistory(historyKey)
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Error al revertir",
+            variant: "destructive"
+          })
+        }
+      }
+    })
   }
 
   if (loading) {
@@ -169,7 +228,8 @@ export function AdminSettingsPage() {
   const groups = Object.keys(settingsGrouped)
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
         <AdminPageHeader 
           title="Configuración"
           subtitle="Gestiona los parámetros globales del sistema"
@@ -282,8 +342,11 @@ export function AdminSettingsPage() {
           ))}
         </Tabs>
 
-        {/* Dialogo de Confirmación */}
-        <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        {/* Dialogo de Confirmación de Cambios */}
+        <Dialog open={showConfirm} onOpenChange={(open) => {
+          if (!open) handleCloseConfirmModal()
+          else setShowConfirm(true)
+        }}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -327,7 +390,7 @@ export function AdminSettingsPage() {
             </div>
 
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setShowConfirm(false)}>
+              <Button variant="ghost" onClick={handleCloseConfirmModal}>
                 Cancelar
               </Button>
               <Button onClick={handleConfirmSave} disabled={saving} className="font-bold">
@@ -343,7 +406,10 @@ export function AdminSettingsPage() {
         </Dialog>
 
         {/* Dialogo de Historial */}
-        <Dialog open={!!historyKey} onOpenChange={(open) => !open && setHistoryKey(null)}>
+        <Dialog open={!!historyKey} onOpenChange={(open) => {
+          if (!open) handleCloseHistoryModal()
+          else setHistoryKey(historyKey)
+        }}>
           <DialogContent className="sm:max-w-xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -408,12 +474,75 @@ export function AdminSettingsPage() {
             </ScrollArea>
 
             <DialogFooter>
-              <Button variant="secondary" onClick={() => setHistoryKey(null)}>
+              <Button variant="secondary" onClick={handleCloseHistoryModal}>
                 Cerrar
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Sistema Centralizado de Confirmación */}
+        <Dialog open={confirmConfig.open} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, open }))}>
+          <DialogContent className="sm:max-w-[400px] border-none shadow-2xl p-0 overflow-hidden rounded-2xl">
+            <div className={cn(
+              "h-2 w-full",
+              confirmConfig.variant === "destructive" ? "bg-red-500" : "bg-primary"
+            )} />
+            
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className={cn(
+                  "p-3 rounded-xl",
+                  confirmConfig.variant === "destructive" ? "bg-red-50" : "bg-primary/10"
+                )}>
+                  {confirmConfig.variant === "destructive" ? (
+                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                  ) : (
+                    <CheckCircle2 className="h-6 w-6 text-primary" />
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-foreground leading-none">
+                    {confirmConfig.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Confirmación de acción
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-muted/30 rounded-xl p-4 mb-6 border border-border/50">
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  {confirmConfig.description}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-11 font-bold rounded-xl border-border/50 hover:bg-muted/50"
+                  onClick={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant={confirmConfig.variant === "destructive" ? "destructive" : "default"}
+                  className={cn(
+                    "flex-1 h-11 font-bold rounded-xl shadow-lg transition-all active:scale-95",
+                    confirmConfig.variant !== "destructive" && "bg-primary hover:bg-primary/90 shadow-primary/20"
+                  )}
+                  onClick={() => {
+                    confirmConfig.onConfirm();
+                    setConfirmConfig(prev => ({ ...prev, open: false }));
+                  }}
+                >
+                  {confirmConfig.confirmText || "Confirmar"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+    </>
   )
 }

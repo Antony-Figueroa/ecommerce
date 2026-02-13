@@ -12,6 +12,8 @@ import {
   Activity,
   ArrowUpRight,
   ArrowDownRight,
+  CheckCircle2,
+  Trash2,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -36,7 +38,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-import { formatUSD, formatBS } from "@/lib/utils"
+import { formatUSD, formatBS, cn } from "@/lib/utils"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { motion } from "framer-motion"
@@ -67,11 +69,16 @@ interface InventoryAdjustment {
   createdBy: string
 }
 
-interface Provider {
+  interface Provider {
   id: string
   name: string
+  country: string
+  address: string
   phone?: string
   email?: string
+  _count?: {
+    batches: number
+  }
 }
 
 interface BatchProductItem {
@@ -129,8 +136,83 @@ export function AdminInventoryPage() {
       entryDate: new Date().toISOString().split("T")[0],
     }
   ])
-  const [providerForm, setProviderForm] = useState({ name: "", phone: "", email: "" })
+  const [providerForm, setProviderForm] = useState({ name: "", country: "", address: "", phone: "", email: "" })
   const [bcvRate, setBcvRate] = useState(0)
+  
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  const hasBatchChanges = () => {
+    return batchForm.code !== "" || batchForm.providerId !== "" || batchForm.notes !== "" || (batchItems.length > 0 && (batchItems[0].productId !== "" || batchItems[0].quantity !== 1 || batchItems.length > 1))
+  }
+
+  const hasProviderChanges = () => {
+    return providerForm.name !== "" || providerForm.country !== "" || providerForm.address !== "" || providerForm.phone !== "" || providerForm.email !== ""
+  }
+
+  const hasAdjustChanges = () => {
+    return adjustmentQuantity !== "" || adjustmentReason !== ""
+  }
+
+  const handleCloseBatchModal = () => {
+    if (hasBatchChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el lote. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setShowBatchDialog(false)
+          setBatchForm({ code: "", providerId: "", notes: "" })
+          setBatchItems([{
+            productId: "",
+            productName: "",
+            productCode: "",
+            quantity: 1,
+            soldQuantity: 0,
+            unitCostUSD: 0,
+            unitSaleUSD: 0,
+            entryDate: new Date().toISOString().split("T")[0],
+          }])
+        }
+      })
+    } else {
+      setShowBatchDialog(false)
+    }
+  }
+
+  const handleCloseProviderModal = () => {
+    if (hasProviderChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el proveedor. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setShowProviderDialog(false)
+          setProviderForm({ name: "", country: "", address: "", phone: "", email: "" })
+        }
+      })
+    } else {
+      setShowProviderDialog(false)
+    }
+  }
+
   const batchStorageKey = "adminBatchesLocal"
   const providerStorageKey = "adminProvidersLocal"
 
@@ -249,95 +331,142 @@ export function AdminInventoryPage() {
     }
   }
 
-  const handleCreateProvider = async () => {
-    if (!providerForm.name.trim()) return
-    try {
-      const payload = {
-        name: providerForm.name.trim(),
-        phone: providerForm.phone.trim() || undefined,
-        email: providerForm.email.trim() || undefined,
-      }
-      await api.createProvider(payload)
-    } catch (error: any) {
-      const localProviders = readLocalData<Provider[]>(providerStorageKey, [])
-      const newProvider: Provider = {
-        id: generateId(),
-        name: providerForm.name.trim(),
-        phone: providerForm.phone.trim() || undefined,
-        email: providerForm.email.trim() || undefined,
-      }
-      const updated = [...localProviders, newProvider]
-      writeLocalData(providerStorageKey, updated)
-      setProviders(updated)
+  const handleCloseAdjustModal = () => {
+    if (hasAdjustChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el ajuste. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setShowAdjustDialog(false)
+          setAdjustmentQuantity("")
+          setAdjustmentReason("")
+          setSelectedProduct(null)
+        }
+      })
+    } else {
+      setShowAdjustDialog(false)
+      setSelectedProduct(null)
     }
-    setProviderForm({ name: "", phone: "", email: "" })
-    setShowProviderDialog(false)
-    toast({
-      title: "Proveedor creado",
-      description: "El proveedor fue registrado correctamente.",
+  }
+
+  const handleCreateProvider = async () => {
+    if (!providerForm.name.trim() || !providerForm.country.trim() || !providerForm.address.trim()) {
+      toast({
+        title: "Campos requeridos",
+        description: "El nombre, país y dirección son obligatorios.",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    confirmAction({
+      title: "¿Registrar nuevo proveedor?",
+      description: `¿Estás seguro de que deseas registrar a "${providerForm.name}" como nuevo proveedor?`,
+      confirmText: "Registrar Proveedor",
+      onConfirm: async () => {
+        try {
+          const payload = {
+            name: providerForm.name.trim(),
+            country: providerForm.country.trim(),
+            address: providerForm.address.trim(),
+            phone: providerForm.phone.trim() || undefined,
+            email: providerForm.email.trim() || undefined,
+          }
+          await api.createProvider(payload)
+        } catch (error: any) {
+          const localProviders = readLocalData<Provider[]>(providerStorageKey, [])
+          const newProvider: Provider = {
+            id: generateId(),
+            name: providerForm.name.trim(),
+            country: providerForm.country.trim(),
+            address: providerForm.address.trim(),
+            phone: providerForm.phone.trim() || undefined,
+            email: providerForm.email.trim() || undefined,
+          }
+          const updated = [...localProviders, newProvider]
+          writeLocalData(providerStorageKey, updated)
+          setProviders(updated)
+        }
+        setProviderForm({ name: "", country: "", address: "", phone: "", email: "" })
+        setShowProviderDialog(false)
+        toast({
+          title: "Proveedor creado",
+          description: "El proveedor fue registrado correctamente.",
+        })
+      }
     })
   }
 
   const handleCreateBatch = async () => {
     if (!batchForm.code.trim()) return
-    const payload = {
-      code: batchForm.code.trim(),
-      providerId: batchForm.providerId || undefined,
-      notes: batchForm.notes.trim() || undefined,
-      products: batchItems.map(item => ({
-        productId: item.productId,
-        quantity: Number(item.quantity) || 0,
-        unitCostUSD: Number(item.unitCostUSD) || 0,
-        unitSaleUSD: Number(item.unitSaleUSD) || 0,
-        entryDate: item.entryDate,
-      }))
-    }
-    try {
-      await api.createBatch(payload)
-    } catch (error: any) {
-      const localBatches = readLocalData<Batch[]>(batchStorageKey, [])
-      const providerName = providers.find(p => p.id === batchForm.providerId)?.name
-      const newBatch: Batch = {
-        id: generateId(),
-        code: batchForm.code.trim(),
-        providerId: batchForm.providerId || undefined,
-        providerName,
-        createdAt: new Date().toISOString(),
-        notes: batchForm.notes.trim() || undefined,
-        products: batchItems.map(item => ({
-          ...item,
-          productName: item.productName,
-          productCode: item.productCode,
-          quantity: Number(item.quantity) || 0,
-          soldQuantity: Number(item.soldQuantity) || 0,
-          unitCostUSD: Number(item.unitCostUSD) || 0,
-          unitSaleUSD: Number(item.unitSaleUSD) || 0,
-          entryDate: item.entryDate,
-        }))
+
+    confirmAction({
+      title: "¿Crear nuevo lote?",
+      description: `¿Estás seguro de que deseas registrar el lote "${batchForm.code}" con ${batchItems.length} productos?`,
+      confirmText: "Crear Lote",
+      onConfirm: async () => {
+        const payload = {
+          code: batchForm.code.trim(),
+          providerId: batchForm.providerId || undefined,
+          notes: batchForm.notes.trim() || undefined,
+          products: batchItems.map(item => ({
+            productId: item.productId,
+            quantity: Number(item.quantity) || 0,
+            unitCostUSD: Number(item.unitCostUSD) || 0,
+            unitSaleUSD: Number(item.unitSaleUSD) || 0,
+            entryDate: item.entryDate,
+          }))
+        }
+        try {
+          await api.createBatch(payload)
+        } catch (error: any) {
+          const localBatches = readLocalData<Batch[]>(batchStorageKey, [])
+          const providerName = providers.find(p => p.id === batchForm.providerId)?.name
+          const newBatch: Batch = {
+            id: generateId(),
+            code: batchForm.code.trim(),
+            providerId: batchForm.providerId || undefined,
+            providerName,
+            createdAt: new Date().toISOString(),
+            notes: batchForm.notes.trim() || undefined,
+            products: batchItems.map(item => ({
+              ...item,
+              productName: item.productName,
+              productCode: item.productCode,
+              quantity: Number(item.quantity) || 0,
+              soldQuantity: Number(item.soldQuantity) || 0,
+              unitCostUSD: Number(item.unitCostUSD) || 0,
+              unitSaleUSD: Number(item.unitSaleUSD) || 0,
+              entryDate: item.entryDate,
+            }))
+          }
+          const updated = [newBatch, ...localBatches]
+          writeLocalData(batchStorageKey, updated)
+          setBatches(updated)
+        }
+        setShowBatchDialog(false)
+        setBatchForm({ code: "", providerId: "", notes: "" })
+        setBatchItems([
+          {
+            productId: "",
+            productName: "",
+            productCode: "",
+            quantity: 1,
+            soldQuantity: 0,
+            unitCostUSD: 0,
+            unitSaleUSD: 0,
+            entryDate: new Date().toISOString().split("T")[0],
+          }
+        ])
+        toast({
+          title: "Lote creado",
+          description: "El lote fue registrado correctamente.",
+        })
+        fetchBatches()
       }
-      const updated = [newBatch, ...localBatches]
-      writeLocalData(batchStorageKey, updated)
-      setBatches(updated)
-    }
-    setShowBatchDialog(false)
-    setBatchForm({ code: "", providerId: "", notes: "" })
-    setBatchItems([
-      {
-        productId: "",
-        productName: "",
-        productCode: "",
-        quantity: 1,
-        soldQuantity: 0,
-        unitCostUSD: 0,
-        unitSaleUSD: 0,
-        entryDate: new Date().toISOString().split("T")[0],
-      }
-    ])
-    toast({
-      title: "Lote creado",
-      description: "El lote fue registrado correctamente.",
     })
-    fetchBatches()
   }
 
   const addBatchItem = () => {
@@ -380,9 +509,22 @@ export function AdminInventoryPage() {
   const toggleDiscount = (index: number) => {
     if (!selectedBatch) return
     const current = selectedBatch.products[index]
-    updateSelectedBatchItem(index, {
-      discounted: !current.discounted,
-      discountPercent: current.discounted ? 0 : (current.discountPercent || 10)
+    const action = !current.discounted ? "aplicar" : "quitar"
+    
+    confirmAction({
+      title: `¿${action.charAt(0).toUpperCase() + action.slice(1)} descuento?`,
+      description: `¿Estás seguro de que deseas ${action} el descuento para "${current.productName}"?`,
+      confirmText: action.charAt(0).toUpperCase() + action.slice(1) + " Descuento",
+      onConfirm: () => {
+        updateSelectedBatchItem(index, {
+          discounted: !current.discounted,
+          discountPercent: current.discounted ? 0 : (current.discountPercent || 10)
+        })
+        toast({
+          title: "Descuento actualizado",
+          description: `Se ha ${current.discounted ? "quitado" : "aplicado"} el descuento a ${current.productName}.`,
+        })
+      }
     })
   }
 
@@ -416,34 +558,44 @@ export function AdminInventoryPage() {
     if (!selectedProduct || !adjustmentQuantity || parseInt(adjustmentQuantity) <= 0) return
 
     const quantity = parseInt(adjustmentQuantity)
-    try {
-      let newStock: number
-      if (adjustmentType === "entry") {
-        newStock = selectedProduct.currentStock + quantity
-      } else if (adjustmentType === "exit") {
-        newStock = Math.max(0, selectedProduct.currentStock - quantity)
-      } else {
-        newStock = quantity
-      }
+    const typeLabel = adjustmentType === "entry" ? "entrada" : adjustmentType === "exit" ? "salida" : "ajuste"
 
-      await api.updateProduct(selectedProduct.id, { stock: newStock })
-      
-      await fetchInventory()
-      setShowAdjustDialog(false)
-      setAdjustmentQuantity("")
-      setAdjustmentReason("")
-      toast({
-        title: "Inventario Optimizado",
-        description: `Stock de ${selectedProduct.productName} actualizado a ${newStock} unidades.`,
-      })
-    } catch (error) {
-      console.error("Error updating stock:", error)
-      toast({
-        title: "Fallo en la Operación",
-        description: "No se pudo procesar el ajuste de inventario.",
-        variant: "destructive",
-      })
-    }
+    confirmAction({
+      title: `¿Confirmar ${typeLabel}?`,
+      description: `¿Estás seguro de que deseas realizar una ${typeLabel} de ${quantity} unidades para "${selectedProduct.productName}"?`,
+      confirmText: "Confirmar Ajuste",
+      variant: adjustmentType === "exit" ? "destructive" : "default",
+      onConfirm: async () => {
+        try {
+          let newStock: number
+          if (adjustmentType === "entry") {
+            newStock = selectedProduct.currentStock + quantity
+          } else if (adjustmentType === "exit") {
+            newStock = Math.max(0, selectedProduct.currentStock - quantity)
+          } else {
+            newStock = quantity
+          }
+
+          await api.updateProduct(selectedProduct.id, { stock: newStock })
+          
+          await fetchInventory()
+          setShowAdjustDialog(false)
+          setAdjustmentQuantity("")
+          setAdjustmentReason("")
+          toast({
+            title: "Inventario Optimizado",
+            description: `Stock de ${selectedProduct.productName} actualizado a ${newStock} unidades.`,
+          })
+        } catch (error) {
+          console.error("Error updating stock:", error)
+          toast({
+            title: "Fallo en la Operación",
+            description: "No se pudo procesar el ajuste de inventario.",
+            variant: "destructive",
+          })
+        }
+      }
+    })
   }
 
   const filteredInventory = useMemo(() => {
@@ -778,28 +930,93 @@ export function AdminInventoryPage() {
                 </div>
                 <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
                   {batches.map(batch => (
-                    <button
-                      key={batch.id}
-                      onClick={() => setSelectedBatch(batch)}
-                      className={`w-full text-left p-4 rounded-xl border transition-all ${
-                        selectedBatch?.id === batch.id ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40"
-                      }`}
-                      aria-label={`Seleccionar lote ${batch.code} del proveedor ${batch.providerName || "desconocido"}`}
-                      aria-pressed={selectedBatch?.id === batch.id}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-bold text-slate-800">{batch.code}</p>
-                        <span className="text-[10px] uppercase tracking-widest text-slate-400">
-                          {new Date(batch.createdAt).toLocaleDateString()}
-                        </span>
+                    <div key={batch.id} className="relative group">
+                      <button
+                        onClick={() => setSelectedBatch(batch)}
+                        className={`w-full text-left p-4 rounded-xl border transition-all ${
+                          selectedBatch?.id === batch.id ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40"
+                        }`}
+                        aria-label={`Seleccionar lote ${batch.code} del proveedor ${batch.providerName || "desconocido"}`}
+                        aria-pressed={selectedBatch?.id === batch.id}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-slate-800">{batch.code}</p>
+                          <span className="text-[10px] uppercase tracking-widest text-slate-400">
+                            {new Date(batch.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Proveedor: {batch.providerName || "Sin proveedor"}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Productos: {batch.products?.length || 0}
+                        </p>
+                      </button>
+
+                      {/* Botón de eliminar con restricción */}
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {batch.products?.some(p => p.soldQuantity > 0) ? (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="cursor-not-allowed">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-muted-foreground/50"
+                                    disabled
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="bg-destructive text-destructive-foreground border-none">
+                                <p className="text-xs font-bold flex items-center gap-1">
+                                  No se puede eliminar: tiene unidades vendidas
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              confirmAction({
+                                title: "¿Eliminar lote?",
+                                description: `¿Estás seguro de que deseas eliminar el lote "${batch.code}"? Esta acción no se puede deshacer.`,
+                                confirmText: "Eliminar",
+                                variant: "destructive",
+                                onConfirm: async () => {
+                                  try {
+                                    await api.deleteBatch(batch.id)
+                                    toast({
+                                      title: "Lote eliminado",
+                                      description: "El lote fue eliminado correctamente.",
+                                    })
+                                    if (selectedBatch?.id === batch.id) {
+                                      setSelectedBatch(null)
+                                    }
+                                    fetchBatches()
+                                    fetchInventory()
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "No se pudo eliminar el lote.",
+                                      variant: "destructive",
+                                    })
+                                  }
+                                }
+                              })
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Proveedor: {batch.providerName || "Sin proveedor"}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Productos: {batch.products?.length || 0}
-                      </p>
-                    </button>
+                    </div>
                   ))}
                   {batches.length === 0 && (
                     <div className="p-8 text-center text-sm text-slate-400">
@@ -901,7 +1118,10 @@ export function AdminInventoryPage() {
         </div>
 
         {/* Adjustment Dialog - Warm Style */}
-        <Dialog open={showAdjustDialog} onOpenChange={setShowAdjustDialog}>
+        <Dialog open={showAdjustDialog} onOpenChange={(open) => {
+          if (!open) handleCloseAdjustModal()
+          else setShowAdjustDialog(true)
+        }}>
           <DialogContent className="rounded-3xl border-0 shadow-2xl p-8 sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
@@ -956,7 +1176,7 @@ export function AdminInventoryPage() {
               </div>
             )}
             <DialogFooter className="gap-3">
-              <Button variant="outline" onClick={() => setShowAdjustDialog(false)} className="rounded-xl border-slate-200 font-bold text-xs uppercase tracking-wider h-11 px-6">
+              <Button variant="outline" onClick={handleCloseAdjustModal} className="rounded-xl border-slate-200 font-bold text-xs uppercase tracking-wider h-11 px-6">
                 Cancelar
               </Button>
               <Button onClick={handleAdjustment} className="rounded-xl bg-primary text-white hover:bg-primary/90 font-bold text-xs uppercase tracking-wider h-11 px-8 shadow-lg shadow-primary/20">
@@ -1037,7 +1257,10 @@ export function AdminInventoryPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
+        <Dialog open={showBatchDialog} onOpenChange={(open) => {
+          if (!open) handleCloseBatchModal()
+          else setShowBatchDialog(true)
+        }}>
           <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Registrar lote</DialogTitle>
@@ -1068,9 +1291,59 @@ export function AdminInventoryPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {providers.map((provider) => (
-                        <SelectItem key={provider.id} value={provider.id}>
-                          {provider.name}
-                        </SelectItem>
+                        <div key={provider.id} className="flex items-center justify-between group">
+                          <SelectItem value={provider.id} className="flex-1">
+                            {provider.name}
+                          </SelectItem>
+                          {provider._count && provider._count.batches > 0 ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="px-2 opacity-50 cursor-not-allowed">
+                                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="bg-destructive text-destructive-foreground border-none">
+                                  <p className="text-[10px] font-bold">No se puede eliminar: tiene lotes asociados</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                confirmAction({
+                                  title: "¿Eliminar proveedor?",
+                                  description: `¿Estás seguro de que deseas eliminar al proveedor "${provider.name}"? Esta acción no se puede deshacer.`,
+                                  confirmText: "Eliminar",
+                                  variant: "destructive",
+                                  onConfirm: async () => {
+                                    try {
+                                      await api.deleteProvider(provider.id)
+                                      toast({
+                                        title: "Proveedor eliminado",
+                                        description: "El proveedor fue eliminado correctamente.",
+                                      })
+                                      fetchProviders()
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "No se pudo eliminar el proveedor.",
+                                        variant: "destructive",
+                                      })
+                                    }
+                                  }
+                                })
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>
@@ -1179,7 +1452,7 @@ export function AdminInventoryPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowBatchDialog(false)}>
+              <Button variant="outline" onClick={handleCloseBatchModal}>
                 Cancelar
               </Button>
               <Button onClick={handleCreateBatch}>
@@ -1189,7 +1462,10 @@ export function AdminInventoryPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showProviderDialog} onOpenChange={setShowProviderDialog}>
+        <Dialog open={showProviderDialog} onOpenChange={(open) => {
+          if (!open) handleCloseProviderModal()
+          else setShowProviderDialog(true)
+        }}>
           <DialogContent className="sm:max-w-[520px]">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Nuevo proveedor</DialogTitle>
@@ -1198,40 +1474,111 @@ export function AdminInventoryPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Nombre *</label>
-                <Input
-                  value={providerForm.name}
-                  onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
-                  placeholder="Nombre del proveedor"
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Nombre *</label>
+                  <Input
+                    value={providerForm.name}
+                    onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
+                    placeholder="Nombre del proveedor"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">País *</label>
+                  <Input
+                    value={providerForm.country}
+                    onChange={(e) => setProviderForm({ ...providerForm, country: e.target.value })}
+                    placeholder="Ej: Venezuela"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Dirección *</label>
+                <Textarea
+                  value={providerForm.address}
+                  onChange={(e) => setProviderForm({ ...providerForm, address: e.target.value })}
+                  placeholder="Dirección fiscal o de oficina"
+                  className="min-h-[80px]"
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Teléfono</label>
-                <Input
-                  value={providerForm.phone}
-                  onChange={(e) => setProviderForm({ ...providerForm, phone: e.target.value })}
-                  placeholder="Opcional"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Correo</label>
-                <Input
-                  type="email"
-                  value={providerForm.email}
-                  onChange={(e) => setProviderForm({ ...providerForm, email: e.target.value })}
-                  placeholder="Opcional"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Teléfono</label>
+                  <Input
+                    value={providerForm.phone}
+                    onChange={(e) => setProviderForm({ ...providerForm, phone: e.target.value })}
+                    placeholder="Opcional"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Correo</label>
+                  <Input
+                    type="email"
+                    value={providerForm.email}
+                    onChange={(e) => setProviderForm({ ...providerForm, email: e.target.value })}
+                    placeholder="Opcional"
+                  />
+                </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowProviderDialog(false)}>
+              <Button variant="outline" onClick={handleCloseProviderModal}>
                 Cancelar
               </Button>
               <Button onClick={handleCreateProvider}>
                 Guardar proveedor
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={confirmConfig.open} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, open }))}>
+          <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className={cn(
+                "h-16 w-16 rounded-full flex items-center justify-center animate-in zoom-in-50 duration-300",
+                confirmConfig.variant === "destructive" 
+                  ? "bg-destructive/10 text-destructive" 
+                  : "bg-primary/10 text-primary"
+              )}>
+                {confirmConfig.variant === "destructive" ? (
+                  <AlertTriangle className="h-8 w-8" />
+                ) : (
+                  <CheckCircle2 className="h-8 w-8" />
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <DialogTitle className="text-xl font-black">{confirmConfig.title}</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground font-medium px-2">
+                  {confirmConfig.description}
+                </DialogDescription>
+              </div>
+
+              <div className="flex w-full gap-3 mt-4">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 rounded-xl font-bold h-11"
+                  onClick={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant={confirmConfig.variant || "default"}
+                  className={cn(
+                    "flex-1 rounded-xl font-bold h-11 shadow-sm",
+                    confirmConfig.variant !== "destructive" && "bg-primary hover:bg-primary/90"
+                  )}
+                  onClick={() => {
+                    confirmConfig.onConfirm()
+                    setConfirmConfig(prev => ({ ...prev, open: false }))
+                  }}
+                >
+                  {confirmConfig.confirmText || "Confirmar"}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

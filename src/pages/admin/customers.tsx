@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   AlertCircle,
   Clock,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -31,6 +33,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { api } from "@/lib/api"
 import {
   Dialog,
@@ -77,6 +85,55 @@ export function AdminCustomersPage() {
     phone: "",
   })
 
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  const hasChanges = () => {
+    return formData.name !== "" || 
+           formData.email !== "" || 
+           formData.password !== "" || 
+           formData.username !== "" || 
+           formData.phone !== ""
+  }
+
+  const handleCloseModal = () => {
+    if (hasChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el formulario. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setIsAddingAdmin(false)
+          setFormData({
+            name: "",
+            email: "",
+            password: "",
+            username: "",
+            phone: "",
+          })
+        }
+      })
+    } else {
+      setIsAddingAdmin(false)
+    }
+  }
+
   useEffect(() => {
     fetchCustomers()
   }, [])
@@ -104,77 +161,108 @@ export function AdminCustomersPage() {
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      setNewAdminLoading(true)
-      await api.createAdmin(formData)
-      toast({
-        title: "Éxito",
-        description: "Administrador creado correctamente",
-      })
-      setIsAddingAdmin(false)
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        username: "",
-        phone: "",
-      })
-      fetchCustomers()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al crear administrador",
-        variant: "destructive",
-      })
-    } finally {
-      setNewAdminLoading(false)
-    }
+    
+    confirmAction({
+      title: "¿Crear nuevo administrador?",
+      description: `¿Estás seguro de que deseas otorgar permisos de administrador a ${formData.name || formData.email}?`,
+      confirmText: "Crear Administrador",
+      onConfirm: async () => {
+        try {
+          setNewAdminLoading(true)
+          await api.createAdmin(formData)
+          toast({
+            title: "Éxito",
+            description: "Administrador creado correctamente",
+          })
+          setIsAddingAdmin(false)
+          setFormData({
+            name: "",
+            email: "",
+            password: "",
+            username: "",
+            phone: "",
+          })
+          fetchCustomers()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Error al crear administrador",
+            variant: "destructive",
+          })
+        } finally {
+          setNewAdminLoading(false)
+        }
+      }
+    })
   }
 
   const toggleCustomerStatus = async (customerId: string, currentStatus: boolean) => {
-    try {
-      setUpdatingId(customerId)
-      await api.updateCustomer(customerId, { isActive: !currentStatus })
-      setCustomers(prev => 
-        prev.map(c => c.id === customerId ? { ...c, isActive: !currentStatus } : c)
-      )
-      toast({
-        title: "Estado actualizado",
-        description: `Usuario ${!currentStatus ? 'activado' : 'desactivado'} correctamente`,
-      })
-    } catch (error) {
-      console.error("Error toggling customer status:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado del usuario",
-        variant: "destructive",
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    const customer = customers.find(c => c.id === customerId)
+    if (!customer) return
+
+    confirmAction({
+      title: currentStatus ? "¿Desactivar cuenta?" : "¿Activar cuenta?",
+      description: currentStatus 
+        ? `¿Estás seguro de que deseas desactivar la cuenta de ${customer.name || customer.email}? El usuario no podrá iniciar sesión.`
+        : `¿Deseas activar la cuenta de ${customer.name || customer.email}?`,
+      confirmText: currentStatus ? "Desactivar" : "Activar",
+      variant: currentStatus ? "destructive" : "default",
+      onConfirm: async () => {
+        try {
+          setUpdatingId(customerId)
+          await api.updateCustomer(customerId, { isActive: !currentStatus })
+          setCustomers(prev => 
+            prev.map(c => c.id === customerId ? { ...c, isActive: !currentStatus } : c)
+          )
+          toast({
+            title: "Estado actualizado",
+            description: `Usuario ${!currentStatus ? 'activado' : 'desactivado'} correctamente`,
+          })
+        } catch (error) {
+          console.error("Error toggling customer status:", error)
+          toast({
+            title: "Error",
+            description: "No se pudo actualizar el estado del usuario",
+            variant: "destructive",
+          })
+        } finally {
+          setUpdatingId(null)
+        }
+      }
+    })
   }
 
   const changeUserRole = async (customerId: string, newRole: string) => {
-    try {
-      setUpdatingId(customerId)
-      // Assuming api.updateCustomer supports role update or there's a specific endpoint
-      await api.updateCustomer(customerId, { role: newRole } as any)
-      setCustomers(prev => 
-        prev.map(c => c.id === customerId ? { ...c, role: newRole } : c)
-      )
-      toast({
-        title: "Rol actualizado",
-        description: `El usuario ahora es ${newRole}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el rol",
-        variant: "destructive",
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    const customer = customers.find(c => c.id === customerId)
+    if (!customer) return
+
+    confirmAction({
+      title: "¿Cambiar rol de usuario?",
+      description: `¿Estás seguro de que deseas cambiar el rol de ${customer.name || customer.email} a ${newRole === 'ADMIN' ? 'Administrador' : 'Cliente'}?`,
+      confirmText: "Cambiar Rol",
+      onConfirm: async () => {
+        try {
+          setUpdatingId(customerId)
+          // Assuming api.updateCustomer supports role update or there's a specific endpoint
+          await api.updateCustomer(customerId, { role: newRole } as any)
+          setCustomers(prev => 
+            prev.map(c => c.id === customerId ? { ...c, role: newRole } : c)
+          )
+          toast({
+            title: "Rol actualizado",
+            description: `El usuario ahora es ${newRole === 'ADMIN' ? 'Administrador' : 'Cliente'}`,
+          })
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "No se pudo actualizar el rol",
+            variant: "destructive",
+          })
+        } finally {
+          setUpdatingId(null)
+        }
+      }
+    })
   }
 
   const filteredData = useMemo(() => {
@@ -327,19 +415,40 @@ export function AdminCustomersPage() {
                         <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuLabel>Gestión</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => toggleCustomerStatus(customer.id, customer.isActive)}>
-                            {customer.isActive ? (
-                              <>
-                                <X className="h-4 w-4 mr-2 text-destructive" /> 
-                                <span className="text-destructive">Desactivar Cuenta</span>
-                              </>
-                            ) : (
-                              <>
-                                <Check className="h-4 w-4 mr-2 text-green-500" />
-                                <span className="text-green-500">Activar Cuenta</span>
-                              </>
-                            )}
-                          </DropdownMenuItem>
+                          {customer.isActive && customer._count?.sales > 0 ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="w-full">
+                                    <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
+                                      <X className="h-4 w-4 mr-2 text-destructive" /> 
+                                      <span className="text-destructive">Desactivar Cuenta</span>
+                                    </DropdownMenuItem>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="bg-destructive text-destructive-foreground border-none">
+                                  <p className="text-xs font-bold flex items-center gap-1">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    No se puede desactivar: tiene pedidos asociados
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <DropdownMenuItem onClick={() => toggleCustomerStatus(customer.id, customer.isActive)}>
+                              {customer.isActive ? (
+                                <>
+                                  <X className="h-4 w-4 mr-2 text-destructive" /> 
+                                  <span className="text-destructive">Desactivar Cuenta</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-4 w-4 mr-2 text-green-500" />
+                                  <span className="text-green-500">Activar Cuenta</span>
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          )}
                           
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel>Cambiar Rol</DropdownMenuLabel>
@@ -494,7 +603,10 @@ export function AdminCustomersPage() {
       </div>
 
       {/* Create Admin Dialog */}
-      <Dialog open={isAddingAdmin} onOpenChange={setIsAddingAdmin}>
+      <Dialog open={isAddingAdmin} onOpenChange={(open) => {
+        if (!open) handleCloseModal()
+        else setIsAddingAdmin(true)
+      }}>
         <DialogContent className="sm:max-w-[425px] rounded-3xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black flex items-center gap-2">
@@ -564,18 +676,78 @@ export function AdminCustomersPage() {
                 required 
               />
             </div>
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="ghost" onClick={() => setIsAddingAdmin(false)} className="rounded-xl font-bold">
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={newAdminLoading} className="rounded-xl font-bold px-8 shadow-lg shadow-primary/20">
-                {newAdminLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                Crear Administrador
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
+          <DialogFooter className="gap-2 sm:gap-0 pt-4">
+            <Button variant="outline" onClick={handleCloseModal} className="rounded-xl font-bold">
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCreateAdmin} 
+              disabled={newAdminLoading}
+              className="rounded-xl font-bold bg-primary hover:bg-primary/90"
+            >
+              {newAdminLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creando...
+                </>
+              ) : (
+                "Crear Administrador"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+
+    {/* Confirmation Dialog */}
+    <Dialog open={confirmConfig.open} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, open }))}>
+      <DialogContent className="sm:max-w-[400px] rounded-3xl p-6">
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className={cn(
+            "h-16 w-16 rounded-full flex items-center justify-center animate-in zoom-in-50 duration-300",
+            confirmConfig.variant === "destructive" 
+              ? "bg-destructive/10 text-destructive" 
+              : "bg-primary/10 text-primary"
+          )}>
+            {confirmConfig.variant === "destructive" ? (
+              <AlertTriangle className="h-8 w-8" />
+            ) : (
+              <CheckCircle2 className="h-8 w-8" />
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <DialogTitle className="text-xl font-black">{confirmConfig.title}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground font-medium px-2">
+              {confirmConfig.description}
+            </DialogDescription>
+          </div>
+
+          <div className="flex w-full gap-3 mt-4">
+            <Button 
+              variant="outline" 
+              className="flex-1 rounded-xl font-bold h-11"
+              onClick={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant={confirmConfig.variant || "default"}
+              className={cn(
+                "flex-1 rounded-xl font-bold h-11 shadow-sm",
+                confirmConfig.variant !== "destructive" && "bg-primary hover:bg-primary/90"
+              )}
+              onClick={() => {
+                confirmConfig.onConfirm()
+                setConfirmConfig(prev => ({ ...prev, open: false }))
+              }}
+            >
+              {confirmConfig.confirmText || "Confirmar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </div>
+)
 }

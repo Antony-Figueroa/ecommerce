@@ -9,8 +9,9 @@ import {
   Truck,
   User,
   X,
-  Check,
+  CheckCircle,
   AlertTriangle,
+  Info,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -21,8 +22,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
@@ -33,6 +41,9 @@ interface Provider {
   address: string | null
   createdAt: string
   updatedAt: string
+  _count?: {
+    batches: number
+  }
 }
 
 interface ProviderFormData {
@@ -61,6 +72,50 @@ export function AdminProvidersPage() {
     country: "",
     address: "",
   })
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  const hasChanges = () => {
+    if (!editingProvider) {
+      return formData.name !== "" || formData.country !== "" || formData.address !== ""
+    }
+    return formData.name !== (editingProvider.name || "") ||
+           formData.country !== (editingProvider.country || "") ||
+           formData.address !== (editingProvider.address || "")
+  }
+
+  const handleCloseModal = () => {
+    if (hasChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar. Si sales ahora, perderás toda la información ingresada.",
+        confirmText: "Salir sin guardar",
+        variant: "destructive",
+        onConfirm: () => {
+          setShowAddDialog(false)
+          resetForm()
+        }
+      })
+    } else {
+      setShowAddDialog(false)
+      resetForm()
+    }
+  }
 
   useEffect(() => {
     fetchProviders()
@@ -122,35 +177,44 @@ export function AdminProvidersPage() {
   const handleSave = async () => {
     if (!validateForm()) return
 
-    setSaving(true)
-    try {
-      if (editingProvider) {
-        await api.updateProvider(editingProvider.id, formData)
-        toast({
-          title: "Éxito",
-          description: "Proveedor actualizado correctamente",
-        })
-      } else {
-        await api.createProvider(formData)
-        toast({
-          title: "Éxito",
-          description: "Proveedor creado correctamente",
-        })
-      }
+    confirmAction({
+      title: editingProvider ? "¿Actualizar proveedor?" : "¿Crear proveedor?",
+      description: editingProvider 
+        ? `¿Estás seguro de que deseas guardar los cambios en "${formData.name}"?`
+        : `¿Deseas registrar al proveedor "${formData.name}"?`,
+      confirmText: editingProvider ? "Guardar cambios" : "Crear proveedor",
+      onConfirm: async () => {
+        setSaving(true)
+        try {
+          if (editingProvider) {
+            await api.updateProvider(editingProvider.id, formData)
+            toast({
+              title: "Éxito",
+              description: "Proveedor actualizado correctamente",
+            })
+          } else {
+            await api.createProvider(formData)
+            toast({
+              title: "Éxito",
+              description: "Proveedor creado correctamente",
+            })
+          }
 
-      setShowAddDialog(false)
-      resetForm()
-      fetchProviders()
-    } catch (error: any) {
-      console.error("Error saving provider:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Error al guardar el proveedor",
-        variant: "destructive",
-      })
-    } finally {
-      setSaving(false)
-    }
+          setShowAddDialog(false)
+          resetForm()
+          fetchProviders()
+        } catch (error: any) {
+          console.error("Error saving provider:", error)
+          toast({
+            title: "Error",
+            description: error.message || "Error al guardar el proveedor",
+            variant: "destructive",
+          })
+        } finally {
+          setSaving(false)
+        }
+      }
+    })
   }
 
   const handleEdit = (provider: Provider) => {
@@ -165,23 +229,32 @@ export function AdminProvidersPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Estás seguro de eliminar este proveedor?")) return
+    const provider = providers.find(p => p.id === id)
+    if (!provider) return
 
-    try {
-      await api.deleteProvider(id)
-      toast({
-        title: "Éxito",
-        description: "Proveedor eliminado correctamente",
-      })
-      fetchProviders()
-    } catch (error: any) {
-      console.error("Error deleting provider:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Error al eliminar el proveedor",
-        variant: "destructive",
-      })
-    }
+    confirmAction({
+      title: "¿Eliminar proveedor?",
+      description: `¿Estás seguro de que deseas eliminar a "${provider.name}"? Esta acción no se puede deshacer.`,
+      confirmText: "Eliminar",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await api.deleteProvider(id)
+          toast({
+            title: "Éxito",
+            description: "Proveedor eliminado correctamente",
+          })
+          fetchProviders()
+        } catch (error: any) {
+          console.error("Error deleting provider:", error)
+          toast({
+            title: "Error",
+            description: error.message || "Error al eliminar el proveedor",
+            variant: "destructive",
+          })
+        }
+      }
+    })
   }
 
   const filteredProviders = providers.filter((provider) => {
@@ -250,14 +323,40 @@ export function AdminProvidersPage() {
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => handleDelete(provider.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  
+                  {provider._count && provider._count.batches > 0 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-not-allowed">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground/50"
+                              disabled
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-destructive text-destructive-foreground border-none">
+                          <p className="text-xs font-bold flex items-center gap-1">
+                            <Info className="h-3 w-3" />
+                            No se puede eliminar: tiene lotes asociados
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => handleDelete(provider.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -286,10 +385,21 @@ export function AdminProvidersPage() {
         )}
       </div>
 
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={showAddDialog} onOpenChange={(open) => {
+        if (!open) handleCloseModal()
+        else setShowAddDialog(true)
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingProvider ? "Editar Proveedor" : "Nuevo Proveedor"}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>{editingProvider ? "Editar Proveedor" : "Nuevo Proveedor"}</DialogTitle>
+              <Button variant="ghost" size="icon" onClick={handleCloseModal}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <DialogDescription>
+              Completa los datos del proveedor para gestionar tus productos.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -328,11 +438,47 @@ export function AdminProvidersPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} disabled={saving}>
+            <Button variant="outline" onClick={handleCloseModal} disabled={saving}>
               Cancelar
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Guardando..." : editingProvider ? "Guardar Cambios" : "Crear Proveedor"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {confirmConfig.variant === "destructive" ? (
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              ) : (
+                <CheckCircle className="h-5 w-5 text-primary" />
+              )}
+              {confirmConfig.title}
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              {confirmConfig.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant={confirmConfig.variant || "default"}
+              onClick={() => {
+                confirmConfig.onConfirm();
+                setConfirmConfig({ ...confirmConfig, open: false });
+              }}
+            >
+              {confirmConfig.confirmText || "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>

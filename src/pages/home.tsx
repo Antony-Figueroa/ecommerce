@@ -5,7 +5,6 @@ import { ArrowRight, Shield, Phone, Loader2, Zap, Award, CheckCircle2 } from "lu
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { ProductCard } from "@/components/shop/product-card"
 import { ProductCarousel } from "@/components/shop/ProductCarousel"
 import { GoalSelector } from "@/components/shop/goal-selector"
 import { Hero, FeatureBanner } from "@/components/shared/hero"
@@ -27,12 +26,6 @@ const staggerContainer = {
       delayChildren: 0.1
     }
   }
-};
-
-const scaleIn = {
-  initial: { opacity: 0, scale: 0.98 },
-  animate: { opacity: 1, scale: 1 },
-  transition: { duration: 0.5, ease: "easeOut" }
 };
 
 // Componente de sección optimizado

@@ -154,6 +154,112 @@ export function AdminOrdersPage() {
   const [adminNotes, setAdminNotes] = useState("")
   const [isProcessingProof, setIsProcessingProof] = useState(false)
 
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  const hasAcceptanceChanges = () => {
+    return initialPaymentUSD !== "0" || installmentCount !== 0 || customInstallments.length > 0 || isFinancingEnabled
+  }
+
+  const hasPaymentChanges = () => {
+    return paymentAmount !== "" || paymentReason !== ""
+  }
+
+  const hasDeliveryChanges = () => {
+    return deliveryReason !== ""
+  }
+
+  const hasRejectionChanges = () => {
+    return rejectionReason !== ""
+  }
+
+  const handleCloseAcceptanceModal = () => {
+    if (hasAcceptanceChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en la configuración del pedido. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setAcceptanceModalOpen(false)
+          setInitialPaymentUSD("0")
+          setInstallmentCount(0)
+          setCustomInstallments([])
+          setIsFinancingEnabled(false)
+        }
+      })
+    } else {
+      setAcceptanceModalOpen(false)
+    }
+  }
+
+  const handleClosePaymentModal = () => {
+    if (hasPaymentChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el registro de pago. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setPaymentModalOpen(false)
+          setPaymentAmount("")
+          setPaymentReason("")
+        }
+      })
+    } else {
+      setPaymentModalOpen(false)
+    }
+  }
+
+  const handleCloseDeliveryModal = () => {
+    if (hasDeliveryChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el estado de entrega. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setDeliveryModalOpen(false)
+          setDeliveryReason("")
+        }
+      })
+    } else {
+      setDeliveryModalOpen(false)
+    }
+  }
+
+  const handleCloseRejectionModal = () => {
+    if (hasRejectionChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar en el motivo de rechazo. ¿Estás seguro de que deseas salir?",
+        confirmText: "Salir",
+        variant: "destructive",
+        onConfirm: () => {
+          setRejectionModalOpen(false)
+          setRejectionReason("")
+        }
+      })
+    } else {
+      setRejectionModalOpen(false)
+    }
+  }
+
   useEffect(() => {
     if (selectedOrder) {
       refreshPaymentStatus(selectedOrder.id)
@@ -263,24 +369,31 @@ export function AdminOrdersPage() {
       return
     }
 
-    setUpdatingId(selectedOrder.id)
-    try {
-      await api.createInstallmentPlan(selectedOrder.id, newInstallments)
-      toast({
-        title: "Plan creado",
-        description: "El plan de cuotas ha sido creado exitosamente",
-      })
-      setAcceptanceModalOpen(false)
-      refreshPaymentStatus(selectedOrder.id)
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo crear el plan de cuotas",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    confirmAction({
+      title: "¿Crear plan de cuotas?",
+      description: `¿Estás seguro de que deseas crear un plan de ${newInstallments.length} cuotas para este pedido?`,
+      confirmText: "Crear Plan",
+      onConfirm: async () => {
+        setUpdatingId(selectedOrder.id)
+        try {
+          await api.createInstallmentPlan(selectedOrder.id, newInstallments)
+          toast({
+            title: "Plan creado",
+            description: "El plan de cuotas ha sido creado exitosamente",
+          })
+          setAcceptanceModalOpen(false)
+          refreshPaymentStatus(selectedOrder.id)
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudo crear el plan de cuotas",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingId(null)
+        }
+      }
+    })
   }
 
   const formatStatus = (status: string) => {
@@ -421,26 +534,33 @@ export function AdminOrdersPage() {
       })) : []
     } : undefined
 
-    setUpdatingId(acceptanceOrder.id)
-    try {
-      await api.updateSaleStatus(acceptanceOrder.id, 'ACCEPTED', undefined, financing)
-      toast({
-        title: "Pedido Aceptado",
-        description: isFinancingEnabled 
-          ? `El pedido ha sido aceptado con un plan de ${customInstallments.length} cuotas.`
-          : "El pedido ha sido aceptado correctamente.",
-      })
-      setAcceptanceModalOpen(false)
-      await fetchOrders()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo aceptar el pedido",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    confirmAction({
+      title: "¿Aceptar pedido?",
+      description: `¿Estás seguro de que deseas aceptar el pedido de ${acceptanceOrder.customerName}? ${isFinancingEnabled ? "Se creará un plan de financiamiento." : ""}`,
+      confirmText: "Aceptar Pedido",
+      onConfirm: async () => {
+        setUpdatingId(acceptanceOrder.id)
+        try {
+          await api.updateSaleStatus(acceptanceOrder.id, 'ACCEPTED', undefined, financing)
+          toast({
+            title: "Pedido Aceptado",
+            description: isFinancingEnabled 
+              ? `El pedido ha sido aceptado con un plan de ${customInstallments.length} cuotas.`
+              : "El pedido ha sido aceptado correctamente.",
+          })
+          setAcceptanceModalOpen(false)
+          await fetchOrders()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudo aceptar el pedido",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingId(null)
+        }
+      }
+    })
   }
 
   const buildInstallments = (count: number, total: number) => {
@@ -473,117 +593,160 @@ export function AdminOrdersPage() {
   }
 
   const updateOrderStatus = async (orderId: string, status: string, reason?: string) => {
-    setUpdatingId(orderId)
-    try {
-      await api.updateSaleStatus(orderId, status, reason)
-      toast({
-        title: "Estado actualizado",
-        description: `La orden ha sido marcada como ${formatStatus(status).label}`,
-      })
-      await fetchOrders()
-      if (status === 'REJECTED') {
-        setRejectionModalOpen(false)
-        setRejectionReason("")
-        setRejectionOrderId(null)
+    const statusLabel = formatStatus(status).label
+
+    confirmAction({
+      title: `¿Cambiar estado a ${statusLabel}?`,
+      description: `¿Estás seguro de que deseas marcar este pedido como "${statusLabel}"?`,
+      confirmText: "Confirmar Cambio",
+      variant: (status === 'REJECTED' || status === 'CANCELLED') ? "destructive" : "default",
+      onConfirm: async () => {
+        setUpdatingId(orderId)
+        try {
+          await api.updateSaleStatus(orderId, status, reason)
+          toast({
+            title: "Estado actualizado",
+            description: `La orden ha sido marcada como ${statusLabel}`,
+          })
+          await fetchOrders()
+          if (status === 'REJECTED') {
+            setRejectionModalOpen(false)
+            setRejectionReason("")
+            setRejectionOrderId(null)
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudo actualizar el estado",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingId(null)
+        }
       }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo actualizar el estado",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    })
   }
 
   const updateOrderItemStatus = async (orderId: string, itemId: string, status: string) => {
-    setUpdatingItemId(itemId)
-    try {
-      await api.updateSaleItemStatus(orderId, itemId, status)
-      toast({
-        title: "Item actualizado",
-        description: `El producto ha sido marcado como ${status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado'}`,
-      })
-      
-      // Refresh order data
-      await fetchOrders()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo actualizar el item",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingItemId(null)
-    }
+    const label = status === 'ACCEPTED' ? 'Aceptado' : 'Rechazado'
+
+    confirmAction({
+      title: `¿Marcar item como ${label}?`,
+      description: `¿Estás seguro de que deseas cambiar el estado de este producto a ${label}?`,
+      confirmText: "Confirmar",
+      variant: status === 'REJECTED' ? "destructive" : "default",
+      onConfirm: async () => {
+        setUpdatingItemId(itemId)
+        try {
+          await api.updateSaleItemStatus(orderId, itemId, status)
+          toast({
+            title: "Item actualizado",
+            description: `El producto ha sido marcado como ${label}`,
+          })
+          
+          // Refresh order data
+          await fetchOrders()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudo actualizar el item",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingItemId(null)
+        }
+      }
+    })
   }
 
   const updateOrderItemQuantity = async (orderId: string, itemId: string, quantity: number) => {
-    setUpdatingItemId(itemId)
-    try {
-      await api.updateSaleItemQuantity(orderId, itemId, quantity)
-      toast({
-        title: "Cantidad actualizada",
-        description: "La cantidad del producto ha sido ajustada correctamente",
-      })
-      
-      setEditingQuantity(null)
-      // Refresh order data
-      await fetchOrders()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo actualizar la cantidad",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingItemId(null)
-    }
+    confirmAction({
+      title: "¿Actualizar cantidad?",
+      description: `¿Deseas cambiar la cantidad de este producto a ${quantity}?`,
+      confirmText: "Actualizar",
+      onConfirm: async () => {
+        setUpdatingItemId(itemId)
+        try {
+          await api.updateSaleItemQuantity(orderId, itemId, quantity)
+          toast({
+            title: "Cantidad actualizada",
+            description: "La cantidad del producto ha sido ajustada correctamente",
+          })
+          
+          setEditingQuantity(null)
+          // Refresh order data
+          await fetchOrders()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudo actualizar la cantidad",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingItemId(null)
+        }
+      }
+    })
   }
 
   const acceptAllOrderItems = async (orderId: string) => {
-    setUpdatingId(orderId)
-    try {
-      await api.acceptAllSaleItems(orderId)
-      toast({
-        title: "Items aceptados",
-        description: "Todos los productos han sido marcados como aceptados",
-      })
-      
-      // Refresh order data
-      await fetchOrders()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudieron aceptar los items",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    confirmAction({
+      title: "¿Aceptar todos los productos?",
+      description: "¿Estás seguro de que deseas marcar todos los productos de este pedido como aceptados?",
+      confirmText: "Aceptar Todos",
+      onConfirm: async () => {
+        setUpdatingId(orderId)
+        try {
+          await api.acceptAllSaleItems(orderId)
+          toast({
+            title: "Items aceptados",
+            description: "Todos los productos han sido marcados como aceptados",
+          })
+          
+          // Refresh order data
+          await fetchOrders()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudieron aceptar los items",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingId(null)
+        }
+      }
+    })
   }
 
   const updateDeliveryStatus = async (orderId: string, deliveryStatus: string, reason?: string) => {
-    setUpdatingId(orderId)
-    try {
-      await api.updateSaleDeliveryStatus(orderId, deliveryStatus, reason)
-      toast({
-        title: "Entrega actualizada",
-        description: `El estado de entrega ha sido marcado como ${formatDeliveryStatus(deliveryStatus).label}`,
-      })
-      setDeliveryModalOpen(false)
-      setDeliveryReason("")
-      await fetchOrders()
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo actualizar el estado de entrega",
-        variant: "destructive"
-      })
-    } finally {
-      setUpdatingId(null)
-    }
+    const label = formatDeliveryStatus(deliveryStatus).label
+    
+    confirmAction({
+      title: "¿Actualizar estado de entrega?",
+      description: `¿Estás seguro de que deseas marcar la entrega como "${label}"?`,
+      confirmText: "Actualizar Entrega",
+      onConfirm: async () => {
+        setUpdatingId(orderId)
+        try {
+          await api.updateSaleDeliveryStatus(orderId, deliveryStatus, reason)
+          toast({
+            title: "Entrega actualizada",
+            description: `El estado de entrega ha sido marcado como ${label}`,
+          })
+          setDeliveryModalOpen(false)
+          setDeliveryReason("")
+          await fetchOrders()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "No se pudo actualizar el estado de entrega",
+            variant: "destructive"
+          })
+        } finally {
+          setUpdatingId(null)
+        }
+      }
+    })
   }
 
   const handleDeliveryStatusClick = (orderId: string, status: string) => {
@@ -737,20 +900,6 @@ export function AdminOrdersPage() {
     }
   }
 
-  const exportOrders = () => {
-    const csvContent = orders.map(order =>
-      `${order.saleNumber},${order.customerName},${order.customerEmail || ""},${order.totalUSD},${order.status},${order.createdAt}`
-    ).join("\n")
-    
-    const header = "Orden,Cliente,Email,Total USD,Estado,Fecha\n"
-    const blob = new Blob([header + csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `ordenes_${new Date().toISOString().split("T")[0]}.csv`
-    a.click()
-  }
-
   const generateInvoicePDF = (order: Order) => {
     const items = Array.isArray(order.items) ? order.items : []
     const companyInfo = {
@@ -901,8 +1050,18 @@ export function AdminOrdersPage() {
 
   return (
     <div className="space-y-6" role="main" aria-label="Gestión de Ventas">
+      <AdminPageHeader 
+        title="Gestión de Ventas"
+        subtitle="Supervisa y procesa los pedidos de tus clientes en tiempo real."
+        icon={ShoppingBag}
+        action={{
+          label: "Nuevo Pedido",
+          onClick: () => window.open('/admin/orders/new', '_blank'),
+          icon: PlusCircle
+        }}
+      />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 md:hidden">
           <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
             <ShoppingBag className="h-8 w-8 text-primary" aria-hidden="true" />
             Gestión de Ventas
@@ -1928,7 +2087,10 @@ export function AdminOrdersPage() {
         </Dialog>
 
         {/* Acceptance & Financing Modal */}
-        <Dialog open={acceptanceModalOpen} onOpenChange={setAcceptanceModalOpen}>
+        <Dialog open={acceptanceModalOpen} onOpenChange={(open) => {
+          if (!open) handleCloseAcceptanceModal()
+          else setAcceptanceModalOpen(true)
+        }}>
           <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-primary text-xl font-black">
@@ -2155,7 +2317,7 @@ export function AdminOrdersPage() {
                     </div>
                     
                     <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1 font-bold" onClick={() => setAcceptanceModalOpen(false)} aria-label="Cancelar aceptación del pedido">
+                      <Button variant="outline" className="flex-1 font-bold" onClick={handleCloseAcceptanceModal} aria-label="Cancelar aceptación del pedido">
                         Cancelar
                       </Button>
                       <Button 
@@ -2277,7 +2439,10 @@ export function AdminOrdersPage() {
         </Dialog>
 
         {/* Payment Confirmation Modal */}
-        <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <Dialog open={paymentModalOpen} onOpenChange={(open) => {
+          if (!open) handleClosePaymentModal()
+          else setPaymentModalOpen(true)
+        }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-primary">
@@ -2316,7 +2481,7 @@ export function AdminOrdersPage() {
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setPaymentModalOpen(false)} aria-label="Cancelar registro de pago">
+              <Button variant="outline" onClick={handleClosePaymentModal} aria-label="Cancelar registro de pago">
                 Cancelar
               </Button>
               <Button 
@@ -2337,7 +2502,10 @@ export function AdminOrdersPage() {
         </Dialog>
 
         {/* Rejection Reason Modal */}
-        <Dialog open={rejectionModalOpen} onOpenChange={setRejectionModalOpen}>
+        <Dialog open={rejectionModalOpen} onOpenChange={(open) => {
+          if (!open) handleCloseRejectionModal()
+          else setRejectionModalOpen(true)
+        }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-destructive">
@@ -2362,7 +2530,7 @@ export function AdminOrdersPage() {
               />
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setRejectionModalOpen(false)} aria-label="Cancelar y volver al detalle">
+              <Button variant="outline" onClick={handleCloseRejectionModal} aria-label="Cancelar y volver al detalle">
                 Cancelar
               </Button>
               <Button 
@@ -2461,7 +2629,10 @@ export function AdminOrdersPage() {
         </Dialog>
 
         {/* Delivery Status Modal */}
-        <Dialog open={deliveryModalOpen} onOpenChange={setDeliveryModalOpen}>
+        <Dialog open={deliveryModalOpen} onOpenChange={(open) => {
+          if (!open) handleCloseDeliveryModal()
+          else setDeliveryModalOpen(true)
+        }}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-primary">
@@ -2486,7 +2657,7 @@ export function AdminOrdersPage() {
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setDeliveryModalOpen(false)} aria-label="Cancelar y volver">
+              <Button variant="outline" onClick={handleCloseDeliveryModal} aria-label="Cancelar y volver">
                 Cancelar
               </Button>
               <Button 

@@ -22,9 +22,19 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
  
-import { formatUSD, formatBS } from "@/lib/utils"
+import { cn, formatUSD, formatBS } from "@/lib/utils"
 import { api, API_BASE } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog"
 import { Loader2 } from "lucide-react"
 
 interface Product {
@@ -57,6 +67,24 @@ export function FinancialDashboard() {
   const [isUpdatingBcv, setIsUpdatingBcv] = useState(false)
   const [businessEvents, setBusinessEvents] = useState<BusinessEvent[]>([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(false)
+
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
 
   // Memoize totals to avoid recalculation on every render
   const totals = useMemo(() => {
@@ -91,6 +119,21 @@ export function FinancialDashboard() {
   useEffect(() => {
     document.title = "Gestión Financiera | Ana's Supplements Admin"
   }, [])
+
+  const handleGenerateReport = (type: string) => {
+    confirmAction({
+      title: "Generar Reporte",
+      description: `¿Estás seguro de que deseas generar un reporte de ${type} para el rango de fechas seleccionado?`,
+      confirmText: "Generar",
+      onConfirm: () => {
+        toast({
+          title: "Generando reporte",
+          description: `El reporte de ${type} se está procesando y se descargará pronto.`,
+        })
+        // Aquí iría la lógica real de generación y descarga
+      }
+    })
+  }
 
   const fetchData = async () => {
     try {
@@ -193,36 +236,43 @@ export function FinancialDashboard() {
   }
 
   const handleUpdateBcv = async () => {
-    setIsUpdatingBcv(true)
-    try {
-      const result = await api.forceBCVUpdate()
-      console.log("Resultado de actualización BCV:", result)
-      
-      const newRate = Number(result.record?.rate || result.rate)
-      
-      if (isNaN(newRate) || newRate <= 0) {
-        throw new Error("La API devolvió una tasa inválida")
-      }
+    confirmAction({
+      title: "¿Actualizar tasa BCV?",
+      description: "Se realizará una petición al servidor para obtener la tasa oficial más reciente.",
+      confirmText: "Actualizar",
+      onConfirm: async () => {
+        setIsUpdatingBcv(true)
+        try {
+          const result = await api.forceBCVUpdate()
+          console.log("Resultado de actualización BCV:", result)
+          
+          const newRate = Number(result.record?.rate || result.rate)
+          
+          if (isNaN(newRate) || newRate <= 0) {
+            throw new Error("La API devolvió una tasa inválida")
+          }
 
-      setBcvRate({ 
-        rate: newRate, 
-        timestamp: result.record?.createdAt || result.record?.timestamp || new Date().toISOString() 
-      })
-      
-      toast({
-        title: "Tasa actualizada",
-        description: `La tasa BCV se ha actualizado a Bs ${formatBS(newRate)}`,
-      })
-    } catch (error) {
-      console.error("Error updating BCV rate:", error)
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la tasa BCV automáticamente.",
-        variant: "destructive",
-      })
-    } finally {
-        setIsUpdatingBcv(false)
-    }
+          setBcvRate({ 
+            rate: newRate, 
+            timestamp: result.record?.createdAt || result.record?.timestamp || new Date().toISOString() 
+          })
+          
+          toast({
+            title: "Tasa actualizada",
+            description: `La tasa BCV se ha actualizado a Bs ${formatBS(newRate)}`,
+          })
+        } catch (error) {
+          console.error("Error updating BCV rate:", error)
+          toast({
+            title: "Error",
+            description: "No se pudo actualizar la tasa BCV automáticamente.",
+            variant: "destructive",
+          })
+        } finally {
+            setIsUpdatingBcv(false)
+        }
+      }
+    })
   }
 
   const handleManualBcvUpdate = async (newRate: number) => {
@@ -235,27 +285,34 @@ export function FinancialDashboard() {
       return
     }
 
-    setIsUpdatingBcv(true)
-    try {
-      const result = await api.setBCVRateManual(newRate)
-      const confirmedRate = Number(result.rate)
-      setBcvRate({ 
-        rate: isNaN(confirmedRate) ? newRate : confirmedRate, 
-        timestamp: result.record?.createdAt || new Date().toISOString() 
-      })
-      toast({
-        title: "Tasa actualizada manualmente",
-        description: `La tasa BCV se ha establecido a Bs ${formatBS(result.rate)}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar la tasa manualmente.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsUpdatingBcv(false)
-    }
+    confirmAction({
+      title: "¿Establecer tasa manual?",
+      description: `¿Estás seguro de que deseas establecer la tasa BCV manualmente a Bs ${formatBS(newRate)}?`,
+      confirmText: "Establecer Tasa",
+      onConfirm: async () => {
+        setIsUpdatingBcv(true)
+        try {
+          const result = await api.setBCVRateManual(newRate)
+          const confirmedRate = Number(result.rate)
+          setBcvRate({ 
+            rate: isNaN(confirmedRate) ? newRate : confirmedRate, 
+            timestamp: result.record?.createdAt || new Date().toISOString() 
+          })
+          toast({
+            title: "Tasa actualizada manualmente",
+            description: `La tasa BCV se ha establecido a Bs ${formatBS(result.rate)}`,
+          })
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "No se pudo actualizar la tasa manualmente.",
+            variant: "destructive",
+          })
+        } finally {
+          setIsUpdatingBcv(false)
+        }
+      }
+    })
   }
 
   const addToCart = (product: Product) => {
@@ -293,43 +350,51 @@ export function FinancialDashboard() {
   const processSale = async () => {
     if (cart.length === 0) return
 
-    const items = cart.map(item => ({
-      productId: item.product.id,
-      quantity: item.quantity,
-    }))
+    confirmAction({
+      title: "¿Procesar venta?",
+      description: `¿Estás seguro de que deseas procesar esta venta por un total de ${formatUSD(totals.totalUSD)}?`,
+      confirmText: "Procesar Venta",
+      onConfirm: async () => {
+        const items = cart.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        }))
 
-    try {
-      const response = await fetch(`${API_BASE}/financial/sales`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items,
-          bcvRate: bcvRate.rate,
-          customerName: "Venta directa",
-        }),
-      })
+        try {
+          const response = await fetch(`${API_BASE}/financial/sales`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items,
+              bcvRate: bcvRate.rate,
+              customerName: "Venta directa",
+            }),
+          })
 
-      if (response.ok) {
-        setCart([])
-        fetchData()
-        toast({
-          title: "Venta procesada",
-          description: "Venta procesada exitosamente!",
-        })
+          if (response.ok) {
+            setCart([])
+            fetchData()
+            toast({
+              title: "Venta procesada",
+              description: "Venta procesada exitosamente!",
+            })
+          }
+        } catch (error) {
+          toast({
+            title: "Venta procesada (demo)",
+            description: "La venta se procesó en modo demo.",
+          })
+          setCart([])
+        }
       }
-    } catch (error) {
-      toast({
-        title: "Venta procesada (demo)",
-        description: "La venta se procesó en modo demo.",
-      })
-      setCart([])
-    }
+    })
   }
 
 
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
+    <>
+      <div className="space-y-6 pb-20 md:pb-0">
         <AdminPageHeader 
           title="Gestión Financiera"
           subtitle="Inventario, ventas y análisis de rentabilidad"
@@ -873,7 +938,10 @@ export function FinancialDashboard() {
 
           <TabsContent value="reports" className="space-y-6 mt-6">
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-              <Card className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-blue-500 group">
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-blue-500 group"
+                onClick={() => handleGenerateReport("Ventas")}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <FileText className="h-6 w-6 text-blue-500" />
@@ -884,7 +952,10 @@ export function FinancialDashboard() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-green-500 group">
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-green-500 group"
+                onClick={() => handleGenerateReport("Inventario")}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="bg-green-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <Package className="h-6 w-6 text-green-500" />
@@ -895,7 +966,10 @@ export function FinancialDashboard() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-purple-500 group">
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-purple-500 group"
+                onClick={() => handleGenerateReport("Financiero")}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="bg-purple-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <TrendingUp className="h-6 w-6 text-purple-500" />
@@ -923,7 +997,12 @@ export function FinancialDashboard() {
                     <Input type="date" className="h-11 font-medium" />
                   </div>
                   <div className="flex items-end">
-                    <Button className="w-full h-11 font-black text-sm shadow-lg shadow-primary/20">GENERAR REPORTE</Button>
+                    <Button 
+                      className="w-full h-11 font-black text-sm shadow-lg shadow-primary/20"
+                      onClick={() => handleGenerateReport("Personalizado")}
+                    >
+                      GENERAR REPORTE
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -931,5 +1010,31 @@ export function FinancialDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <AlertDialog open={confirmConfig.open} onOpenChange={(open: boolean) => setConfirmConfig(prev => ({ ...prev, open }))}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold">{confirmConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              {confirmConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl font-bold border-slate-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmConfig.onConfirm}
+              className={cn(
+                "rounded-xl font-bold",
+                confirmConfig.variant === "destructive" 
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
+            >
+              {confirmConfig.confirmText || "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

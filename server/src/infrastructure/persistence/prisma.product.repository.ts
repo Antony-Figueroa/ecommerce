@@ -62,6 +62,16 @@ export class PrismaProductRepository implements ProductRepository {
           categories: true,
           images: {
             orderBy: { sortOrder: 'asc' }
+          },
+          _count: {
+            select: {
+              batches: true,
+              inventoryBatchItems: true,
+              saleItems: true,
+              cartItems: true,
+              favorites: true,
+              requirementItems: true
+            }
           }
         },
         orderBy: { createdAt: 'desc' },

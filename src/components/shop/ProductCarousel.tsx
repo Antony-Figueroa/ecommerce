@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo } from "react"
-import { motion, useScroll, useSpring, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ProductCard } from "./product-card"

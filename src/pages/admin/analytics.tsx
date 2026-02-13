@@ -8,8 +8,19 @@ import {
   Loader2,
   ArrowUpRight,
   ArrowDownRight,
+  AlertTriangle,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import {
   AreaChart,
   Area,
@@ -27,7 +38,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
  
-import { formatUSD } from "@/lib/utils"
+import { cn, formatUSD } from "@/lib/utils"
 import { api } from "@/lib/api"
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4']
@@ -38,6 +49,26 @@ export function AdminAnalyticsPage() {
   const [stats, setStats] = useState<any>(null)
   const [reportData, setReportData] = useState<any>(null)
   const [isReady, setIsReady] = useState(false)
+
+  // Sistema de confirmación centralizado
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+    variant: "default"
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 100)
@@ -105,29 +136,37 @@ export function AdminAnalyticsPage() {
   const handleExport = () => {
     if (!reportData) return
 
-    const data = [
-      ["Reporte de Analíticas - Ana's Supplements"],
-      [`Periodo: ${period}`],
-      [""],
-      ["RESUMEN MENSUAL"],
-      ["Mes", "Ingresos (USD)", "Órdenes"],
-      ...monthlyData.map((d: any) => [d.month, d.revenue, d.orders]),
-      [""],
-      ["PRODUCTOS MÁS VENDIDOS"],
-      ["Producto", "Ventas", "Ingresos (USD)"],
-      ...topProducts.map((p: any) => [p.name, p.sales, p.revenue]),
-    ]
+    confirmAction({
+      title: "Exportar Reporte",
+      description: "¿Estás seguro de que deseas exportar los datos de analíticas del periodo seleccionado en formato CSV?",
+      confirmText: "Exportar",
+      variant: "default",
+      onConfirm: () => {
+        const data = [
+          ["Reporte de Analíticas - Ana's Supplements"],
+          [`Periodo: ${period}`],
+          [""],
+          ["RESUMEN MENSUAL"],
+          ["Mes", "Ingresos (USD)", "Órdenes"],
+          ...monthlyData.map((d: any) => [d.month, d.revenue, d.orders]),
+          [""],
+          ["PRODUCTOS MÁS VENDIDOS"],
+          ["Producto", "Ventas", "Ingresos (USD)"],
+          ...topProducts.map((p: any) => [p.name, p.sales, p.revenue]),
+        ]
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + data.map(e => e.join(",")).join("\n")
+        const csvContent = "data:text/csv;charset=utf-8," 
+          + data.map(e => e.join(",")).join("\n")
 
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `analytics_report_${period}_${new Date().toISOString().split('T')[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+        const encodedUri = encodeURI(csvContent)
+        const link = document.createElement("a")
+        link.setAttribute("href", encodedUri)
+        link.setAttribute("download", `analytics_report_${period}_${new Date().toISOString().split('T')[0]}.csv`)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    })
   }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -144,7 +183,8 @@ export function AdminAnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-10">
+    <>
+      <div className="space-y-6 pb-10">
         <AdminPageHeader 
           title="Reportes y Analíticas"
           subtitle="Visualiza el rendimiento real de tu negocio"
@@ -387,8 +427,37 @@ export function AdminAnalyticsPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+  </div>
       </div>
+
+      <AlertDialog open={confirmConfig.open} onOpenChange={(open: boolean) => setConfirmConfig(prev => ({ ...prev, open }))}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold flex items-center gap-2">
+              {confirmConfig.variant === "destructive" && <AlertTriangle className="h-5 w-5 text-destructive" />}
+              {confirmConfig.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              {confirmConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl font-bold border-slate-200">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmConfig.onConfirm}
+              className={cn(
+                "rounded-xl font-bold",
+                confirmConfig.variant === "destructive" 
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              )}
+            >
+              {confirmConfig.confirmText || "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
 

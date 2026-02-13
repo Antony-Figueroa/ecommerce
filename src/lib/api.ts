@@ -574,6 +574,12 @@ class ApiClient {
     })
   }
 
+  async deleteBatch(id: string) {
+    return this.request(`/admin/batches/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Admin Sales
   async getSales(params?: { page?: number; limit?: number; status?: string; startDate?: string; endDate?: string }) {
     const searchParams = new URLSearchParams()
@@ -871,6 +877,10 @@ class ApiClient {
   }
 
   // Notifications (Admin)
+  async getAdminStats() {
+    return this.request<any>('/admin/stats')
+  }
+
   async getAdminUnreadNotifications() {
     return this.request<any[]>('/admin/notifications/unread')
   }

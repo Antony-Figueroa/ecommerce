@@ -28,10 +28,22 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { ImageUpload } from "@/components/admin/image-upload"
 import { MultiSelect } from "@/components/ui/multi-select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
 import { formatUSD, cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -62,6 +74,14 @@ interface Product {
   priceHistory?: any[]
   salesCount?: number
   viewCount?: number
+  _count?: {
+    batches: number
+    inventoryBatchItems: number
+    saleItems: number
+    cartItems: number
+    favorites: number
+    requirementItems: number
+  }
 }
 
 interface Category {
@@ -135,6 +155,68 @@ export function AdminProductsPage() {
   const [showCustomBrand, setShowCustomBrand] = useState(false)
   const [brands, setBrands] = useState<string[]>([])
   
+  // States for ConfirmDialog
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  // Check if form has changes
+  const hasChanges = () => {
+    if (editingProduct) {
+      // Logic to compare formData with editingProduct
+      return (
+        formData.name !== String(editingProduct.name || "") ||
+        formData.description !== String(editingProduct.description || "") ||
+        Number(formData.price) !== Number(editingProduct.price) ||
+        Number(formData.purchasePrice) !== Number(editingProduct.purchasePrice) ||
+        formData.brand !== String(editingProduct.brand || "") ||
+        formData.format !== String(editingProduct.format || "") ||
+        formData.categoryIds.length !== (editingProduct.categoryIds?.length || 0)
+      )
+    }
+    return (
+      formData.name !== "" ||
+      formData.description !== "" ||
+      formData.price !== 0 ||
+      formData.purchasePrice !== 0 ||
+      formData.brand !== "" ||
+      formData.format !== "" ||
+      formData.categoryIds.length > 0
+    )
+  }
+
+  const handleCloseModal = () => {
+    if (hasChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar. Si sales ahora, perderás toda la información ingresada.",
+        confirmText: "Salir sin guardar",
+        variant: "destructive",
+        onConfirm: () => {
+          setShowAddDialog(false)
+          resetForm()
+        }
+      })
+    } else {
+      setShowAddDialog(false)
+      resetForm()
+    }
+  }
+
   const generateProductCode = () => {
     const prefix = "ANA"
     const timestamp = Date.now().toString().slice(-6)
@@ -330,51 +412,72 @@ export function AdminProductsPage() {
   const handleSave = async () => {
     if (!validateForm()) return
 
-    setSaving(true)
-    try {
-      const { batchNumber, expirationDate, ...rest } = formData
-      
-      // Clean up the data before sending
-      const productData = {
-        ...rest,
-        // Ensure price is a number
-        price: Number(formData.price),
-        purchasePrice: Number(formData.purchasePrice),
-        profitMargin: Number(formData.profitMargin),
-        stock: Number(formData.stock),
-        originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
-      }
+    confirmAction({
+      title: editingProduct ? "¿Guardar cambios?" : "¿Crear nuevo producto?",
+      description: editingProduct 
+        ? "¿Estás seguro de que deseas actualizar la información de este producto?" 
+        : "¿Estás seguro de que deseas añadir este nuevo producto al catálogo?",
+      confirmText: editingProduct ? "Guardar cambios" : "Crear producto",
+      onConfirm: async () => {
+        setSaving(true)
+        try {
+          const { batchNumber, expirationDate, ...rest } = formData
+          
+          // Clean up the data before sending
+          const productData = {
+            ...rest,
+            // Ensure price is a number
+            price: Number(formData.price),
+            purchasePrice: Number(formData.purchasePrice),
+            profitMargin: Number(formData.profitMargin),
+            stock: Number(formData.stock),
+            originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+          }
 
-      if (editingProduct) {
-        // Update existing product
-        await api.updateProduct(editingProduct.id, productData)
-      } else {
-        // Create new product
-        const createData = {
-          ...productData,
-          ...(formData.batchNumber ? { batchNumber: formData.batchNumber } : {}),
-          ...(formData.expirationDate ? { expirationDate: formData.expirationDate } : {}),
+          if (editingProduct) {
+            // Update existing product
+            await api.updateProduct(editingProduct.id, productData)
+            toast({
+              title: "Producto actualizado",
+              description: "Los cambios se han guardado correctamente.",
+            })
+          } else {
+            // Create new product
+            const createData = {
+              ...productData,
+              ...(formData.batchNumber ? { batchNumber: formData.batchNumber } : {}),
+              ...(formData.expirationDate ? { expirationDate: formData.expirationDate } : {}),
+            }
+            await api.createProduct(createData)
+            toast({
+              title: "Producto creado",
+              description: "El nuevo producto ha sido añadido al catálogo.",
+            })
+          }
+
+          setShowAddDialog(false)
+          resetForm()
+          fetchProducts()
+          fetchBrands()
+        } catch (error: any) {
+          console.error("Error saving product:", error)
+          const details = error.data?.error?.details
+          let errorMessage = error.message || "Error al guardar el producto"
+          
+          if (Array.isArray(details)) {
+            errorMessage = `Error de validación: ${details.map((d: any) => d.message).join(", ")}`
+          }
+          
+          toast({
+            title: "Error",
+            description: errorMessage,
+            variant: "destructive",
+          })
+        } finally {
+          setSaving(false)
         }
-        await api.createProduct(createData)
       }
-
-      setShowAddDialog(false)
-      resetForm()
-      fetchProducts()
-      fetchBrands()
-    } catch (error: any) {
-      console.error("Error saving product:", error)
-      const details = error.data?.error?.details
-      let errorMessage = error.message || "Error al guardar el producto"
-      
-      if (Array.isArray(details)) {
-        errorMessage = `Error de validación: ${details.map((d: any) => d.message).join(", ")}`
-      }
-      
-      alert(errorMessage)
-    } finally {
-      setSaving(false)
-    }
+    })
   }
 
   const handleEdit = (product: Product) => {
@@ -458,61 +561,117 @@ export function AdminProductsPage() {
 
   const handleAddStock = async () => {
     if (!productToAddStock) return
-    try {
-      const updateData = {
-        batch: {
-          batchNumber: batchFormData.batchNumber,
-          expirationDate: batchFormData.expirationDate,
-          purchasePrice: batchFormData.purchasePrice,
-          salePrice: batchFormData.salePrice,
-          stock: batchFormData.stock
+
+    confirmAction({
+      title: "¿Registrar reabastecimiento?",
+      description: `Se registrará un nuevo lote con ${batchFormData.stock} unidades para "${productToAddStock.name}".`,
+      confirmText: "Registrar reabastecimiento",
+      onConfirm: async () => {
+        try {
+          const updateData = {
+            batch: {
+              batchNumber: batchFormData.batchNumber,
+              expirationDate: batchFormData.expirationDate,
+              purchasePrice: batchFormData.purchasePrice,
+              salePrice: batchFormData.salePrice,
+              stock: batchFormData.stock
+            }
+          }
+          await api.updateProduct(productToAddStock.id, updateData)
+          toast({
+            title: "Stock actualizado",
+            description: `Se han añadido ${batchFormData.stock} unidades correctamente.`,
+          })
+          setShowAddStockDialog(false)
+          setProductToAddStock(null)
+          setBatchFormData({
+            batchNumber: "",
+            expirationDate: "",
+            purchasePrice: 0,
+            salePrice: 0,
+            stock: 1
+          })
+          fetchProducts()
+        } catch (error: any) {
+          console.error("Error adding stock:", error)
+          toast({
+            title: "Error",
+            description: error.message || "Error al añadir stock",
+            variant: "destructive",
+          })
         }
       }
-      await api.updateProduct(productToAddStock.id, updateData)
-      setShowAddStockDialog(false)
-      setProductToAddStock(null)
-      setBatchFormData({
-        batchNumber: "",
-        expirationDate: "",
-        purchasePrice: 0,
-        salePrice: 0,
-        stock: 1
-      })
-      fetchProducts()
-    } catch (error: any) {
-      console.error("Error adding stock:", error)
-      alert(error.message || "Error al añadir stock")
-    }
+    })
   }
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
-    try {
-      await api.updateProduct(productId, { isActive: !currentStatus })
-      const updatedProduct = products.find(p => p.id === productId)
-      if (!currentStatus && updatedProduct) { // Si se está activando
-        setProductToAddStock(updatedProduct)
-        setBatchFormData({
-          batchNumber: `RESTOCK-${Date.now()}`,
-          expirationDate: "",
-          purchasePrice: Number(updatedProduct.purchasePrice),
-          salePrice: Number(updatedProduct.price),
-          stock: 1
-        })
-        setShowAddStockDialog(true)
+    const product = products.find(p => p.id === productId)
+    if (!product) return
+
+    confirmAction({
+      title: currentStatus ? "¿Desactivar producto?" : "¿Reactivar producto?",
+      description: currentStatus 
+        ? `¿Estás seguro de que deseas desactivar "${product.name}"? El producto ya no será visible para los clientes.`
+        : `¿Estás seguro de que deseas reactivar "${product.name}"? Deberás registrar un nuevo lote de stock para activarlo correctamente.`,
+      confirmText: currentStatus ? "Desactivar" : "Reactivar",
+      variant: currentStatus ? "destructive" : "default",
+      onConfirm: async () => {
+        try {
+          await api.updateProduct(productId, { isActive: !currentStatus })
+          toast({
+            title: currentStatus ? "Producto desactivado" : "Producto reactivado",
+            description: `"${product.name}" ha sido ${currentStatus ? 'desactivado' : 'reactivado'} correctamente.`,
+          })
+          
+          if (!currentStatus) { // Si se está activando
+            setProductToAddStock(product)
+            setBatchFormData({
+              batchNumber: `RESTOCK-${Date.now()}`,
+              expirationDate: "",
+              purchasePrice: Number(product.purchasePrice),
+              salePrice: Number(product.price),
+              stock: 1
+            })
+            setShowAddStockDialog(true)
+          }
+          fetchProducts()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: "No se pudo cambiar el estado del producto.",
+            variant: "destructive",
+          })
+        }
       }
-      fetchProducts()
-    } catch {
-    }
+    })
   }
 
   const deleteProduct = async (productId: string) => {
-    if (!confirm("Estas seguro de eliminar este producto?")) return
-    
-    try {
-      await api.deleteProduct(productId)
-      fetchProducts()
-    } catch {
-    }
+    const product = products.find(p => p.id === productId)
+    if (!product) return
+
+    confirmAction({
+      title: "¿Eliminar permanentemente?",
+      description: `¿Estás seguro de que deseas eliminar permanentemente "${product.name}"? Esta acción no se puede deshacer y borrará todos los registros asociados.`,
+      confirmText: "Eliminar producto",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await api.deleteProduct(productId)
+          toast({
+            title: "Producto eliminado",
+            description: "El producto ha sido eliminado permanentemente del sistema.",
+          })
+          fetchProducts()
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: "No se pudo eliminar el producto.",
+            variant: "destructive",
+          })
+        }
+      }
+    })
   }
 
   const filteredProducts = products.filter((product) => {
@@ -775,18 +934,50 @@ export function AdminProductsPage() {
                       <Edit className="h-4 w-4 mr-1" aria-hidden="true" />
                       Editar
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toggleProductStatus(product.id, product.isActive)}
-                      aria-label={product.isActive ? `Desactivar ${product.name}` : `Activar ${product.name}`}
-                    >
-                      {product.isActive ? (
-                        <X className="h-4 w-4 text-red-500" aria-hidden="true" />
-                      ) : (
-                        <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
-                      )}
-                    </Button>
+                    {product.isActive && product._count && (
+                      product._count.saleItems > 0 || 
+                      product._count.inventoryBatchItems > 0 || 
+                      product._count.batches > 0 ||
+                      product._count.cartItems > 0 ||
+                      product._count.favorites > 0 ||
+                      product._count.requirementItems > 0
+                    ) ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="cursor-not-allowed">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="opacity-50"
+                                disabled
+                              >
+                                <X className="h-4 w-4 text-red-500" aria-hidden="true" />
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="bg-destructive text-destructive-foreground border-none">
+                            <p className="text-xs font-bold flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              No se puede desactivar: está en uso
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleProductStatus(product.id, product.isActive)}
+                        aria-label={product.isActive ? `Desactivar ${product.name}` : `Activar ${product.name}`}
+                      >
+                        {product.isActive ? (
+                          <X className="h-4 w-4 text-red-500" aria-hidden="true" />
+                        ) : (
+                          <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -904,19 +1095,51 @@ export function AdminProductsPage() {
                           >
                             <Edit className="h-4 w-4" aria-hidden="true" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-red-500"
-                            onClick={() => toggleProductStatus(product.id, product.isActive)}
-                            aria-label={product.isActive ? `Desactivar ${product.name}` : `Activar ${product.name}`}
-                          >
-                            {product.isActive ? (
-                              <X className="h-4 w-4" aria-hidden="true" />
-                            ) : (
-                              <Check className="h-4 w-4 text-green-500" aria-hidden="true" />
-                            )}
-                          </Button>
+                          {product.isActive && product._count && (
+                            product._count.saleItems > 0 || 
+                            product._count.inventoryBatchItems > 0 || 
+                            product._count.batches > 0 ||
+                            product._count.cartItems > 0 ||
+                            product._count.favorites > 0 ||
+                            product._count.requirementItems > 0
+                          ) ? (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="cursor-not-allowed">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-muted-foreground/30"
+                                      disabled
+                                    >
+                                      <X className="h-4 w-4" aria-hidden="true" />
+                                    </Button>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="bg-destructive text-destructive-foreground border-none">
+                                  <p className="text-xs font-bold flex items-center gap-1">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    No se puede desactivar: está en uso
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-red-500"
+                              onClick={() => toggleProductStatus(product.id, product.isActive)}
+                              aria-label={product.isActive ? `Desactivar ${product.name}` : `Activar ${product.name}`}
+                            >
+                              {product.isActive ? (
+                                <X className="h-4 w-4" aria-hidden="true" />
+                              ) : (
+                                <Check className="h-4 w-4" aria-hidden="true" />
+                              )}
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1024,7 +1247,13 @@ export function AdminProductsPage() {
         </Dialog>
 
         {/* Add/Edit Dialog */}
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <Dialog open={showAddDialog} onOpenChange={(open) => {
+          if (!open) {
+            handleCloseModal()
+          } else {
+            setShowAddDialog(true)
+          }
+        }}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -1286,11 +1515,47 @@ export function AdminProductsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddDialog(false)} disabled={saving}>
+              <Button variant="outline" onClick={handleCloseModal} disabled={saving}>
                 Cancelar
               </Button>
               <Button onClick={handleSave} disabled={saving}>
                 {saving ? "Guardando..." : editingProduct ? "Guardar cambios" : "Crear producto"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {confirmConfig.variant === "destructive" ? (
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                )}
+                {confirmConfig.title}
+              </DialogTitle>
+              <DialogDescription className="pt-2 text-base">
+                {confirmConfig.description}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4 gap-2 sm:gap-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                variant={confirmConfig.variant || "default"}
+                onClick={() => {
+                  confirmConfig.onConfirm();
+                  setConfirmConfig({ ...confirmConfig, open: false });
+                }}
+              >
+                {confirmConfig.confirmText || "Confirmar"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1447,17 +1712,46 @@ export function AdminProductsPage() {
                     <Edit className="h-4 w-4 mr-2" />
                     Editar producto
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      deleteProduct(viewingProduct.id)
-                      setViewingProduct(null)
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </Button>
+                  {viewingProduct._count && (
+                    viewingProduct._count.saleItems > 0 || 
+                    viewingProduct._count.inventoryBatchItems > 0 || 
+                    viewingProduct._count.batches > 0
+                  ) ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex-1 cursor-not-allowed">
+                            <Button
+                              variant="outline"
+                              className="w-full opacity-50"
+                              disabled
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-destructive text-destructive-foreground border-none">
+                          <p className="text-xs font-bold flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            No se puede eliminar: tiene registros asociados
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        deleteProduct(viewingProduct.id)
+                        setViewingProduct(null)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

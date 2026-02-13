@@ -176,7 +176,7 @@ export function GoalSelector() {
       // Finalizar Quiz
       const queryParams = new URLSearchParams()
       queryParams.set('search', selectedGoal?.query || '')
-      Object.entries(newAnswers).forEach(([key, val]) => {
+      Object.entries(newAnswers).forEach(([_, val]) => {
         queryParams.append('tags', val)
       })
       navigate(`/productos?${queryParams.toString()}`)

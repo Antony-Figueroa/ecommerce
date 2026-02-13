@@ -6,6 +6,9 @@ import {
   Trash2,
   Loader2,
   LayoutGrid,
+  AlertTriangle,
+  CheckCircle2,
+  X,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,6 +23,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { api } from "@/lib/api"
 import { EmojiPicker } from "@/components/shared/emoji-picker"
 import { useToast } from "@/hooks/use-toast"
@@ -67,7 +76,56 @@ export function AdminCategoriesPage() {
     sortOrder: 0,
   })
   const [errors, setErrors] = useState<CategoryErrors>({})
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant?: "default" | "destructive";
+    confirmText?: string;
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    onConfirm: () => {},
+  })
   const { toast } = useToast()
+
+  const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
+    setConfirmConfig({ ...config, open: true })
+  }
+
+  const hasChanges = () => {
+    if (!editingCategory) {
+      return formData.name !== "" || 
+             formData.description !== "" || 
+             formData.icon !== "" || 
+             formData.sortOrder !== 0
+    }
+
+    return formData.name !== editingCategory.name ||
+           formData.description !== (editingCategory.description || "") ||
+           formData.icon !== (editingCategory.icon || "") ||
+           formData.sortOrder !== editingCategory.sortOrder
+  }
+
+  const handleCloseModal = () => {
+    if (hasChanges()) {
+      confirmAction({
+        title: "¿Salir sin guardar?",
+        description: "Tienes cambios sin guardar. Si sales ahora, perderás toda la información ingresada.",
+        confirmText: "Salir sin guardar",
+        variant: "destructive",
+        onConfirm: () => {
+          setShowAddDialog(false)
+          resetForm()
+        }
+      })
+    } else {
+      setShowAddDialog(false)
+      resetForm()
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -128,35 +186,45 @@ export function AdminCategoriesPage() {
 
   const handleSave = async () => {
     if (!validateForm()) return
-    setSaving(true)
-    try {
-      if (editingCategory) {
-        await api.updateCategory(editingCategory.id, formData)
-        toast({
-          title: "Éxito",
-          description: "Categoría actualizada correctamente",
-        })
-      } else {
-        await api.createCategory(formData)
-        toast({
-          title: "Éxito",
-          description: "Categoría creada correctamente",
-        })
+
+    confirmAction({
+      title: editingCategory ? "¿Actualizar categoría?" : "¿Crear categoría?",
+      description: editingCategory 
+        ? `¿Estás seguro de que deseas guardar los cambios en "${formData.name}"?`
+        : `¿Deseas crear la nueva categoría "${formData.name}"?`,
+      confirmText: editingCategory ? "Guardar cambios" : "Crear categoría",
+      onConfirm: async () => {
+        setSaving(true)
+        try {
+          if (editingCategory) {
+            await api.updateCategory(editingCategory.id, formData)
+            toast({
+              title: "Éxito",
+              description: "Categoría actualizada correctamente",
+            })
+          } else {
+            await api.createCategory(formData)
+            toast({
+              title: "Éxito",
+              description: "Categoría creada correctamente",
+            })
+          }
+          setShowAddDialog(false)
+          resetForm()
+          // Recargar datos usando el mismo patrón optimizado
+          const data = await api.getAdminCategories()
+          setCategories(data.categories || [])
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Error al guardar la categoría",
+            variant: "destructive"
+          })
+        } finally {
+          setSaving(false)
+        }
       }
-      setShowAddDialog(false)
-      resetForm()
-      // Recargar datos usando el mismo patrón optimizado
-      const data = await api.getAdminCategories()
-      setCategories(data.categories || [])
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al guardar la categoría",
-        variant: "destructive"
-      })
-    } finally {
-      setSaving(false)
-    }
+    })
   }
 
   const handleEdit = (category: Category) => {
@@ -173,41 +241,63 @@ export function AdminCategoriesPage() {
   }
 
   const deleteCategory = async (categoryId: string) => {
-    if (!confirm("¿Estás seguro de eliminar esta categoría?")) return
-    
-    try {
-      await api.deleteCategory(categoryId)
-      toast({
-        title: "Éxito",
-        description: "Categoría eliminada correctamente",
-      })
-      const data = await api.getAdminCategories()
-      setCategories(data.categories || [])
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al eliminar la categoría",
-        variant: "destructive"
-      })
-    }
+    const category = categories.find(c => c.id === categoryId)
+    if (!category) return
+
+    confirmAction({
+      title: "¿Eliminar categoría?",
+      description: `¿Estás seguro de que deseas eliminar la categoría "${category.name}"? Esta acción no se puede deshacer.`,
+      confirmText: "Eliminar",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await api.deleteCategory(categoryId)
+          toast({
+            title: "Éxito",
+            description: "Categoría eliminada correctamente",
+          })
+          const data = await api.getAdminCategories()
+          setCategories(data.categories || [])
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Error al eliminar la categoría",
+            variant: "destructive"
+          })
+        }
+      }
+    })
   }
 
   const toggleCategoryStatus = async (categoryId: string, currentStatus: boolean) => {
-    try {
-      await api.toggleCategoryStatus(categoryId, !currentStatus)
-      toast({
-        title: "Éxito",
-        description: `Categoría ${!currentStatus ? 'activada' : 'desactivada'} correctamente`,
-      })
-      const data = await api.getAdminCategories()
-      setCategories(data.categories || [])
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Error al cambiar el estado",
-        variant: "destructive"
-      })
-    }
+    const category = categories.find(c => c.id === categoryId)
+    if (!category) return
+
+    confirmAction({
+      title: currentStatus ? "¿Desactivar categoría?" : "¿Activar categoría?",
+      description: currentStatus 
+        ? `¿Estás seguro de que deseas desactivar "${category.name}"? Los productos de esta categoría podrían no ser visibles.`
+        : `¿Deseas activar la categoría "${category.name}"?`,
+      confirmText: currentStatus ? "Desactivar" : "Activar",
+      variant: currentStatus ? "destructive" : "default",
+      onConfirm: async () => {
+        try {
+          await api.toggleCategoryStatus(categoryId, !currentStatus)
+          toast({
+            title: "Éxito",
+            description: `Categoría ${!currentStatus ? 'activada' : 'desactivada'} correctamente`,
+          })
+          const data = await api.getAdminCategories()
+          setCategories(data.categories || [])
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Error al cambiar el estado",
+            variant: "destructive"
+          })
+        }
+      }
+    })
   }
 
   const filteredCategories = categories.filter((category) => {
@@ -301,9 +391,39 @@ export function AdminCategoriesPage() {
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="text-red-500" onClick={() => deleteCategory(category.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {category.productCount > 0 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="cursor-not-allowed">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground/50"
+                              disabled
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="bg-destructive text-destructive-foreground border-none">
+                          <p className="text-xs font-bold flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            No se puede eliminar: tiene productos asociados
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => deleteCategory(category.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">
@@ -314,13 +434,34 @@ export function AdminCategoriesPage() {
                   {category.isActive ? "Activa" : "Inactiva"}
                 </Badge>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => toggleCategoryStatus(category.id, category.isActive)}
-                  >
-                    {category.isActive ? "Desactivar" : "Activar"}
-                  </Button>
+                  {category.isActive && category.productCount > 0 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              disabled
+                            >
+                              Desactivar
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>No se puede desactivar porque tiene productos asociados</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => toggleCategoryStatus(category.id, category.isActive)}
+                    >
+                      {category.isActive ? "Desactivar" : "Activar"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -329,10 +470,18 @@ export function AdminCategoriesPage() {
       </div>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog open={showAddDialog} onOpenChange={(open) => {
+        if (!open) handleCloseModal()
+        else setShowAddDialog(true)
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingCategory ? "Editar categoria" : "Nueva categoria"}</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>{editingCategory ? "Editar categoria" : "Nueva categoria"}</DialogTitle>
+              <Button variant="ghost" size="icon" onClick={handleCloseModal}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <DialogDescription>
               Completa los datos de la categoria para organizar tus productos.
             </DialogDescription>
@@ -403,9 +552,45 @@ export function AdminCategoriesPage() {
             </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={handleCloseModal}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Guardando..." : editingCategory ? "Guardar cambios" : "Crear categoria"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {confirmConfig.variant === "destructive" ? (
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+              )}
+              {confirmConfig.title}
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              {confirmConfig.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant={confirmConfig.variant || "default"}
+              onClick={() => {
+                confirmConfig.onConfirm();
+                setConfirmConfig({ ...confirmConfig, open: false });
+              }}
+            >
+              {confirmConfig.confirmText || "Confirmar"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -24,6 +24,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { PageLoader } from "@/components/shared/page-loader"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
+import { api } from "@/lib/api"
 import {
   Tooltip,
   TooltipContent,
@@ -49,44 +50,11 @@ interface MenuGroup {
   items: MenuItem[]
 }
 
-const menuGroups: MenuGroup[] = [
-  {
-    title: "Principal",
-    items: [
-      { path: "/admin", label: "Inicio", icon: LayoutDashboard },
-      { path: "/admin/financial", label: "Financiero", icon: DollarSign },
-      { path: "/admin/orders", label: "Pedidos", icon: ShoppingCart, badge: 5 },
-    ]
-  },
-  {
-    title: "Catálogo",
-    items: [
-      { path: "/admin/products", label: "Productos", icon: Package },
-      { path: "/admin/categories", label: "Categorías", icon: Tag },
-      { path: "/admin/providers", label: "Proveedores", icon: Truck },
-      { path: "/admin/inventory", label: "Inventario", icon: Box, alert: true },
-    ]
-  },
-  {
-    title: "Gestión",
-    items: [
-      { path: "/admin/customers", label: "Clientes", icon: Users },
-      { path: "/admin/analytics", label: "Reportes", icon: BarChart3 },
-      { path: "/admin/notifications", label: "Notificaciones", icon: Bell },
-      { path: "/admin/ai-hub", label: "AI Chat", icon: Cpu },
-    ]
-  },
-  {
-    title: "Sistema",
-    items: [
-      { path: "/admin/settings", label: "Configuración", icon: Settings },
-    ]
-  }
-]
-
 export function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [pendingOrders, setPendingOrders] = useState(0)
+  const [lowStockCount, setLowStockCount] = useState(0)
   const location = useLocation()
   const { user, logout } = useAuth()
 
@@ -95,6 +63,61 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
       document.title = `${title} | Ana's Supplements Admin`
     }
   }, [title])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const stats = await api.getAdminStats()
+        if (stats) {
+          // Asegurarse de que el conteo sea un número real
+          setPendingOrders(Number(stats.pendingOrders) || 0)
+          setLowStockCount(Number(stats.lowStockProducts) || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching admin stats for sidebar:", error)
+      }
+    }
+
+    fetchStats()
+    // Refrescar cada 1 minuto para mayor reactividad
+    const interval = setInterval(fetchStats, 60 * 1000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const menuGroups: MenuGroup[] = [
+    {
+      title: "Principal",
+      items: [
+        { path: "/admin", label: "Inicio", icon: LayoutDashboard },
+        { path: "/admin/financial", label: "Financiero", icon: DollarSign },
+        { path: "/admin/orders", label: "Pedidos", icon: ShoppingCart, badge: pendingOrders > 0 ? pendingOrders : undefined },
+      ]
+    },
+    {
+      title: "Catálogo",
+      items: [
+        { path: "/admin/products", label: "Productos", icon: Package },
+        { path: "/admin/categories", label: "Categorías", icon: Tag },
+        { path: "/admin/providers", label: "Proveedores", icon: Truck },
+        { path: "/admin/inventory", label: "Inventario", icon: Box, alert: lowStockCount > 0 },
+      ]
+    },
+    {
+      title: "Gestión",
+      items: [
+        { path: "/admin/customers", label: "Clientes", icon: Users },
+        { path: "/admin/analytics", label: "Reportes", icon: BarChart3 },
+        { path: "/admin/notifications", label: "Notificaciones", icon: Bell },
+        { path: "/admin/ai-hub", label: "AI Chat", icon: Cpu },
+      ]
+    },
+    {
+      title: "Sistema",
+      items: [
+        { path: "/admin/settings", label: "Configuración", icon: Settings },
+      ]
+    }
+  ]
 
   const SidebarContent = ({ isMobile = false }) => (
     <div className="flex flex-col h-full bg-card select-none">
