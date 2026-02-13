@@ -27,6 +27,7 @@ import adminVentasRoutes from './infrastructure/web/routes/admin/ventas.routes.j
 import adminCuotaRoutes from './infrastructure/web/routes/admin/cuota.routes.js'
 import adminProviderRoutes from './infrastructure/web/routes/admin/provider.routes.js'
 import adminBatchRoutes from './infrastructure/web/routes/admin/batch.routes.js'
+import adminBusinessEventRoutes from './infrastructure/web/routes/admin/business-event.routes.js'
 import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
@@ -152,6 +153,7 @@ app.use('/api/admin/cuotas', adminCuotaRoutes)
 app.use('/api/admin/upload', adminUploadRoutes)
 app.use('/api/admin/providers', adminProviderRoutes)
 app.use('/api/admin/batches', adminBatchRoutes)
+app.use('/api/admin/business-events', adminBusinessEventRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
 

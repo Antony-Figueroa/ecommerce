@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/client"
 }
 
 datasource db {
@@ -23,6 +24,25 @@ model SystemAuditLog {
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model BusinessEvent {
+  id          String   @id @default(uuid())
+  type        String   // SALE, REQUIREMENT, LOW_STOCK, CUSTOM, ALERT
+  title       String
+  description String?
+  date        DateTime
+  amount      Float?
+  status      String?
+  isFuture    Boolean  @default(false)
+  alertSent   Boolean  @default(false)
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User?    @relation("UserBusinessEvents", fields: [userId], references: [id])
+
+  @@index([date])
+  @@index([type])
 }
 
 model User {
@@ -52,6 +72,7 @@ model User {
   auditLogs                SaleAuditLog[]
   settingHistory           SettingHistory[]
   systemAuditLogs          SystemAuditLog[]     @relation("UserAuditLogs")
+  businessEvents           BusinessEvent[]      @relation("UserBusinessEvents")
 }
 
 model Favorite {

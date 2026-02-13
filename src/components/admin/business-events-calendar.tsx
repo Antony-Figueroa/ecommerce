@@ -1,11 +1,15 @@
 import { useState, useMemo } from "react"
 import { 
+  Edit,
+  Trash2,
   ChevronLeft, 
   ChevronRight, 
   DollarSign, 
   Package, 
   AlertTriangle,
-  Info
+  Info,
+  Plus,
+  Bell
 } from "lucide-react"
 import { 
   format, 
@@ -20,7 +24,9 @@ import {
   addDays, 
   eachDayOfInterval,
   isToday,
-  parseISO
+  parseISO,
+  startOfDay,
+  isBefore
 } from "date-fns"
 import { es } from "date-fns/locale"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -32,9 +38,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-export type EventType = 'SALE' | 'REQUIREMENT' | 'LOW_STOCK'
+export type EventType = 'SALE' | 'REQUIREMENT' | 'LOW_STOCK' | 'CUSTOM' | 'ALERT'
 
 export interface BusinessEvent {
   id: string
@@ -44,15 +55,18 @@ export interface BusinessEvent {
   amount?: number
   status?: string
   description?: string
+  isFuture?: boolean
 }
 
 interface BusinessEventsCalendarProps {
   events: BusinessEvent[]
   onDateClick?: (date: Date) => void
+  onEditEvent?: (event: BusinessEvent) => void
+  onDeleteEvent?: (id: string) => void
   isLoading?: boolean
 }
 
-export function BusinessEventsCalendar({ events, onDateClick, isLoading }: BusinessEventsCalendarProps) {
+export function BusinessEventsCalendar({ events, onDateClick, onEditEvent, onDeleteEvent, isLoading }: BusinessEventsCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
@@ -116,6 +130,11 @@ export function BusinessEventsCalendar({ events, onDateClick, isLoading }: Busin
     return <div className="grid grid-cols-7 border-b border-slate-100 dark:border-border/50">{weekDays}</div>
   }
 
+  const isSystemEvent = (id: string | number) => {
+    const sId = id.toString()
+    return sId.includes('-') && (sId.startsWith('sale-') || sId.startsWith('req-') || sId.startsWith('lowstock-'))
+  }
+
   const renderCells = () => {
     const rows: JSX.Element[] = []
     let daysInRow: JSX.Element[] = []
@@ -123,16 +142,18 @@ export function BusinessEventsCalendar({ events, onDateClick, isLoading }: Busin
     days.forEach((day, i) => {
       const dayEvents = getEventsForDay(day)
       const isCurrentMonth = isSameMonth(day, startOfMonth(currentMonth))
+      const isPast = isBefore(startOfDay(day), startOfDay(new Date()))
       
       daysInRow.push(
         <div
           key={day.toString()}
           className={cn(
-            "min-h-[80px] sm:min-h-[100px] border-r border-b border-slate-100 dark:border-border/50 p-1 sm:p-2 transition-colors relative group cursor-pointer",
+            "min-h-[80px] sm:min-h-[100px] border-r border-b border-slate-100 dark:border-border/50 p-1 sm:p-2 transition-colors relative group",
             !isCurrentMonth ? "bg-slate-50/50 dark:bg-muted/5" : "bg-white dark:bg-card hover:bg-slate-50 dark:hover:bg-muted/10",
-            isToday(day) && "bg-primary/5 dark:bg-primary/10"
+            isToday(day) && "bg-primary/5 dark:bg-primary/10",
+            isPast ? "cursor-default grayscale-[0.2] opacity-80" : "cursor-pointer"
           )}
-          onClick={() => onDateClick?.(day)}
+          onClick={() => !isPast && onDateClick?.(day)}
         >
           <div className="flex justify-between items-start">
             <span className={cn(
@@ -142,33 +163,90 @@ export function BusinessEventsCalendar({ events, onDateClick, isLoading }: Busin
             )}>
               {format(day, "d")}
             </span>
-            {dayEvents.length > 0 && (
-              <Badge variant="secondary" className="h-4 px-1 text-[8px] font-bold">
-                {dayEvents.length}
-              </Badge>
-            )}
+            <div className="flex items-center gap-1">
+              {!isPast && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDateClick?.(day)
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              )}
+              {dayEvents.length > 0 && (
+                <Badge variant="secondary" className="h-4 px-1 text-[8px] font-bold">
+                  {dayEvents.length}
+                </Badge>
+              )}
+            </div>
           </div>
           
-          <div className="mt-1 space-y-1 overflow-hidden">
-            {dayEvents.slice(0, 3).map((event) => (
-              <TooltipProvider key={event.id}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className={cn(
-                      "flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold truncate transition-transform hover:scale-[1.02]",
-                      event.type === 'SALE' && "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400",
-                      event.type === 'REQUIREMENT' && "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
-                      event.type === 'LOW_STOCK' && "bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400"
-                    )}>
-                      {event.type === 'SALE' && <DollarSign className="h-2.5 w-2.5 shrink-0" />}
-                      {event.type === 'REQUIREMENT' && <Package className="h-2.5 w-2.5 shrink-0" />}
-                      {event.type === 'LOW_STOCK' && <AlertTriangle className="h-2.5 w-2.5 shrink-0" />}
-                      <span className="truncate">{event.title}</span>
-                    </div>
-                  </TooltipTrigger>
+                    <div className="space-y-1 overflow-hidden">
+                      {dayEvents.slice(0, 3).map((event) => (
+                        <TooltipProvider key={event.id}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div 
+                                className={cn(
+                                  "flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold truncate transition-transform hover:scale-[1.02]",
+                                  event.type === 'SALE' && "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400",
+                                  event.type === 'REQUIREMENT' && "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400",
+                                  event.type === 'LOW_STOCK' && "bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
+                                  event.type === 'CUSTOM' && "bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400",
+                                  event.type === 'ALERT' && "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400",
+                                  event.isFuture && "border border-dashed border-current opacity-80",
+                                   !isSystemEvent(event.id) ? "cursor-pointer" : "cursor-default"
+                                 )}
+                                 onClick={(e) => {
+                                   if (!isSystemEvent(event.id)) {
+                                     e.stopPropagation()
+                                     onEditEvent?.(event)
+                                   }
+                                 }}
+                              >
+                                {event.type === 'SALE' && <DollarSign className="h-2.5 w-2.5 shrink-0" />}
+                                {event.type === 'REQUIREMENT' && <Package className="h-2.5 w-2.5 shrink-0" />}
+                                {event.type === 'LOW_STOCK' && <AlertTriangle className="h-2.5 w-2.5 shrink-0" />}
+                                {event.type === 'CUSTOM' && <Info className="h-2.5 w-2.5 shrink-0" />}
+                                {event.type === 'ALERT' && <Bell className="h-2.5 w-2.5 shrink-0" />}
+                                <span className="truncate">{event.title}</span>
+                              </div>
+                            </TooltipTrigger>
                   <TooltipContent side="top" className="p-2 max-w-[200px]">
-                    <div className="space-y-1">
-                      <p className="font-bold text-xs">{event.title}</p>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="font-bold text-xs">{event.title}</p>
+                        {!isSystemEvent(event.id) && (
+                          <div className="flex items-center gap-1">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEditEvent?.(event)
+                              }}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDeleteEvent?.(event.id)
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                       {event.amount && <p className="text-[10px] text-green-600 font-bold">Monto: ${event.amount.toFixed(2)}</p>}
                       {event.status && <p className="text-[10px] font-medium">Estado: {event.status}</p>}
                       {event.description && <p className="text-[10px] text-muted-foreground leading-tight">{event.description}</p>}
@@ -178,9 +256,95 @@ export function BusinessEventsCalendar({ events, onDateClick, isLoading }: Busin
               </TooltipProvider>
             ))}
             {dayEvents.length > 3 && (
-              <p className="text-[8px] text-muted-foreground font-bold pl-1">
-                + {dayEvents.length - 3} más...
-              </p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="text-[8px] text-muted-foreground font-bold pl-1 hover:text-primary transition-colors cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    + {dayEvents.length - 3} más...
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  side="right" 
+                  className="w-64 p-3 shadow-2xl border-slate-200 dark:border-border/60"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider">
+                        {dayEvents.length} Eventos - {format(day, "d 'de' MMMM", { locale: es })}
+                      </h4>
+                    </div>
+                    <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                      {dayEvents.map((event) => (
+                        <div 
+                          key={event.id}
+                          className={cn(
+                            "flex flex-col gap-1 p-2 rounded-lg border text-[10px] transition-all hover:shadow-sm",
+                            event.type === 'SALE' && "bg-green-50/50 border-green-100 text-green-800 dark:bg-green-950/20 dark:border-green-900/30 dark:text-green-400",
+                            event.type === 'REQUIREMENT' && "bg-blue-50/50 border-blue-100 text-blue-800 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-400",
+                            event.type === 'LOW_STOCK' && "bg-orange-50/50 border-orange-100 text-orange-800 dark:bg-orange-950/20 dark:border-orange-900/30 dark:text-orange-400",
+                            event.type === 'CUSTOM' && "bg-purple-50/50 border-purple-100 text-purple-800 dark:bg-purple-950/20 dark:border-purple-900/30 dark:text-purple-400",
+                            event.type === 'ALERT' && "bg-red-50/50 border-red-100 text-red-800 dark:bg-red-950/20 dark:border-red-900/30 dark:text-red-400"
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-1.5 font-bold">
+                            <div className="flex items-center gap-1.5">
+                              {event.type === 'SALE' && <DollarSign className="h-3 w-3" />}
+                              {event.type === 'REQUIREMENT' && <Package className="h-3 w-3" />}
+                              {event.type === 'LOW_STOCK' && <AlertTriangle className="h-3 w-3" />}
+                              {event.type === 'CUSTOM' && <Info className="h-3 w-3" />}
+                              {event.type === 'ALERT' && <Bell className="h-3 w-3" />}
+                              <span className="truncate">{event.title}</span>
+                            </div>
+                            
+                            {!isSystemEvent(event.id) && (
+                              <div className="flex items-center gap-0.5 ml-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-50/50"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEditEvent?.(event)
+                                  }}
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50/50"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDeleteEvent?.(event.id)
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          {event.description && (
+                            <p className="text-[9px] text-muted-foreground leading-relaxed pl-4">
+                              {event.description}
+                            </p>
+                          )}
+                          {event.amount && (
+                            <div className="pl-4 flex items-center gap-1">
+                              <span className="text-[9px] font-medium opacity-70">Monto:</span>
+                              <span className="text-[9px] font-bold text-green-600 dark:text-green-400">
+                                ${event.amount.toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         </div>

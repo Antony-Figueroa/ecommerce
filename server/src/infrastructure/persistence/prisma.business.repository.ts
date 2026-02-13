@@ -6,7 +6,8 @@ import {
   BatchRepository,
   PaymentRepository,
   InstallmentRepository,
-  PaymentProofRepository
+  PaymentProofRepository,
+  BusinessEventRepository
 } from '../../domain/repositories/business.repository.js'
 
 export class PrismaSaleRepository implements SaleRepository {
@@ -430,5 +431,91 @@ export class PrismaBatchRepository implements BatchRepository {
 
   async create(data: any) {
     return prisma.batch.create({ data })
+  }
+}
+
+export class PrismaBusinessEventRepository implements BusinessEventRepository {
+  async create(data: {
+    type: string
+    title: string
+    description?: string
+    date: Date
+    amount?: number
+    status?: string
+    isFuture?: boolean
+    userId?: string
+  }) {
+    return prisma.businessEvent.create({
+      data: {
+        ...data,
+        userId: data.userId || null
+      }
+    })
+  }
+
+  async findAll(options: {
+    startDate?: Date
+    endDate?: Date
+    type?: string
+    userId?: string
+    isFuture?: boolean
+  }) {
+    const { startDate, endDate, type, userId, isFuture } = options
+    const where: any = {}
+
+    if (startDate || endDate) {
+      where.date = {}
+      if (startDate) where.date.gte = startDate
+      if (endDate) where.date.lte = endDate
+    }
+
+    if (type) where.type = type
+    if (userId) where.userId = userId
+    if (isFuture !== undefined) where.isFuture = isFuture
+
+    return prisma.businessEvent.findMany({
+      where,
+      orderBy: { date: 'asc' },
+      include: { user: true }
+    })
+  }
+
+  async findById(id: string) {
+    return prisma.businessEvent.findUnique({
+      where: { id },
+      include: { user: true }
+    })
+  }
+
+  async update(id: string, data: any) {
+    return prisma.businessEvent.update({
+      where: { id },
+      data
+    })
+  }
+
+  async delete(id: string) {
+    await prisma.businessEvent.delete({
+      where: { id }
+    })
+  }
+
+  async findPendingAlerts(date: Date) {
+    return prisma.businessEvent.findMany({
+      where: {
+        isFuture: true,
+        alertSent: false,
+        date: {
+          lte: date
+        }
+      }
+    })
+  }
+
+  async markAlertSent(id: string) {
+    await prisma.businessEvent.update({
+      where: { id },
+      data: { alertSent: true }
+    })
   }
 }

@@ -1,3 +1,5 @@
+import { startOfDay, isBefore, format } from "date-fns"
+import { es } from "date-fns/locale"
 import { useState, useEffect, useMemo } from "react"
 import {
   DollarSign,
@@ -5,6 +7,7 @@ import {
   Package,
   AlertTriangle,
   Plus,
+  Edit,
   Minus,
   Calculator,
   FileText,
@@ -57,6 +60,24 @@ interface BCVRate {
   timestamp: string
 }
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+
 export function FinancialDashboard() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
@@ -67,6 +88,15 @@ export function FinancialDashboard() {
   const [isUpdatingBcv, setIsUpdatingBcv] = useState(false)
   const [businessEvents, setBusinessEvents] = useState<BusinessEvent[]>([])
   const [isLoadingEvents, setIsLoadingEvents] = useState(false)
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false)
+  const [editingEventId, setEditingEventId] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [newEvent, setNewEvent] = useState({
+    type: 'CUSTOM',
+    title: '',
+    description: '',
+    isFuture: true
+  })
 
   const [confirmConfig, setConfirmConfig] = useState<{
     open: boolean;
@@ -176,54 +206,83 @@ export function FinancialDashboard() {
   const fetchEvents = async () => {
     setIsLoadingEvents(true)
     try {
-      const [salesData, reqData, invData] = await Promise.all([
+      // Get events from different sources
+      const [salesData, reqData, invData, dbEvents] = await Promise.all([
         api.getSalesReport(),
         api.getRequirementsReport(),
         api.getInventoryReportAdmin(),
+        api.getBusinessEvents()
       ])
 
       const events: BusinessEvent[] = []
 
-      // Map sales
+      // Map persistence DB events (priority)
+      if (Array.isArray(dbEvents)) {
+        dbEvents.forEach((ev: any) => {
+          events.push({
+            id: ev.id,
+            type: ev.type as any,
+            title: ev.title,
+            description: ev.description,
+            date: ev.date,
+            amount: ev.amount,
+            status: ev.status,
+            isFuture: ev.isFuture
+          })
+        })
+      }
+
+      // Map sales (only if not already in dbEvents to avoid duplicates if synced later)
       if (Array.isArray(salesData)) {
         salesData.forEach((sale: any) => {
-          events.push({
-            id: `sale-${sale.id}`,
-            type: 'SALE',
-            title: `Venta #${sale.saleNumber}`,
-            description: `${sale.customerName} - ${formatUSD(sale.totalUSD)}`,
-            date: sale.date || sale.createdAt,
-            amount: Number(sale.totalUSD),
-            status: 'completed'
-          })
+          if (!events.find(e => e.id === `sale-${sale.id}`)) {
+            events.push({
+              id: `sale-${sale.id}`,
+              type: 'SALE',
+              title: `Venta #${sale.saleNumber}`,
+              description: `${sale.customerName} - ${formatUSD(sale.totalUSD)}`,
+              date: sale.date || sale.createdAt,
+              amount: Number(sale.totalUSD),
+              status: 'completed'
+            })
+          }
         })
       }
 
       // Map requirements
       if (reqData && Array.isArray(reqData.items)) {
         reqData.items.forEach((req: any) => {
-          events.push({
-            id: `req-${req.id}`,
-            type: 'REQUIREMENT',
-            title: `Requerimiento ${req.code}`,
-            description: `${req.supplier} - ${formatUSD(req.totalUSD)}`,
-            date: req.date || req.createdAt,
-            amount: Number(req.totalUSD),
-            status: req.status.toLowerCase()
-          })
+          if (!events.find(e => e.id === `req-${req.id}`)) {
+            events.push({
+              id: `req-${req.id}`,
+              type: 'REQUIREMENT',
+              title: `Requerimiento ${req.code}`,
+              description: `${req.supplier} - ${formatUSD(req.totalUSD)}`,
+              date: req.date || req.createdAt,
+              amount: Number(req.totalUSD),
+              status: req.status.toLowerCase()
+            })
+          }
         })
       }
 
-      // Map low stock from inventory report alerts
+      // Map low stock
       if (invData && invData.alerts && Array.isArray(invData.alerts.lowStock)) {
         invData.alerts.lowStock.forEach((prod: any) => {
-          events.push({
-            id: `lowstock-${prod.id}`,
-            type: 'LOW_STOCK',
-            title: `Stock Bajo: ${prod.name}`,
-            description: `Quedan ${prod.stock} unidades (Mín: ${prod.minStock})`,
-            date: new Date().toISOString(), // Inventory alerts are current
-          })
+          if (!events.find(e => e.id === `lowstock-${prod.id}`)) {
+            // Alertas de stock bajo se asocian al día de hoy para que no se muevan
+            // En el futuro, esto debería venir de una tabla de notificaciones persistentes
+            const today = new Date();
+            today.setHours(12, 0, 0, 0); // Mediodía para evitar problemas de zona horaria
+            
+            events.push({
+              id: `lowstock-${prod.id}`,
+              type: 'LOW_STOCK',
+              title: `Stock Bajo: ${prod.name}`,
+              description: `Quedan ${prod.stock} unidades (Mín: ${prod.minStock})`,
+              date: today.toISOString(),
+            })
+          }
         })
       }
 
@@ -233,6 +292,164 @@ export function FinancialDashboard() {
     } finally {
       setIsLoadingEvents(false)
     }
+  }
+
+  const handleAddEvent = async () => {
+    if (!selectedDate || !newEvent.title) {
+      toast({
+        title: "Error",
+        description: "El título y la fecha son obligatorios",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Validación de fecha pasada
+    const today = startOfDay(new Date())
+    const eventDate = startOfDay(selectedDate)
+    
+    if (isBefore(eventDate, today)) {
+      toast({
+        title: "Fecha inválida",
+        description: "No se pueden crear eventos en fechas pasadas.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const actionText = editingEventId ? "editar" : "crear"
+    const actionTitle = editingEventId ? "Editar Evento" : "Crear Evento"
+
+    confirmAction({
+      title: actionTitle,
+      description: `¿Estás seguro de que deseas ${actionText} este evento en el calendario?`,
+      confirmText: editingEventId ? "Actualizar" : "Crear",
+      onConfirm: async () => {
+        try {
+          if (editingEventId) {
+            await api.put(`/admin/business-events/${editingEventId}`, {
+              ...newEvent,
+              date: selectedDate.toISOString(),
+            })
+            toast({
+              title: "Evento actualizado",
+              description: "Los cambios se han guardado correctamente."
+            })
+          } else {
+            await api.createBusinessEvent({
+              ...newEvent,
+              date: selectedDate.toISOString(),
+            })
+            toast({
+              title: "Evento creado",
+              description: "El evento se ha guardado correctamente en el calendario."
+            })
+          }
+
+          setIsAddEventOpen(false)
+          setEditingEventId(null)
+          setNewEvent({
+            type: 'CUSTOM',
+            title: '',
+            description: '',
+            isFuture: true
+          })
+          fetchEvents()
+        } catch (error) {
+          console.error("Error saving event:", error)
+          toast({
+            title: "Error",
+            description: `No se pudo ${actionText} el evento.`,
+            variant: "destructive"
+          })
+        }
+      }
+    })
+  }
+
+  const handleEditEvent = (event: BusinessEvent) => {
+    // Solo permitir editar eventos que no sean generados por el sistema (que tienen prefijos)
+    const isSystemEvent = event.id.toString().includes('-') && 
+                         (event.id.toString().startsWith('sale-') || 
+                          event.id.toString().startsWith('req-') || 
+                          event.id.toString().startsWith('lowstock-'))
+    
+    if (isSystemEvent) {
+      toast({
+        title: "Evento del sistema",
+        description: "Los eventos generados automáticamente no se pueden editar.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setEditingEventId(event.id)
+    setNewEvent({
+      type: event.type,
+      title: event.title,
+      description: event.description || '',
+      isFuture: event.isFuture ?? true
+    })
+    setSelectedDate(new Date(event.date))
+    setIsAddEventOpen(true)
+  }
+
+  const handleDeleteEvent = (id: string) => {
+    // Solo permitir eliminar eventos que no sean generados por el sistema
+    const isSystemEvent = id.toString().includes('-') && 
+                         (id.toString().startsWith('sale-') || 
+                          id.toString().startsWith('req-') || 
+                          id.toString().startsWith('lowstock-'))
+    
+    if (isSystemEvent) {
+      toast({
+        title: "Evento del sistema",
+        description: "Los eventos generados automáticamente no se pueden eliminar.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    confirmAction({
+      title: "Eliminar Evento",
+      description: "¿Estás seguro de que deseas eliminar este evento? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/admin/business-events/${id}`)
+          toast({
+            title: "Evento eliminado",
+            description: "El evento se ha borrado del calendario."
+          })
+          fetchEvents()
+        } catch (error) {
+          console.error("Error deleting event:", error)
+          toast({
+            title: "Error",
+            description: "No se pudo eliminar el evento.",
+            variant: "destructive"
+          })
+        }
+      }
+    })
+  }
+
+  const onDateClick = (date: Date) => {
+    const today = startOfDay(new Date())
+    const clickedDate = startOfDay(date)
+    
+    if (isBefore(clickedDate, today)) {
+      toast({
+        title: "Acción no permitida",
+        description: "No se pueden añadir eventos en fechas que ya pasaron.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setSelectedDate(date)
+    setIsAddEventOpen(true)
   }
 
   const handleUpdateBcv = async () => {
@@ -546,7 +763,90 @@ export function FinancialDashboard() {
             <BusinessEventsCalendar 
               events={businessEvents} 
               isLoading={isLoadingEvents}
+              onDateClick={onDateClick}
+              onEditEvent={handleEditEvent}
+              onDeleteEvent={handleDeleteEvent}
             />
+
+            <Dialog open={isAddEventOpen} onOpenChange={(open) => {
+              setIsAddEventOpen(open)
+              if (!open) {
+                setEditingEventId(null)
+                setNewEvent({
+                  type: 'CUSTOM',
+                  title: '',
+                  description: '',
+                  isFuture: true
+                })
+              }
+            }}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {editingEventId ? <Edit className="h-5 w-5 text-primary" /> : <Plus className="h-5 w-5 text-primary" />}
+                    {editingEventId ? 'Editar Evento' : 'Añadir Evento al Calendario'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {selectedDate && format(selectedDate, "PPPP", { locale: es })}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="text-right font-bold text-xs uppercase">Tipo</Label>
+                    <Select 
+                      value={newEvent.type} 
+                      onValueChange={(v) => setNewEvent({...newEvent, type: v})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecciona el tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CUSTOM">Evento Personalizado</SelectItem>
+                        <SelectItem value="ALERT">Alerta / Recordatorio</SelectItem>
+                        <SelectItem value="SALE">Venta Manual</SelectItem>
+                        <SelectItem value="REQUIREMENT">Requerimiento</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="title" className="text-right font-bold text-xs uppercase">Título</Label>
+                    <Input
+                      id="title"
+                      value={newEvent.title}
+                      onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                      placeholder="Ej: Reunión con proveedor"
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="description" className="text-right font-bold text-xs uppercase">Detalles</Label>
+                    <Input
+                      id="description"
+                      value={newEvent.description}
+                      onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                      placeholder="Descripción del evento"
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 ml-[100px]">
+                    <Checkbox 
+                      id="isFuture" 
+                      checked={newEvent.isFuture}
+                      onCheckedChange={(checked) => setNewEvent({...newEvent, isFuture: !!checked})}
+                    />
+                    <Label htmlFor="isFuture" className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Recibir alerta en la bandeja de notificaciones
+                    </Label>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddEventOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleAddEvent}>
+                    {editingEventId ? 'Actualizar Evento' : 'Guardar Evento'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="overflow-hidden">

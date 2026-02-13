@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../../generated/client/index.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
 import { CategoryRepository, BrandRepository, InventoryLogRepository } from '../../domain/repositories/inventory.repository.js'
 import { FavoriteRepository } from '../../domain/repositories/favorite.repository.js'

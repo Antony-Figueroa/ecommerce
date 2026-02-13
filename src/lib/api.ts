@@ -219,6 +219,45 @@ class ApiClient {
     return this.request<any[]>('/admin/notifications')
   }
 
+  // Business Events (Calendar)
+  async getBusinessEvents(params: { startDate?: string; endDate?: string; type?: string; isFuture?: boolean } = {}) {
+    const searchParams = new URLSearchParams()
+    if (params.startDate) searchParams.append('startDate', params.startDate)
+    if (params.endDate) searchParams.append('endDate', params.endDate)
+    if (params.type) searchParams.append('type', params.type)
+    if (params.isFuture !== undefined) searchParams.append('isFuture', String(params.isFuture))
+    
+    return this.request<any[]>(`/admin/business-events?${searchParams.toString()}`)
+  }
+
+  async createBusinessEvent(data: {
+    type: string
+    title: string
+    description?: string
+    date: string
+    amount?: number
+    status?: string
+    isFuture?: boolean
+  }) {
+    return this.request<any>('/admin/business-events', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async updateBusinessEvent(id: string, data: any) {
+    return this.request<any>(`/admin/business-events/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    })
+  }
+
+  async deleteBusinessEvent(id: string) {
+    return this.request<any>(`/admin/business-events/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
   async requestCatalog(email: string) {
     return this.request('/catalog/request', {
       method: 'POST',

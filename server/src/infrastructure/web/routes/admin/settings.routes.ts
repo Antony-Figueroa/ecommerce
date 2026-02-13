@@ -99,8 +99,8 @@ router.post('/backups/restore', async (req: Request, res: Response) => {
  */
 router.delete('/backups/:filename', async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id
-    const { filename } = req.params
+    const userId = (req as any).user.id as string
+    const { filename } = req.params as { filename: string }
     const { password } = req.body // Recibido en el cuerpo de la petición DELETE
     const result = await settingsService.deleteBackup(userId, filename, password)
     res.json(result)

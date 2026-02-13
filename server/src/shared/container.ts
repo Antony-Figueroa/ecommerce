@@ -1,6 +1,6 @@
 import { PrismaProductRepository } from '../infrastructure/persistence/prisma.product.repository.js'
 import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
-import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository, PrismaPaymentRepository, PrismaInstallmentRepository, PrismaPaymentProofRepository } from '../infrastructure/persistence/prisma.business.repository.js'
+import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository, PrismaPaymentRepository, PrismaInstallmentRepository, PrismaPaymentProofRepository, PrismaBusinessEventRepository } from '../infrastructure/persistence/prisma.business.repository.js'
 import { PrismaBCVRepository, PrismaSettingsRepository } from '../infrastructure/persistence/prisma.settings.repository.js'
 import { PrismaUserRepository } from '../infrastructure/persistence/prisma.user.repository.js'
 import { PrismaFavoriteRepository } from '../infrastructure/persistence/prisma.favorite.repository.js'
@@ -32,8 +32,10 @@ import { PaymentManager } from '../application/services/payment-manager.service.
 import { NotificationManager } from '../application/services/notification-manager.service.js'
 import { UserService } from '../application/services/user.service.js'
 import { AIChatService } from '../application/services/ai-chat.service.js'
+import { BusinessEventService } from '../application/services/business-event.service.js'
 import { BackupService } from '../application/services/backup.service.js'
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
+import { PrismaClient } from '../generated/client/index.js'
 
 // Repositories
 export const productRepo = new PrismaProductRepository()
@@ -51,6 +53,7 @@ export const batchRepo = new PrismaBatchRepository()
 export const paymentRepo = new PrismaPaymentRepository()
 export const installmentRepo = new PrismaInstallmentRepository()
 export const paymentProofRepo = new PrismaPaymentProofRepository()
+export const businessEventRepo = new PrismaBusinessEventRepository()
 export const userRepo = new PrismaUserRepository()
 export const favoriteRepo = new PrismaFavoriteRepository()
 export const cartRepo = new PrismaCartRepository()
@@ -86,6 +89,11 @@ export const notificationService = new NotificationService(
   batchRepo,
   notificationManager,
   notificationSettingRepo
+)
+
+export const businessEventService = new BusinessEventService(
+  businessEventRepo,
+  notificationManager
 )
 
 export const batchManager = new BatchManager(

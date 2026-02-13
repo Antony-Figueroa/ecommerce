@@ -86,6 +86,31 @@ export interface RequirementRepository {
   aggregate(options: any): Promise<any>
 }
 
+export interface BusinessEventRepository {
+  create(data: {
+    type: string
+    title: string
+    description?: string
+    date: Date
+    amount?: number
+    status?: string
+    isFuture?: boolean
+    userId?: string
+  }): Promise<any>
+  findAll(options: {
+    startDate?: Date
+    endDate?: Date
+    type?: string
+    userId?: string
+    isFuture?: boolean
+  }): Promise<any[]>
+  findById(id: string): Promise<any | null>
+  update(id: string, data: any): Promise<any>
+  delete(id: string): Promise<void>
+  findPendingAlerts(date: Date): Promise<any[]>
+  markAlertSent(id: string): Promise<void>
+}
+
 export interface BatchRepository {
   findMany(options: any): Promise<any[]>
   findNearExpiry(days: number): Promise<any[]>
