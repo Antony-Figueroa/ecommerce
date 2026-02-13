@@ -90,7 +90,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
       items: [
         { path: "/admin", label: "Inicio", icon: LayoutDashboard },
         { path: "/admin/financial", label: "Financiero", icon: DollarSign },
-        { path: "/admin/orders", label: "Pedidos", icon: ShoppingCart, badge: pendingOrders > 0 ? pendingOrders : undefined },
+        { path: "/admin/orders", label: "Órdenes", icon: ShoppingCart, badge: pendingOrders > 0 ? pendingOrders : undefined },
       ]
     },
     {

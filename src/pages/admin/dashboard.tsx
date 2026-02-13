@@ -2,6 +2,7 @@ import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { formatUSD as formatUSDUtil } from '@/lib/utils';
+import { AdminPageHeader } from '@/components/admin/page-header';
 import { 
   ShoppingCart, 
   DollarSign, 
@@ -153,32 +154,22 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="bg-background selection:bg-primary/20 selection:text-primary" role="main" aria-label="Panel de Control Administrativo">
-        <header className="mb-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-primary/10 rounded-xl">
-                  <Activity className="h-6 w-6 text-primary" aria-hidden="true" />
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard Operativo</h1>
-              </div>
-              <p className="text-muted-foreground text-sm font-medium ml-12">
-                Ventas, inventario y salud del negocio en tiempo real
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                onClick={() => navigate('/admin/products')}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6"
-                aria-label="Agregar un nuevo producto al catálogo"
-              >
-                <Plus className="mr-2 h-5 w-5" aria-hidden="true" />
-                Nuevo Producto
-              </Button>
-            </div>
-          </div>
-        </header>
+    <div className="space-y-6 pb-20 md:pb-0 selection:bg-primary/20 selection:text-primary" role="main" aria-label="Panel de Control Administrativo">
+        <AdminPageHeader 
+          title="Dashboard Operativo"
+          subtitle="Ventas, inventario y salud del negocio en tiempo real"
+          icon={Activity}
+          rightContent={
+            <Button 
+              onClick={() => navigate('/admin/products')}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95 px-6"
+              aria-label="Agregar un nuevo producto al catálogo"
+            >
+              <Plus className="mr-2 h-5 w-5" aria-hidden="true" />
+              Nuevo Producto
+            </Button>
+          }
+        />
 
         {/* Stats Grid - "Dynamic & Athletic" Aesthetic */}
         <motion.div 

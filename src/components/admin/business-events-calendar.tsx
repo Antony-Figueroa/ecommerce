@@ -219,7 +219,12 @@ export function BusinessEventsCalendar({ events, onDateClick, onEditEvent, onDel
                   <TooltipContent side="top" className="p-2 max-w-[200px]">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-4">
-                        <p className="font-bold text-xs">{event.title}</p>
+                        <div className="space-y-0.5">
+                          <p className="font-bold text-xs">{event.title}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium">
+                            {format(new Date(event.date), "HH:mm 'hs'", { locale: es })}
+                          </p>
+                        </div>
                         {!isSystemEvent(event.id) && (
                           <div className="flex items-center gap-1">
                             <Button 
@@ -296,7 +301,12 @@ export function BusinessEventsCalendar({ events, onDateClick, onEditEvent, onDel
                               {event.type === 'LOW_STOCK' && <AlertTriangle className="h-3 w-3" />}
                               {event.type === 'CUSTOM' && <Info className="h-3 w-3" />}
                               {event.type === 'ALERT' && <Bell className="h-3 w-3" />}
-                              <span className="truncate">{event.title}</span>
+                              <div className="flex flex-col min-w-0">
+                                <span className="truncate">{event.title}</span>
+                                <span className="text-[8px] opacity-70">
+                                  {format(new Date(event.date), "HH:mm 'hs'", { locale: es })}
+                                </span>
+                              </div>
                             </div>
                             
                             {!isSystemEvent(event.id) && (

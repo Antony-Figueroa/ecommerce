@@ -1605,7 +1605,7 @@ export function AdminInventoryPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="batch-code" className="text-sm font-medium">Código de lote/factura *</label>
                   <Input
@@ -1620,12 +1620,27 @@ export function AdminInventoryPage() {
                   <label htmlFor="batch-provider" className="text-sm font-medium">Proveedor</label>
                   <Select
                     value={batchForm.providerId}
-                    onValueChange={(val) => setBatchForm({ ...batchForm, providerId: val })}
+                    onValueChange={(val) => {
+                      if (val === "new-provider-trigger") {
+                        setShowProviderDialog(true)
+                        return
+                      }
+                      setBatchForm({ ...batchForm, providerId: val })
+                    }}
                   >
                     <SelectTrigger id="batch-provider" aria-label="Seleccionar proveedor">
                       <SelectValue placeholder="Seleccionar proveedor" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem 
+                        value="new-provider-trigger" 
+                        className="text-primary font-bold border-b mb-1 focus:bg-primary/10 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          <span>Nuevo proveedor</span>
+                        </div>
+                      </SelectItem>
                       {providers.map((provider) => (
                         <div key={provider.id} className="flex items-center justify-between group">
                           <SelectItem value={provider.id} className="flex-1">
@@ -1683,11 +1698,6 @@ export function AdminInventoryPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="flex items-end">
-                  <Button variant="outline" onClick={() => setShowProviderDialog(true)} className="w-full" aria-label="Crear nuevo proveedor">
-                    Nuevo proveedor
-                  </Button>
                 </div>
               </div>
 
@@ -1859,12 +1869,27 @@ export function AdminInventoryPage() {
                   <label className="text-sm font-medium">Proveedor</label>
                   <Select
                     value={editBatchForm.providerId}
-                    onValueChange={(val) => setEditBatchForm({ ...editBatchForm, providerId: val })}
+                    onValueChange={(val) => {
+                      if (val === "new-provider-trigger") {
+                        setShowProviderDialog(true)
+                        return
+                      }
+                      setEditBatchForm({ ...editBatchForm, providerId: val })
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar proveedor" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem 
+                        value="new-provider-trigger" 
+                        className="text-primary font-bold border-b mb-1 focus:bg-primary/10 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          <span>Nuevo proveedor</span>
+                        </div>
+                      </SelectItem>
                       {providers.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name}

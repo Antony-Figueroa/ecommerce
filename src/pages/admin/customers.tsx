@@ -39,6 +39,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useAuth } from "@/contexts/auth-context"
 import { api } from "@/lib/api"
 import {
   Dialog,
@@ -76,6 +77,7 @@ export function AdminCustomersPage() {
   const [newAdminLoading, setNewAdminLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const { toast } = useToast()
+  const { refreshUser, user: currentUser } = useAuth()
 
   const [formData, setFormData] = useState({
     name: "",
@@ -252,6 +254,11 @@ export function AdminCustomersPage() {
             title: "Rol actualizado",
             description: `El usuario ahora es ${newRole === 'ADMIN' ? 'Administrador' : 'Cliente'}`,
           })
+
+          // Si el usuario actualizado es el usuario actual, refrescar su sesión
+          if (currentUser && customerId === currentUser.id) {
+            await refreshUser()
+          }
         } catch (error) {
           toast({
             title: "Error",

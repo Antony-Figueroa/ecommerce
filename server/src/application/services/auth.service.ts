@@ -62,7 +62,7 @@ export class AuthService {
   }
 
   async register(data: any, ipAddress?: string, userAgent?: string) {
-    const { email, password, name, username } = data
+    const { email, password, name, username, phone } = data
 
     const existingEmail = await this.userRepo.findByEmail(email)
     if (existingEmail) {
@@ -83,6 +83,7 @@ export class AuthService {
       passwordHash: hashedPassword,
       name,
       username,
+      phone,
       emailVerified: true,
       role: 'CUSTOMER'
     })

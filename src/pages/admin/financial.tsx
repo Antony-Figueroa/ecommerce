@@ -96,6 +96,7 @@ export function FinancialDashboard() {
     type: 'CUSTOM',
     title: '',
     description: '',
+    time: '12:00',
     isFuture: true
   })
 
@@ -367,10 +368,15 @@ export function FinancialDashboard() {
       confirmText: editingEventId ? "Actualizar" : "Crear",
       onConfirm: async () => {
         try {
+          const [hours, minutes] = newEvent.time.split(':').map(Number)
+          const dateWithTime = new Date(selectedDate)
+          dateWithTime.setHours(hours, minutes, 0, 0)
+          const finalDate = dateWithTime.toISOString()
+
           if (editingEventId) {
             await api.put(`/admin/business-events/${editingEventId}`, {
               ...newEvent,
-              date: selectedDate.toISOString(),
+              date: finalDate,
             })
             toast({
               title: "Evento actualizado",
@@ -379,7 +385,7 @@ export function FinancialDashboard() {
           } else {
             await api.createBusinessEvent({
               ...newEvent,
-              date: selectedDate.toISOString(),
+              date: finalDate,
             })
             toast({
               title: "Evento creado",
@@ -393,6 +399,7 @@ export function FinancialDashboard() {
             type: 'CUSTOM',
             title: '',
             description: '',
+            time: '12:00',
             isFuture: true
           })
           fetchEvents()
@@ -429,6 +436,7 @@ export function FinancialDashboard() {
       type: event.type,
       title: event.title,
       description: event.description || '',
+      time: event.date ? format(new Date(event.date), "HH:mm") : '12:00',
       isFuture: event.isFuture ?? true
     })
     setSelectedDate(new Date(event.date))
@@ -812,14 +820,15 @@ export function FinancialDashboard() {
             <Dialog open={isAddEventOpen} onOpenChange={(open) => {
               setIsAddEventOpen(open)
               if (!open) {
-                setEditingEventId(null)
-                setNewEvent({
-                  type: 'CUSTOM',
-                  title: '',
-                  description: '',
-                  isFuture: true
-                })
-              }
+                  setEditingEventId(null)
+                  setNewEvent({
+                    type: 'CUSTOM',
+                    title: '',
+                    description: '',
+                    time: '12:00',
+                    isFuture: true
+                  })
+                }
             }}>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -866,6 +875,16 @@ export function FinancialDashboard() {
                       value={newEvent.description}
                       onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
                       placeholder="Descripción del evento"
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="time" className="text-right font-bold text-xs uppercase">Hora</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={newEvent.time}
+                      onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
                       className="col-span-3"
                     />
                   </div>

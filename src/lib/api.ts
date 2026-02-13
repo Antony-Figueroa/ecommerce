@@ -162,6 +162,7 @@ class ApiClient {
         }
           
         const error = new Error(errorMessage)
+        ;(error as any).status = response.status
         if (errorCode) (error as any).code = errorCode;
         if (errorDetails) (error as any).details = errorDetails;
         if (errorData.quotaExceeded) (error as any).quotaExceeded = errorData.quotaExceeded;

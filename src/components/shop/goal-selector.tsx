@@ -24,8 +24,8 @@ const goals = [
     description: "Potencia tu día y concentración",
     icon: Zap,
     color: "bg-amber-500",
-    lightColor: "bg-amber-50",
-    textColor: "text-amber-600",
+    lightColor: "bg-amber-50 dark:bg-amber-500/10",
+    textColor: "text-amber-600 dark:text-amber-400",
     query: "energia",
     questions: [
       {
@@ -53,8 +53,8 @@ const goals = [
     description: "Maximiza tus entrenamientos",
     icon: Dumbbell,
     color: "bg-blue-600",
-    lightColor: "bg-blue-50",
-    textColor: "text-blue-600",
+    lightColor: "bg-blue-50 dark:bg-blue-500/10",
+    textColor: "text-blue-600 dark:text-blue-400",
     query: "rendimiento",
     questions: [
       {
@@ -74,8 +74,8 @@ const goals = [
     description: "Repara y descansa mejor",
     icon: Moon,
     color: "bg-indigo-600",
-    lightColor: "bg-indigo-50",
-    textColor: "text-indigo-600",
+    lightColor: "bg-indigo-50 dark:bg-indigo-500/10",
+    textColor: "text-indigo-600 dark:text-indigo-400",
     query: "recuperacion",
     questions: [
       {
@@ -95,8 +95,8 @@ const goals = [
     description: "Refuerza tus defensas",
     icon: ShieldCheck,
     color: "bg-emerald-600",
-    lightColor: "bg-emerald-50",
-    textColor: "text-emerald-600",
+    lightColor: "bg-emerald-50 dark:bg-emerald-500/10",
+    textColor: "text-emerald-600 dark:text-emerald-400",
     query: "inmunidad",
     questions: [
         {
@@ -116,8 +116,8 @@ const goals = [
     description: "Alcanza tu peso ideal",
     icon: Flame,
     color: "bg-rose-600",
-    lightColor: "bg-rose-50",
-    textColor: "text-rose-600",
+    lightColor: "bg-rose-50 dark:bg-rose-500/10",
+    textColor: "text-rose-600 dark:text-rose-400",
     query: "peso",
     questions: [
       {
@@ -137,8 +137,8 @@ const goals = [
     description: "Equilibrio y bienestar",
     icon: Brain,
     color: "bg-purple-600",
-    lightColor: "bg-purple-50",
-    textColor: "text-purple-600",
+    lightColor: "bg-purple-50 dark:bg-purple-500/10",
+    textColor: "text-purple-600 dark:text-purple-400",
     query: "bienestar",
     questions: [
       {
