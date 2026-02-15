@@ -20,6 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -1467,7 +1469,7 @@ export function AdminProductsPage() {
 
               <div>
                 <label className="text-sm font-medium" id="description-label">Descripcion</label>
-                <textarea
+                <Textarea
                   value={formData.description}
                   onChange={(e) => {
                     setFormData({ ...formData, description: e.target.value })
@@ -1475,7 +1477,7 @@ export function AdminProductsPage() {
                   }}
                   placeholder="Descripcion del producto"
                   className={cn(
-                    "w-full px-3 py-2 border rounded-md min-h-[100px]",
+                    "min-h-[100px]",
                     errors.description ? "border-red-500" : ""
                   )}
                   aria-labelledby="description-label"
@@ -1484,26 +1486,26 @@ export function AdminProductsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isFeatured"
                     checked={formData.isFeatured}
-                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                    className="rounded"
-                    aria-label="Marcar como producto destacado"
+                    onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: !!checked })}
                   />
-                  <span className="text-sm">Producto destacado</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                  <label htmlFor="isFeatured" className="text-sm cursor-pointer">
+                    Producto destacado
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isActive"
                     checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="rounded"
-                    aria-label="Mantener producto activo"
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: !!checked })}
                   />
-                  <span className="text-sm">Activo</span>
-                </label>
+                  <label htmlFor="isActive" className="text-sm cursor-pointer">
+                    Activo
+                  </label>
+                </div>
               </div>
             </div>
             <DialogFooter>

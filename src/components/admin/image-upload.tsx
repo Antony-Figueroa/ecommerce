@@ -230,7 +230,7 @@ export function ImageUpload({ images, onChange, maxImages = 10 }: ImageUploadPro
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className={cn(
-              "aspect-square rounded-xl border-2 border-dashed border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary",
+              "aspect-square rounded-xl border-2 border-dashed border-border/50 bg-background hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary",
               isUploading && "opacity-50 cursor-not-allowed"
             )}
           >

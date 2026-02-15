@@ -325,7 +325,7 @@ export function AdminProvidersPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                    className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                     onClick={() => handleEdit(provider)}
                   >
                     <Edit className="h-4 w-4" />
@@ -358,7 +358,7 @@ export function AdminProvidersPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       onClick={() => handleDelete(provider.id)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -414,7 +414,7 @@ export function AdminProvidersPage() {
           <div className="p-6 space-y-6 bg-background">
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 flex items-center gap-2">
                   Nombre del Proveedor
                   <span className="text-primary">*</span>
                 </label>
@@ -426,7 +426,7 @@ export function AdminProvidersPage() {
                     if (errors.name) setErrors({ ...errors, name: undefined })
                   }}
                   className={cn(
-                    "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                    "h-12 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
                     errors.name && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
                   )}
                 />
@@ -439,7 +439,7 @@ export function AdminProvidersPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 flex items-center gap-2">
                   País de Origen
                   <span className="text-primary">*</span>
                 </label>
@@ -451,7 +451,7 @@ export function AdminProvidersPage() {
                     if (errors.country) setErrors({ ...errors, country: undefined })
                   }}
                   className={cn(
-                    "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                    "h-12 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
                     errors.country && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
                   )}
                 />
@@ -464,7 +464,7 @@ export function AdminProvidersPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 flex items-center gap-2">
                   Dirección Fiscal
                   <span className="text-primary">*</span>
                 </label>
@@ -476,7 +476,7 @@ export function AdminProvidersPage() {
                     if (errors.address) setErrors({ ...errors, address: undefined })
                   }}
                   className={cn(
-                    "min-h-[100px] bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all resize-none",
+                    "min-h-[100px] bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all resize-none",
                     errors.address && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
                   )}
                 />
@@ -494,7 +494,7 @@ export function AdminProvidersPage() {
                 variant="outline" 
                 onClick={handleCloseModal}
                 disabled={saving}
-                className="flex-1 h-12 rounded-xl font-bold border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
+                className="flex-1 h-12 rounded-xl font-bold border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 transition-all"
               >
                 Cancelar
               </Button>

@@ -1107,26 +1107,26 @@ export function AdminInventoryPage() {
             <Card className="border-0 shadow-sm rounded-2xl">
               <CardContent className="p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-slate-800">Reporte del lote</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Reporte del lote</p>
                   <span className="text-xs text-slate-400">{selectedBatch?.code || "Selecciona un lote"}</span>
                 </div>
                 {selectedBatch ? (
                   <>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                         <p className="text-[10px] uppercase tracking-widest text-slate-400">Costo vendido (USD)</p>
-                        <p className="text-lg font-bold text-slate-800">{formatUSD(selectedBatchTotals?.totalCost || 0)}</p>
+                        <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{formatUSD(selectedBatchTotals?.totalCost || 0)}</p>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                         <p className="text-[10px] uppercase tracking-widest text-slate-400">Ventas (USD)</p>
-                        <p className="text-lg font-bold text-slate-800">{formatUSD(selectedBatchTotals?.totalRevenue || 0)}</p>
+                        <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{formatUSD(selectedBatchTotals?.totalRevenue || 0)}</p>
                         <p className="text-[10px] text-slate-400">Bs: {formatBS(selectedBatchTotals?.totalRevenueBs || 0)}</p>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                         <p className="text-[10px] uppercase tracking-widest text-slate-400">Ganancia (USD)</p>
                         <p className="text-lg font-bold text-emerald-600">{formatUSD(selectedBatchTotals?.totalProfit || 0)}</p>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
                         <p className="text-[10px] uppercase tracking-widest text-slate-400">Ganancia %</p>
                         <p className="text-lg font-bold text-emerald-600">{(selectedBatchTotals?.profitPercent || 0).toFixed(2)}%</p>
                       </div>
@@ -1460,7 +1460,7 @@ export function AdminInventoryPage() {
         }}>
           <DialogContent className="rounded-3xl border-0 shadow-2xl p-8 sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-3">
+              <DialogTitle className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-3">
                 {adjustmentType === "entry" && "Entrada de Inventario"}
                 {adjustmentType === "exit" && "Salida de Inventario"}
                 {adjustmentType === "adjustment" && "Ajuste de Stock"}
@@ -1474,8 +1474,8 @@ export function AdminInventoryPage() {
             </DialogHeader>
             {selectedProduct && (
               <div className="space-y-6 py-6">
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p className="text-sm font-bold text-slate-800">{selectedProduct.productName}</p>
+                <div className="p-5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{selectedProduct.productName}</p>
                   <p className="text-xs font-medium text-slate-500 mt-1">
                     Stock actual: <span className="text-primary font-bold">{selectedProduct.currentStock} unidades</span>
                   </p>
@@ -1493,7 +1493,7 @@ export function AdminInventoryPage() {
                     value={adjustmentQuantity}
                     onChange={(e) => setAdjustmentQuantity(e.target.value)}
                     placeholder="0"
-                    className="h-12 bg-white border-slate-200 focus:border-primary focus:ring-primary/10 rounded-xl text-lg font-bold"
+                    className="h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/10 rounded-xl text-lg font-bold"
                     aria-required="true"
                   />
                 </div>
@@ -1505,14 +1505,14 @@ export function AdminInventoryPage() {
                     value={adjustmentReason}
                     onChange={(e) => setAdjustmentReason(e.target.value)}
                     placeholder="Ej: Recepción de pedido, merma, corrección..."
-                    className="h-12 bg-white border-slate-200 focus:border-primary focus:ring-primary/10 rounded-xl text-sm"
+                    className="h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/10 rounded-xl text-sm"
                     aria-required="true"
                   />
                 </div>
               </div>
             )}
             <DialogFooter className="gap-3">
-              <Button variant="outline" onClick={handleCloseAdjustModal} className="rounded-xl border-slate-200 font-bold text-xs uppercase tracking-wider h-11 px-6">
+              <Button variant="outline" onClick={handleCloseAdjustModal} className="rounded-xl border-slate-200 dark:border-slate-800 font-bold text-xs uppercase tracking-wider h-11 px-6">
                 Cancelar
               </Button>
               <Button onClick={handleAdjustment} className="rounded-xl bg-primary text-white hover:bg-primary/90 font-bold text-xs uppercase tracking-wider h-11 px-8 shadow-lg shadow-primary/20">
@@ -2002,7 +2002,7 @@ export function AdminInventoryPage() {
 
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia (BCV)</label>
-                            <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                            <div className="h-10 px-3 flex items-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/30 rounded-xl text-xs font-black text-emerald-600">
                               +{formatBS(item.profitBCV || 0)}
                             </div>
                           </div>
@@ -2050,7 +2050,7 @@ export function AdminInventoryPage() {
             <div className="p-6 space-y-6 bg-background">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 flex items-center gap-2">
                     Nombre del Proveedor
                     <span className="text-primary">*</span>
                   </label>
@@ -2062,7 +2062,7 @@ export function AdminInventoryPage() {
                       if (providerErrors.name) setProviderErrors({ ...providerErrors, name: undefined })
                     }}
                     className={cn(
-                      "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                      "h-12 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
                       providerErrors.name && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
                     )}
                   />
@@ -2075,7 +2075,7 @@ export function AdminInventoryPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 flex items-center gap-2">
                     País de Origen
                     <span className="text-primary">*</span>
                   </label>
@@ -2087,7 +2087,7 @@ export function AdminInventoryPage() {
                       if (providerErrors.country) setProviderErrors({ ...providerErrors, country: undefined })
                     }}
                     className={cn(
-                      "h-12 bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
+                      "h-12 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all",
                       providerErrors.country && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
                     )}
                   />
@@ -2100,7 +2100,7 @@ export function AdminInventoryPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1 flex items-center gap-2">
                     Dirección Fiscal
                     <span className="text-primary">*</span>
                   </label>
@@ -2112,7 +2112,7 @@ export function AdminInventoryPage() {
                       if (providerErrors.address) setProviderErrors({ ...providerErrors, address: undefined })
                     }}
                     className={cn(
-                      "min-h-[100px] bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all resize-none",
+                      "min-h-[100px] bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-primary focus:ring-primary/20 rounded-xl font-medium transition-all resize-none",
                       providerErrors.address && "border-destructive focus:border-destructive focus:ring-destructive/20 bg-destructive/5"
                     )}
                   />
@@ -2129,7 +2129,7 @@ export function AdminInventoryPage() {
                 <Button 
                   variant="outline" 
                   onClick={handleCloseProviderModal}
-                  className="flex-1 h-12 rounded-xl font-bold border-slate-200 hover:bg-slate-50 text-slate-600 transition-all"
+                  className="flex-1 h-12 rounded-xl font-bold border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 transition-all"
                 >
                   Cancelar
                 </Button>

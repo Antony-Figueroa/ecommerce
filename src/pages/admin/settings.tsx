@@ -19,6 +19,7 @@ import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -391,12 +392,11 @@ export function AdminSettingsPage() {
                         
                         {setting.type === 'boolean' ? (
                           <div className="flex items-center gap-4 p-3 bg-secondary/30 rounded-lg border border-border/50">
-                            <input 
-                              type="checkbox"
+                            <Checkbox 
                               id={setting.key}
                               checked={getSettingValue(setting) === 'true'}
-                              onChange={(e) => handleInputChange(setting.key, e.target.checked ? 'true' : 'false')}
-                              className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
+                              onCheckedChange={(checked) => handleInputChange(setting.key, checked ? 'true' : 'false')}
+                              className="h-5 w-5"
                             />
                             <Label htmlFor={setting.key} className="font-bold cursor-pointer">
                               {getSettingValue(setting) === 'true' ? 'Activado' : 'Desactivado'}

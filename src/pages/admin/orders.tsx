@@ -45,6 +45,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -2148,24 +2149,23 @@ export function AdminOrdersPage() {
 
                   <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
                     <div className="space-y-0.5">
-                      <label htmlFor="enable-financing" className="text-sm font-bold flex items-center gap-2">
+                      <label htmlFor="enable-financing" className="text-sm font-bold flex items-center gap-2 cursor-pointer">
                         <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
                         Habilitar Plan de Cuotas
                       </label>
                       <p className="text-xs text-muted-foreground">Dividir el saldo restante en pagos quincenales.</p>
                     </div>
-                    <input 
+                    <Checkbox 
                       id="enable-financing"
-                      type="checkbox" 
                       checked={isFinancingEnabled}
-                      onChange={(e) => {
-                        setIsFinancingEnabled(e.target.checked)
-                        if (e.target.checked && installmentCount === 0) {
+                      onCheckedChange={(checked) => {
+                        setIsFinancingEnabled(!!checked)
+                        if (checked && installmentCount === 0) {
                           setInstallmentCount(2)
                           calculateAutomaticInstallments(2, parseFloat(initialPaymentUSD) || 0)
                         }
                       }}
-                      className="h-5 w-5 accent-primary cursor-pointer"
+                      className="h-5 w-5"
                       aria-label="Habilitar plan de financiamiento en cuotas"
                     />
                   </div>

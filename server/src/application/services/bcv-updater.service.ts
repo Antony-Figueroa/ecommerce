@@ -24,10 +24,17 @@ export class BCVUpdaterService {
       let source = 'auto-ve-dolarapi-bcv'
 
       try {
-        // 2. Consultar API (DolarApi.com - BCV Oficial)
-        const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial')
+        // 2. Consultar API (DolarApi.com - BCV Oficial) con timeout de 10 segundos
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+        const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
+
         if (!response.ok) {
-          throw new Error(`Error HTTP ${response.status} al obtener tasa BCV`)
+          throw new Error(`Error HTTP ${response.status}: ${response.statusText}`)
         }
         
         const data = (await response.json()) as { promedio?: number; price?: number; official?: number; price_old?: number }
@@ -37,20 +44,21 @@ export class BCVUpdaterService {
         newRate = rateValue ?? null
         
         console.log('Valor BCV Oficial procesado:', newRate)
-      } catch (apiError) {
-        console.error('Error consultando DolarApi BCV:', apiError)
+      } catch (apiError: any) {
+        const errorDetail = apiError instanceof Error ? apiError.message : String(apiError)
+        console.error('Error consultando DolarApi BCV:', errorDetail)
         
         // 1. Intentar usar la tasa previa de la BD (último registro obtenido de la API exitosamente)
         if (previousRate > 0) {
           newRate = previousRate
           source = 'auto-fallback-db'
-          console.log(`API falló. Usando última tasa conocida de la BD como respaldo: ${newRate}`)
+          console.log(`API falló (${errorDetail}). Usando última tasa conocida de la BD como respaldo: ${newRate}`)
           
           // Notificar advertencia para que el administrador sepa que la API falló pero el sistema continúa
           await this.notificationService.createNotification({
             type: 'SYSTEM',
             title: 'Advertencia Actualización BCV',
-            message: 'La API de DolarApi falló. Se está utilizando el último monto registrado en la base de datos como respaldo.'
+            message: `La API de DolarApi falló (${errorDetail}). Se está utilizando el último monto registrado en la base de datos (${newRate} Bs) como respaldo.`
           })
         } else {
           // 2. Mecanismo de respaldo final: Tasa fija desde configuración

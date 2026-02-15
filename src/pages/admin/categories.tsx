@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -541,15 +542,16 @@ export function AdminCategoriesPage() {
                 placeholder="https://..."
               />
             </div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="isActive"
                 checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="rounded"
+                onCheckedChange={(checked) => setFormData({ ...formData, isActive: !!checked })}
               />
-              <span className="text-sm">Categoria activa</span>
-            </label>
+              <label htmlFor="isActive" className="text-sm cursor-pointer">
+                Categoria activa
+              </label>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseModal}>Cancelar</Button>
