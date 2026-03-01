@@ -294,7 +294,7 @@ export function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
 <div className="h-[350px] w-full pt-4 relative min-h-[350px]">
-                {isReady && (
+                {isReady && monthlyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <AreaChart data={monthlyData}>
                     <defs>
@@ -352,6 +352,10 @@ export function AdminAnalyticsPage() {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <p className="text-sm">No hay datos para el período seleccionado</p>
+                  </div>
                 )}
               </div>
             </CardContent>
