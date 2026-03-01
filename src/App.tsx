@@ -38,6 +38,8 @@ const AdminProvidersPage = lazy(() => import("@/pages/admin/providers").then(m =
 const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m => ({ default: m.FinancialDashboard })))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
 const AdminAIHub = lazy(() => import("@/pages/admin/AdminAIHub").then(m => ({ default: m.AdminAIHub })))
+const AdminAuditPage = lazy(() => import("@/pages/admin/audit").then(m => ({ default: m.AdminAuditPage })))
+const AdminKanbanPage = lazy(() => import("@/pages/admin/kanban").then(m => ({ default: m.AdminKanbanPage })))
 
 function App() {
   const location = useLocation()
@@ -46,8 +48,8 @@ function App() {
   useEffect(() => {
     // Only scroll to top if not in admin area
     // AND not when just switching categories in products page
-    const isProductTransition = 
-      (location.pathname.startsWith('/productos') || location.pathname.startsWith('/catalogo')) && 
+    const isProductTransition =
+      (location.pathname.startsWith('/productos') || location.pathname.startsWith('/catalogo')) &&
       (prevPathname.current.startsWith('/productos') || prevPathname.current.startsWith('/catalogo'))
 
     if (!location.pathname.startsWith('/admin') && !isProductTransition) {
@@ -76,6 +78,8 @@ function App() {
                 <Route path="/admin/financial" element={<FinancialDashboard />} />
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
                 <Route path="/admin/ai-hub" element={<AdminAIHub />} />
+                <Route path="/admin/audit" element={<AdminAuditPage />} />
+                <Route path="/admin/kanban" element={<AdminKanbanPage />} />
               </Route>
 
               {/* Rutas Públicas y de Usuario - Usan RootLayout para Navbar/Footer persistente */}
@@ -91,7 +95,7 @@ function App() {
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
-                
+
                 {/* Rutas de Usuario Protegidas con Layout de Cuenta anidado */}
                 <Route element={<ProtectedRoute><UserAccountLayout /></ProtectedRoute>}>
                   <Route path="/perfil" element={<AccountPage />} />
@@ -99,7 +103,7 @@ function App() {
                   <Route path="/favoritos" element={<FavoritesPage />} />
                   <Route path="/notificaciones" element={<NotificationsPage />} />
                 </Route>
-                
+
                 {/* Catch-all route to redirect to home */}
                 <Route path="*" element={<HomePage />} />
               </Route>

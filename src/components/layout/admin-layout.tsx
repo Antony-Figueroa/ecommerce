@@ -17,6 +17,8 @@ import {
   LogOut,
   Leaf,
   Cpu,
+  Shield,
+  Kanban,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminTopNav } from "./admin-top-nav"
@@ -90,6 +92,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
       items: [
         { path: "/admin", label: "Inicio", icon: LayoutDashboard },
         { path: "/admin/financial", label: "Financiero", icon: DollarSign },
+        { path: "/admin/kanban", label: "Flujo Kanban", icon: Kanban },
         { path: "/admin/orders", label: "Órdenes", icon: ShoppingCart, badge: pendingOrders > 0 ? pendingOrders : undefined },
       ]
     },
@@ -114,6 +117,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     {
       title: "Sistema",
       items: [
+        { path: "/admin/audit", label: "Auditoría", icon: Shield },
         { path: "/admin/settings", label: "Configuración", icon: Settings },
       ]
     }
@@ -156,7 +160,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
               {group.items.map((item) => {
                 const isActive = location.pathname === item.path || (item.path !== "/admin" && location.pathname.startsWith(item.path))
                 const Icon = item.icon
-                
+
                 const navLink = (
                   <Link
                     key={item.path}
@@ -164,8 +168,8 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                     onClick={() => isMobile && setIsMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative",
-                      isActive 
-                        ? "bg-primary/10 text-primary font-bold shadow-sm" 
+                      isActive
+                        ? "bg-primary/10 text-primary font-bold shadow-sm"
                         : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground font-medium"
                     )}
                   >
@@ -175,7 +179,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                     )}>
                       <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
                     </div>
-                    
+
                     {(sidebarOpen || isMobile) && (
                       <span className="flex-1 text-sm truncate">{item.label}</span>
                     )}
@@ -226,7 +230,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
           <div className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-secondary-foreground font-bold text-xs shrink-0 ring-1 ring-border/50">
             {user?.name?.charAt(0) || 'A'}
           </div>
-          
+
           {(sidebarOpen || isMobile) && (
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-foreground truncate uppercase tracking-tight">
@@ -237,11 +241,11 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
               </p>
             </div>
           )}
-          
+
           {(sidebarOpen || isMobile) && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={logout}
               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
             >
@@ -249,7 +253,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
             </Button>
           )}
         </div>
-        
+
         {!isMobile && (
           <div className="mt-2 flex justify-center">
             <Button

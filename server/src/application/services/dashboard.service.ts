@@ -38,17 +38,17 @@ export class DashboardService {
         totalOrders,
         pendingOrders,
         confirmedOrders,
-        salesData,
         totalCustomers,
         totalProducts,
         lowStockCount,
         recentOrders,
         allSalesForChart,
+        previousPeriodSales,
+        previousPeriodCustomers,
       ] = await Promise.all([
         this.saleRepo.count(where).catch(e => { console.error('Error in totalOrders:', e); return 0; }),
         this.saleRepo.count({ ...where, status: 'PENDING' }).catch(e => { console.error('Error in pendingOrders:', e); return 0; }),
         this.saleRepo.count({ ...where, status: { in: ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'] } }).catch(e => { console.error('Error in confirmedOrders:', e); return 0; }),
-        this.saleRepo.getSummary({ startDate, endDate }).catch(e => { console.error('Error in salesData:', e); return []; }),
         this.userRepo.count({ role: 'CUSTOMER' }).catch(e => { console.error('Error in totalCustomers:', e); return 0; }),
         this.productRepo.count({ isActive: true }).catch(e => { console.error('Error in totalProducts:', e); return 0; }),
         this.productRepo.count({ isActive: true, stock: { lt: 10 } }).catch(e => { console.error('Error in lowStockCount:', e); return 0; }),
@@ -63,7 +63,24 @@ export class DashboardService {
               gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
             }
           },
-        }).catch(e => { console.error('Error in allSalesForChart:', e); return []; })
+        }).catch(e => { console.error('Error in allSalesForChart:', e); return []; }),
+        // Previous period sales (last 30-60 days) for growth calculation
+        this.saleRepo.findAll({
+          where: {
+            status: 'COMPLETED',
+            createdAt: {
+              gte: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+              lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            }
+          }
+        }).catch(e => { console.error('Error in previousPeriodSales:', e); return []; }),
+        // Previous period customers
+        this.userRepo.count({
+          role: 'CUSTOMER',
+          createdAt: {
+            lte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+          }
+        }).catch(e => { console.error('Error in previousPeriodCustomers:', e); return 0; })
       ])
 
       // Process chart data (last 7 days)
@@ -95,10 +112,31 @@ export class DashboardService {
         }
       })
 
-      // Total Revenue (only from COMPLETED sales)
-      const totalRevenue = allSalesForChart
-        .filter((s: any) => s.status === 'COMPLETED')
-        .reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0)
+      // Current Period Revenue (last 30 days)
+      const currentPeriodSales = allSalesForChart.filter((s: any) => 
+        s.status === 'COMPLETED' && 
+        new Date(s.createdAt) >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      )
+
+      const currentRevenue = currentPeriodSales.reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0)
+      const previousRevenue = previousPeriodSales.reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0)
+
+      // Calculate growth percentages
+      const calculateGrowth = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0
+        return Math.round(((current - previous) / previous) * 100 * 10) / 10
+      }
+
+      const revenueGrowth = calculateGrowth(currentRevenue, previousRevenue)
+      const orderGrowth = calculateGrowth(totalOrders, previousPeriodSales.length)
+      const customerGrowth = calculateGrowth(totalCustomers, previousPeriodCustomers)
+
+      // Total Revenue (all time COMPLETED sales)
+      // Since we only fetched last 7 days in allSalesForChart, we need a better way for totalRevenue
+      // but for now let's keep it consistent with what the frontend expects or fetch all completed
+      const totalRevenue = await this.saleRepo.getSummary({ status: 'COMPLETED' })
+        .then(sales => sales.reduce((sum: number, s: any) => sum + Number(s.totalUSD || 0), 0))
+        .catch(() => 0)
 
       return {
         totalOrders,
@@ -109,6 +147,11 @@ export class DashboardService {
         totalProducts,
         lowStockProducts: lowStockCount,
         chartData,
+        growth: {
+          revenue: revenueGrowth,
+          orders: orderGrowth,
+          customers: customerGrowth,
+        },
         recentOrders: recentOrders.map((order: any) => ({
           id: order.id,
           orderNumber: order.saleNumber,
@@ -388,5 +431,30 @@ export class DashboardService {
         })),
       },
     }
+  }
+
+  async getAuditLogs(options: { 
+    entityType?: string, 
+    entityId?: string, 
+    action?: string, 
+    userId?: string, 
+    limit?: number, 
+    page?: number 
+  }) {
+    const skip = ((options.page || 1) - 1) * (options.limit || 50)
+    
+    const logs = await this.auditService.getLogs({
+      where: {
+        entityType: options.entityType,
+        entityId: options.entityId,
+        action: options.action,
+        userId: options.userId
+      },
+      take: options.limit || 50,
+      skip,
+      orderBy: { createdAt: 'desc' }
+    })
+
+    return logs
   }
 }

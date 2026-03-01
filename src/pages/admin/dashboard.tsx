@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import { formatUSD as formatUSDUtil } from '@/lib/utils';
+import { formatUSD as formatUSDUtil, cn } from '@/lib/utils';
 import { AdminPageHeader } from '@/components/admin/page-header';
 import {
   ShoppingCart,
@@ -44,6 +44,11 @@ interface DashboardStats {
     sales: number;
     revenue: number;
   }>;
+  growth?: {
+    revenue: number;
+    orders: number;
+    customers: number;
+  };
   recentOrders: Array<{
     id: string;
     orderNumber: string;
@@ -80,13 +85,13 @@ export function AdminDashboard() {
     fetchStats();
   }, []);
 
-  // Mock growth and chart data since current backend doesn't provide historical trends yet
-  const mockGrowth = useMemo(() => ({
-    revenueGrowth: 12.5,
-    orderGrowth: 8.2,
-    customerGrowth: 5.4,
-    aovGrowth: -2.1,
-    conversionGrowth: 1.2,
+  // Use real growth from backend if available, otherwise fallback to 0
+  const realGrowth = useMemo(() => ({
+    revenueGrowth: stats?.growth?.revenue || 0,
+    orderGrowth: stats?.growth?.orders || 0,
+    customerGrowth: stats?.growth?.customers || 0,
+    aovGrowth: 0, // Could be calculated too
+    conversionGrowth: 0,
     averageOrderValue: stats ? (stats.totalRevenue / (stats.totalOrders || 1)) : 0,
     conversionRate: 3.45
   }), [stats]);
@@ -181,12 +186,12 @@ export function AdminDashboard() {
         aria-label="Resumen de estadísticas clave"
       >
         {[
-          { title: 'Ingresos Totales', value: formatUSD(stats.totalRevenue), growth: mockGrowth.revenueGrowth, icon: DollarSign, trend: 'up', label: 'Crecimiento de ingresos' },
-          { title: 'Pedidos Totales', value: stats.totalOrders, growth: mockGrowth.orderGrowth, icon: ShoppingCart, trend: 'up', label: 'Aumento de pedidos' },
-          { title: 'Clientes Totales', value: stats.totalCustomers, growth: mockGrowth.customerGrowth, icon: Users, trend: 'up', label: 'Nuevos clientes' },
+          { title: 'Ingresos Totales', value: formatUSD(stats.totalRevenue), growth: realGrowth.revenueGrowth, icon: DollarSign, trend: realGrowth.revenueGrowth >= 0 ? 'up' : 'down', label: 'Crecimiento de ingresos' },
+          { title: 'Pedidos Totales', value: stats.totalOrders, growth: realGrowth.orderGrowth, icon: ShoppingCart, trend: realGrowth.orderGrowth >= 0 ? 'up' : 'down', label: 'Aumento de pedidos' },
+          { title: 'Clientes Totales', value: stats.totalCustomers, growth: realGrowth.customerGrowth, icon: Users, trend: realGrowth.customerGrowth >= 0 ? 'up' : 'down', label: 'Nuevos clientes' },
           { title: 'Pedidos Pendientes', value: stats.pendingOrders, growth: 0, icon: ArrowDownRight, trend: 'down', label: 'Pedidos por procesar' },
           { title: 'Productos Críticos', value: stats.lowStockProducts, growth: 0, icon: Package, trend: 'down', label: 'Bajo inventario' },
-          { title: 'Ticket Promedio', value: formatUSD(mockGrowth.averageOrderValue), growth: mockGrowth.aovGrowth, icon: TrendingUp, trend: 'down', label: 'Cambio en valor promedio' }
+          { title: 'Ticket Promedio', value: formatUSD(realGrowth.averageOrderValue), growth: realGrowth.aovGrowth, icon: TrendingUp, trend: realGrowth.aovGrowth >= 0 ? 'up' : 'down', label: 'Cambio en valor promedio' }
         ].map((item, i) => (
           <motion.div key={i} variants={itemVariants}>
             <Card
@@ -202,12 +207,15 @@ export function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground tracking-tight mb-2 group-hover:translate-x-0.5 transition-transform duration-500">{item.value}</div>
-                <div
-                  className={`inline-flex items-center text-[10px] font-bold uppercase tracking-wider ${item.trend === 'up' ? 'text-emerald-600' : 'text-rose-500'}`}
-                  aria-label={item.trend === 'up' ? 'Tendencia al alza' : 'Tendencia a la baja'}
-                >
-                  {item.trend === 'up' ? <ArrowUpRight className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDownRight className="mr-1 h-3.5 w-3.5" aria-hidden="true" />}
-                  <span className="bg-muted px-2 py-0.5 rounded-full">{item.growth > 0 ? '+' : ''}{item.growth}%</span>
+                <div className="flex items-center gap-1.5">
+                  <div className={cn(
+                    "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black",
+                    item.trend === 'up' ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
+                  )}>
+                    {item.trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                    {item.growth > 0 ? `+${item.growth}%` : `${item.growth}%`}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium">vs mes ant.</span>
                 </div>
               </CardContent>
             </Card>

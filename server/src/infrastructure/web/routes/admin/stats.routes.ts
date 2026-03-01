@@ -25,5 +25,27 @@ router.get('/', async (req: Request, res: Response) => {
   }
 })
 
+router.get('/audit', async (req: Request, res: Response) => {
+  try {
+    const options = {
+      entityType: req.query.entityType as string | undefined,
+      entityId: req.query.entityId as string | undefined,
+      action: req.query.action as string | undefined,
+      userId: req.query.userId as string | undefined,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
+      page: req.query.page ? parseInt(req.query.page as string) : 1
+    }
+    
+    const logs = await dashboardService.getAuditLogs(options)
+    res.json(logs)
+  } catch (error: any) {
+    console.error('Error fetching audit logs:', error)
+    res.status(500).json({ 
+      error: 'Error al obtener logs de auditoría',
+      message: error.message
+    })
+  }
+})
+
 export default router
 

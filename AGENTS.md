@@ -149,7 +149,7 @@ Para mantener la coherencia y calidad técnica, los agentes deben invocar y segu
 ### 🔍 Systematic Debugging
 
 - **Uso**: Ante cualquier error, bug o comportamiento inesperado.
-- **Mandato**: Seguir el proceso de diagnóstico raíz antes de proponer soluciones.
+- **Mandato**: Seguir el proceso de diagnóstico raíz antes de proponer soluciones. **IMPORTANTE**: El agente debe monitorear proactivamente la terminal y la consola durante cada implementación para detectar y corregir errores "al trote" sin intervención del usuario.
 
 ### 📝 Changelog Generator
 
