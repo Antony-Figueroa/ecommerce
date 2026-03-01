@@ -288,7 +288,8 @@ model Sale {
   profitUSD       Decimal        @default(0)
   profitBS        Decimal        @default(0)
   isPaid          Boolean        @default(false)
-  paidAmountUSD   Decimal?
+  paidAmountUSD   Decimal        @default(0)
+  confirmationToken String?      @unique
   deliveryStatus  String         @default("NOT_DELIVERED")
   notes           String?
   createdAt       DateTime       @default(now())

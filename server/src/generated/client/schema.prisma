@@ -121,6 +121,10 @@ model Product {
   requirementItems    RequirementItem[]
   saleItems           SaleItem[]
   categories          Category[]            @relation("CategoryToProduct")
+
+  @@index([isActive])
+  @@index([brandId])
+  @@index([createdAt])
 }
 
 model Provider {
@@ -267,33 +271,38 @@ model RequirementItem {
 }
 
 model Sale {
-  id              String         @id @default(uuid())
-  saleNumber      String         @unique
-  userId          String?
-  customerName    String?
-  customerPhone   String?
-  customerEmail   String?
-  deliveryAddress String?
-  paymentMethod   String         @default("WHATSAPP")
-  status          String         @default("PENDING")
-  subtotalUSD     Decimal        @default(0)
-  shippingCostUSD Decimal        @default(0)
-  totalUSD        Decimal        @default(0)
-  bcvRate         Decimal
-  totalBS         Decimal        @default(0)
-  profitUSD       Decimal        @default(0)
-  profitBS        Decimal        @default(0)
-  isPaid          Boolean        @default(false)
-  paidAmountUSD   Decimal?
-  deliveryStatus  String         @default("NOT_DELIVERED")
-  notes           String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  installments    Installment[]
-  payments        Payment[]
-  user            User?          @relation(fields: [userId], references: [id])
-  auditLogs       SaleAuditLog[]
-  items           SaleItem[]
+  id                String         @id @default(uuid())
+  saleNumber        String         @unique
+  userId            String?
+  customerName      String?
+  customerPhone     String?
+  customerEmail     String?
+  deliveryAddress   String?
+  paymentMethod     String         @default("WHATSAPP")
+  status            String         @default("PENDING")
+  subtotalUSD       Decimal        @default(0)
+  shippingCostUSD   Decimal        @default(0)
+  totalUSD          Decimal        @default(0)
+  bcvRate           Decimal
+  totalBS           Decimal        @default(0)
+  profitUSD         Decimal        @default(0)
+  profitBS          Decimal        @default(0)
+  isPaid            Boolean        @default(false)
+  paidAmountUSD     Decimal        @default(0)
+  confirmationToken String?        @unique
+  deliveryStatus    String         @default("NOT_DELIVERED")
+  notes             String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  installments      Installment[]
+  payments          Payment[]
+  user              User?          @relation(fields: [userId], references: [id])
+  auditLogs         SaleAuditLog[]
+  items             SaleItem[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Payment {
@@ -391,6 +400,9 @@ model InventoryLog {
   changeAmount  Int
   reason        String?
   createdAt     DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
 }
 
 model Brand {

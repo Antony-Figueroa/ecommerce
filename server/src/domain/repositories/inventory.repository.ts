@@ -96,17 +96,17 @@ export interface ProviderRepository {
   findAll(): Promise<Provider[]>
   findById(id: string): Promise<Provider | null>
   findByName(name: string): Promise<Provider | null>
-  create(data: any): Promise<Provider>
-  update(id: string, data: any): Promise<Provider>
-  delete(id: string): Promise<void>
+  create(data: any, tx?: any): Promise<Provider>
+  update(id: string, data: any, tx?: any): Promise<Provider>
+  delete(id: string, tx?: any): Promise<void>
 }
 
 export interface InventoryBatchRepository {
   findAll(options?: any): Promise<any[]>
   findById(id: string): Promise<any | null>
-  create(data: any): Promise<any>
-  update(id: string, data: any): Promise<any>
-  delete(id: string): Promise<void>
+  create(data: any, tx?: any): Promise<any>
+  update(id: string, data: any, tx?: any): Promise<any>
+  delete(id: string, tx?: any): Promise<void>
   findAvailableItemsByProduct(productId: string): Promise<any[]>
-  updateItem(id: string, data: any): Promise<any>
+  updateItem(id: string, data: any, tx?: any): Promise<any>
 }

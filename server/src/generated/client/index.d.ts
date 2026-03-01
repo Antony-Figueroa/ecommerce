@@ -20653,6 +20653,7 @@ export namespace Prisma {
     profitBS: Decimal | null
     isPaid: boolean | null
     paidAmountUSD: Decimal | null
+    confirmationToken: string | null
     deliveryStatus: string | null
     notes: string | null
     createdAt: Date | null
@@ -20678,6 +20679,7 @@ export namespace Prisma {
     profitBS: Decimal | null
     isPaid: boolean | null
     paidAmountUSD: Decimal | null
+    confirmationToken: string | null
     deliveryStatus: string | null
     notes: string | null
     createdAt: Date | null
@@ -20703,6 +20705,7 @@ export namespace Prisma {
     profitBS: number
     isPaid: number
     paidAmountUSD: number
+    confirmationToken: number
     deliveryStatus: number
     notes: number
     createdAt: number
@@ -20752,6 +20755,7 @@ export namespace Prisma {
     profitBS?: true
     isPaid?: true
     paidAmountUSD?: true
+    confirmationToken?: true
     deliveryStatus?: true
     notes?: true
     createdAt?: true
@@ -20777,6 +20781,7 @@ export namespace Prisma {
     profitBS?: true
     isPaid?: true
     paidAmountUSD?: true
+    confirmationToken?: true
     deliveryStatus?: true
     notes?: true
     createdAt?: true
@@ -20802,6 +20807,7 @@ export namespace Prisma {
     profitBS?: true
     isPaid?: true
     paidAmountUSD?: true
+    confirmationToken?: true
     deliveryStatus?: true
     notes?: true
     createdAt?: true
@@ -20913,7 +20919,8 @@ export namespace Prisma {
     profitUSD: Decimal
     profitBS: Decimal
     isPaid: boolean
-    paidAmountUSD: Decimal | null
+    paidAmountUSD: Decimal
+    confirmationToken: string | null
     deliveryStatus: string
     notes: string | null
     createdAt: Date
@@ -20958,6 +20965,7 @@ export namespace Prisma {
     profitBS?: boolean
     isPaid?: boolean
     paidAmountUSD?: boolean
+    confirmationToken?: boolean
     deliveryStatus?: boolean
     notes?: boolean
     createdAt?: boolean
@@ -20989,6 +20997,7 @@ export namespace Prisma {
     profitBS?: boolean
     isPaid?: boolean
     paidAmountUSD?: boolean
+    confirmationToken?: boolean
     deliveryStatus?: boolean
     notes?: boolean
     createdAt?: boolean
@@ -21015,6 +21024,7 @@ export namespace Prisma {
     profitBS?: boolean
     isPaid?: boolean
     paidAmountUSD?: boolean
+    confirmationToken?: boolean
     deliveryStatus?: boolean
     notes?: boolean
     createdAt?: boolean
@@ -21060,7 +21070,8 @@ export namespace Prisma {
       profitUSD: Prisma.Decimal
       profitBS: Prisma.Decimal
       isPaid: boolean
-      paidAmountUSD: Prisma.Decimal | null
+      paidAmountUSD: Prisma.Decimal
+      confirmationToken: string | null
       deliveryStatus: string
       notes: string | null
       createdAt: Date
@@ -21481,6 +21492,7 @@ export namespace Prisma {
     readonly profitBS: FieldRef<"Sale", 'Decimal'>
     readonly isPaid: FieldRef<"Sale", 'Boolean'>
     readonly paidAmountUSD: FieldRef<"Sale", 'Decimal'>
+    readonly confirmationToken: FieldRef<"Sale", 'String'>
     readonly deliveryStatus: FieldRef<"Sale", 'String'>
     readonly notes: FieldRef<"Sale", 'String'>
     readonly createdAt: FieldRef<"Sale", 'DateTime'>
@@ -34222,6 +34234,7 @@ export namespace Prisma {
     profitBS: 'profitBS',
     isPaid: 'isPaid',
     paidAmountUSD: 'paidAmountUSD',
+    confirmationToken: 'confirmationToken',
     deliveryStatus: 'deliveryStatus',
     notes: 'notes',
     createdAt: 'createdAt',
@@ -35872,7 +35885,8 @@ export namespace Prisma {
     profitUSD?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFilter<"Sale"> | boolean
-    paidAmountUSD?: DecimalNullableFilter<"Sale"> | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
+    confirmationToken?: StringNullableFilter<"Sale"> | string | null
     deliveryStatus?: StringFilter<"Sale"> | string
     notes?: StringNullableFilter<"Sale"> | string | null
     createdAt?: DateTimeFilter<"Sale"> | Date | string
@@ -35902,7 +35916,8 @@ export namespace Prisma {
     profitUSD?: SortOrder
     profitBS?: SortOrder
     isPaid?: SortOrder
-    paidAmountUSD?: SortOrderInput | SortOrder
+    paidAmountUSD?: SortOrder
+    confirmationToken?: SortOrderInput | SortOrder
     deliveryStatus?: SortOrder
     notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -35917,6 +35932,7 @@ export namespace Prisma {
   export type SaleWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     saleNumber?: string
+    confirmationToken?: string
     AND?: SaleWhereInput | SaleWhereInput[]
     OR?: SaleWhereInput[]
     NOT?: SaleWhereInput | SaleWhereInput[]
@@ -35935,7 +35951,7 @@ export namespace Prisma {
     profitUSD?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFilter<"Sale"> | boolean
-    paidAmountUSD?: DecimalNullableFilter<"Sale"> | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     deliveryStatus?: StringFilter<"Sale"> | string
     notes?: StringNullableFilter<"Sale"> | string | null
     createdAt?: DateTimeFilter<"Sale"> | Date | string
@@ -35945,7 +35961,7 @@ export namespace Prisma {
     user?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     auditLogs?: SaleAuditLogListRelationFilter
     items?: SaleItemListRelationFilter
-  }, "id" | "saleNumber">
+  }, "id" | "saleNumber" | "confirmationToken">
 
   export type SaleOrderByWithAggregationInput = {
     id?: SortOrder
@@ -35965,7 +35981,8 @@ export namespace Prisma {
     profitUSD?: SortOrder
     profitBS?: SortOrder
     isPaid?: SortOrder
-    paidAmountUSD?: SortOrderInput | SortOrder
+    paidAmountUSD?: SortOrder
+    confirmationToken?: SortOrderInput | SortOrder
     deliveryStatus?: SortOrder
     notes?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -35998,7 +36015,8 @@ export namespace Prisma {
     profitUSD?: DecimalWithAggregatesFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalWithAggregatesFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     isPaid?: BoolWithAggregatesFilter<"Sale"> | boolean
-    paidAmountUSD?: DecimalNullableWithAggregatesFilter<"Sale"> | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalWithAggregatesFilter<"Sale"> | Decimal | DecimalJsLike | number | string
+    confirmationToken?: StringNullableWithAggregatesFilter<"Sale"> | string | null
     deliveryStatus?: StringWithAggregatesFilter<"Sale"> | string
     notes?: StringNullableWithAggregatesFilter<"Sale"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Sale"> | Date | string
@@ -38487,7 +38505,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -38517,7 +38536,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -38545,7 +38565,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38575,7 +38596,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38604,7 +38626,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -38628,7 +38651,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38653,7 +38677,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -40933,6 +40958,7 @@ export namespace Prisma {
     profitBS?: SortOrder
     isPaid?: SortOrder
     paidAmountUSD?: SortOrder
+    confirmationToken?: SortOrder
     deliveryStatus?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
@@ -40969,6 +40995,7 @@ export namespace Prisma {
     profitBS?: SortOrder
     isPaid?: SortOrder
     paidAmountUSD?: SortOrder
+    confirmationToken?: SortOrder
     deliveryStatus?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
@@ -40994,6 +41021,7 @@ export namespace Prisma {
     profitBS?: SortOrder
     isPaid?: SortOrder
     paidAmountUSD?: SortOrder
+    confirmationToken?: SortOrder
     deliveryStatus?: SortOrder
     notes?: SortOrder
     createdAt?: SortOrder
@@ -43932,7 +43960,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -43960,7 +43989,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -44269,7 +44299,8 @@ export namespace Prisma {
     profitUSD?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFilter<"Sale"> | boolean
-    paidAmountUSD?: DecimalNullableFilter<"Sale"> | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFilter<"Sale"> | Decimal | DecimalJsLike | number | string
+    confirmationToken?: StringNullableFilter<"Sale"> | string | null
     deliveryStatus?: StringFilter<"Sale"> | string
     notes?: StringNullableFilter<"Sale"> | string | null
     createdAt?: DateTimeFilter<"Sale"> | Date | string
@@ -47288,7 +47319,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -47317,7 +47349,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -47360,7 +47393,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47389,7 +47423,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47416,7 +47451,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -47445,7 +47481,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -47519,7 +47556,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47548,7 +47586,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47749,7 +47788,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -47778,7 +47818,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -47902,7 +47943,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -47931,7 +47973,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48021,7 +48064,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -48050,7 +48094,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -48162,7 +48207,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48191,7 +48237,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48840,7 +48887,8 @@ export namespace Prisma {
     profitUSD?: Decimal | DecimalJsLike | number | string
     profitBS?: Decimal | DecimalJsLike | number | string
     isPaid?: boolean
-    paidAmountUSD?: Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: Decimal | DecimalJsLike | number | string
+    confirmationToken?: string | null
     deliveryStatus?: string
     notes?: string | null
     createdAt?: Date | string
@@ -48971,7 +49019,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -48999,7 +49048,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -49027,7 +49077,8 @@ export namespace Prisma {
     profitUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     profitBS?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     isPaid?: BoolFieldUpdateOperationsInput | boolean
-    paidAmountUSD?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    paidAmountUSD?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    confirmationToken?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryStatus?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

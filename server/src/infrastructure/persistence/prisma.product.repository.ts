@@ -143,8 +143,14 @@ export class PrismaProductRepository implements ProductRepository {
 
   async delete(id: string, tx?: any) {
     const client = tx || prisma
-    await client.product.delete({
+    return client.product.delete({
       where: { id },
+      include: { 
+        categories: true,
+        images: {
+          orderBy: { sortOrder: 'asc' }
+        }
+      },
     })
   }
 

@@ -1,8 +1,39 @@
-import { Router, Response } from 'express'
+import { Router, Response, Request } from 'express'
 import { saleService, paymentService } from '../../../shared/container.js'
 import { authenticate, AuthRequest } from '../middleware/auth.middleware.js'
 
 const router = Router()
+
+// Public routes for proposal confirmation (no authentication required)
+router.get('/confirm/:token', async (req: Request, res: Response) => {
+  try {
+    const token = req.params.token as string
+    const sale = await saleService.getSaleByToken(token)
+    res.json(sale)
+  } catch (error: any) {
+    console.error('Error al obtener pedido por token:', error)
+    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
+    res.status(status).json({ error: error.message || 'Error al obtener pedido' })
+  }
+})
+
+router.post('/confirm/:token/respond', async (req: Request, res: Response) => {
+  try {
+    const token = req.params.token as string
+    const { response, reason } = req.body
+
+    if (!['ACCEPT', 'REJECT'].includes(response)) {
+      return res.status(400).json({ error: 'Respuesta inválida' })
+    }
+
+    const updatedSale = await saleService.respondToProposal(token, response, undefined, reason)
+    res.json(updatedSale)
+  } catch (error: any) {
+    console.error('Error al responder a propuesta por token:', error)
+    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
+    res.status(status).json({ error: error.message || 'Error al procesar respuesta' })
+  }
+})
 
 router.use(authenticate)
 
@@ -75,13 +106,14 @@ router.post('/:id/respond-proposal', async (req: AuthRequest, res: Response) => 
   try {
     const userId = req.user!.id
     const saleId = req.params.id as string
-    const { status } = req.body
+    const { status, reason } = req.body
 
-    if (!['ACCEPTED', 'REJECTED'].includes(status)) {
+    const responseLabel = status === 'ACCEPTED' ? 'ACCEPT' : status === 'REJECTED' ? 'REJECT' : null
+    if (!responseLabel) {
       return res.status(400).json({ error: 'Estado de respuesta inválido' })
     }
 
-    const updatedSale = await saleService.respondToProposal(saleId, status, userId)
+    const updatedSale = await saleService.respondToProposal(saleId, responseLabel, userId, reason)
     res.json(updatedSale)
   } catch (error: any) {
     console.error('Error al responder a la propuesta:', error)
