@@ -238,11 +238,7 @@ export class PrismaInventoryBatchRepository implements InventoryBatchRepository 
     })
   }
 
-<<<<<<< HEAD
   async updateItem(id: string, data: any, tx?: any): Promise<any> {
-=======
-  async updateItem(id: string, data: any, tx?: any) {
->>>>>>> 37a79b4a653cb93bfe53cae63909f30b68df9a60
     const client = tx || prisma
     return client.inventoryBatchItem.update({
       where: { id },
