@@ -17,6 +17,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -348,27 +355,16 @@ export function AdminCategoriesPage() {
             />
           </div>
           <div className="flex gap-2">
-            <Button
-              variant={statusFilter === "all" ? "default" : "outline"}
-              onClick={() => setStatusFilter("all")}
-              size="sm"
-            >
-              Todos
-            </Button>
-            <Button
-              variant={statusFilter === "active" ? "default" : "outline"}
-              onClick={() => setStatusFilter("active")}
-              size="sm"
-            >
-              Activos
-            </Button>
-            <Button
-              variant={statusFilter === "inactive" ? "default" : "outline"}
-              onClick={() => setStatusFilter("inactive")}
-              size="sm"
-            >
-              Inactivos
-            </Button>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | "active" | "inactive")}>
+              <SelectTrigger className="w-[140px] h-9 text-xs font-bold uppercase tracking-wider">
+                <SelectValue placeholder="Filtrar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs font-bold">Todos</SelectItem>
+                <SelectItem value="active" className="text-xs font-bold">Activos</SelectItem>
+                <SelectItem value="inactive" className="text-xs font-bold">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

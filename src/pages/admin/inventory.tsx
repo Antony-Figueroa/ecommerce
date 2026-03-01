@@ -1723,27 +1723,37 @@ export function AdminInventoryPage() {
 
             {/* Quick Status Filters */}
             <div className="flex items-center gap-2 mt-3 md:mt-0">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Estado:</span>
-              <div className="flex gap-1">
-                {[
-                  { value: "all", label: "Todos", count: stats.totalItems, color: "bg-slate-100 text-slate-600 hover:bg-slate-200" },
-                  { value: "normal", label: "Óptimo", count: stats.normalStock, color: "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" },
-                  { value: "low", label: "Bajo", count: stats.lowStock, color: "bg-amber-50 text-amber-600 hover:bg-amber-100" },
-                  { value: "critical", label: "Crítico", count: stats.criticalStock, color: "bg-rose-50 text-rose-600 hover:bg-rose-100" },
-                ].map((filter) => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setStatusFilter(filter.value)}
-                    className={`px-3 py-1.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${
-                      statusFilter === filter.value
-                        ? filter.color + " shadow-md ring-2 ring-offset-1 ring-primary/30"
-                        : "bg-slate-50 text-slate-400 hover:bg-slate-100"
-                    }`}
-                  >
-                    {filter.label} ({filter.count})
-                  </button>
-                ))}
-              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] h-9 bg-white dark:bg-card text-xs font-bold uppercase tracking-wider">
+                  <SelectValue placeholder="Filtrar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs font-bold">
+                    <span className="flex items-center justify-between gap-3">
+                      Todos
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{stats.totalItems}</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="normal" className="text-xs font-bold">
+                    <span className="flex items-center justify-between gap-3">
+                      Óptimo
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{stats.normalStock}</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="low" className="text-xs font-bold">
+                    <span className="flex items-center justify-between gap-3">
+                      Bajo
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{stats.lowStock}</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="critical" className="text-xs font-bold">
+                    <span className="flex items-center justify-between gap-3">
+                      Crítico
+                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{stats.criticalStock}</span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

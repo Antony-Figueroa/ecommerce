@@ -1136,38 +1136,50 @@ export function AdminOrdersPage() {
               aria-label="Buscar pedidos"
             />
           </div>
-          <div className="flex items-center gap-2 bg-gray-100/50 dark:bg-gray-800/50 p-1.5 rounded-2xl border border-border/40 overflow-x-auto no-scrollbar" role="group" aria-label="Filtrar por estado">
-            {[
-              { id: 'all', label: 'Todos', count: statusCounts.all },
-              { id: 'PENDING', label: 'Pendientes', count: statusCounts.PENDING },
-              { id: 'ACCEPTED', label: 'Aceptados', count: statusCounts.ACCEPTED },
-              { id: 'COMPLETED', label: 'Completados', count: statusCounts.COMPLETED },
-              { id: 'REJECTED', label: 'Rechazados', count: statusCounts.REJECTED },
-              { id: 'CANCELLED', label: 'Cancelados', count: statusCounts.CANCELLED },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setStatusFilter(tab.id)}
-                aria-pressed={statusFilter === tab.id}
-                className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-xl whitespace-nowrap group ${
-                  statusFilter === tab.id
-                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02] ring-1 ring-black/5"
-                    : "text-muted-foreground hover:text-primary hover:bg-white/70"
-                }`}
-              >
-                {tab.label}
-                <Badge 
-                  variant="secondary" 
-                  className={`ml-1 h-5 min-w-5 flex items-center justify-center p-0 text-[10px] transition-colors ${
-                    statusFilter === tab.id 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'group-hover:bg-primary group-hover:text-primary-foreground'
-                  }`}
-                >
-                  {tab.count}
-                </Badge>
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] h-10 bg-white dark:bg-card border-2 border-border/40 rounded-xl font-bold text-xs uppercase tracking-wider">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="font-bold text-xs">
+                  <span className="flex items-center justify-between gap-3">
+                    Todos
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.all}</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="PENDING" className="font-bold text-xs">
+                  <span className="flex items-center justify-between gap-3">
+                    Pendientes
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.PENDING}</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="ACCEPTED" className="font-bold text-xs">
+                  <span className="flex items-center justify-between gap-3">
+                    Aceptados
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.ACCEPTED}</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="COMPLETED" className="font-bold text-xs">
+                  <span className="flex items-center justify-between gap-3">
+                    Completados
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.COMPLETED}</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="REJECTED" className="font-bold text-xs">
+                  <span className="flex items-center justify-between gap-3">
+                    Rechazados
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.REJECTED}</span>
+                  </span>
+                </SelectItem>
+                <SelectItem value="CANCELLED" className="font-bold text-xs">
+                  <span className="flex items-center justify-between gap-3">
+                    Cancelados
+                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.CANCELLED}</span>
+                  </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
