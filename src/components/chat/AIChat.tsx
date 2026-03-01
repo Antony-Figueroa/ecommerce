@@ -231,7 +231,7 @@ export const AIChat: React.FC = () => {
         ? messages 
         : [] // Para un chat nuevo, el historial previo es vacío
 
-      const res = await api.chat(textToSend, historyForApi)
+      const res = await api.chat(textToSend, historyForApi) as { response: string; usage: { promptLength: number; responseLength: number }; error?: string }
       
       // Manejar errores de cuota o límite
       if (res.error && (res.error.includes('limit') || res.error.includes('quota') || res.error.includes('límite'))) {

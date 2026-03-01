@@ -5,6 +5,7 @@ Este es un sistema completo de comercio electrónico para la venta de suplemento
 ## Características Principales
 
 ### 🛒 Tienda Online (Frontend)
+
 - **Catálogo Dinámico**: Navegación por categorías, búsqueda de productos y filtros avanzados.
 - **Carrito de Compras**: Gestión de productos, cálculo de totales y persistencia local.
 - **Autenticación Segura**: Inicio de sesión, registro y recuperación de contraseña (incluye Google Auth).
@@ -12,6 +13,7 @@ Este es un sistema completo de comercio electrónico para la venta de suplemento
 - **Diseño Responsivo**: Optimizado para dispositivos móviles y escritorio utilizando Tailwind CSS y shadcn/ui.
 
 ### ⚙️ Panel de Administración (Backend)
+
 - **Gestión de Productos**: Control total sobre el inventario, marcas, formatos y estados.
 - **Categorías**: Organización jerárquica con protección de integridad de datos.
 - **Dashboard de Analíticas**: Métricas en tiempo real de ventas, clientes y stock bajo desde la base de datos.

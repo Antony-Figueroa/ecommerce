@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Link } from "react-router-dom"
-import { ShoppingBag, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart, CheckCircle, XCircle, Upload, Eye } from "lucide-react"
+import { ShoppingBag, Package, Search, ExternalLink, Calendar, MapPin, CreditCard, ShoppingCart, CheckCircle, XCircle, Eye, MessageCircle } from "lucide-react"
 import { useSearchParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -25,14 +25,7 @@ export function OrdersPage() {
   const [isDetailOpen, setIsDetailOpen] = React.useState(false)
   const [isLoadingDetail, setIsLoadingDetail] = React.useState(false)
   const [bcvRate, setBcvRate] = React.useState<number>(0)
-  
-  // Estados para subir comprobante
-  const [isProofDialogOpen, setIsProofDialogOpen] = React.useState(false)
-  const [selectedInstallmentId, setSelectedInstallmentId] = React.useState<string | null>(null)
-  const [isUploading, setIsUploading] = React.useState(false)
-  const [proofAmount, setProofAmount] = React.useState("")
-  const [proofNotes, setProofNotes] = React.useState("")
-  const [proofFile, setProofFile] = React.useState<File | null>(null)
+  const [whatsappNumber, setWhatsappNumber] = React.useState<string>("")
   
   // Función para determinar qué tasa usar (histórica del pedido o actual)
   const getOrderRate = (order: Order) => {
@@ -56,7 +49,8 @@ export function OrdersPage() {
         // Optimizando waterfalls mediante ejecución paralela (async-parallel)
         await Promise.all([
           loadOrders(),
-          fetchBCVRate()
+          fetchBCVRate(),
+          fetchWhatsAppNumber()
         ])
       } finally {
         setIsLoading(false)
@@ -79,6 +73,18 @@ export function OrdersPage() {
       }
     } catch (error) {
       console.error("Error fetching BCV rate:", error)
+    }
+  }
+
+  const fetchWhatsAppNumber = async () => {
+    try {
+      const settings = await api.getPublicSettings()
+      if (settings.whatsapp_number) {
+        const cleanNumber = settings.whatsapp_number.replace(/\+/g, '').replace(/\D/g, '')
+        setWhatsappNumber(cleanNumber)
+      }
+    } catch (error) {
+      console.error("Error fetching WhatsApp number:", error)
     }
   }
 
@@ -230,49 +236,32 @@ export function OrdersPage() {
     }
   };
 
-  const handleSubmitProof = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedInstallmentId || !proofFile || !proofAmount) return
-
-    try {
-      setIsUploading(true)
-      
-      // 1. Subir imagen
-      const uploadResult = await api.uploadImages([proofFile])
-      const proofUrl = uploadResult[0].url
-
-      // 2. Registrar comprobante
-      await api.submitPaymentProof(selectedInstallmentId, {
-        proofUrl,
-        amountUSD: Number(proofAmount),
-        notes: proofNotes
-      })
-
-      toast({
-        title: "Comprobante Enviado",
-        description: "El administrador revisará tu pago pronto.",
-      })
-
-      // Limpiar y cerrar
-      setIsProofDialogOpen(false)
-      setProofFile(null)
-      setProofAmount("")
-      setProofNotes("")
-      
-      // Recargar detalle del pedido
-      if (selectedOrder) {
-        const updatedOrder = await api.getMyOrderDetail(selectedOrder.id)
-        setSelectedOrder(updatedOrder)
-      }
-    } catch (error: any) {
+  const handleSendProofByWhatsApp = (installment: any, order: Order) => {
+    if (!whatsappNumber) {
       toast({
         title: "Error",
-        description: error.message || "No se pudo subir el comprobante",
+        description: "No hay número de WhatsApp configurado. Por favor contacta al negocio.",
         variant: "destructive"
       })
-    } finally {
-      setIsUploading(false)
+      return
     }
+
+    const installmentNumber = (order.paymentStatus?.installments?.findIndex((i: any) => i.id === installment.id) ?? -1) + 1
+    const totalInstallments = order.paymentStatus?.installments?.length || 0
+    const amountDue = Number(installment.amountUSD) - Number(installment.paidAmount)
+    const today = new Date().toLocaleDateString("es-MX")
+
+    let message = `*💳 Comprobante de Pago - Ana's Supplements*\n\n`
+    message += `Hola, envío el comprobante de mi pago:\n\n`
+    message += `*Pedido:* #${order.saleNumber}\n`
+    message += `*Cliente:* ${order.customerName}\n`
+    message += `*Cuota:* #${installmentNumber} de ${totalInstallments}\n`
+    message += `*Monto:* $${amountDue.toFixed(2)} USD\n`
+    message += `*Fecha:* ${today}\n\n`
+    message += `Por favor verificar. ¡Gracias!`
+
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, "_blank")
   }
 
   const filteredOrders = React.useMemo(() => {
@@ -729,15 +718,11 @@ export function OrdersPage() {
                               {inst.status !== 'PAID' && (
                                 <Button 
                                   size="sm" 
-                                  className="w-full sm:w-auto gap-2"
-                                  onClick={() => {
-                                    setSelectedInstallmentId(inst.id)
-                                    setProofAmount((Number(inst.amountUSD) - Number(inst.paidAmount)).toString())
-                                    setIsProofDialogOpen(true)
-                                  }}
+                                  className="w-full sm:w-auto gap-2 bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleSendProofByWhatsApp(inst, selectedOrder)}
                                 >
-                                  <Upload className="h-3.5 w-3.5" />
-                                  Subir Comprobante
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                  Enviar por WhatsApp
                                 </Button>
                               )}
                             </div>
@@ -784,62 +769,7 @@ export function OrdersPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isProofDialogOpen} onOpenChange={setIsProofDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-primary">
-              <Upload className="h-5 w-5" />
-              Subir Comprobante de Pago
-            </DialogTitle>
-            <DialogDescription>
-              Adjunta una captura de pantalla o foto de tu pago. El administrador lo verificará pronto.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmitProof} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Monto Pagado (USD)</label>
-              <Input
-                type="number"
-                step="0.01"
-                required
-                value={proofAmount}
-                onChange={(e) => setProofAmount(e.target.value)}
-                placeholder="0.00"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Imagen del Comprobante</label>
-              <Input
-                type="file"
-                accept="image/*"
-                required
-                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Notas adicionales (Opcional)</label>
-              <Input
-                value={proofNotes}
-                onChange={(e) => setProofNotes(e.target.value)}
-                placeholder="Ej: Transferencia desde Banco X, referencia #123"
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsProofDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isUploading || !proofFile}>
-                {isUploading ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                ) : (
-                  <Upload className="h-4 w-4 mr-2" />
-                )}
-                Enviar Comprobante
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+
     </>
   )
 }

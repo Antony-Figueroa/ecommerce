@@ -236,7 +236,7 @@ export function AdminAIHub() {
         parts: m.parts.map(p => ({ text: p.text })) // Clean parts for API
       }));
 
-      const res = await api.adminChat(textToSend, historyForApi, imageToSend, currentAnalysis);
+      const res = await api.adminChat(textToSend, historyForApi, imageToSend, currentAnalysis) as { response: string; usage: { promptLength: number; responseLength: number }; error?: string };
       
       // Manejar errores de cuota o límite retornados por la API
       if (res.error && (res.error.includes('limit') || res.error.includes('quota') || res.error.includes('límite'))) {

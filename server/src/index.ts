@@ -220,6 +220,18 @@ if (RUN_TASKS) {
     cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
   }, 30000)
 
+httpServer.on('error', (err) => {
+  if ((err as any).code === 'EADDRINUSE') {
+    console.error(
+      `Port ${config.port} is already in use. ` +
+      'Please stop the process that is listening on that port or set a different PORT in your environment.'
+    )
+    process.exit(1)
+  }
+  // rethrow other errors so they crash the process and can be logged by PM2 / systemd etc.
+  throw err
+})
+
 httpServer.listen(config.port, () => {
   console.log(`
 ╔═══════════════════════════════════════════════════╗

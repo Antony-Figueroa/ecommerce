@@ -10,7 +10,7 @@ export class SocketService {
   init(server: HttpServer) {
     this.io = new SocketServer(server, {
       cors: {
-        origin: [config.frontendUrl, 'http://127.0.0.1:5173', 'http://localhost:5173', 'http://127.0.0.1:5174', 'http://localhost:5174', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+        origin: [config.frontendUrl, 'http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'],
         credentials: true,
         methods: ['GET', 'POST']
       },

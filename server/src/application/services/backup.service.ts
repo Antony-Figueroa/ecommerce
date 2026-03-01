@@ -12,8 +12,23 @@ export class BackupService {
   constructor() {
     // La base de datos está en server/prisma/dev.db
     // Este archivo está en server/src/application/services/backup.service.ts
-    this.dbPath = path.join(__dirname, '../../../prisma/dev.db');
+    // En entornos de desarrollo con Prisma, el nombre por defecto suele ser dev.db
+    this.dbPath = process.env.DATABASE_URL 
+      ? path.resolve(process.env.DATABASE_URL.replace('file:', ''))
+      : path.join(__dirname, '../../../prisma/dev.db');
     this.backupDir = path.join(__dirname, '../../../../backups');
+  }
+
+  /**
+   * Verifica si la base de datos existe antes de intentar respaldar
+   */
+  private async ensureDbExists() {
+    try {
+      await fs.access(this.dbPath);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -22,6 +37,11 @@ export class BackupService {
   async createBackup() {
     try {
       console.log(`[${new Date().toISOString()}] Iniciando respaldo de base de datos...`);
+
+      if (!(await this.ensureDbExists())) {
+        console.warn(`⚠️ Omitiendo respaldo: Base de datos no encontrada en ${this.dbPath}`);
+        return null;
+      }
 
       // Asegurar que la carpeta de respaldos existe
       await fs.mkdir(this.backupDir, { recursive: true });
