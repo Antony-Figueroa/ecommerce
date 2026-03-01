@@ -163,7 +163,8 @@ export const saleService = new SaleService(
   auditService,
   stockManager,
   saleCalculator,
-  logRepo
+  logRepo,
+  prisma
 )
 
 export const requirementService = new RequirementService(

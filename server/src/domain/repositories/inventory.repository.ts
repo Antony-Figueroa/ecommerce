@@ -96,9 +96,9 @@ export interface ProviderRepository {
   findAll(): Promise<Provider[]>
   findById(id: string): Promise<Provider | null>
   findByName(name: string): Promise<Provider | null>
-  create(data: any): Promise<Provider>
-  update(id: string, data: any): Promise<Provider>
-  delete(id: string): Promise<void>
+  create(data: any, tx?: any): Promise<Provider>
+  update(id: string, data: any, tx?: any): Promise<Provider>
+  delete(id: string, tx?: any): Promise<void>
 }
 
 export interface InventoryBatchRepository {
@@ -107,6 +107,7 @@ export interface InventoryBatchRepository {
   create(data: any, tx?: any): Promise<any>
   update(id: string, data: any, tx?: any): Promise<any>
   delete(id: string, tx?: any): Promise<void>
+<<<<<<< HEAD
   findAvailableItemsByProduct(productId: string, tx?: any): Promise<any[]>
   updateItem(id: string, data: any, tx?: any): Promise<any>
 }
@@ -167,4 +168,8 @@ export interface InventoryTransferRepository {
   update(id: string, data: any): Promise<InventoryTransfer>
   complete(id: string): Promise<InventoryTransfer>
   cancel(id: string): Promise<InventoryTransfer>
+=======
+  findAvailableItemsByProduct(productId: string): Promise<any[]>
+  updateItem(id: string, data: any, tx?: any): Promise<any>
+>>>>>>> 37a79b4a653cb93bfe53cae63909f30b68df9a60
 }

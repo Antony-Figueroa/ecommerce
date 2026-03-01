@@ -99,7 +99,10 @@ export class PrismaBrandRepository implements BrandRepository {
 export class PrismaInventoryLogRepository implements InventoryLogRepository {
   async create(data: any, tx?: any): Promise<InventoryLog> {
     const client = tx || prisma
-    const log = await client.inventoryLog.create({ data })
+    const log = await client.inventoryLog.create({
+      data,
+      include: { product: true }
+    })
     return log as unknown as InventoryLog
   }
 
@@ -235,7 +238,11 @@ export class PrismaInventoryBatchRepository implements InventoryBatchRepository 
     })
   }
 
+<<<<<<< HEAD
   async updateItem(id: string, data: any, tx?: any): Promise<any> {
+=======
+  async updateItem(id: string, data: any, tx?: any) {
+>>>>>>> 37a79b4a653cb93bfe53cae63909f30b68df9a60
     const client = tx || prisma
     return client.inventoryBatchItem.update({
       where: { id },

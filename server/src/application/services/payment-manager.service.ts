@@ -75,7 +75,7 @@ export class PaymentManager {
     paymentMethod: string
     reference?: string
     notes?: string
-  }, userId?: string, ipAddress?: string, userAgent?: string) {
+  }, userId?: string, ipAddress?: string, userAgent?: string, tx?: any) {
     const sale = await this.saleRepo.findById(data.saleId)
     if (!sale) throw new NotFoundError('Venta')
 
@@ -88,7 +88,7 @@ export class PaymentManager {
       throw new ValidationError(`El monto del pago ($${data.amountUSD}) excede el saldo pendiente ($${remainingUSD.toFixed(2)})`)
     }
 
-    const payment = await this.paymentRepo.create(data)
+    const payment = await this.paymentRepo.create(data, tx)
 
     // 2. Actualizar el monto pagado en la venta
     const newPaidAmount = Number(sale.paidAmountUSD || 0) + data.amountUSD
@@ -97,7 +97,7 @@ export class PaymentManager {
     await this.saleRepo.update(data.saleId, {
       paidAmountUSD: newPaidAmount,
       isPaid
-    })
+    }, tx)
 
     // 3. Registrar en el log de auditoría del sistema
     await this.auditService.logAction({
@@ -113,19 +113,12 @@ export class PaymentManager {
       },
       ipAddress,
       userAgent
-    })
-
-    // 4. Registrar en el log de auditoría de la venta (legado/específico)
-    await this.saleRepo.createAuditLog({
-      saleId: data.saleId,
-      action: 'PAYMENT_RECEIVED',
-      reason: `Pago recibido: $${data.amountUSD.toFixed(2)} (${data.paymentMethod})`
-    })
+    }, tx)
 
     return { payment, isPaid, newPaidAmount }
   }
 
-  async updateInstallmentsWithPayment(saleId: string, paidAmount: number) {
+  async updateInstallmentsWithPayment(saleId: string, paidAmount: number, tx?: any) {
     const installments = await this.installmentRepo.findBySaleId(saleId)
     const pendingInstallments = installments.filter(inst => inst.status !== 'PAID')
 
@@ -145,7 +138,7 @@ export class PaymentManager {
         paidAmount: newPaidAmount,
         status,
         paidAt: status === 'PAID' ? new Date() : undefined
-      })
+      }, tx)
 
       updatedIds.push(inst.id)
       remainingPayment -= paymentToApply
@@ -154,14 +147,14 @@ export class PaymentManager {
     return updatedIds
   }
 
-  async createInstallmentPlan(saleId: string, plan: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string) {
+  async createInstallmentPlan(saleId: string, plan: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string, tx?: any) {
     const created = await this.installmentRepo.createMany(
       plan.map(inst => ({
         saleId,
         amountUSD: inst.amountUSD,
         dueDate: inst.dueDate,
         status: 'PENDING'
-      }))
+      })), tx
     )
 
     const totalUSD = plan.reduce((sum, i) => sum + i.amountUSD, 0)
@@ -173,7 +166,7 @@ export class PaymentManager {
       details: { saleId, count: plan.length, totalUSD },
       ipAddress,
       userAgent
-    })
+    }, tx)
 
     return created
   }
