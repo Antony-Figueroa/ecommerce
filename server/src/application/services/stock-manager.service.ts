@@ -9,26 +9,23 @@ export class StockManager {
   ) {}
 
   async deductStock(productId: string, quantity: number, reason: string, reference: string) {
-    const product = await this.productRepo.findById(productId)
-    if (!product) return
-
-    const previousStock = product.stock
-    if (previousStock < quantity) {
-      // In strict mode we should throw, but here we just ensure it doesn't go below zero if not intended
-      // although createSale already checks this.
-      console.warn(`Negative stock prevention: Product ${productId} has ${previousStock}, requested ${quantity}`)
-    }
-    const newStock = Math.max(0, previousStock - quantity)
-
-    await this.productRepo.update(productId, {
-      stock: newStock,
-      inStock: newStock > 0,
+    // Usamos una actualización atómica para evitar condiciones de carrera
+    // Aunque el servicio ya verificó el stock, esto es una capa extra de seguridad
+    const updatedProduct = await this.productRepo.update(productId, {
+      stock: { decrement: quantity },
     })
 
+    const newStock = updatedProduct.stock
+    const previousStock = newStock + quantity
+
+    // Aseguramos que inStock esté sincronizado
+    if (newStock <= 0) {
+      await this.productRepo.update(productId, { inStock: false })
+    }
+
     // Point 5: Low stock alert
-    if (newStock <= (product.minStock || 5)) {
-      // Notification logic (could call notificationService)
-      console.log(`Low stock alert: ${product.name} is at ${newStock}`)
+    if (newStock <= (updatedProduct.minStock || 5)) {
+      console.log(`Low stock alert: ${updatedProduct.name} is at ${newStock}`)
     }
 
     // FEFO (First Expired First Out) or FIFO (First In First Out) depending on implementation

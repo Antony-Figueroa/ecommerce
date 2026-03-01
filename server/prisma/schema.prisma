@@ -121,6 +121,10 @@ model Product {
   requirementItems    RequirementItem[]
   saleItems           SaleItem[]
   categories          Category[]            @relation("CategoryToProduct")
+
+  @@index([isActive])
+  @@index([brandId])
+  @@index([createdAt])
 }
 
 model Provider {
@@ -294,6 +298,10 @@ model Sale {
   user            User?          @relation(fields: [userId], references: [id])
   auditLogs       SaleAuditLog[]
   items           SaleItem[]
+
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Payment {
@@ -391,6 +399,9 @@ model InventoryLog {
   changeAmount  Int
   reason        String?
   createdAt     DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
 }
 
 model Brand {

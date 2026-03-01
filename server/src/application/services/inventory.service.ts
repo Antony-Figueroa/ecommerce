@@ -44,31 +44,37 @@ export class InventoryService {
       userAgent
     })
 
-    for (const product of products) {
-      const currentPrice = Number(product.price)
-      const newPrice = currentPrice * ratio
-      
-      await this.productRepo.update(product.id, { price: newPrice })
+    // Procesa productos en grupos para evitar sobrecarga si hay miles
+    const BATCH_SIZE = 100
+    for (let i = 0; i < products.length; i += BATCH_SIZE) {
+      const batch = products.slice(i, i + BATCH_SIZE)
+      await Promise.all(batch.map(async (product) => {
+        const currentPrice = Number(product.price)
+        const newPrice = currentPrice * ratio
+        
+        await this.productRepo.update(product.id, { price: newPrice })
 
-      if (Math.abs(newPrice - currentPrice) > 0.01) {
-        try {
-          const interestedUsers = await this.favoriteRepo.findAllByProductId(product.id)
-          for (const fav of interestedUsers) {
-            await this.notificationService.createNotification({
-              type: 'PRICE_UPDATE',
-              category: 'FAVORITES',
-              priority: 'NORMAL',
-              title: 'Actualización de precio',
-              message: `El precio de ${product.name} se ha actualizado a $${newPrice.toFixed(2)} debido al cambio de tasa BCV.`,
-              userId: fav.userId,
-              link: `/product/${product.slug}`,
-              metadata: JSON.stringify({ productId: product.id, oldPrice: currentPrice, newPrice: newPrice })
-            })
+        if (Math.abs(newPrice - currentPrice) > 0.01) {
+          try {
+            const interestedUsers = await this.favoriteRepo.findAllByProductId(product.id)
+            // No bloqueamos el flujo principal por notificaciones
+            Promise.all(interestedUsers.map(fav => 
+              this.notificationService.createNotification({
+                type: 'PRICE_UPDATE',
+                category: 'FAVORITES',
+                priority: 'NORMAL',
+                title: 'Actualización de precio',
+                message: `El precio de ${product.name} se ha actualizado a $${newPrice.toFixed(2)} debido al cambio de tasa BCV.`,
+                userId: fav.userId,
+                link: `/product/${product.slug}`,
+                metadata: JSON.stringify({ productId: product.id, oldPrice: currentPrice, newPrice: newPrice })
+              })
+            )).catch(err => console.error('Error sending price update notifications batch:', err))
+          } catch (error) {
+            console.error('Error fetching interested users:', error)
           }
-        } catch (error) {
-          console.error('Error sending price update notifications:', error)
         }
-      }
+      }))
     }
   }
 

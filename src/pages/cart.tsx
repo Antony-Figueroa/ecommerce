@@ -7,12 +7,14 @@ import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 import { formatUSD, formatBS } from "@/lib/utils"
 import { api } from "@/lib/api"
 
 export function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, totalPrice, saveForLater, moveToCart, getSavedItems } = useCart()
   const { user } = useAuth()
+  const { toast } = useToast()
   const navigate = useNavigate()
 
   const [showCheckout, setShowCheckout] = useState(false)
@@ -162,11 +164,19 @@ export function CartPage() {
         // Si se abrió con éxito, limpiamos y volvemos al inicio
         clearCart()
         setShowCheckout(false)
+        toast({
+          title: "¡Pedido Enviado!",
+          description: "Tu pedido ha sido registrado y enviado por WhatsApp.",
+        })
         navigate("/")
       }
     } catch (error: any) {
       console.error("Error creating order:", error)
-      alert(error.message || "Hubo un error al procesar tu pedido. Por favor intenta de nuevo.")
+      toast({
+        title: "Error al procesar pedido",
+        description: error.message || "Hubo un error al procesar tu pedido. Por favor intenta de nuevo.",
+        variant: "destructive",
+      })
     } finally {
       setIsProcessing(false)
     }
