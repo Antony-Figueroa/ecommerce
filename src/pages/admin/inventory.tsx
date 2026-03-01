@@ -171,6 +171,12 @@ export function AdminInventoryPage() {
   const [showScannerDialog, setShowScannerDialog] = useState(false)
   const [scannedCode, setScannedCode] = useState("")
   const [showTrendsChart, setShowTrendsChart] = useState(false)
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
   
   // Locations & Transfers state
   const [locations, setLocations] = useState<any[]>([])
@@ -1374,7 +1380,8 @@ export function AdminInventoryPage() {
                   Cerrar
                 </Button>
               </div>
-              <div className="h-[300px] w-full">
+              <div className="h-[300px] w-full min-h-0">
+                {isReady ? (
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <AreaChart data={generateTrendData}>
                     <defs>
@@ -1399,6 +1406,11 @@ export function AdminInventoryPage() {
                     <Line type="monotone" dataKey="stock" stroke="#f59e0b" strokeWidth={2} dot={false} name="Stock" />
                   </AreaChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <p className="text-sm">Cargando gráfico...</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
