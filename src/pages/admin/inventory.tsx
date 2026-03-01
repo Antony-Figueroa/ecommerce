@@ -185,7 +185,7 @@ export function AdminInventoryPage() {
   const [editingLocation, setEditingLocation] = useState<any>(null)
   const [locationForm, setLocationForm] = useState({ name: "", description: "", address: "", isDefault: false })
   const [transferForm, setTransferForm] = useState({ fromLocationId: "", toLocationId: "", productId: "", quantity: 1, notes: "" })
-  const [transferStatusFilter, setTransferStatusFilter] = useState<string>("")
+  const [transferStatusFilter, setTransferStatusFilter] = useState<string>("ALL")
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [showBulkDialog, setShowBulkDialog] = useState(false)
   const [bulkAction, setBulkAction] = useState<"entry" | "exit" | "adjust">("entry")
@@ -206,7 +206,8 @@ export function AdminInventoryPage() {
   // Fetch transfers
   const fetchTransfers = async () => {
     try {
-      const res = await api.getTransfers(transferStatusFilter || undefined)
+      const status = transferStatusFilter === "ALL" ? undefined : transferStatusFilter
+      const res = await api.getTransfers(status)
       setTransfers(res.transfers || [])
     } catch (error) {
       console.error("Error fetching transfers:", error)
@@ -2847,7 +2848,7 @@ export function AdminInventoryPage() {
                       <Select value={transferStatusFilter} onValueChange={setTransferStatusFilter}>
                         <SelectTrigger className="w-[140px] h-8"><SelectValue placeholder="Todos" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos</SelectItem>
+                          <SelectItem value="ALL">Todos</SelectItem>
                           <SelectItem value="PENDING">Pendientes</SelectItem>
                           <SelectItem value="COMPLETED">Completadas</SelectItem>
                           <SelectItem value="CANCELLED">Canceladas</SelectItem>
