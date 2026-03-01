@@ -68,10 +68,11 @@ Siga este orden para mantener la consistencia:
 1. React y Hooks
 2. Librerías externas (Router, etc.)
 3. Componentes de UI (`@/components/ui`)
-4. Utilidades (`@/lib/utils`)
-5. Contextos y Hooks propios
-6. Tipos e Interfaces
-7. API y Servicios
+4. Componentes Admin (`@/components/admin`)
+5. Utilidades (`@/lib/utils`)
+6. Contextos y Hooks propios
+7. Tipos e Interfaces
+8. API y Servicios
 
 ### Convenciones de Nomenclatura
 
@@ -91,14 +92,15 @@ Siga este orden para mantener la consistencia:
 ```text
 ├── src/                # Frontend
 │   ├── components/     # UI, Layout, Shop, Cart, Product
-│   ├── pages/          # Páginas y rutas
-│   ├── contexts/       # Gestión de estado global
-│   ├── hooks/          # Lógica reutilizable
-│   ├── lib/            # Clientes API y utilidades
-│   └── types/          # Definiciones de TypeScript
-├── server/             # Backend
-│   ├── src/            # Controladores, Rutas, Servicios
-│   └── prisma/         # Esquema y migraciones
+│   │   └── admin/     # Componentes admin unificados
+│   ├── pages/         # Páginas y rutas
+│   ├── contexts/      # Gestión de estado global
+│   ├── hooks/         # Lógica reutilizable
+│   ├── lib/           # Clientes API y utilidades
+│   └── types/         # Definiciones de TypeScript
+├── server/            # Backend
+│   ├── src/           # Controladores, Rutas, Servicios
+│   └── prisma/       # Esquema y migraciones
 ```
 
 ### Patrones React
@@ -107,6 +109,42 @@ Siga este orden para mantener la consistencia:
 - Usar `forwardRef` para componentes que aceptan refs (estándar shadcn/ui).
 - Implementar el patrón **Context Provider** para estados compartidos.
 - Utilizar `cn()` para la gestión condicional de clases Tailwind.
+
+---
+
+## 🎯 Componentes Admin Unificados
+
+**IMPORTANTE**: Para mantener consistencia en toda la interfaz admin, USE los siguientes componentes creados en `@/components/admin/`:
+
+### AdminCard
+- Uso: Contenedores de contenido con estilos consistentes
+- Props: `hover`, `padding` ("none" | "sm" | "md" | "lg")
+- Archivo: `src/components/admin/admin-card.tsx`
+
+### AdminTable
+- Uso: Tablas de datos con estilos consistentes
+- Incluye: `AdminTable`, `AdminTableHeader`, `AdminTableBody`, `AdminTableRow`, `AdminTableHead`, `AdminTableCell`, `AdminTableEmpty`
+- Archivo: `src/components/admin/admin-table.tsx`
+
+### AdminBadge
+- Uso: Etiquetas de estado y categorización
+- Variantes: `default`, `success`, `warning`, `danger`, `info`, `neutral`, `outline`
+- Tamaños: `sm`, `md`, `lg`
+- Incluye helper `StatusBadge` para estados de pedido
+- Archivo: `src/components/admin/admin-badge.tsx`
+
+### AdminButton
+- Uso: Botones con estilos consistentes
+- Variantes: `primary`, `secondary`, `outline`, `ghost`, `danger`, `success`, `link`
+- Tamaños: `sm`, `md`, `lg`, `icon`
+- Soporte: `loading`
+- Archivo: `src/components/admin/admin-button.tsx`
+
+### FilterSelect (Select)
+- Uso: Filtros y selects de búsqueda
+- **OBLIGATORIO**: Usar Select para filtros de estado, NO botones
+- Componente: `src/components/admin/admin-filter-select.tsx`
+- Archivo UI: `@/components/ui/select`
 
 ---
 
@@ -120,12 +158,19 @@ Siga este orden para mantener la consistencia:
 
 ## 🧠 Uso Obligatorio de Skills (Agentes AI)
 
-Para mantener la coherencia y calidad técnica, los agentes deben invocar y seguir las skills ubicadas en `.agents/skills/`. Se priorizan las siguientes 4 skills para cada interacción:
+> **NOTA**: Antes de cualquier tarea, el agente DEBE invocar la skill apropiada y seguir sus principios.
 
-### 🎨 Interface Design (PRIORIDAD ALTA)
+### 🎨 Interface Design (PRIORIDAD MÁXIMA)
+
+**Ubicación**: `.agents/skills/interface-design/SKILL.md`
 
 - **Uso**: Cualquier modificación de UI, componentes o flujos de usuario.
-- **Mandato**: Aplicar 'Intent First' y 'Subtle Layering'. Realizar 'Squint Test' y 'Signature Test'.
+- **MANDATO OBLIGATORIO**:
+  - Aplicar 'Intent First' - responder: ¿Quién es el usuario? ¿Qué debe lograr? ¿Cómo debe sentirse?
+  - Aplicar 'Subtle Layering' - superficies barely different pero distinguibles
+  - Realizar 'Squint Test' - con ojos borrosos debe percibirse jerarquía
+  - Realizar 'Signature Test' - 5 elementos específicos que hacen único este producto
+  - **NO generar interfaces genéricas** - cada componente debe emerger del propósito específico
 
 ### ⚡ Vercel React Best Practices (PRIORIDAD ALTA)
 
@@ -144,12 +189,12 @@ Para mantener la coherencia y calidad técnica, los agentes deben invocar y segu
 
 ---
 
-### Otras Skills Disponibles
-
 ### 🔍 Systematic Debugging
 
 - **Uso**: Ante cualquier error, bug o comportamiento inesperado.
-- **Mandato**: Seguir el proceso de diagnóstico raíz antes de proponer soluciones. **IMPORTANTE**: El agente debe monitorear proactivamente la terminal y la consola durante cada implementación para detectar y corregir errores "al trote" sin intervención del usuario.
+- **MANDATO**: 
+  - Seguir el proceso de diagnóstico raíz antes de proponer soluciones
+  - **IMPORTANTE**: El agente debe monitorear proactivamente la terminal y la consola durante cada implementación para detectar y corregir errores "al trote" sin intervención del usuario
 
 ### 📝 Changelog Generator
 
@@ -168,6 +213,23 @@ Para mantener la coherencia y calidad técnica, los agentes deben invocar y segu
 
 ---
 
+## 🧪 Recharts - Gráficos
+
+Para evitar warnings de dimensiones negativas:
+- **SIEMPRE** validar que los datos existan antes de renderizar
+- Usar estado `isReady` con timeout de 100ms
+- Mostrar estado de carga cuando no hay datos
+
+```tsx
+{isReady && data.length > 0 ? (
+  <ResponsiveContainer>...</ResponsiveContainer>
+) : (
+  <div>Cargando...</div>
+)}
+```
+
+---
+
 ## 🔗 Documentación Relacionada
 
 - [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
@@ -176,4 +238,4 @@ Para mantener la coherencia y calidad técnica, los agentes deben invocar y segu
 - [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
 - [Documentación Chat IA](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/ai-chat.md)
 
-Última actualización: 2026-02-05
+Última actualización: 2026-03-01
