@@ -326,6 +326,33 @@ export function AdminOrdersPage() {
     }
   }
 
+  const exportOrdersToCSV = () => {
+    const headers = ["ID", "Fecha", "Cliente", "Email", "Teléfono", "Total USD", "Estado", "Método Pago", "Estado Entrega", "Pagado"]
+    const rows = filteredOrders.map(order => [
+      order.id.slice(0, 8),
+      new Date(order.createdAt).toLocaleDateString("es-VE"),
+      order.customerName || "Cliente",
+      order.customerEmail || "",
+      order.customerPhone || "",
+      order.totalUSD,
+      order.status,
+      order.paymentMethod,
+      order.deliveryStatus,
+      order.isPaid ? "Sí" : "No"
+    ])
+    
+    const csvContent = [headers, ...rows.map(row => row.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `pedidos_${new Date().toISOString().split("T")[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    
+    toast({ title: "Exportación Exitosa", description: "Los pedidos se han exportado correctamente." })
+  }
+
   const handleCreateInstallmentPlan = async () => {
     if (!selectedOrder) return
 
@@ -1084,6 +1111,15 @@ export function AdminOrdersPage() {
           >
             <Clock className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
             <span className="hidden sm:inline">Actualizar</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="rounded-xl border-2 hover:bg-primary/5 transition-all font-bold gap-2"
+            onClick={exportOrdersToCSV}
+            aria-label="Exportar pedidos"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Exportar</span>
           </Button>
         </div>
       </div>

@@ -157,6 +157,11 @@ export function AdminProductsPage() {
   const [showCustomBrand, setShowCustomBrand] = useState(false)
   const [brands, setBrands] = useState<string[]>([])
   
+  // Bulk selection state
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [showBulkDialog, setShowBulkDialog] = useState(false)
+  const [bulkAction, setBulkAction] = useState<"activate" | "deactivate" | "feature" | "unfeature" | "delete">("activate")
+  
   // States for ConfirmDialog
   const [confirmConfig, setConfirmConfig] = useState<{
     open: boolean;
@@ -360,6 +365,40 @@ export function AdminProductsPage() {
     setShowCustomFormat(false)
     setCustomBrand("")
     setCustomFormat("")
+    setSelectedProducts([])
+  }
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    )
+  }
+
+  const handleBulkAction = async () => {
+    if (selectedProducts.length === 0) return
+    
+    try {
+      for (const productId of selectedProducts) {
+        if (bulkAction === "delete") {
+          await api.deleteProduct(productId)
+        } else {
+          const updates: any = {}
+          if (bulkAction === "activate") updates.isActive = true
+          if (bulkAction === "deactivate") updates.isActive = false
+          if (bulkAction === "feature") updates.isFeatured = true
+          if (bulkAction === "unfeature") updates.isFeatured = false
+          await api.updateProduct(productId, updates)
+        }
+      }
+      toast({ title: "Éxito", description: `${selectedProducts.length} productos actualizados` })
+      setShowBulkDialog(false)
+      setSelectedProducts([])
+      fetchProducts()
+    } catch (error) {
+      toast({ title: "Error", description: "Error al procesar acción masiva", variant: "destructive" })
+    }
   }
 
   const validateForm = (): boolean => {
@@ -801,6 +840,23 @@ export function AdminProductsPage() {
           </div>
         </section>
 
+        {/* Bulk Action Bar */}
+        {selectedProducts.length > 0 && (
+          <div className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-xl animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              <span className="font-bold text-sm">{selectedProducts.length} productos seleccionados</span>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedProducts([])} className="text-muted-foreground hover:text-foreground">
+                Limpiar
+              </Button>
+            </div>
+            <Button size="sm" onClick={() => setShowBulkDialog(true)} className="font-bold">
+              <Package className="h-4 w-4 mr-2" />
+              Acciones Masivas
+            </Button>
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-12">
             <TabsTrigger 
@@ -840,7 +896,18 @@ export function AdminProductsPage() {
         {viewMode === "grid" ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Lista de productos en cuadrícula">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-all" role="listitem">
+              <Card key={product.id} className={cn(
+                "overflow-hidden border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-all",
+                selectedProducts.includes(product.id) && "ring-2 ring-primary"
+              )} role="listitem">
+                <div className="absolute top-3 left-3 z-10">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={() => toggleProductSelection(product.id)}
+                    className="h-5 w-5 rounded border-white shadow-sm text-primary focus:ring-primary bg-white"
+                  />
+                </div>
                 <div className="aspect-square relative bg-muted/40 p-2">
                   <img
                     src={product.images?.find(img => img.isMain)?.url || product.image}
@@ -1751,6 +1818,56 @@ export function AdminProductsPage() {
             </Card>
           </div>
         )}
+
+        {/* Bulk Action Dialog */}
+        <Dialog open={showBulkDialog} onOpenChange={setShowBulkDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                Acciones Masivas
+              </DialogTitle>
+              <DialogDescription>
+                Aplicar acción a {selectedProducts.length} productos seleccionados.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-bold">Acción a realizar</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "activate", label: "Activar", color: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+                    { value: "deactivate", label: "Desactivar", color: "bg-amber-50 text-amber-600 border-amber-200" },
+                    { value: "feature", label: "Destacar", color: "bg-violet-50 text-violet-600 border-violet-200" },
+                    { value: "unfeature", label: "Quitar Destacado", color: "bg-slate-50 text-slate-600 border-slate-200" },
+                    { value: "delete", label: "Eliminar", color: "bg-red-50 text-red-600 border-red-200" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setBulkAction(opt.value as any)}
+                      className={`py-2 px-3 rounded-lg border text-sm font-bold transition-all ${
+                        bulkAction === opt.value 
+                          ? opt.color + " ring-2 ring-offset-1 ring-primary/30" 
+                          : "bg-slate-50 text-slate-400 border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowBulkDialog(false)}>Cancelar</Button>
+              <Button 
+                variant={bulkAction === "delete" ? "destructive" : "default"}
+                onClick={handleBulkAction}
+              >
+                Aplicar a {selectedProducts.length} productos
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
   )
 }

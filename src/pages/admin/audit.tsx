@@ -1,21 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Shield, 
-  Search, 
-  Filter, 
-  Calendar, 
   User, 
   Activity, 
   Eye, 
-  Clock,
   Terminal,
-  Database,
-  ArrowRight,
   Info
 } from 'lucide-react';
 import { AdminPageHeader } from '@/components/admin/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -32,7 +25,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { api } from '@/lib/api';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

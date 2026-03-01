@@ -1,5 +1,5 @@
 import { PrismaProductRepository } from '../infrastructure/persistence/prisma.product.repository.js'
-import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
+import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository, PrismaInventoryLocationRepository, PrismaInventoryStockRepository, PrismaInventoryTransferRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
 import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository, PrismaPaymentRepository, PrismaInstallmentRepository, PrismaPaymentProofRepository, PrismaBusinessEventRepository } from '../infrastructure/persistence/prisma.business.repository.js'
 import { PrismaBCVRepository, PrismaSettingsRepository } from '../infrastructure/persistence/prisma.settings.repository.js'
 import { PrismaUserRepository } from '../infrastructure/persistence/prisma.user.repository.js'
@@ -31,7 +31,6 @@ import { ProductManager } from '../application/services/product-manager.service.
 import { PaymentManager } from '../application/services/payment-manager.service.js'
 import { NotificationManager } from '../application/services/notification-manager.service.js'
 import { UserService } from '../application/services/user.service.js'
-import { AIChatService } from '../application/services/ai-chat.service.js'
 import { BusinessEventService } from '../application/services/business-event.service.js'
 import { BackupService } from '../application/services/backup.service.js'
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
@@ -59,6 +58,9 @@ export const favoriteRepo = new PrismaFavoriteRepository()
 export const cartRepo = new PrismaCartRepository()
 export const notificationSettingRepo = new PrismaNotificationSettingRepository()
 export const auditRepo = new PrismaAuditRepository()
+export const inventoryLocationRepo = new PrismaInventoryLocationRepository()
+export const inventoryStockRepo = new PrismaInventoryStockRepository()
+export const inventoryTransferRepo = new PrismaInventoryTransferRepository()
 
 // Services
 export const emailService = new EmailService()
@@ -189,4 +191,3 @@ export const favoriteService = new FavoriteService(favoriteRepo, notificationSer
 
 export const cartService = new CartService(cartRepo, notificationService, emailService)
 export const userService = new UserService(userRepo, auditService)
-export const aiChatService = new AIChatService(inventoryService)

@@ -104,9 +104,67 @@ export interface ProviderRepository {
 export interface InventoryBatchRepository {
   findAll(options?: any): Promise<any[]>
   findById(id: string): Promise<any | null>
-  create(data: any): Promise<any>
-  update(id: string, data: any): Promise<any>
+  create(data: any, tx?: any): Promise<any>
+  update(id: string, data: any, tx?: any): Promise<any>
+  delete(id: string, tx?: any): Promise<void>
+  findAvailableItemsByProduct(productId: string, tx?: any): Promise<any[]>
+  updateItem(id: string, data: any, tx?: any): Promise<any>
+}
+
+export interface InventoryLocation {
+  id: string
+  name: string
+  description?: string | null
+  address?: string | null
+  isActive: boolean
+  isDefault: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface InventoryStock {
+  id: string
+  productId: string
+  locationId: string
+  quantity: number
+  minStock: number
+  maxStock: number
+  updatedAt: Date
+}
+
+export interface InventoryTransfer {
+  id: string
+  fromLocationId: string
+  toLocationId: string
+  productId: string
+  quantity: number
+  status: string
+  notes?: string | null
+  createdAt: Date
+  completedAt?: Date | null
+}
+
+export interface InventoryLocationRepository {
+  findAll(): Promise<InventoryLocation[]>
+  findById(id: string): Promise<InventoryLocation | null>
+  findDefault(): Promise<InventoryLocation | null>
+  create(data: any): Promise<InventoryLocation>
+  update(id: string, data: any): Promise<InventoryLocation>
   delete(id: string): Promise<void>
-  findAvailableItemsByProduct(productId: string): Promise<any[]>
-  updateItem(id: string, data: any): Promise<any>
+}
+
+export interface InventoryStockRepository {
+  findAll(locationId?: string): Promise<InventoryStock[]>
+  findByProductAndLocation(productId: string, locationId: string): Promise<InventoryStock | null>
+  upsert(productId: string, locationId: string, data: any): Promise<InventoryStock>
+  updateQuantity(id: string, quantity: number): Promise<InventoryStock>
+}
+
+export interface InventoryTransferRepository {
+  findAll(options?: any): Promise<InventoryTransfer[]>
+  findById(id: string): Promise<InventoryTransfer | null>
+  create(data: any): Promise<InventoryTransfer>
+  update(id: string, data: any): Promise<InventoryTransfer>
+  complete(id: string): Promise<InventoryTransfer>
+  cancel(id: string): Promise<InventoryTransfer>
 }

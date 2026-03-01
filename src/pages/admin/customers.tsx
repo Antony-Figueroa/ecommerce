@@ -18,6 +18,7 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
+  Download,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -159,6 +160,30 @@ export function AdminCustomersPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const exportCustomersToCSV = () => {
+    const headers = ["ID", "Nombre", "Email", "Teléfono", "Rol", "Activo", "Fecha Registro"]
+    const rows = filteredData.all.map((customer: any) => [
+      customer.id.slice(0, 8),
+      customer.name || "Sin nombre",
+      customer.email || "",
+      customer.phone || "",
+      customer.role || "customer",
+      customer.isActive ? "Sí" : "No",
+      new Date(customer.createdAt).toLocaleDateString("es-VE")
+    ])
+    
+    const csvContent = [headers, ...rows.map((row: any) => row.join(","))].join("\n")
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `clientes_${new Date().toISOString().split("T")[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    
+    toast({ title: "Exportación Exitosa", description: "Los clientes se han exportado correctamente." })
   }
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
@@ -498,16 +523,23 @@ export function AdminCustomersPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      <AdminPageHeader 
-        title="Gestión de Usuarios"
-        subtitle="Administra los usuarios, niveles de acceso y estados de la plataforma"
-        icon={Users}
-        action={{
-          label: "Nuevo Administrador",
-          onClick: () => setIsAddingAdmin(true),
-          icon: UserPlus
-        }}
-      />
+      <div className="flex items-center justify-between">
+        <AdminPageHeader 
+          title="Gestión de Usuarios"
+          subtitle="Administra los usuarios, niveles de acceso y estados de la plataforma"
+          icon={Users}
+        />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportCustomersToCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Exportar
+          </Button>
+          <Button onClick={() => setIsAddingAdmin(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Nuevo Administrador
+          </Button>
+        </div>
+      </div>
 
       {/* Stats Summary - Pro Style */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

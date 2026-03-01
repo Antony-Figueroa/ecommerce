@@ -102,7 +102,7 @@ export function AdminAnalyticsPage() {
         }
 
         const [statsRes, reportRes] = await Promise.all([
-          api.getStats(),
+          api.getStats({ startDate, endDate }),
           api.getAnalyticsReport({ startDate, endDate })
         ])
         setStats(statsRes)
@@ -173,8 +173,11 @@ export function AdminAnalyticsPage() {
       return (
         <div className="bg-white p-4 border rounded-lg shadow-lg">
           <p className="font-bold text-gray-900">{label}</p>
-          <p className="text-emerald-600">Ingresos: {formatUSD(payload[0].value)}</p>
-          {payload[1] && <p className="text-blue-600">Órdenes: {payload[1].value}</p>}
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className={entry.dataKey === 'revenue' ? "text-emerald-600" : "text-blue-600"}>
+              {entry.name}: {entry.dataKey === 'revenue' ? formatUSD(entry.value) : entry.value}
+            </p>
+          ))}
         </div>
       )
     }
@@ -251,53 +254,57 @@ export function AdminAnalyticsPage() {
             title="Ingresos Totales" 
             value={formatUSD(stats?.totalRevenue || 0)} 
             icon={<DollarSign className="h-6 w-6 text-emerald-600" />}
-            trend="+12.5%"
-            trendUp={true}
+            trend={`${(stats?.growth?.revenue || 0) >= 0 ? '+' : ''}${stats?.growth?.revenue || 0}%`}
+            trendUp={(stats?.growth?.revenue || 0) >= 0}
             color="bg-emerald-100"
           />
           <MetricCard 
             title="Total Órdenes" 
             value={stats?.totalOrders || 0} 
             icon={<ShoppingCart className="h-6 w-6 text-blue-600" />}
-            trend="+8.2%"
-            trendUp={true}
+            trend={`${(stats?.growth?.orders || 0) >= 0 ? '+' : ''}${stats?.growth?.orders || 0}%`}
+            trendUp={(stats?.growth?.orders || 0) >= 0}
             color="bg-blue-100"
           />
           <MetricCard 
             title="Ticket Promedio" 
             value={formatUSD((stats?.totalRevenue || 0) / (stats?.totalOrders || 1))} 
             icon={<BarChart3 className="h-6 w-6 text-purple-600" />}
-            trend="+4.5%"
-            trendUp={true}
+            trend={period === '7d' ? '—' : `${((stats?.growth?.revenue || 0) - (stats?.growth?.orders || 0)) >= 0 ? '+' : ''}${Math.round(((stats?.growth?.revenue || 0) - (stats?.growth?.orders || 0)) * 10) / 10}%`}
+            trendUp={((stats?.growth?.revenue || 0) - (stats?.growth?.orders || 0)) >= 0}
             color="bg-purple-100"
           />
           <MetricCard 
             title="Total Clientes" 
             value={stats?.totalCustomers || 0} 
             icon={<Users className="h-6 w-6 text-orange-600" />}
-            trend="+15.2%"
-            trendUp={true}
+            trend={`${(stats?.growth?.customers || 0) >= 0 ? '+' : ''}${stats?.growth?.customers || 0}%`}
+            trendUp={(stats?.growth?.customers || 0) >= 0}
             color="bg-orange-100"
           />
         </div>
 
         {/* Charts Section */}
         <div className="grid gap-6 md:grid-cols-3">
-          {/* Main Revenue Chart */}
+          {/* Main Revenue & Orders Chart */}
           <Card className="md:col-span-2 overflow-hidden border-none shadow-sm">
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-bold">Evolución de Ingresos</CardTitle>
+              <CardTitle className="text-lg font-bold">Evolución de Ingresos y Órdenes</CardTitle>
               <CardDescription>Comparativa de ingresos y órdenes en el tiempo</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[350px] w-full pt-4 relative min-h-[350px]">
+<div className="h-[350px] w-full pt-4 relative min-h-[350px]">
                 {isReady && (
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <AreaChart data={monthlyData}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
                         <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -309,19 +316,39 @@ export function AdminAnalyticsPage() {
                       dy={10}
                     />
                     <YAxis 
+                      yAxisId="left"
                       axisLine={false} 
                       tickLine={false} 
                       tick={{ fill: '#94a3b8', fontSize: 12 }}
                       tickFormatter={(value) => `$${value}`}
                     />
+                    <YAxis 
+                      yAxisId="right"
+                      orientation="right"
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{ fill: '#94a3b8', fontSize: 12 }}
+                    />
                     <Tooltip content={<CustomTooltip />} isAnimationActive={false} />
                     <Area 
+                      yAxisId="left"
                       type="monotone" 
                       dataKey="revenue" 
                       stroke="#10b981" 
                       strokeWidth={3}
                       fillOpacity={1} 
                       fill="url(#colorRevenue)" 
+                      name="Ingresos"
+                    />
+                    <Area 
+                      yAxisId="right"
+                      type="monotone" 
+                      dataKey="orders" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      fillOpacity={1} 
+                      fill="url(#colorOrders)" 
+                      name="Órdenes"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -337,9 +364,9 @@ export function AdminAnalyticsPage() {
               <CardDescription>Distribución porcentual de ventas</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center pt-4">
-              <div className="h-[250px] w-full min-h-[250px]">
+<div className="h-[250px] w-full min-h-[250px]">
                 {isReady && (
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <PieChart>
                     <Pie
                       data={categoryStats}
@@ -380,9 +407,9 @@ export function AdminAnalyticsPage() {
               <CardDescription>Top 10 productos por volumen de ventas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] w-full pt-4 min-h-[300px]">
+<div className="h-[300px] w-full pt-4 min-h-[300px]">
                 {isReady && (
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <BarChart data={topProducts} layout="vertical" margin={{ left: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
                     <XAxis type="number" hide />

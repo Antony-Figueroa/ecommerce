@@ -28,6 +28,7 @@ import adminCuotaRoutes from './infrastructure/web/routes/admin/cuota.routes.js'
 import adminProviderRoutes from './infrastructure/web/routes/admin/provider.routes.js'
 import adminBatchRoutes from './infrastructure/web/routes/admin/batch.routes.js'
 import adminBusinessEventRoutes from './infrastructure/web/routes/admin/business-event.routes.js'
+import adminInventoryRoutes from './infrastructure/web/routes/admin/inventory.routes.js'
 import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
@@ -36,7 +37,6 @@ import { notificationService, bcvUpdaterService, cartService, backupService } fr
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
 import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
-import aiChatRoutes from './infrastructure/web/routes/ai-chat.routes.js'
 
 import { createServer } from 'http'
 import { socketService } from './infrastructure/socket.service.js'
@@ -136,8 +136,6 @@ app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/catalog', catalogRoutes)
-app.use('/api/chat', aiChatRoutes)
-app.use('/api/admin/chat_ai', aiChatRoutes)
 app.use('/api/admin/bcv', bcvAdminRoutes)
 app.use('/api/admin/products', adminProductRoutes)
 app.use('/api/admin/categories', adminCategoryRoutes)
@@ -154,6 +152,7 @@ app.use('/api/admin/upload', adminUploadRoutes)
 app.use('/api/admin/providers', adminProviderRoutes)
 app.use('/api/admin/batches', adminBatchRoutes)
 app.use('/api/admin/business-events', adminBusinessEventRoutes)
+app.use('/api/admin/inventory', adminInventoryRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
 

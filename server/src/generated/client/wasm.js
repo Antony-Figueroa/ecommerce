@@ -441,6 +441,39 @@ exports.Prisma.InventoryLogScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.InventoryLocationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  address: 'address',
+  isActive: 'isActive',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InventoryStockScalarFieldEnum = {
+  id: 'id',
+  productId: 'productId',
+  locationId: 'locationId',
+  quantity: 'quantity',
+  minStock: 'minStock',
+  maxStock: 'maxStock',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.InventoryTransferScalarFieldEnum = {
+  id: 'id',
+  fromLocationId: 'fromLocationId',
+  toLocationId: 'toLocationId',
+  productId: 'productId',
+  quantity: 'quantity',
+  status: 'status',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  completedAt: 'completedAt'
+};
+
 exports.Prisma.BrandScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -535,6 +568,9 @@ exports.Prisma.ModelName = {
   SaleAuditLog: 'SaleAuditLog',
   BCVRate: 'BCVRate',
   InventoryLog: 'InventoryLog',
+  InventoryLocation: 'InventoryLocation',
+  InventoryStock: 'InventoryStock',
+  InventoryTransfer: 'InventoryTransfer',
   Brand: 'Brand',
   Setting: 'Setting',
   SettingHistory: 'SettingHistory',

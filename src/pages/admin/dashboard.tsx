@@ -257,7 +257,7 @@ export function AdminDashboard() {
             </CardHeader>
             <CardContent className="p-6 lg:p-8 pt-12">
               <div className="h-[300px] lg:h-[400px] w-full min-h-0 min-w-0" role="img" aria-label="Gráfico de área mostrando la relación entre ingresos y cantidad de pedidos durante la última semana.">
-                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} aspect={4}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">

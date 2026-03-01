@@ -605,6 +605,13 @@ class ApiClient {
     })
   }
 
+  async updateProductStock(id: string, stock: number) {
+    return this.request(`/admin/products/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stock }),
+    })
+  }
+
   async deleteProduct(id: string) {
     return this.request(`/admin/products/${id}`, {
       method: 'DELETE',
@@ -676,6 +683,60 @@ class ApiClient {
   async deleteBatch(id: string) {
     return this.request(`/admin/batches/${id}`, {
       method: 'DELETE',
+    })
+  }
+
+  // Inventory Locations
+  async getLocations() {
+    return this.request<{ locations: any[] }>('/admin/inventory/locations')
+  }
+
+  async createLocation(data: { name: string; description?: string; address?: string; isDefault?: boolean }) {
+    return this.request('/admin/inventory/locations', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateLocation(id: string, data: Partial<{ name: string; description: string; address: string; isActive: boolean; isDefault: boolean }>) {
+    return this.request(`/admin/inventory/locations/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteLocation(id: string) {
+    return this.request(`/admin/inventory/locations/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getLocationStock(locationId: string) {
+    return this.request<{ stock: any[] }>(`/admin/inventory/locations/${locationId}/stock`)
+  }
+
+  // Inventory Transfers
+  async getTransfers(status?: string) {
+    const query = status ? `?status=${status}` : ''
+    return this.request<{ transfers: any[] }>(`/admin/inventory/transfers${query}`)
+  }
+
+  async createTransfer(data: { fromLocationId: string; toLocationId: string; productId: string; quantity: number; notes?: string }) {
+    return this.request('/admin/inventory/transfers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async completeTransfer(id: string) {
+    return this.request(`/admin/inventory/transfers/${id}/complete`, {
+      method: 'POST',
+    })
+  }
+
+  async cancelTransfer(id: string) {
+    return this.request(`/admin/inventory/transfers/${id}/cancel`, {
+      method: 'POST',
     })
   }
 
@@ -959,8 +1020,12 @@ class ApiClient {
   }
 
   // Admin Stats
-  async getStats() {
-    return this.request<any>('/admin/stats')
+  async getStats(params?: { startDate?: string; endDate?: string }) {
+    const searchParams = new URLSearchParams()
+    if (params?.startDate) searchParams.set('startDate', params.startDate)
+    if (params?.endDate) searchParams.set('endDate', params.endDate)
+    const query = searchParams.toString()
+    return this.request<any>(`/admin/stats${query ? `?${query}` : ''}`)
   }
 
   // Admin Management
