@@ -16,7 +16,17 @@ import {
   HardDrive,
   DollarSign,
   Users,
-  Truck
+  Truck,
+  Store,
+  CreditCard,
+  Bell,
+  Receipt,
+  Mail,
+  Phone,
+  ShoppingCart,
+  Wallet,
+  Calculator,
+  Calendar,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
@@ -115,6 +125,52 @@ export function AdminSettingsPage() {
     { id: '1', name: 'Zona Local', baseCost: 2, costPerKg: 0.5, freeShippingThreshold: 50, estimatedDays: '1-2' },
     { id: '2', name: 'Nacional', baseCost: 5, costPerKg: 1, freeShippingThreshold: 100, estimatedDays: '3-5' },
   ])
+  
+  // Business Info State
+  const [businessInfo, setBusinessInfo] = useState({
+    storeName: "Ana's Supplements",
+    email: "contact@anas-supplements.com",
+    phone: "+58 412-123-4567",
+    address: "Caracas, Venezuela",
+    website: "www.anas-supplements.com",
+    rif: "J-12345678-9",
+  })
+  
+  // Order Settings State
+  const [orderSettings, setOrderSettings] = useState({
+    autoConfirmPending: true,
+    paymentTimeoutHours: 24,
+    autoCancelUnpaid: true,
+    sendOrderNotifications: true,
+    lowStockAlert: true,
+    lowStockThreshold: 10,
+  })
+  
+  // Payment Methods State
+  const [paymentMethods, setPaymentMethods] = useState([
+    { id: '1', name: 'Efectivo', enabled: true, description: 'Pago en tienda o delivery' },
+    { id: '2', name: 'Transferencia', enabled: true, description: 'Banco Venezuela, Mercantil, etc.' },
+    { id: '3', name: 'Zelle', enabled: true, description: 'Zelle USD' },
+    { id: '4', name: 'Pago Móvil', enabled: true, description: 'Transferencia móvil BS' },
+    { id: '5', name: 'Tarjeta Débito/Crédito', enabled: false, description: 'Procesador de pagos' },
+  ])
+  
+  // Tax Settings State
+  const [taxSettings, setTaxSettings] = useState({
+    taxEnabled: false,
+    taxRate: 16,
+    taxLabel: "IVA",
+    includeTaxInPrice: false,
+  })
+  
+  // Notification Settings State
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNewOrder: true,
+    emailLowStock: true,
+    emailDailySummary: false,
+    whatsappNewOrder: true,
+    smsLowStock: false,
+  })
   
   const { toast } = useToast()
 
@@ -602,6 +658,51 @@ export function AdminSettingsPage() {
             <span className="whitespace-nowrap">Envío</span>
           </TabsTrigger>
           
+          {/* Negocio Tab */}
+          <TabsTrigger 
+            value="negocio"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <Store className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Negocio</span>
+          </TabsTrigger>
+          
+          {/* Pedidos Tab */}
+          <TabsTrigger 
+            value="pedidos"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <ShoppingCart className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Pedidos</span>
+          </TabsTrigger>
+          
+          {/* Pagos Tab */}
+          <TabsTrigger 
+            value="pagos"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <Wallet className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Pagos</span>
+          </TabsTrigger>
+          
+          {/* Impuestos Tab */}
+          <TabsTrigger 
+            value="impuestos"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <Receipt className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Impuestos</span>
+          </TabsTrigger>
+          
+          {/* Notificaciones Tab */}
+          <TabsTrigger 
+            value="notificaciones"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <Bell className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Notificaciones</span>
+          </TabsTrigger>
+          
           {/* Multi-Moneda Content */}
           <TabsContent value="moneda" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -781,6 +882,475 @@ export function AdminSettingsPage() {
                 <Button className="font-bold bg-primary">
                   <Save className="h-4 w-4 mr-2" />
                   Guardar Zonas
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Negocio Content */}
+          <TabsContent value="negocio" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Store className="h-6 w-6 text-primary" />
+                  Información del Negocio
+                </CardTitle>
+                <CardDescription>
+                  Datos comerciales que aparecerán en facturas y comunicaciones.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">Nombre de la Tienda</Label>
+                    <Input 
+                      value={businessInfo.storeName}
+                      onChange={(e) => setBusinessInfo({...businessInfo, storeName: e.target.value})}
+                      placeholder="Nombre de tu tienda"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">RIF / Identificación Fiscal</Label>
+                    <Input 
+                      value={businessInfo.rif}
+                      onChange={(e) => setBusinessInfo({...businessInfo, rif: e.target.value})}
+                      placeholder="J-12345678-9"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">Correo Electrónico</Label>
+                    <Input 
+                      type="email"
+                      value={businessInfo.email}
+                      onChange={(e) => setBusinessInfo({...businessInfo, email: e.target.value})}
+                      placeholder="contact@tu-tienda.com"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">Teléfono</Label>
+                    <Input 
+                      value={businessInfo.phone}
+                      onChange={(e) => setBusinessInfo({...businessInfo, phone: e.target.value})}
+                      placeholder="+58 412-123-4567"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">Sitio Web</Label>
+                    <Input 
+                      value={businessInfo.website}
+                      onChange={(e) => setBusinessInfo({...businessInfo, website: e.target.value})}
+                      placeholder="www.tu-tienda.com"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">Dirección</Label>
+                    <Input 
+                      value={businessInfo.address}
+                      onChange={(e) => setBusinessInfo({...businessInfo, address: e.target.value})}
+                      placeholder="Ciudad, País"
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Estos datos aparecen en todas las facturas y comprobantes</li>
+                    <li>• El RIF es obligatorio para emitir facturas fiscales</li>
+                    <li>• Asegúrate de que el correo sea correcto para recibir notificaciones</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Información
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Pedidos Content */}
+          <TabsContent value="pedidos" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <ShoppingCart className="h-6 w-6 text-primary" />
+                  Configuración de Pedidos
+                </CardTitle>
+                <CardDescription>
+                  Automatiza procesos y recibe alertas importantes sobre tus pedidos.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Confirmar pedidos automáticamente</p>
+                        <p className="text-xs text-muted-foreground">Los pedidos se confirman al instante</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={orderSettings.autoConfirmPending}
+                      onCheckedChange={(c) => setOrderSettings({...orderSettings, autoConfirmPending: !!c})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-full flex items-center justify-center">
+                        <Clock className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Cancelar pedidos impagos</p>
+                        <p className="text-xs text-muted-foreground">Libera inventario automáticamente</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={orderSettings.autoCancelUnpaid}
+                      onCheckedChange={(c) => setOrderSettings({...orderSettings, autoCancelUnpaid: !!c})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                        <Bell className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Notificaciones de nuevos pedidos</p>
+                        <p className="text-xs text-muted-foreground">Recibe alertas instantáneas</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={orderSettings.sendOrderNotifications}
+                      onCheckedChange={(c) => setOrderSettings({...orderSettings, sendOrderNotifications: !!c})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Alertas de stock bajo</p>
+                        <p className="text-xs text-muted-foreground">Notifica cuando un producto está por agotarse</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={orderSettings.lowStockAlert}
+                      onCheckedChange={(c) => setOrderSettings({...orderSettings, lowStockAlert: !!c})}
+                    />
+                  </div>
+                </div>
+                
+                {orderSettings.lowStockAlert && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-secondary/30 rounded-xl border border-border/50">
+                    <div>
+                      <Label className="text-sm font-bold mb-2 block">Umbral de Stock Bajo</Label>
+                      <Input 
+                        type="number"
+                        value={orderSettings.lowStockThreshold}
+                        onChange={(e) => setOrderSettings({...orderSettings, lowStockThreshold: Number(e.target.value)})}
+                        min={1}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Unidades mínimas antes de alertar</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label className="text-sm font-bold mb-2 block">Tiempo máximo de pago (horas)</Label>
+                    <Input 
+                      type="number"
+                      value={orderSettings.paymentTimeoutHours}
+                      onChange={(e) => setOrderSettings({...orderSettings, paymentTimeoutHours: Number(e.target.value)})}
+                      min={1}
+                      max={168}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Después de este tiempo se cancela el pedido</p>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                  <p className="text-sm font-bold text-purple-800 dark:text-purple-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-purple-700 dark:text-purple-300 space-y-1">
+                    <li>• La automatización reduce errores manuales y ahorra tiempo</li>
+                    <li>• Las alertas de stock evitan ventas de productos agotados</li>
+                    <li>• Configura el tiempo de pago según tu política de reservas</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Configuración
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Pagos Content */}
+          <TabsContent value="pagos" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Wallet className="h-6 w-6 text-primary" />
+                  Métodos de Pago
+                </CardTitle>
+                <CardDescription>
+                  Configura qué métodos de pago aceptas en tu tienda.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {paymentMethods.map((method) => (
+                    <div key={method.id} className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <CreditCard className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold">{method.name}</p>
+                          <p className="text-xs text-muted-foreground">{method.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {method.enabled ? (
+                          <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 border-none">
+                            Activo
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Inactivo</Badge>
+                        )}
+                        <Checkbox 
+                          checked={method.enabled}
+                          onCheckedChange={(c) => {
+                            const updated = paymentMethods.map(pm => 
+                              pm.id === method.id ? { ...pm, enabled: !!c } : pm
+                            )
+                            setPaymentMethods(updated)
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Más métodos de pago = más conversiones</li>
+                    <li>• Activa Zelle y transferencia para clientes internacionales</li>
+                    <li>• Pago móvil es ideal para el mercado venezolano</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Métodos
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Impuestos Content */}
+          <TabsContent value="impuestos" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Receipt className="h-6 w-6 text-primary" />
+                  Configuración de Impuestos
+                </CardTitle>
+                <CardDescription>
+                  Configura cómo se aplican los impuestos en tus precios.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-emerald-900 dark:text-emerald-100">Impuestos Activados</p>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300">Aplicar impuesto a los productos</p>
+                    </div>
+                  </div>
+                  <Checkbox 
+                    checked={taxSettings.taxEnabled}
+                    onCheckedChange={(c) => setTaxSettings({...taxSettings, taxEnabled: !!c})}
+                  />
+                </div>
+                
+                {taxSettings.taxEnabled && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label className="text-sm font-bold mb-2 block">Tasa de Impuesto (%)</Label>
+                        <Input 
+                          type="number"
+                          value={taxSettings.taxRate}
+                          onChange={(e) => setTaxSettings({...taxSettings, taxRate: Number(e.target.value)})}
+                          min={0}
+                          max={100}
+                          step={0.1}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Porcentaje estándar: 16% (IVA Venezuela)</p>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-sm font-bold mb-2 block">Nombre del Impuesto</Label>
+                        <Input 
+                          value={taxSettings.taxLabel}
+                          onChange={(e) => setTaxSettings({...taxSettings, taxLabel: e.target.value})}
+                          placeholder="IVA, ITBMS, etc."
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Nombre que aparecerá en facturas</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-full flex items-center justify-center">
+                          <Calculator className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-bold">Incluir en el precio</p>
+                          <p className="text-xs text-muted-foreground">El impuesto ya está incluido en el precio mostrado</p>
+                        </div>
+                      </div>
+                      <Checkbox 
+                        checked={taxSettings.includeTaxInPrice}
+                        onCheckedChange={(c) => setTaxSettings({...taxSettings, includeTaxInPrice: !!c})}
+                      />
+                    </div>
+                  </>
+                )}
+                
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                  <p className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                    <li>• En Venezuela el IVA estándar es 16%</li>
+                    <li>• "Incluir en precio" muestra el total al cliente directamente</li>
+                    <li>• "No incluir" muestra precio base + impuesto al final</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Impuestos
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Notificaciones Content */}
+          <TabsContent value="notificaciones" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Bell className="h-6 w-6 text-primary" />
+                  Preferencias de Notificaciones
+                </CardTitle>
+                <CardDescription>
+                  Elige cómo quieres recibir las alertas del sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Correo Electrónico</p>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                        <Mail className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Nuevos pedidos</p>
+                        <p className="text-xs text-muted-foreground">Recibe correo cuando alguien compra</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={notificationSettings.emailNewOrder}
+                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, emailNewOrder: !!c})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center">
+                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Stock bajo</p>
+                        <p className="text-xs text-muted-foreground">Alerta cuando un producto se agota</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={notificationSettings.emailLowStock}
+                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, emailLowStock: !!c})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center">
+                        <Calendar className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Resumen diario</p>
+                        <p className="text-xs text-muted-foreground">Un correo al día con las ventas</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={notificationSettings.emailDailySummary}
+                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, emailDailySummary: !!c})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">WhatsApp</p>
+                  
+                  <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
+                        <Phone className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-bold">Nuevos pedidos</p>
+                        <p className="text-xs text-muted-foreground">Notificación inmediata por WhatsApp</p>
+                      </div>
+                    </div>
+                    <Checkbox 
+                      checked={notificationSettings.whatsappNewOrder}
+                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, whatsappNewOrder: !!c})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Las notificaciones instantáneas te permiten responder rápido</li>
+                    <li>• WhatsApp es el canal más efectivo en Venezuela</li>
+                    <li>• El resumen diario te mantiene informado sin interrupciones</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Preferencias
                 </Button>
               </CardFooter>
             </Card>
