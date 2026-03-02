@@ -109,6 +109,8 @@ export function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [sortBy, setSortBy] = useState<"saleNumber" | "customerName" | "totalUSD" | "createdAt">("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false)
   const [rejectionOrderId, setRejectionOrderId] = useState<string | null>(null)
@@ -1046,6 +1048,13 @@ export function AdminOrdersPage() {
       order.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || order.status === statusFilter
     return matchesSearch && matchesStatus
+  }).sort((a, b) => {
+    let comparison = 0
+    if (sortBy === "saleNumber") comparison = a.saleNumber.localeCompare(b.saleNumber)
+    else if (sortBy === "customerName") comparison = (a.customerName || "").localeCompare(b.customerName || "")
+    else if (sortBy === "totalUSD") comparison = (a.totalUSD || 0) - (b.totalUSD || 0)
+    else if (sortBy === "createdAt") comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    return sortOrder === "asc" ? comparison : -comparison
   })
 
   const statusCounts = {
@@ -1177,6 +1186,25 @@ export function AdminOrdersPage() {
                     Cancelados
                     <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.CANCELLED}</span>
                   </span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
+              <SelectTrigger className="w-[150px] h-10 bg-white dark:bg-card border-2 border-border/40 rounded-xl font-bold text-xs uppercase tracking-wider">
+                <SelectValue placeholder="Ordenar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt" className="font-bold text-xs">
+                  Fecha {sortBy === "createdAt" && (sortOrder === "desc" ? "↓" : "↑")}
+                </SelectItem>
+                <SelectItem value="saleNumber" className="font-bold text-xs">
+                  # Pedido {sortBy === "saleNumber" && (sortOrder === "desc" ? "↓" : "↑")}
+                </SelectItem>
+                <SelectItem value="customerName" className="font-bold text-xs">
+                  Cliente {sortBy === "customerName" && (sortOrder === "desc" ? "↓" : "↑")}
+                </SelectItem>
+                <SelectItem value="totalUSD" className="font-bold text-xs">
+                  Total {sortBy === "totalUSD" && (sortOrder === "desc" ? "↓" : "↑")}
                 </SelectItem>
               </SelectContent>
             </Select>

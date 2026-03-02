@@ -152,13 +152,11 @@ export function NotificationTray({ onClose }: NotificationTrayProps) {
       </div>
 
       <Tabs defaultValue="ALL" className="w-full flex-1 flex flex-col" onValueChange={(v) => setActiveTab(v as NotificationCategory)}>
-        <div className="px-6 py-2 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
-          <TabsList className="bg-transparent h-10 w-full justify-start gap-6 p-0">
-            <TabsTrigger value="ALL" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Todo</TabsTrigger>
-            <TabsTrigger value="ORDERS" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Pedidos</TabsTrigger>
-            <TabsTrigger value="FAVORITES" className="data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 pb-2 text-sm font-bold text-slate-500 dark:text-slate-400 transition-all">Favoritos</TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px px-6">
+          <TabsTrigger value="ALL">Todo</TabsTrigger>
+          <TabsTrigger value="ORDERS">Pedidos</TabsTrigger>
+          <TabsTrigger value="FAVORITES">Favoritos</TabsTrigger>
+        </TabsList>
 
         <ScrollArea className="flex-1 overflow-y-auto max-h-[400px]">
           {loading ? (

@@ -196,33 +196,33 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/40 bg-card/60 px-4 md:px-8 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-border/40 bg-card/60 px-3 md:px-5 backdrop-blur-xl">
       <TooltipProvider>
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="md:hidden text-muted-foreground hover:text-primary h-10 w-10 rounded-xl hover:bg-primary/5"
+            className="md:hidden text-muted-foreground hover:text-primary h-9 w-9 rounded-lg hover:bg-primary/5 shrink-0"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           </Button>
 
           {/* Breadcrumbs */}
-          <nav className="hidden md:flex items-center gap-2.5 text-sm font-bold text-muted-foreground/60">
-            <Link to="/admin" className="hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-primary/5">
-              <Home className="h-4 w-4" />
+          <nav className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground/60 min-w-0">
+            <Link to="/admin" className="hover:text-primary transition-colors p-1 rounded-md hover:bg-primary/5 shrink-0">
+              <Home className="h-3.5 w-3.5" />
             </Link>
             {breadcrumbs.map((breadcrumb) => (
               breadcrumb.routeTo !== "/admin" && (
-                <div key={breadcrumb.routeTo} className="flex items-center gap-2.5">
-                  <ChevronRight size={12} className="text-muted-foreground/30" strokeWidth={3} />
+                <div key={breadcrumb.routeTo} className="flex items-center gap-1.5 min-w-0">
+                  <ChevronRight size={10} className="text-muted-foreground/30 shrink-0" strokeWidth={3} />
                   <Link 
                     to={breadcrumb.routeTo} 
                     className={cn(
-                      "transition-colors hover:text-primary px-2 py-1 rounded-md hover:bg-primary/5",
-                      breadcrumb.isLast && "text-foreground font-extrabold"
+                      "transition-colors hover:text-primary px-1.5 py-0.5 rounded-md hover:bg-primary/5 truncate max-w-[120px]",
+                      breadcrumb.isLast && "text-foreground font-bold"
                     )}
                   >
                     {breadcrumb.label}
@@ -234,28 +234,30 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
         </div>
 
         {/* Right side: Actions */}
-        <div className="flex items-center gap-3 md:gap-4">
-          <div className="hidden lg:flex items-center gap-3 mr-2">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0">
+          {/* Search - hidden on small screens */}
+          <div className="hidden xl:flex items-center gap-2 mr-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
               <Input 
                 placeholder="Buscar..." 
-                className="w-64 pl-10 h-10 bg-secondary/30 border-none focus-visible:ring-primary/20 rounded-xl font-medium transition-all focus:w-80"
+                className="w-48 pl-8 h-8 bg-secondary/30 border-none focus-visible:ring-primary/20 rounded-lg text-xs font-medium transition-all focus:w-56"
               />
             </div>
           </div>
+          
           {/* View Shop */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex gap-2 text-muted-foreground hover:text-primary transition-colors font-bold"
+                className="text-muted-foreground hover:text-primary transition-colors font-semibold text-xs px-2 h-8"
                 asChild
               >
                 <Link to="/">
-                  <ExternalLink className="h-4 w-4" />
-                  <span className="hidden lg:inline">Ver Tienda</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span className="hidden lg:inline ml-1.5">Ver Tienda</span>
                 </Link>
               </Button>
             </TooltipTrigger>
@@ -267,46 +269,46 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="flex gap-2 font-bold shadow-lg shadow-primary/20">
-                    <Plus className="h-4 w-4" />
-                    <span className="hidden sm:inline">Acción Rápida</span>
+                  <Button variant="default" size="sm" className="flex gap-1.5 font-semibold text-xs shadow-sm h-8 px-2.5">
+                    <Plus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Nueva</span>
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>Nueva Acción Rápida</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Crear Nuevo</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel className="text-xs">Crear Nuevo</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate("/admin/products?action=new")}>
-                <Plus className="h-4 w-4 text-muted-foreground" />
+              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/products?action=new")}>
+                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Producto</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate("/admin/categories?action=new")}>
-                <Plus className="h-4 w-4 text-muted-foreground" />
+              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/categories?action=new")}>
+                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Categoría</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate("/admin/orders?action=new")}>
-                <Plus className="h-4 w-4 text-muted-foreground" />
+              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/orders?action=new")}>
+                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Orden</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* BCV Rate */}
+          {/* BCV Rate - hidden on smaller screens */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="hidden items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold  lg:flex">
-                <TrendingUp className="h-3.5 w-3.5" />
-                <span>Tasa BCV: {typeof bcvRate === 'number' && !isNaN(bcvRate) ? `${bcvRate.toFixed(2)} Bs/$` : "Cargando..."}</span>
+              <div className="hidden 2xl:flex items-center gap-2 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold">
+                <TrendingUp className="h-3 w-3" />
+                <span>BCV: {typeof bcvRate === 'number' && !isNaN(bcvRate) ? `${bcvRate.toFixed(2)} Bs/$` : "..."}</span>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-6 w-6 rounded-full hover:bg-primary/20 hover:text-primary"
+                  className="h-5 w-5 rounded-full hover:bg-primary/20 hover:text-primary"
                   onClick={handleUpdateBcv}
                   disabled={updatingBcv}
                 >
-                  <RefreshCw className={`h-3 w-3 ${updatingBcv ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`h-2.5 w-2.5 ${updatingBcv ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
             </TooltipTrigger>
@@ -320,9 +322,9 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsDark(!isDark)}
-                className="text-muted-foreground hover:text-primary transition-colors h-10 w-10 rounded-xl hover:bg-primary/5"
+                className="text-muted-foreground hover:text-primary transition-colors h-9 w-9 rounded-lg hover:bg-primary/5"
               >
-                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
             <TooltipContent>Modo {isDark ? "claro" : "oscuro"}</TooltipContent>
@@ -333,83 +335,80 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary transition-colors h-10 w-10 rounded-xl hover:bg-primary/5">
-                    <Bell className="h-5 w-5" />
+                  <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary transition-colors h-9 w-9 rounded-lg hover:bg-primary/5">
+                    <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
                     )}
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>Notificaciones</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel className="flex items-center justify-between">
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuLabel className="flex items-center justify-between text-xs">
                 Notificaciones
                 {unreadCount > 0 && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-auto px-2 py-1 text-xs text-primary font-bold"
+                    className="h-auto px-1.5 py-0.5 text-[10px] text-primary font-semibold"
                     onClick={handleMarkAllRead}
                   >
-                    Marcar todas como leídas
+                    Marcar leídas
                   </Button>
                 )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-64 overflow-y-auto">
                 {loadingNotifications && notifications.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-muted-foreground">Cargando...</div>
+                  <div className="p-3 text-center text-[10px] text-muted-foreground">Cargando...</div>
                 ) : notifications.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">
+                  <div className="p-6 text-center text-xs text-muted-foreground">
                     No hay notificaciones nuevas
                   </div>
                 ) : (
-                  notifications.map((notification) => (
+                  notifications.slice(0, 5).map((notification) => (
                     <DropdownMenuItem 
                       key={notification.id} 
                       className={cn(
-                        "flex flex-col items-start gap-1 p-3 cursor-pointer transition-colors",
+                        "flex flex-col items-start gap-1 p-2.5 cursor-pointer transition-colors",
                         notification.isRead ? "opacity-60 bg-transparent" : "bg-primary/5 hover:bg-primary/10"
                       )}
                       onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
                     >
                       <div className="flex w-full items-center justify-between">
-                        <span className={cn("text-sm text-foreground", !notification.isRead && "font-bold")}>
+                        <span className={cn("text-xs text-foreground", !notification.isRead && "font-semibold")}>
                           {notification.title}
                         </span>
-                        {!notification.isRead && <div className="h-2 w-2 rounded-full bg-primary" />}
+                        {!notification.isRead && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0 ml-1" />}
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <p className="text-[10px] text-muted-foreground line-clamp-2">
                         {notification.message}
                       </p>
-                      <span className="text-[10px] text-muted-foreground/60">
-                        {formatTime(notification.createdAt)}
-                      </span>
                     </DropdownMenuItem>
                   ))
                 )}
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                className="justify-center text-xs font-bold text-primary cursor-pointer"
+                className="justify-center text-[10px] font-semibold text-primary cursor-pointer"
                 onClick={() => navigate("/admin/notifications")}
               >
-                Ver todas las notificaciones
+                Ver todas
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Separator orientation="vertical" className="h-6 mx-1 hidden md:block" />
+          <Separator orientation="vertical" className="h-5 mx-0.5 hidden md:block" />
 
           {/* User Profile */}
           <DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 px-2 hover:bg-secondary/50 transition-all rounded-xl">
-                    <div className="h-8 w-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden">
+                  <Button variant="ghost" className="gap-2 px-1.5 hover:bg-secondary/50 transition-all rounded-lg h-9">
+                    <div className="h-7 w-7 rounded-md bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] shadow-sm overflow-hidden">
                       {user?.avatarUrl ? (
                         <img 
                           src={user.avatarUrl} 
@@ -421,32 +420,32 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
                           }}
                         />
                       ) : (
-                        user?.name?.charAt(0) || <User className="h-4 w-4" />
+                        user?.name?.charAt(0) || <User className="h-3.5 w-3.5" />
                       )}
                     </div>
-                    <div className="hidden sm:flex flex-col items-start">
-                      <span className="text-xs font-bold leading-tight">{user?.name || "Admin"}</span>
-                      <span className="text-[10px] text-muted-foreground leading-tight">Administrador</span>
+                    <div className="hidden md:flex flex-col items-start">
+                      <span className="text-[11px] font-semibold leading-tight">{user?.name || "Admin"}</span>
+                      <span className="text-[9px] text-muted-foreground leading-tight">Admin</span>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
-              <TooltipContent>Perfil de Usuario</TooltipContent>
+              <TooltipContent>Perfil</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel className="text-xs">Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate("/admin/settings")}>
-                <Settings className="h-4 w-4 text-muted-foreground" />
+              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/settings")}>
+                <Settings className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Configuración</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer">
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              <DropdownMenuItem className="gap-2 cursor-pointer text-xs">
+                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Ayuda</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 text-destructive cursor-pointer focus:text-destructive focus:bg-destructive/10" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
+              <DropdownMenuItem className="gap-2 text-destructive cursor-pointer focus:text-destructive focus:bg-destructive/10 text-xs" onClick={handleLogout}>
+                <LogOut className="h-3.5 w-3.5" />
                 <span>Cerrar Sesión</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

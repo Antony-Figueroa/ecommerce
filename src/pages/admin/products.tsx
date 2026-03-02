@@ -140,6 +140,8 @@ export function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [stockFilter, setStockFilter] = useState("all")
+  const [sortBy, setSortBy] = useState<"name" | "price" | "stock" | "createdAt">("name")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [activeTab, setActiveTab] = useState("active")
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     if (typeof window !== "undefined") {
@@ -735,6 +737,13 @@ export function AdminProductsPage() {
       (activeTab === "inactive" && !product.isActive)
       
     return matchesSearch && matchesCategory && matchesStock && matchesStatus
+  }).sort((a, b) => {
+    let comparison = 0
+    if (sortBy === "name") comparison = a.name.localeCompare(b.name)
+    else if (sortBy === "price") comparison = (a.price || 0) - (b.price || 0)
+    else if (sortBy === "stock") comparison = a.stock - b.stock
+    else if (sortBy === "createdAt") comparison = new Date((a as any).createdAt || 0).getTime() - new Date((b as any).createdAt || 0).getTime()
+    return sortOrder === "asc" ? comparison : -comparison
   })
 
   const lowStockCount = products.filter(p => p.stock < 10).length
@@ -858,34 +867,25 @@ export function AdminProductsPage() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-12">
-            <TabsTrigger 
-              value="active" 
-              className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-wider"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max">
+            <TabsTrigger value="active" className="gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
               Activos
-              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 border-none">
+              <Badge variant="secondary" className="ml-1.5 bg-green-100 text-green-700 border-none text-[10px] py-0 h-5">
                 {products.filter(p => p.isActive).length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="inactive"
-              className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-wider"
-            >
-              <XCircle className="h-4 w-4 mr-2 text-red-500" />
+            <TabsTrigger value="inactive" className="gap-2">
+              <XCircle className="h-3.5 w-3.5 text-red-500" />
               Eliminados
-              <Badge variant="secondary" className="ml-2 bg-red-100 text-red-700 border-none">
+              <Badge variant="secondary" className="ml-1.5 bg-red-100 text-red-700 border-none text-[10px] py-0 h-5">
                 {products.filter(p => !p.isActive).length}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger 
-              value="all"
-              className="rounded-lg px-6 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-wider"
-            >
-              <Box className="h-4 w-4 mr-2 text-primary" />
+            <TabsTrigger value="all" className="gap-2">
+              <Box className="h-3.5 w-3.5" />
               Todos
-              <Badge variant="secondary" className="ml-2 bg-slate-100 text-slate-700 border-none">
+              <Badge variant="secondary" className="ml-1.5 bg-slate-100 text-slate-700 border-none text-[10px] py-0 h-5">
                 {products.length}
               </Badge>
             </TabsTrigger>
@@ -1058,10 +1058,37 @@ export function AdminProductsPage() {
               <table className="w-full text-left" aria-label="Tabla de productos">
                 <thead className="bg-muted/40 border-b border-border/60">
                   <tr>
-                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Producto</th>
+                    <th 
+                      className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
+                      scope="col"
+                      onClick={() => { setSortBy("name"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Producto
+                        {sortBy === "name" && <span className="text-primary">{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                      </div>
+                    </th>
                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Marca/Cat</th>
-                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Precio</th>
-                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider" scope="col">Stock</th>
+                    <th 
+                      className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
+                      scope="col"
+                      onClick={() => { setSortBy("price"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Precio
+                        {sortBy === "price" && <span className="text-primary">{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
+                      scope="col"
+                      onClick={() => { setSortBy("stock"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Stock
+                        {sortBy === "stock" && <span className="text-primary">{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                      </div>
+                    </th>
                     <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right" scope="col">Acciones</th>
                   </tr>
                 </thead>

@@ -27,6 +27,13 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -74,6 +81,8 @@ export function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [sortBy, setSortBy] = useState<"name" | "email" | "createdAt">("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [isAddingAdmin, setIsAddingAdmin] = useState(false)
   const [newAdminLoading, setNewAdminLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -305,6 +314,12 @@ export function AdminCustomersPage() {
         customer.phone?.includes(searchTerm) ||
         customer.username?.toLowerCase().includes(searchTerm.toLowerCase())
       )
+    }).sort((a, b) => {
+      let comparison = 0
+      if (sortBy === "name") comparison = (a.name || "").localeCompare(b.name || "")
+      else if (sortBy === "email") comparison = (a.email || "").localeCompare(b.email || "")
+      else if (sortBy === "createdAt") comparison = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+      return sortOrder === "asc" ? comparison : -comparison
     })
 
     const active = searched.filter(c => c.isActive)
@@ -319,7 +334,7 @@ export function AdminCustomersPage() {
       admins,
       clients
     }
-  }, [customers, searchTerm])
+  }, [customers, searchTerm, sortBy, sortOrder])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("es-MX", {
@@ -592,17 +607,31 @@ export function AdminCustomersPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
+            <SelectTrigger className="w-[160px] h-11 bg-card/50 border-muted-foreground/20 rounded-xl font-bold text-xs">
+              <SelectValue placeholder="Ordenar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="createdAt" className="font-bold text-xs">
+                Fecha {sortBy === "createdAt" && (sortOrder === "desc" ? "↓" : "↑")}
+              </SelectItem>
+              <SelectItem value="name" className="font-bold text-xs">
+                Nombre {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+              </SelectItem>
+              <SelectItem value="email" className="font-bold text-xs">
+                Email {sortBy === "email" && (sortOrder === "asc" ? "↑" : "↓")}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <div className="flex items-center justify-between mb-4 bg-muted/20 p-1 rounded-xl w-fit">
-            <TabsList className="bg-transparent h-10 gap-1">
-              <TabsTrigger value="all" className="rounded-lg px-4 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">Todos</TabsTrigger>
-              <TabsTrigger value="clients" className="rounded-lg px-4 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">Clientes</TabsTrigger>
-              <TabsTrigger value="admins" className="rounded-lg px-4 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">Admins</TabsTrigger>
-              <TabsTrigger value="active" className="rounded-lg px-4 font-bold data-[state=active]:bg-background data-[state=active]:shadow-sm">Activos</TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max">
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="clients">Clientes</TabsTrigger>
+            <TabsTrigger value="admins">Admins</TabsTrigger>
+            <TabsTrigger value="active">Activos</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="all" className="mt-0 animate-in fade-in-50 duration-300">
             <div className="space-y-10">

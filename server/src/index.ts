@@ -187,39 +187,47 @@ app.use(ErrorHandler.handle)
 // Background Tasks
 const RUN_TASKS = process.env.NODE_ENV !== 'test'
 
+const runBgTask = (name: string, task: () => Promise<unknown>) => {
+  task().catch((err) => {
+    // IMPORTANT: never allow background task promise rejections to crash the server
+    console.error(`[BG_TASK_ERROR] ${name}:`, err)
+  })
+}
+
 if (RUN_TASKS) {
   // Check stock and expirations every 12 hours
   setInterval(() => {
-    notificationService.checkLowStock()
-    notificationService.checkExpirations()
+    runBgTask('notificationService.checkLowStock', () => notificationService.checkLowStock())
+    runBgTask('notificationService.checkExpirations', () => notificationService.checkExpirations())
   }, 12 * 60 * 60 * 1000)
 
   // Actualizar tasa BCV cada hora
   setInterval(() => {
-    bcvUpdaterService.updateRate()
+    runBgTask('bcvUpdaterService.updateRate', () => bcvUpdaterService.updateRate())
   }, 60 * 60 * 1000)
 
   // Verificar carritos abandonados cada 6 horas
   setInterval(() => {
-    cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
+    runBgTask('cartService.checkAbandonedCarts', () => cartService.checkAbandonedCarts())
   }, 6 * 60 * 60 * 1000)
 
   // Respaldo diario de la base de datos (cada 24 horas)
   setInterval(() => {
-    backupService.createBackup().catch(err => console.error('Error en respaldo diario:', err))
+    runBgTask('backupService.createBackup (daily)', () => backupService.createBackup())
   }, 24 * 60 * 60 * 1000)
 
   // Ejecutar un respaldo inicial al arrancar
-  backupService.createBackup().catch(err => console.error('Error en respaldo inicial:', err))
-}
+  runBgTask('backupService.createBackup (initial)', () => backupService.createBackup())
+
   // Ejecución inicial después de un retraso
   setTimeout(() => {
     console.log('Ejecutando tareas iniciales de segundo plano...')
-    notificationService.checkLowStock().catch(err => console.error('Error en checkLowStock:', err))
-    notificationService.checkExpirations().catch(err => console.error('Error en checkExpirations:', err))
-    bcvUpdaterService.updateRate().catch(err => console.error('Error en updateRate:', err))
-    cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
+    runBgTask('notificationService.checkLowStock (startup)', () => notificationService.checkLowStock())
+    runBgTask('notificationService.checkExpirations (startup)', () => notificationService.checkExpirations())
+    runBgTask('bcvUpdaterService.updateRate (startup)', () => bcvUpdaterService.updateRate())
+    runBgTask('cartService.checkAbandonedCarts (startup)', () => cartService.checkAbandonedCarts())
   }, 30000)
+}
 
 httpServer.on('error', (err) => {
   if ((err as any).code === 'EADDRINUSE') {

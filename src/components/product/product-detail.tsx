@@ -220,8 +220,8 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
 
       <div className="mt-12">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start border-b bg-transparent p-0">
-            <TabsTrigger value="description" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px">
+            <TabsTrigger value="description">
               Descripción
             </TabsTrigger>
           </TabsList>

@@ -767,46 +767,29 @@ export function FinancialDashboard() {
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex items-center gap-4 w-full overflow-x-auto scrollbar-hide pb-1 mb-6">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Vista:</span>
-            <TabsList className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1 shrink-0">
-              <TabsTrigger 
-                value="overview" 
-                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
-              >
-                <TrendingUp className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
-                Resumen
-              </TabsTrigger>
-              <TabsTrigger 
-                value="pos" 
-                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
-              >
-                <Calculator className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
-                Punto de Venta
-              </TabsTrigger>
-              <TabsTrigger 
-                value="inventory" 
-                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
-              >
-                <Package className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
-                Inventario
-              </TabsTrigger>
-              <TabsTrigger 
-                value="sales" 
-                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
-              >
-                <FileText className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
-                Ventas
-              </TabsTrigger>
-              <TabsTrigger 
-                value="reports" 
-                className="flex items-center gap-2.5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group whitespace-nowrap"
-              >
-                <History className="h-3.5 w-3.5 shrink-0 group-data-[state=active]:scale-110 transition-transform" />
-                Reportes
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mr-2 self-end pb-2">Vista:</span>
+            <TabsTrigger value="overview" className="gap-2">
+              <TrendingUp className="h-3.5 w-3.5" />
+              Resumen
+            </TabsTrigger>
+            <TabsTrigger value="pos" className="gap-2">
+              <Calculator className="h-3.5 w-3.5" />
+              Punto de Venta
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-2">
+              <Package className="h-3.5 w-3.5" />
+              Inventario
+            </TabsTrigger>
+            <TabsTrigger value="sales" className="gap-2">
+              <FileText className="h-3.5 w-3.5" />
+              Ventas
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="gap-2">
+              <History className="h-3.5 w-3.5" />
+              Reportes
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
             <BusinessEventsCalendar 

@@ -1668,62 +1668,9 @@ export function AdminInventoryPage() {
             />
           </div>
           
-          <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap" id="sort-label">Ordenar:</span>
-            <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-11 items-center px-1 shrink-0" role="group" aria-labelledby="sort-label">
-              <button
-                onClick={() => { setSortBy("stock"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
-                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
-                  sortBy === "stock" 
-                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                    : "text-muted-foreground hover:text-primary hover:bg-white/70"
-                }`}
-                aria-label={`Ordenar por stock ${sortOrder === "asc" ? "descendente" : "ascendente"}`}
-                aria-pressed={sortBy === "stock"}
-              >
-                <ArrowUpDown className="h-3.5 w-3.5" aria-hidden="true" />
-                Stock
-                {sortBy === "stock" && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 bg-muted text-[10px]" aria-hidden="true">{sortOrder === "asc" ? "↑" : "↓"}</Badge>
-                )}
-              </button>
-              <button
-                onClick={() => { setSortBy("name"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
-                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
-                  sortBy === "name" 
-                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                    : "text-muted-foreground hover:text-primary hover:bg-white/70"
-                }`}
-                aria-label={`Ordenar por nombre ${sortOrder === "asc" ? "descendente" : "ascendente"}`}
-                aria-pressed={sortBy === "name"}
-              >
-                <ArrowUpDown className="h-3.5 w-3.5" aria-hidden="true" />
-                Nombre
-                {sortBy === "name" && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 bg-muted text-[10px]" aria-hidden="true">{sortOrder === "asc" ? "↑" : "↓"}</Badge>
-                )}
-              </button>
-              <button
-                onClick={() => { setSortBy("category"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
-                className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
-                  sortBy === "category" 
-                    ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                    : "text-muted-foreground hover:text-primary hover:bg-white/70"
-                }`}
-                aria-label={`Ordenar por categoría ${sortOrder === "asc" ? "descendente" : "ascendente"}`}
-                aria-pressed={sortBy === "category"}
-              >
-                <ArrowUpDown className="h-3.5 w-3.5" aria-hidden="true" />
-                Categoría
-                {sortBy === "category" && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 bg-muted text-[10px]" aria-hidden="true">{sortOrder === "asc" ? "↑" : "↓"}</Badge>
-                )}
-              </button>
-            </div>
-
-            {/* Quick Status Filters */}
-            <div className="flex items-center gap-2 mt-3 md:mt-0">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+          {/* Quick Status Filters - now with sort integrated in table headers */}
+          <div className="flex items-center gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[160px] h-9 bg-white dark:bg-card text-xs font-bold uppercase tracking-wider">
                   <SelectValue placeholder="Filtrar estado" />
                 </SelectTrigger>
@@ -1756,7 +1703,6 @@ export function AdminInventoryPage() {
               </Select>
             </div>
           </div>
-        </div>
 
         {/* Bulk Action Bar */}
         {selectedItems.length > 0 && (
@@ -1790,12 +1736,39 @@ export function AdminInventoryPage() {
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                       />
                     </th>
-                    <th scope="col" className="text-left p-5 text-[10px] font-bold uppercase tracking-widest">Producto</th>
-                    <th scope="col" className="text-left p-5 text-[10px] font-bold uppercase tracking-widest">Categoría</th>
-                    <th scope="col" className="text-left p-5 text-[10px] font-bold uppercase tracking-widest">Nivel de Stock</th>
-                    <th scope="col" className="text-left p-5 text-[10px] font-bold uppercase tracking-widest">Estado</th>
-                    <th scope="col" className="text-right p-5 text-[10px] font-bold uppercase tracking-widest">Valor</th>
-                    <th scope="col" className="text-center p-5 text-[10px] font-bold uppercase tracking-widest">Acciones</th>
+                    <th 
+                      scope="col" 
+                      className="text-left p-4 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => { setSortBy("name"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Producto
+                        {sortBy === "name" && <span className="text-primary">{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                      </div>
+                    </th>
+                    <th 
+                      scope="col" 
+                      className="text-left p-4 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => { setSortBy("category"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Categoría
+                        {sortBy === "category" && <span className="text-primary">{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                      </div>
+                    </th>
+                    <th 
+                      scope="col" 
+                      className="text-left p-4 text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => { setSortBy("stock"); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}
+                    >
+                      <div className="flex items-center gap-1">
+                        Stock
+                        {sortBy === "stock" && <span className="text-primary">{sortOrder === "asc" ? "↑" : "↓"}</span>}
+                      </div>
+                    </th>
+                    <th scope="col" className="text-left p-4 text-[10px] font-bold uppercase tracking-widest">Estado</th>
+                    <th scope="col" className="text-right p-4 text-[10px] font-bold uppercase tracking-widest">Valor</th>
+                    <th scope="col" className="text-center p-4 text-[10px] font-bold uppercase tracking-widest">Acciones</th>
                   </tr>
                 </thead>
                 <motion.tbody 

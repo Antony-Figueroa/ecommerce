@@ -410,7 +410,10 @@ export function AdminSettingsPage() {
     )
   }
 
-  const groups = Object.keys(settingsGrouped)
+  const groups = Object.keys(settingsGrouped || {})
+  
+  const hasGroups = groups.length > 0
+  const defaultTab = hasGroups ? groups[0] : 'negocio'
 
   return (
     <>
@@ -426,112 +429,47 @@ export function AdminSettingsPage() {
           }}
         />
 
-        <Tabs defaultValue={groups[0] || "general"} className="w-full">
-          <TabsList className="inline-flex w-max md:w-auto bg-slate-100/50 dark:bg-muted/20 p-1.5 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm mb-6">
-            {groups.map(group => (
-              <TabsTrigger 
-                key={group} 
-                value={group}
-                className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-              >
-                <span className="whitespace-nowrap">{group.charAt(0).toUpperCase() + group.slice(1)}</span>
-              </TabsTrigger>
-            ))}
-            <TabsTrigger 
-              value="backups"
-              className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-            >
-              <Database className="h-4 w-4 mr-1" />
-              <span className="whitespace-nowrap">Respaldos</span>
+        <Tabs defaultValue={defaultTab} className="w-full" onValueChange={(v) => console.log('Tab changed to:', v)}>
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max">
+            <TabsTrigger value="negocio" className="gap-2">
+              <Store className="h-3.5 w-3.5" />
+              Negocio
+            </TabsTrigger>
+            <TabsTrigger value="pedidos" className="gap-2">
+              <ShoppingCart className="h-3.5 w-3.5" />
+              Pedidos
+            </TabsTrigger>
+            <TabsTrigger value="pagos" className="gap-2">
+              <Wallet className="h-3.5 w-3.5" />
+              Pagos
+            </TabsTrigger>
+            <TabsTrigger value="impuestos" className="gap-2">
+              <Receipt className="h-3.5 w-3.5" />
+              Impuestos
+            </TabsTrigger>
+            <TabsTrigger value="notificaciones" className="gap-2">
+              <Bell className="h-3.5 w-3.5" />
+              Notificaciones
+            </TabsTrigger>
+            <TabsTrigger value="moneda" className="gap-2">
+              <DollarSign className="h-3.5 w-3.5" />
+              Moneda
+            </TabsTrigger>
+            <TabsTrigger value="roles" className="gap-2">
+              <Users className="h-3.5 w-3.5" />
+              Roles
+            </TabsTrigger>
+            <TabsTrigger value="envio" className="gap-2">
+              <Truck className="h-3.5 w-3.5" />
+              Envío
+            </TabsTrigger>
+            <TabsTrigger value="backups" className="gap-2">
+              <Database className="h-3.5 w-3.5" />
+              Respaldos
             </TabsTrigger>
           </TabsList>
 
-          {groups.map(group => (
-            <TabsContent key={group} value={group} className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {settingsGrouped[group].map(setting => (
-                  <Card key={setting.id} className="border-border/50 shadow-sm hover:shadow-md transition-all group">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <CardTitle className="text-lg font-bold flex items-center gap-2">
-                            {setting.label}
-                            {modifiedSettings[setting.key] !== undefined && (
-                              <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100/80 border-none text-[10px]">
-                                Modificado
-                              </Badge>
-                            )}
-                          </CardTitle>
-                          <CardDescription className="text-xs font-medium">
-                            {setting.description}
-                          </CardDescription>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-primary"
-                          onClick={() => viewHistory(setting.key)}
-                          title="Ver historial"
-                        >
-                          <History className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={setting.key} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                            Valor
-                          </Label>
-                          <span className="text-[10px] font-mono text-muted-foreground/50">
-                            {setting.key}
-                          </span>
-                        </div>
-                        
-                        {setting.type === 'boolean' ? (
-                          <div className="flex items-center gap-4 p-3 bg-secondary/30 rounded-lg border border-border/50">
-                            <Checkbox 
-                              id={setting.key}
-                              checked={getSettingValue(setting) === 'true'}
-                              onCheckedChange={(checked) => handleInputChange(setting.key, checked ? 'true' : 'false')}
-                              className="h-5 w-5"
-                            />
-                            <Label htmlFor={setting.key} className="font-bold cursor-pointer">
-                              {getSettingValue(setting) === 'true' ? 'Activado' : 'Desactivado'}
-                            </Label>
-                          </div>
-                        ) : setting.type === 'number' ? (
-                          <Input 
-                            id={setting.key}
-                            type="number"
-                            value={getSettingValue(setting)}
-                            onChange={(e) => handleInputChange(setting.key, e.target.value)}
-                            className="font-bold bg-secondary/20 focus:bg-background transition-all"
-                          />
-                        ) : (
-                          <Input 
-                            id={setting.key}
-                            value={getSettingValue(setting)}
-                            onChange={(e) => handleInputChange(setting.key, e.target.value)}
-                            className="font-bold bg-secondary/20 focus:bg-background transition-all"
-                          />
-                        )}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="pt-2 pb-4 flex justify-between items-center text-[10px] text-muted-foreground border-t border-border/50 mt-2">
-                      <span className="italic">
-                        Actualizado: {new Date(setting.updatedAt).toLocaleDateString()}
-                      </span>
-                      <Badge variant="outline" className="text-[9px] font-bold uppercase py-0 px-1.5 h-4">
-                        {setting.type}
-                      </Badge>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-          ))}
-
+          {/* Static Tab Contents - No依赖API */}
           <TabsContent value="backups" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card className="border-border/50 shadow-sm">
               <CardHeader>
@@ -630,78 +568,6 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
-          {/* Multi-Moneda Tab */}
-          <TabsTrigger 
-            value="moneda"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <DollarSign className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Moneda</span>
-          </TabsTrigger>
-          
-          {/* Roles Tab */}
-          <TabsTrigger 
-            value="roles"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <Users className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Roles</span>
-          </TabsTrigger>
-          
-          {/* Envío Tab */}
-          <TabsTrigger 
-            value="envio"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <Truck className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Envío</span>
-          </TabsTrigger>
-          
-          {/* Negocio Tab */}
-          <TabsTrigger 
-            value="negocio"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <Store className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Negocio</span>
-          </TabsTrigger>
-          
-          {/* Pedidos Tab */}
-          <TabsTrigger 
-            value="pedidos"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <ShoppingCart className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Pedidos</span>
-          </TabsTrigger>
-          
-          {/* Pagos Tab */}
-          <TabsTrigger 
-            value="pagos"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <Wallet className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Pagos</span>
-          </TabsTrigger>
-          
-          {/* Impuestos Tab */}
-          <TabsTrigger 
-            value="impuestos"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <Receipt className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Impuestos</span>
-          </TabsTrigger>
-          
-          {/* Notificaciones Tab */}
-          <TabsTrigger 
-            value="notificaciones"
-            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
-          >
-            <Bell className="h-4 w-4 mr-1" />
-            <span className="whitespace-nowrap">Notificaciones</span>
-          </TabsTrigger>
           
           {/* Multi-Moneda Content */}
           <TabsContent value="moneda" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
