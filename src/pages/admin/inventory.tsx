@@ -1200,6 +1200,50 @@ export function AdminInventoryPage() {
           }}
         />
 
+        {/* Alertas de Stock - Productos que necesitan atención */}
+        {(stats.criticalStock > 0 || stats.lowStock > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {stats.criticalStock > 0 && (
+              <div className="flex items-center gap-4 p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-xl">
+                <div className="p-3 bg-rose-100 dark:bg-rose-900/50 rounded-lg">
+                  <TrendingDown className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-rose-700 dark:text-rose-300">Stock Crítico</p>
+                  <p className="text-2xl font-extrabold text-rose-800 dark:text-rose-200">{stats.criticalStock} productos</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-rose-600 hover:text-rose-700 hover:bg-rose-100 dark:hover:bg-rose-900/50 font-bold"
+                  onClick={() => setStatusFilter("critical")}
+                >
+                  Ver <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
+            {stats.lowStock > 0 && (
+              <div className="flex items-center gap-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                <div className="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
+                  <AlertTriangle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-amber-700 dark:text-amber-300">Stock Bajo</p>
+                  <p className="text-2xl font-extrabold text-amber-800 dark:text-amber-200">{stats.lowStock} productos</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50 font-bold"
+                  onClick={() => setStatusFilter("low")}
+                >
+                  Ver <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Barra de herramientas mejorada */}
         <div className="flex flex-wrap gap-2 items-center justify-between bg-white dark:bg-card p-4 rounded-2xl border border-border/60 shadow-sm">
           <div className="flex gap-2 flex-wrap">
