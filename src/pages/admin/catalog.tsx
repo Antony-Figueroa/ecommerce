@@ -19,7 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   BookOpen, 
   Download, 
@@ -590,107 +592,171 @@ export function AdminCatalogPage() {
       )}
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Configuración del Catálogo</DialogTitle>
+        <DialogContent className="max-w-xl max-h-[85vh]">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Settings className="h-5 w-5 text-emerald-600" />
+              Configuración del Catálogo
+            </DialogTitle>
+            <DialogDescription>
+              Personaliza el diseño y contenido de tu catálogo digital
+            </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-6 py-4">
-            {/* Título y Diseño */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Diseño</h3>
-              
-              <div>
-                <label className="text-sm font-bold mb-2 block">Título del Catálogo</label>
-                <Input
-                  value={catalogTitle}
-                  onChange={(e) => setCatalogTitle(e.target.value)}
-                  placeholder="CATÁLOGO DE PRODUCTOS"
-                />
+          <ScrollArea className="h-[calc(85vh-180px)] pr-4">
+            <div className="space-y-6 py-4">
+              {/* Título y Diseño */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Diseño del Catálogo
+                </h3>
+                
+                <div className="grid gap-4">
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Título Principal</label>
+                    <Input
+                      value={catalogTitle}
+                      onChange={(e) => setCatalogTitle(e.target.value)}
+                      placeholder="CATÁLOGO DE PRODUCTOS"
+                      className="font-medium"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Este título aparece en la portada</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Diseño de Grilla</label>
+                    <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">
+                          <div className="flex items-center gap-2">
+                            <div className="grid grid-cols-2 gap-1 w-8 h-8">
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                            </div>
+                            <span>2x2 (4 productos por página)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="3">
+                          <div className="flex items-center gap-2">
+                            <div className="grid grid-cols-3 gap-0.5 w-8 h-8">
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                              <div className="bg-primary/20 rounded" />
+                            </div>
+                            <span>3x3 (9 productos por página)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
               
-              <div>
-                <label className="text-sm font-bold mb-2 block">Diseño de Grilla</label>
-                <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="2">2x2 (4 productos por página)</SelectItem>
-                    <SelectItem value="3">3x3 (9 productos por página)</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Personalización de Marca */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Identidad de Marca
+                </h3>
+                
+                <div className="grid gap-4">
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Nombre de la Empresa</label>
+                    <Input
+                      value={brandName}
+                      onChange={(e) => setBrandName(e.target.value)}
+                      placeholder="Ana's Supplements"
+                      className="font-medium"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">Color de Acento</label>
+                    <div className="flex gap-3">
+                      <div className="relative">
+                        <input
+                          type="color"
+                          value={brandColor}
+                          onChange={(e) => setBrandColor(e.target.value)}
+                          className="w-12 h-10 rounded-lg border cursor-pointer bg-transparent"
+                        />
+                      </div>
+                      <Input
+                        value={brandColor}
+                        onChange={(e) => setBrandColor(e.target.value)}
+                        placeholder="#10b981"
+                        className="flex-1 font-mono"
+                      />
+                      <div 
+                        className="w-10 h-10 rounded-lg border" 
+                        style={{ backgroundColor: brandColor }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-semibold mb-2 block">URL del Logo</label>
+                    <Input
+                      value={brandLogo}
+                      onChange={(e) => setBrandLogo(e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Deja vacío para usar el color de acento</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Estadísticas */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  Resumen del Catálogo
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Productos visibles</p>
+                    <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{products.filter(p => p.visible).length}</p>
+                  </div>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Con imagen</p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{products.filter(p => p.image).length}</p>
+                  </div>
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-100 dark:border-amber-800">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Sin imagen</p>
+                    <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{productsWithoutImage.length}</p>
+                  </div>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800">
+                    <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Páginas</p>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{renderPreview().length}</p>
+                  </div>
+                </div>
+                
+                {productsWithoutImage.length > 0 && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                      ⚠️ {productsWithoutImage.length} productos no tienen imagen asignada. Agrega imágenes para un catálogo más profesional.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-            
-            {/* Personalización de Marca */}
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Marca</h3>
-              
-              <div>
-                <label className="text-sm font-bold mb-2 block">Nombre de la Empresa</label>
-                <Input
-                  value={brandName}
-                  onChange={(e) => setBrandName(e.target.value)}
-                  placeholder="Ana's Supplements"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-bold mb-2 block">Color de Acento</label>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    value={brandColor}
-                    onChange={(e) => setBrandColor(e.target.value)}
-                    className="w-12 h-10 rounded-lg border cursor-pointer"
-                  />
-                  <Input
-                    value={brandColor}
-                    onChange={(e) => setBrandColor(e.target.value)}
-                    placeholder="#10b981"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-sm font-bold mb-2 block">URL del Logo (opcional)</label>
-                <Input
-                  value={brandLogo}
-                  onChange={(e) => setBrandLogo(e.target.value)}
-                  placeholder="https://example.com/logo.png"
-                />
-              </div>
-            </div>
-            
-            {/* Estadísticas */}
-            <div className="pt-4 border-t">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Estadísticas</h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-muted-foreground">Productos visibles</p>
-                  <p className="text-xl font-bold">{products.filter(p => p.visible).length}</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-muted-foreground">Con imagen</p>
-                  <p className="text-xl font-bold text-green-600">{products.filter(p => p.image).length}</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-muted-foreground">Sin imagen</p>
-                  <p className="text-xl font-bold text-amber-600">{productsWithoutImage.length}</p>
-                </div>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-muted-foreground">Páginas</p>
-                  <p className="text-xl font-bold">{renderPreview().length}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          </ScrollArea>
           
-          <DialogFooter>
-            <Button onClick={() => setShowSettings(false)} className="font-bold">
-              Cerrar
+          <DialogFooter className="pt-4 border-t">
+            <Button onClick={() => setShowSettings(false)} className="font-bold w-full sm:w-auto">
+              Listo
             </Button>
           </DialogFooter>
         </DialogContent>

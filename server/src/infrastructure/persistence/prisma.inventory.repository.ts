@@ -3,8 +3,9 @@ import { Category, Brand, InventoryLog, CategoryRepository, BrandRepository, Inv
 
 export class PrismaCategoryRepository implements CategoryRepository {
   async findAll(options?: any): Promise<Category[]> {
+    const { includeInactive, ...prismaOptions } = options || {}
     const categories = await prisma.category.findMany({
-      ...options,
+      ...prismaOptions,
       include: options?.include || { _count: { select: { products: true } } },
       orderBy: options?.orderBy || { name: 'asc' },
     })
