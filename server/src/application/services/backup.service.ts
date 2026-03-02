@@ -106,6 +106,7 @@ export class BackupService {
 
   /**
    * Restaura un respaldo específico
+   * IMPORTANTE: Crea un respaldo automático de la DB actual antes de restaurar
    */
   async restoreBackup(filename: string) {
     try {
@@ -116,21 +117,49 @@ export class BackupService {
 
       console.log(`[${new Date().toISOString()}] Iniciando restauración de base de datos: ${filename}`);
 
-      // Crear un respaldo temporal de la DB actual antes de restaurar
-      const tempBackup = `${this.dbPath}.tmp`;
+      // =====================================================
+      // CREAR RESPALDO AUTOMÁTICO ANTES DE RESTAURAR
+      // Esto asegura que tenemos un punto de retorno si algo falla
+      // =====================================================
+      const now = new Date();
+      const timestamp = now.toISOString()
+        .replace(/:/g, '-')
+        .replace(/\..+/, '')
+        .replace('T', '_');
+      
+      const autoBackupFilename = `db_backup_pre_restore_${timestamp}.db`;
+      const autoBackupPath = path.join(this.backupDir, autoBackupFilename);
+      
+      console.log(`📦 Creando respaldo automático de seguridad: ${autoBackupFilename}`);
+      await fs.copyFile(this.dbPath, autoBackupPath);
+      console.log(`✅ Respaldo de seguridad creado: ${autoBackupFilename}`);
+
+      // =====================================================
+      // PROCESO DE RESTAURACIÓN
+      // =====================================================
+      
+      // Crear un respaldo temporal de la DB actual por seguridad adicional
+      const tempBackup = `${this.dbPath}.restore_tmp`;
       await fs.copyFile(this.dbPath, tempBackup);
 
       try {
-        // Restaurar la DB
+        // Restaurar la DB desde el respaldo seleccionado
         await fs.copyFile(source, this.dbPath);
         
         // Eliminar el respaldo temporal si todo salió bien
         await fs.unlink(tempBackup);
         
         console.log(`✅ Restauración completada exitosamente: ${filename}`);
-        return true;
+        console.log(`💡 Puedes revertir usando el respaldo de seguridad: ${autoBackupFilename}`);
+        
+        return {
+          success: true,
+          autoBackupFilename,
+          restoredFrom: filename
+        };
       } catch (restoreError) {
         // Si falla la restauración, intentar recuperar la DB original
+        console.error('⚠️ Error durante la restauración, intentando recuperar...');
         await fs.copyFile(tempBackup, this.dbPath);
         await fs.unlink(tempBackup);
         throw restoreError;

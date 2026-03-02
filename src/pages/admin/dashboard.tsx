@@ -65,6 +65,12 @@ export function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsReady(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     async function fetchStats() {
@@ -256,8 +262,8 @@ export function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent className="p-6 lg:p-8 pt-12">
-              <div className="h-[300px] lg:h-[400px] w-full min-h-0 min-w-0" role="img" aria-label="Gráfico de área mostrando la relación entre ingresos y cantidad de pedidos durante la última semana.">
-                {chartData.length > 0 ? (
+<div className="h-[300px] lg:h-[400px] w-full min-h-0 min-w-0" role="img" aria-label="Gráfico de área mostrando la relación entre ingresos y cantidad de pedidos durante la última semana.">
+                {isReady && chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>

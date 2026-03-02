@@ -257,10 +257,12 @@ export function AdminSettingsPage() {
           description: "Respaldo creado correctamente",
         })
       } else if (backupAction.type === 'restore' && backupAction.filename) {
-        await api.restoreBackup(backupAction.filename, backupPassword)
+        const result = await api.restoreBackup(backupAction.filename, backupPassword)
         toast({
-          title: "Éxito",
-          description: "Base de datos restaurada correctamente. El sistema puede requerir reiniciar la sesión.",
+          title: "Restauración completada",
+          description: result?.autoBackupFilename 
+            ? `Base de datos restaurada. Se creó un respaldo de seguridad: ${result.autoBackupFilename}`
+            : "Base de datos restaurada correctamente. El sistema puede requerir reiniciar la sesión.",
         })
       } else if (backupAction.type === 'delete' && backupAction.filename) {
         await api.deleteBackup(backupAction.filename, backupPassword)

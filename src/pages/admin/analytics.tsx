@@ -369,7 +369,7 @@ export function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center pt-4">
 <div className="h-[250px] w-full min-h-[250px]">
-                {isReady && (
+                {isReady && categoryStats.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <PieChart>
                     <Pie
@@ -388,6 +388,10 @@ export function AdminAnalyticsPage() {
                     <Tooltip isAnimationActive={false} />
                   </PieChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <p className="text-sm">No hay datos de categorías</p>
+                  </div>
                 )}
               </div>
               <div className="w-full mt-4 space-y-2">
@@ -412,7 +416,7 @@ export function AdminAnalyticsPage() {
             </CardHeader>
             <CardContent>
 <div className="h-[300px] w-full pt-4 min-h-[300px]">
-                {isReady && (
+                {isReady && topProducts.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <BarChart data={topProducts} layout="vertical" margin={{ left: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
@@ -453,6 +457,10 @@ export function AdminAnalyticsPage() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <p className="text-sm">No hay datos de productos</p>
+                  </div>
                 )}
               </div>
             </CardContent>

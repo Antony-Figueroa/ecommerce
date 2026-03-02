@@ -46,12 +46,14 @@ export class SettingsService {
 
     const backup = await this.backupService.createBackup()
     
-    await this.auditService.logAction({
-      entityType: 'SETTINGS',
-      action: 'BACKUP_CREATE',
-      userId,
-      details: { filename: backup.filename }
-    })
+    if (backup) {
+      await this.auditService.logAction({
+        entityType: 'SETTINGS',
+        action: 'BACKUP_CREATE',
+        userId,
+        details: { filename: backup.filename }
+      })
+    }
 
     return backup
   }
@@ -71,16 +73,23 @@ export class SettingsService {
       await this.verifyAdminPassword(userId, password)
     }
 
-    await this.backupService.restoreBackup(filename)
+    const result = await this.backupService.restoreBackup(filename)
     
     await this.auditService.logAction({
       entityType: 'SETTINGS',
       action: 'BACKUP_RESTORE',
       userId,
-      details: { filename }
+      details: { 
+        restoredFrom: filename,
+        autoBackupCreated: result.autoBackupFilename
+      }
     })
 
-    return { message: 'Base de datos restaurada con éxito' }
+    return { 
+      message: 'Base de datos restaurada con éxito',
+      autoBackupFilename: result.autoBackupFilename,
+      restoredFrom: result.restoredFrom
+    }
   }
 
   /**
