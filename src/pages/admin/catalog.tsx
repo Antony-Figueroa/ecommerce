@@ -29,6 +29,9 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  AlertCircle,
+  CheckCircle2,
+  X,
 } from "lucide-react"
 
 interface CatalogProduct {
@@ -52,11 +55,17 @@ interface CatalogCategory {
   productCount: number
 }
 
+interface CatalogBrand {
+  id: string
+  name: string
+}
+
 const CATALOG_YEAR = new Date().getFullYear()
 
 export function AdminCatalogPage() {
   const [products, setProducts] = useState<CatalogProduct[]>([])
   const [categories, setCategories] = useState<CatalogCategory[]>([])
+  const [brands, setBrands] = useState<CatalogBrand[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<"preview" | "edit">("preview")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
@@ -66,11 +75,36 @@ export function AdminCatalogPage() {
   const [currentPage, setCurrentPage] = useState(0)
   const [exporting, setExporting] = useState(false)
   
+  // New features state
+  const [brandFilter, setBrandFilter] = useState<string>("all")
+  const [formatFilter, setFormatFilter] = useState<string>("all")
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
+  const [showImageWarning, setShowImageWarning] = useState(true)
+  const [exportCategory, setExportCategory] = useState<string>("all")
+  
+  // Brand customization (in settings)
+  const [brandLogo, setBrandLogo] = useState<string>("")
+  const [brandColor, setBrandColor] = useState<string>("#10b981")
+  const [brandName, setBrandName] = useState<string>("Ana's Supplements")
+  
   const previewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchCatalogData()
   }, [])
+
+  // Derived filters
+  const formats = Array.from(new Set(products.map(p => p.format).filter(Boolean)))
+  
+  const filteredProducts = products.filter(p => 
+    p.visible && 
+    (selectedCategory === "all" || p.categoryId === selectedCategory) &&
+    (brandFilter === "all" || p.brand === brandFilter) &&
+    (formatFilter === "all" || p.format === formatFilter) &&
+    (selectedProducts.size === 0 || selectedProducts.has(p.id))
+  )
+
+  const productsWithoutImage = products.filter(p => !p.image && p.visible)
 
   const fetchCatalogData = async () => {
     try {
@@ -78,6 +112,15 @@ export function AdminCatalogPage() {
       const data = await api.getCatalogData()
       setProducts(data.products || [])
       setCategories(data.categories || [])
+      
+      // Extract unique brands
+      const uniqueBrands = Array.from(new Set(data.products.map((p: CatalogProduct) => p.brand).filter(Boolean)))
+        .map((name, index) => ({ id: String(index), name: name as string }))
+      setBrands(uniqueBrands)
+      
+      // Auto-select all visible products
+      const visibleIds = data.products.filter((p: CatalogProduct) => p.visible).map((p: CatalogProduct) => p.id)
+      setSelectedProducts(new Set(visibleIds))
     } catch (error) {
       console.error("Error fetching catalog data:", error)
     } finally {
@@ -91,14 +134,40 @@ export function AdminCatalogPage() {
       setProducts(prev => prev.map(p => 
         p.id === productId ? { ...p, visible } : p
       ))
+      setSelectedProducts(prev => {
+        const next = new Set<string>(prev)
+        if (visible) {
+          next.add(productId)
+        } else {
+          next.delete(productId)
+        }
+        return next
+      })
     } catch (error) {
       console.error("Error toggling visibility:", error)
     }
   }
 
-  const visibleProducts = products.filter(p => 
-    p.visible && (selectedCategory === "all" || p.categoryId === selectedCategory)
-  )
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProducts(prev => {
+      const next = new Set(prev)
+      if (next.has(productId)) {
+        next.delete(productId)
+      } else {
+        next.add(productId)
+      }
+      return next
+    })
+  }
+
+  const selectAllVisible = () => {
+    const visibleIds = products.filter(p => p.visible).map(p => p.id)
+    setSelectedProducts(new Set(visibleIds))
+  }
+
+  const deselectAll = () => {
+    setSelectedProducts(new Set())
+  }
 
   const getCategoryPageNumber = (categoryId: string) => {
     let page = 2
@@ -304,10 +373,10 @@ export function AdminCatalogPage() {
         }
       />
 
-      <div className="flex gap-4 mb-6">
+      <div className="flex gap-4 mb-6 flex-wrap">
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Todas las categorías" />
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas las categorías</SelectItem>
@@ -317,15 +386,51 @@ export function AdminCatalogPage() {
           </SelectContent>
         </Select>
         
-        <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
+        <Select value={brandFilter} onValueChange={setBrandFilter}>
           <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Marca" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las marcas</SelectItem>
+            {brands.map(brand => (
+              <SelectItem key={brand.id} value={brand.name}>{brand.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select value={formatFilter} onValueChange={setFormatFilter}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Formato" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los formatos</SelectItem>
+            {formats.map(fmt => (
+              <SelectItem key={fmt} value={fmt}>{fmt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        
+        <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
+          <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="Columnas" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="2">2 columnas</SelectItem>
-            <SelectItem value="3">3 columnas</SelectItem>
+            <SelectItem value="2">2x2</SelectItem>
+            <SelectItem value="3">3x3</SelectItem>
           </SelectContent>
         </Select>
+        
+        {showImageWarning && productsWithoutImage.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+              {productsWithoutImage.length} sin imagen
+            </span>
+            <button onClick={() => setShowImageWarning(false)} className="text-amber-400 hover:text-amber-600">
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
         
         <div className="flex-1" />
         
@@ -388,21 +493,59 @@ export function AdminCatalogPage() {
       ) : (
         <Card>
           <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <Button variant="outline" size="sm" onClick={selectAllVisible} className="text-xs font-bold">
+                  Seleccionar todos
+                </Button>
+                <Button variant="outline" size="sm" onClick={deselectAll} className="text-xs font-bold">
+                  Deseleccionar todos
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {selectedProducts.size} / {products.filter(p => p.visible).length} productos seleccionados
+                </span>
+              </div>
+              <Select value={exportCategory} onValueChange={setExportCategory}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue placeholder="Exportar categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las categorías</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="grid gap-4">
               <div className="grid grid-cols-12 gap-4 text-xs font-bold text-gray-500 uppercase tracking-wider pb-2 border-b">
-                <div className="col-span-1">Orden</div>
-                <div className="col-span-5">Producto</div>
-                <div className="col-span-3">Categoría</div>
+                <div className="col-span-1">#</div>
+                <div className="col-span-1">
+                  <Checkbox
+                    checked={selectedProducts.size === products.filter(p => p.visible).length && products.filter(p => p.visible).length > 0}
+                    onCheckedChange={(checked) => checked ? selectAllVisible() : deselectAll()}
+                  />
+                </div>
+                <div className="col-span-4">Producto</div>
+                <div className="col-span-2">Categoría</div>
+                <div className="col-span-2">Imagen</div>
                 <div className="col-span-2 text-center">Visible</div>
               </div>
               
-              {visibleProducts.map((product, index) => (
-                <div key={product.id} className="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-50">
+              {filteredProducts.map((product, index) => (
+                <div key={product.id} className="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-50 hover:bg-muted/30 rounded-lg px-2">
                   <div className="col-span-1 flex items-center gap-2">
                     <GripVertical className="h-4 w-4 text-gray-300 cursor-grab" />
                     <span className="text-sm font-bold text-gray-500">{index + 1}</span>
                   </div>
-                  <div className="col-span-5 flex items-center gap-3">
+                  <div className="col-span-1">
+                    <Checkbox
+                      checked={selectedProducts.has(product.id)}
+                      onCheckedChange={() => toggleProductSelection(product.id)}
+                    />
+                  </div>
+                  <div className="col-span-4 flex items-center gap-3">
                     <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
                       {product.image ? (
                         <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
@@ -415,10 +558,23 @@ export function AdminCatalogPage() {
                       <p className="text-xs text-gray-500">{product.brand} • {product.format}</p>
                     </div>
                   </div>
-                  <div className="col-span-3">
+                  <div className="col-span-2">
                     <Badge variant="outline" className="text-xs">
                       {product.category?.name || "Sin categoría"}
                     </Badge>
+                  </div>
+                  <div className="col-span-2">
+                    {product.image ? (
+                      <Badge variant="success" className="text-xs">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Con imagen
+                      </Badge>
+                    ) : (
+                      <Badge variant="warning" className="text-xs">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Sin imagen
+                      </Badge>
+                    )}
                   </div>
                   <div className="col-span-2 flex justify-center">
                     <Checkbox
@@ -434,44 +590,101 @@ export function AdminCatalogPage() {
       )}
 
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Configuración del Catálogo</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div>
-              <label className="text-sm font-bold mb-2 block">Título del Catálogo</label>
-              <Input
-                value={catalogTitle}
-                onChange={(e) => setCatalogTitle(e.target.value)}
-                placeholder="CATÁLOGO DE PRODUCTOS"
-              />
+          <div className="space-y-6 py-4">
+            {/* Título y Diseño */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Diseño</h3>
+              
+              <div>
+                <label className="text-sm font-bold mb-2 block">Título del Catálogo</label>
+                <Input
+                  value={catalogTitle}
+                  onChange={(e) => setCatalogTitle(e.target.value)}
+                  placeholder="CATÁLOGO DE PRODUCTOS"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-bold mb-2 block">Diseño de Grilla</label>
+                <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2">2x2 (4 productos por página)</SelectItem>
+                    <SelectItem value="3">3x3 (9 productos por página)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
-            <div>
-              <label className="text-sm font-bold mb-2 block">Diseño de Grilla</label>
-              <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2">2x2 (4 productos por página)</SelectItem>
-                  <SelectItem value="3">3x3 (9 productos por página)</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Personalización de Marca */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Marca</h3>
+              
+              <div>
+                <label className="text-sm font-bold mb-2 block">Nombre de la Empresa</label>
+                <Input
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  placeholder="Ana's Supplements"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-bold mb-2 block">Color de Acento</label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="w-12 h-10 rounded-lg border cursor-pointer"
+                  />
+                  <Input
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    placeholder="#10b981"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-bold mb-2 block">URL del Logo (opcional)</label>
+                <Input
+                  value={brandLogo}
+                  onChange={(e) => setBrandLogo(e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                />
+              </div>
             </div>
             
+            {/* Estadísticas */}
             <div className="pt-4 border-t">
-              <p className="text-sm text-gray-500">
-                <strong>Productos visibles:</strong> {visibleProducts.length} de {products.length}
-              </p>
-              <p className="text-sm text-gray-500">
-                <strong>Categorías:</strong> {categories.length}
-              </p>
-              <p className="text-sm text-gray-500">
-                <strong>Páginas estimadas:</strong> {renderPreview().length}
-              </p>
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Estadísticas</h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-muted-foreground">Productos visibles</p>
+                  <p className="text-xl font-bold">{products.filter(p => p.visible).length}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-muted-foreground">Con imagen</p>
+                  <p className="text-xl font-bold text-green-600">{products.filter(p => p.image).length}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-muted-foreground">Sin imagen</p>
+                  <p className="text-xl font-bold text-amber-600">{productsWithoutImage.length}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-muted-foreground">Páginas</p>
+                  <p className="text-xl font-bold">{renderPreview().length}</p>
+                </div>
+              </div>
             </div>
           </div>
           

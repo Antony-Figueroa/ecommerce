@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { productRepo, categoryRepo } from '../../../../shared/container.js'
 import { authenticate } from '../../middleware/auth.middleware.js'
+import { prisma } from '../../../persistence/prisma.client.js'
 
 const router = Router()
 
@@ -8,23 +9,30 @@ router.use(authenticate)
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const categories = await categoryRepo.findAll({ includeInactive: true })
+    const categories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+    })
     
-    const productsResult = await productRepo.findAll({ limit: 1000 })
-    const products = Array.isArray(productsResult) ? productsResult : []
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      include: { 
+        categories: true,
+        images: { orderBy: { sortOrder: 'asc' }, take: 1 }
+      },
+      take: 1000,
+    })
     
     const activeProducts = products
-      .filter((p: any) => p.isActive)
       .map((p: any) => ({
         id: p.id,
         name: p.name,
         brand: p.brand,
         format: p.format,
         description: p.description,
-        image: p.image,
+        image: p.image || (p.images && p.images[0]?.url) || null,
         price: p.price,
-        categoryId: Array.isArray(p.categoryIds) ? p.categoryIds[0] : null,
-        category: categories.find(c => c.id === (Array.isArray(p.categoryIds) ? p.categoryIds[0] : null)) || null,
+        categoryId: (p.categories && p.categories[0]?.id) || null,
+        category: (p.categories && p.categories[0]) || null,
         visible: p.catalogVisible !== false,
         order: p.catalogOrder || 0,
       }))
