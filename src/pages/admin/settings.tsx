@@ -432,7 +432,8 @@ export function AdminSettingsPage() {
         />
 
         <Tabs defaultValue={defaultTab} className="w-full" onValueChange={(v) => console.log('Tab changed to:', v)}>
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+            <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max h-auto">
             <TabsTrigger value="negocio" className="gap-2">
               <Store className="h-3.5 w-3.5" />
               Negocio
@@ -470,6 +471,7 @@ export function AdminSettingsPage() {
               Respaldos
             </TabsTrigger>
           </TabsList>
+          </div>
 
           {/* Static Tab Contents - No依赖API */}
           <TabsContent value="backups" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">

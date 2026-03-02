@@ -767,7 +767,8 @@ export function FinancialDashboard() {
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max h-auto">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mr-2 self-end pb-2">Vista:</span>
             <TabsTrigger value="overview" className="gap-2">
               <TrendingUp className="h-3.5 w-3.5" />
@@ -790,6 +791,7 @@ export function FinancialDashboard() {
               Reportes
             </TabsTrigger>
           </TabsList>
+          </div>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
             <BusinessEventsCalendar 

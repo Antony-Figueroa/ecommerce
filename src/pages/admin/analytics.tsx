@@ -197,14 +197,14 @@ export function AdminAnalyticsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Periodo:</span>
-              <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground whitespace-nowrap">Periodo:</span>
+              <div className="flex bg-muted/30 dark:bg-muted/20 p-1 rounded-xl border border-border/60 shadow-sm h-11 items-center px-1.5 shrink-0">
                 <button
                   onClick={() => setPeriod("7d")}
                   className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
                     period === "7d" 
-                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                      ? "bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-muted/50"
                   }`}
                 >
                   7 Días
@@ -213,8 +213,8 @@ export function AdminAnalyticsPage() {
                   onClick={() => setPeriod("30d")}
                   className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
                     period === "30d" 
-                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                      ? "bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-muted/50"
                   }`}
                 >
                   30 Días
@@ -223,8 +223,8 @@ export function AdminAnalyticsPage() {
                   onClick={() => setPeriod("90d")}
                   className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
                     period === "90d" 
-                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                      ? "bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-muted/50"
                   }`}
                 >
                   3 Meses
@@ -233,15 +233,15 @@ export function AdminAnalyticsPage() {
                   onClick={() => setPeriod("1y")}
                   className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
                     period === "1y" 
-                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
-                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                      ? "bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-muted/50"
                   }`}
                 >
                   1 Año
                 </button>
               </div>
             </div>
-            <Button variant="outline" onClick={handleExport} className="h-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white/50 dark:bg-muted/10 font-bold text-xs uppercase tracking-wider">
+            <Button variant="outline" onClick={handleExport} className="h-11 rounded-xl border-border/60 bg-muted/30 dark:bg-muted/10 font-bold text-xs uppercase tracking-wider">
               <Download className="h-4 w-4 mr-2" />
               Exportar CSV
             </Button>
@@ -513,7 +513,7 @@ function MetricCard({ title, value, icon, trend, trendUp, color }: any) {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-            <p className="text-2xl font-bold tracking-tight">{value}</p>
+            <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
             <div className="flex items-center gap-1">
               {trendUp ? (
                 <ArrowUpRight className="h-3 w-3 text-emerald-500" />
@@ -526,7 +526,7 @@ function MetricCard({ title, value, icon, trend, trendUp, color }: any) {
               <span className="text-[10px] text-muted-foreground ml-1">vs periodo anterior</span>
             </div>
           </div>
-          <div className={`p-4 rounded-2xl ${color} transition-transform group-hover:scale-110 duration-300`}>
+          <div className={`p-4 rounded-2xl ${color} dark:${color.replace('100', '900/30')} transition-transform group-hover:scale-110 duration-300`}>
             {icon}
           </div>
         </div>

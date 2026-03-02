@@ -23,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Pagination } from "@/components/admin/pagination"
 import {
   Tooltip,
   TooltipContent,
@@ -156,6 +157,10 @@ export function AdminOrdersPage() {
   const [selectedProof, setSelectedProof] = useState<any>(null)
   const [adminNotes, setAdminNotes] = useState("")
   const [isProcessingProof, setIsProcessingProof] = useState(false)
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const [confirmConfig, setConfirmConfig] = useState<{
     open: boolean;
@@ -1057,6 +1062,13 @@ export function AdminOrdersPage() {
     return sortOrder === "asc" ? comparison : -comparison
   })
 
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   const statusCounts = {
     all: orders.length,
     PENDING: orders.filter(o => o.status === "PENDING").length,
@@ -1212,8 +1224,8 @@ export function AdminOrdersPage() {
         </div>
 
         <div className="grid gap-4 mt-6" role="list" aria-label="Lista de pedidos">
-          {filteredOrders.length > 0 ? (
-            filteredOrders.map((order) => {
+          {paginatedOrders.length > 0 ? (
+            paginatedOrders.map((order) => {
                   const status = formatStatus(order.status)
                   const items = Array.isArray(order.items) ? order.items : []
                   
@@ -1564,6 +1576,19 @@ export function AdminOrdersPage() {
                 </Card>
               )}
             </div>
+
+            {/* Pagination */}
+            {filteredOrders.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredOrders.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
+                showItemsPerPage
+              />
+            )}
 
         {/* Order Detail Modal */}
         <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>

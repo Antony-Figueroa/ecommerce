@@ -47,6 +47,7 @@ import {
 import { ImageUpload } from "@/components/admin/image-upload"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Pagination } from "@/components/admin/pagination"
 import { api } from "@/lib/api"
 import { formatUSD, cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
@@ -747,6 +748,15 @@ export function AdminProductsPage() {
     return sortOrder === "asc" ? comparison : -comparison
   })
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(12)
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   const lowStockCount = products.filter(p => p.stock < 10).length
   const outOfStockCount = products.filter(p => p.stock === 0).length
 
@@ -865,7 +875,8 @@ export function AdminProductsPage() {
         )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max h-auto">
             <TabsTrigger value="active" className="gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
               Activos
@@ -888,12 +899,13 @@ export function AdminProductsPage() {
               </Badge>
             </TabsTrigger>
           </TabsList>
+          </div>
         </Tabs>
 
         {/* Products Display */}
         {viewMode === "grid" ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" role="list" aria-label="Lista de productos en cuadrícula">
-            {filteredProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <Card key={product.id} className={cn(
                 "overflow-hidden border border-border/60 rounded-2xl shadow-sm hover:shadow-md transition-all",
                 selectedProducts.includes(product.id) && "ring-2 ring-primary"
@@ -1091,7 +1103,7 @@ export function AdminProductsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
-                  {filteredProducts.map((product) => (
+                  {paginatedProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
@@ -1242,6 +1254,19 @@ export function AdminProductsPage() {
               </table>
             </div>
           </Card>
+        )}
+
+        {/* Pagination */}
+        {filteredProducts.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredProducts.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
+            showItemsPerPage
+          />
         )}
 
         {filteredProducts.length === 0 && (

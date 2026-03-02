@@ -626,12 +626,14 @@ export function AdminCustomersPage() {
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max h-auto">
             <TabsTrigger value="all">Todos</TabsTrigger>
             <TabsTrigger value="clients">Clientes</TabsTrigger>
             <TabsTrigger value="admins">Admins</TabsTrigger>
             <TabsTrigger value="active">Activos</TabsTrigger>
           </TabsList>
+          </div>
 
           <TabsContent value="all" className="mt-0 animate-in fade-in-50 duration-300">
             <div className="space-y-10">

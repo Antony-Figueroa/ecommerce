@@ -146,6 +146,19 @@ Siga este orden para mantener la consistencia:
 - Componente: `src/components/admin/admin-filter-select.tsx`
 - Archivo UI: `@/components/ui/select`
 
+### Pagination
+- Uso: Paginación en tablas de resultados
+- Props: `currentPage`, `totalPages`, `totalItems`, `itemsPerPage`, `onPageChange`, `showItemsPerPage`
+- Opciones de items por página: 10, 25, 50, 100
+- Archivo: `src/components/admin/pagination.tsx`
+
+### ConfirmDialog
+- Uso: Diálogos de confirmación reutilizables
+- Hook: `useConfirmDialog()` que retorna `confirmAction`, `confirmConfig`, `ConfirmDialogComponent`
+- Variantes: default, destructive, success
+- Iconos: warning, success, info, error
+- Archivo: `src/components/admin/confirm-dialog.tsx`
+
 ---
 
 ## 🛡️ Seguridad y Errores
@@ -232,10 +245,10 @@ Para evitar warnings de dimensiones negativas:
 
 ## 🔗 Documentación Relacionada
 
-- [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
-- [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
-- [Arquitectura de Sistemas](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/arquitectura.md)
-- [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
-- [Documentación Chat IA](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/ai-chat.md)
+- [Análisis Funcional](docs/analisis-funcional.md)
+- [Referencia API](docs/api-reference.md)
+- [Arquitectura de Sistemas](docs/ARQUITECTURA.md)
+- [Flujos de Negocio](docs/flujos-negocio.md)
+- [Documentación Chat IA](docs/ai-chat.md)
 
-Última actualización: 2026-03-01
+Última actualización: 2026-03-02

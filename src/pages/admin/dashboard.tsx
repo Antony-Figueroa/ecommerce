@@ -201,7 +201,7 @@ export function AdminDashboard() {
         ].map((item, i) => (
           <motion.div key={i} variants={itemVariants}>
             <Card
-              className="border border-border/60 shadow-sm bg-white dark:bg-card overflow-hidden group hover:shadow-md transition-all duration-500 rounded-2xl relative"
+              className="border border-border/60 shadow-sm bg-card overflow-hidden group hover:shadow-md transition-all duration-500 rounded-2xl relative"
               tabIndex={0}
               role="article"
               aria-label={`${item.title}: ${item.value}. ${item.label}: ${item.growth}%`}
@@ -216,7 +216,7 @@ export function AdminDashboard() {
                 <div className="flex items-center gap-1.5">
                   <div className={cn(
                     "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black",
-                    item.trend === 'up' ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"
+                    item.trend === 'up' ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                   )}>
                     {item.trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                     {item.growth > 0 ? `+${item.growth}%` : `${item.growth}%`}
@@ -239,24 +239,24 @@ export function AdminDashboard() {
           role="region"
           aria-label="Gráfico de rendimiento de ventas"
         >
-          <Card className="border-0 shadow-sm bg-white dark:bg-card rounded-2xl overflow-hidden h-full">
-            <CardHeader className="border-b border-slate-50 dark:border-border p-6 lg:p-8">
+          <Card className="border-0 shadow-sm bg-card rounded-2xl overflow-hidden h-full">
+            <CardHeader className="border-b border-border/60 p-6 lg:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="text-2xl font-bold tracking-tight text-slate-800 dark:text-foreground flex items-center gap-3">
+                  <CardTitle className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
                     Curva de Crecimiento
                     <TrendingUp className="h-5 w-5 text-primary" aria-hidden="true" />
                   </CardTitle>
-                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mt-1">Ingresos vs Pedidos (Análisis Semanal)</CardDescription>
+                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Ingresos vs Pedidos (Análisis Semanal)</CardDescription>
                 </div>
-                <div className="flex gap-6 bg-slate-50 dark:bg-muted p-3 rounded-xl border border-slate-100 dark:border-border" role="legend">
+                <div className="flex gap-6 bg-muted/30 dark:bg-muted/50 p-3 rounded-xl border border-border/60" role="legend">
                   <div className="flex items-center gap-2">
                     <div className="h-3 w-3 bg-primary rounded-full shadow-lg shadow-primary/20" aria-hidden="true" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-muted-foreground">Ingresos</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Ingresos</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 bg-slate-400 dark:bg-slate-500 rounded-full" aria-hidden="true" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600 dark:text-muted-foreground">Pedidos</span>
+                    <div className="h-3 w-3 bg-muted-foreground/50 rounded-full" aria-hidden="true" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pedidos</span>
                   </div>
                 </div>
               </div>
@@ -349,21 +349,21 @@ export function AdminDashboard() {
           role="region"
           aria-label="Lista de pedidos recientes"
         >
-          <Card className="border-0 shadow-sm bg-white dark:bg-card rounded-2xl overflow-hidden h-full flex flex-col">
-            <CardHeader className="bg-slate-50 dark:bg-muted/50 border-b border-slate-100 dark:border-border p-6 lg:p-8 relative overflow-hidden shrink-0">
+          <Card className="border-0 shadow-sm bg-card rounded-2xl overflow-hidden h-full flex flex-col">
+            <CardHeader className="bg-muted/30 dark:bg-muted/20 border-b border-border/60 p-6 lg:p-8 relative overflow-hidden shrink-0">
               <div className="absolute top-0 right-0 w-full h-full bg-primary/5 rounded-full blur-3xl translate-x-1/2" aria-hidden="true" />
               <div className="relative z-10 flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl font-bold tracking-tight text-slate-800 dark:text-foreground">Última Actividad</CardTitle>
-                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mt-1">Sincronización en vivo</CardDescription>
+                  <CardTitle className="text-xl font-bold tracking-tight text-foreground">Última Actividad</CardTitle>
+                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">Sincronización en vivo</CardDescription>
                 </div>
-                <div className="h-10 w-10 bg-white dark:bg-background rounded-xl shadow-sm flex items-center justify-center border border-slate-100 dark:border-border">
+                <div className="h-10 w-10 bg-card rounded-xl shadow-sm flex items-center justify-center border border-border/60">
                   <Activity className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0 flex-1 overflow-y-auto">
-              <div className="divide-y divide-slate-50 dark:divide-border" role="list" aria-label="Pedidos recientes">
+              <div className="divide-y divide-border/60" role="list" aria-label="Pedidos recientes">
                 {stats.recentOrders.length > 0 ? (
                   stats.recentOrders.map((order, i) => (
                     <motion.div
@@ -371,7 +371,7 @@ export function AdminDashboard() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.7 + (i * 0.1) }}
-                      className="p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-muted/30 transition-all duration-300 group cursor-pointer border-l-4 border-transparent hover:border-primary focus-within:bg-slate-50 dark:focus-within:bg-muted/30 outline-none"
+                      className="p-6 flex items-center justify-between hover:bg-muted/30 dark:hover:bg-muted/20 transition-all duration-300 group cursor-pointer border-l-4 border-transparent hover:border-primary focus-within:bg-muted/30 dark:focus-within:bg-muted/20 outline-none"
                       role="listitem"
                       tabIndex={0}
                       aria-label={`Pedido ${order.orderNumber} de ${order.customerName} por un total de ${formatUSD(order.total)}. Estado: ${order.isPaid ? 'Pagado' : 'Pendiente'}.`}
@@ -379,16 +379,16 @@ export function AdminDashboard() {
                       onKeyDown={(e) => handleKeyDown(e, `/admin/orders/${order.id}`)}
                     >
                       <div className="flex items-center gap-5">
-                        <div className="h-12 w-12 bg-slate-50 dark:bg-muted rounded-xl flex items-center justify-center text-primary font-bold text-xs border border-slate-100 dark:border-border group-hover:border-primary/20 group-hover:scale-105 transition-all duration-500">
+                        <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center text-primary font-bold text-xs border border-border/60 group-hover:border-primary/20 group-hover:scale-105 transition-all duration-500">
                           {order.orderNumber.substring(0, 4)}
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-slate-800 dark:text-foreground tracking-tight group-hover:text-primary transition-colors">{order.customerName}</div>
-                          <div className="text-[10px] font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-widest mt-0.5">Orden #{order.orderNumber}</div>
+                          <div className="text-sm font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">{order.customerName}</div>
+                          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Orden #{order.orderNumber}</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-bold text-slate-800 dark:text-foreground">{formatUSD(order.total)}</div>
+                        <div className="text-sm font-bold text-foreground">{formatUSD(order.total)}</div>
                         <div className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center justify-end gap-1.5 mt-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
                           <span className="sr-only">Hora: </span>
@@ -405,11 +405,11 @@ export function AdminDashboard() {
                 )}
               </div>
             </CardContent>
-            <div className="p-6 bg-slate-50/50 dark:bg-muted/20 border-t border-slate-100 dark:border-border mt-auto">
+            <div className="p-6 bg-muted/30 dark:bg-muted/20 border-t border-border/60 mt-auto">
               <Button
                 onClick={() => navigate('/admin/orders')}
                 variant="ghost"
-                className="w-full h-12 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-muted-foreground hover:text-primary hover:bg-white dark:hover:bg-card border border-transparent hover:border-slate-100 dark:hover:border-border transition-all duration-300 flex items-center justify-center gap-3 group rounded-xl"
+                className="w-full h-12 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-muted/50 dark:hover:bg-card border border-transparent hover:border-border transition-all duration-300 flex items-center justify-center gap-3 group rounded-xl"
                 aria-label="Ver todo el historial de pedidos"
               >
                 Ver Todo el Historial
@@ -429,10 +429,10 @@ export function AdminDashboard() {
         role="region"
         aria-label="Acciones rápidas"
       >
-        <div className="flex-1 min-w-[280px] h-14 bg-white dark:bg-card border border-slate-200 dark:border-border rounded-2xl p-1.5 flex gap-2 shadow-sm">
+        <div className="flex-1 min-w-[280px] h-14 bg-card border border-border/60 rounded-2xl p-1.5 flex gap-2 shadow-sm">
           <Button
             onClick={() => navigate('/admin/orders')}
-            className="flex-1 h-full bg-primary text-white hover:bg-primary/90 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all duration-300 shadow-md shadow-primary/20 flex items-center justify-center gap-2"
+            className="flex-1 h-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all duration-300 shadow-md shadow-primary/20 flex items-center justify-center gap-2"
             aria-label="Crear una nueva orden"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -441,7 +441,7 @@ export function AdminDashboard() {
           <Button
             onClick={() => navigate('/admin/inventory')}
             variant="ghost"
-            className="flex-1 h-full text-slate-600 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted/50 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+            className="flex-1 h-full text-muted-foreground hover:bg-muted/50 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
             aria-label="Ir a la gestión de inventario"
           >
             <Package className="h-4 w-4" aria-hidden="true" />
