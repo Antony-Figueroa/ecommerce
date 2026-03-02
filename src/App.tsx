@@ -39,6 +39,7 @@ const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m =
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
 const AdminAuditPage = lazy(() => import("@/pages/admin/audit").then(m => ({ default: m.AdminAuditPage })))
 const AdminKanbanPage = lazy(() => import("@/pages/admin/kanban").then(m => ({ default: m.AdminKanbanPage })))
+const AdminCatalogPage = lazy(() => import("@/pages/admin/catalog").then(m => ({ default: m.AdminCatalogPage })))
 
 function App() {
   const location = useLocation()
@@ -78,6 +79,7 @@ function App() {
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
                 <Route path="/admin/audit" element={<AdminAuditPage />} />
                 <Route path="/admin/kanban" element={<AdminKanbanPage />} />
+                <Route path="/admin/catalog" element={<AdminCatalogPage />} />
               </Route>
 
               {/* Rutas Públicas y de Usuario - Usan RootLayout para Navbar/Footer persistente */}

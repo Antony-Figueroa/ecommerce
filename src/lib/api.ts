@@ -574,6 +574,28 @@ class ApiClient {
     })
   }
 
+  // Catalog
+  async getCatalogData() {
+    return this.request<{
+      products: any[];
+      categories: any[];
+    }>('/admin/catalog')
+  }
+
+  async updateCatalogProductVisibility(productId: string, visible: boolean) {
+    return this.request(`/admin/catalog/products/${productId}/visibility`, {
+      method: 'PUT',
+      body: JSON.stringify({ visible }),
+    })
+  }
+
+  async updateCatalogProductOrder(productId: string, order: number) {
+    return this.request(`/admin/catalog/products/${productId}/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ order }),
+    })
+  }
+
   // Admin Products
   async getAdminProducts(params?: { page?: number; limit?: number; categoryId?: string; categoryIds?: string[]; search?: string; onlyActive?: boolean }) {
     const searchParams = new URLSearchParams()

@@ -13,7 +13,10 @@ import {
   Clock,
   Download,
   FileCode,
-  HardDrive
+  HardDrive,
+  DollarSign,
+  Users,
+  Truck
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
@@ -24,6 +27,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -73,6 +83,38 @@ export function AdminSettingsPage() {
     filename?: string
   } | null>(null)
   const [processingBackup, setProcessingBackup] = useState(false)
+  
+  // Multi-Moneda State
+  const [bcvRate, setBcvRate] = useState<number>(0)
+  const [baseCurrency, setBaseCurrency] = useState<string>("USD")
+  const [enableMultiCurrency, setEnableMultiCurrency] = useState<boolean>(false)
+  
+  // User Roles State
+  const [roles, _setRoles] = useState<Array<{
+    id: string
+    name: string
+    description: string
+    canViewProfits: boolean
+    canEditProducts: boolean
+    canManageOrders: boolean
+    canViewReports: boolean
+  }>>([
+    { id: '1', name: 'Administrador', description: 'Acceso total al sistema', canViewProfits: true, canEditProducts: true, canManageOrders: true, canViewReports: true },
+    { id: '2', name: 'Vendedor', description: 'Solo puede procesar ventas', canViewProfits: false, canEditProducts: false, canManageOrders: true, canViewReports: false },
+  ])
+  
+  // Shipping Logistics State
+  const [shippingZones, _setShippingZones] = useState<Array<{
+    id: string
+    name: string
+    baseCost: number
+    costPerKg: number
+    freeShippingThreshold: number
+    estimatedDays: string
+  }>>([
+    { id: '1', name: 'Zona Local', baseCost: 2, costPerKg: 0.5, freeShippingThreshold: 50, estimatedDays: '1-2' },
+    { id: '2', name: 'Nacional', baseCost: 5, costPerKg: 1, freeShippingThreshold: 100, estimatedDays: '3-5' },
+  ])
   
   const { toast } = useToast()
 
@@ -529,6 +571,217 @@ export function AdminSettingsPage() {
                     </p>
                   </div>
                 </div>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Multi-Moneda Tab */}
+          <TabsTrigger 
+            value="moneda"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <DollarSign className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Moneda</span>
+          </TabsTrigger>
+          
+          {/* Roles Tab */}
+          <TabsTrigger 
+            value="roles"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <Users className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Roles</span>
+          </TabsTrigger>
+          
+          {/* Envío Tab */}
+          <TabsTrigger 
+            value="envio"
+            className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-md data-[state=active]:scale-[1.02] rounded-lg group"
+          >
+            <Truck className="h-4 w-4 mr-1" />
+            <span className="whitespace-nowrap">Envío</span>
+          </TabsTrigger>
+          
+          {/* Multi-Moneda Content */}
+          <TabsContent value="moneda" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <DollarSign className="h-6 w-6 text-primary" />
+                  Configuración de Moneda
+                </CardTitle>
+                <CardDescription>
+                  Gestiona la tasa BCV y la moneda base del sistema. Evita pérdidas por devaluación.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-800 rounded-full flex items-center justify-center">
+                      <DollarSign className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-emerald-900 dark:text-emerald-100">Multi-Moneda</p>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300">Habilitar conversión de divisas</p>
+                    </div>
+                  </div>
+                  <Checkbox 
+                    checked={enableMultiCurrency} 
+                    onCheckedChange={(c) => setEnableMultiCurrency(!!c)}
+                  />
+                </div>
+                
+                {enableMultiCurrency && (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <Label className="text-sm font-bold mb-2 block">Moneda Base</Label>
+                        <Select value={baseCurrency} onValueChange={setBaseCurrency}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="USD">Dólares (USD)</SelectItem>
+                            <SelectItem value="EUR">Euros (EUR)</SelectItem>
+                            <SelectItem value="COP">Pesos Colombianos (COP)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">Moneda principal para precios</p>
+                      </div>
+                      
+                      <div>
+                        <Label className="text-sm font-bold mb-2 block">Tasa BCV Actual</Label>
+                        <Input 
+                          type="number"
+                          value={bcvRate}
+                          onChange={(e) => setBcvRate(Number(e.target.value))}
+                          placeholder="0.00"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Tasa oficial del Banco Central</p>
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                      <p className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-2">Impacto en tu negocio:</p>
+                      <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
+                        <li>• Los precios se mostrarán en {baseCurrency} y en Bs al tipo de cambio actual</li>
+                        <li>• Las ganancias se calculan correctamente evitando pérdidas por devaluación</li>
+                        <li>• Actualiza la tasa BCV regularmente para mantener precios accurate</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Configuración
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          {/* Roles Content */}
+          <TabsContent value="roles" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Users className="h-6 w-6 text-primary" />
+                  Roles de Usuario
+                </CardTitle>
+                <CardDescription>
+                  Configura quién puede ver las ganancias (Admin) y quién solo vende (Vendedor).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {roles.map((role) => (
+                    <div key={role.id} className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Users className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold">{role.name}</p>
+                          <p className="text-xs text-muted-foreground">{role.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Badge variant={role.canViewProfits ? "default" : "outline"}>
+                          {role.canViewProfits ? "Ganancias" : "Sin Ganancias"}
+                        </Badge>
+                        <Badge variant={role.canManageOrders ? "default" : "outline"}>
+                          {role.canManageOrders ? "Órdenes" : "Solo Ver"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Los vendedores solo ven precios de venta, no tus márgenes de ganancia</li>
+                    <li>• Proteges la privacidad de tus estados financieros reales</li>
+                    <li>• Los administradores tienen control total sobre el sistema</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Envío Content */}
+          <TabsContent value="envio" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Truck className="h-6 w-6 text-primary" />
+                  Logística de Envío
+                </CardTitle>
+                <CardDescription>
+                  Configura costos fijos por peso o unidad. Cálculo exacto de la ganancia neta.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {shippingZones.map((zone) => (
+                    <div key={zone.id} className="p-4 border rounded-xl hover:shadow-md transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="font-bold text-lg">{zone.name}</p>
+                        <Badge variant="outline">{zone.estimatedDays} días</Badge>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Costo Base</p>
+                          <p className="font-bold">${zone.baseCost}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Por Kg</p>
+                          <p className="font-bold">${zone.costPerKg}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Envío Gratis</p>
+                          <p className="font-bold">${zone.freeShippingThreshold}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                  <p className="text-sm font-bold text-purple-800 dark:text-purple-200 mb-2">Impacto en tu negocio:</p>
+                  <ul className="text-xs text-purple-700 dark:text-purple-300 space-y-1">
+                    <li>• Calcula el costo real de envío por cada pedido</li>
+                    <li>• Ofrece envío gratis a partir de un monto para aumentar Ticket Promedio</li>
+                    <li>• La ganancia neta = Precio de venta - Costo producto - Costo envío</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button className="font-bold bg-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Zonas
+                </Button>
               </CardFooter>
             </Card>
           </TabsContent>

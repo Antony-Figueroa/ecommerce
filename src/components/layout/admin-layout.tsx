@@ -18,6 +18,7 @@ import {
   Leaf,
   Shield,
   Kanban,
+  BookOpen,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AdminTopNav } from "./admin-top-nav"
@@ -102,6 +103,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         { path: "/admin/categories", label: "Categorías", icon: Tag },
         { path: "/admin/providers", label: "Proveedores", icon: Truck },
         { path: "/admin/inventory", label: "Inventario", icon: Box, alert: lowStockCount > 0 },
+        { path: "/admin/catalog", label: "Catálogo Digital", icon: BookOpen },
       ]
     },
     {
