@@ -36,6 +36,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectWithSearch,
 } from "@/components/ui/select"
 import {
   Tooltip,
@@ -793,17 +794,14 @@ export function AdminProductsPage() {
             <div className="flex bg-muted/40 p-1 rounded-xl border border-border/60 shadow-sm h-11 items-center px-2 shrink-0" role="group">
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-2 border-r border-border/60 mr-1 hidden sm:inline">Filtrar</span>
               
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="min-w-[160px] w-auto border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider px-3" aria-label="Filtrar por categoría">
-                  <SelectValue placeholder="Categoría" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las categorias</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>{String(cat.name || "")}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectWithSearch
+                value={categoryFilter}
+                onValueChange={setCategoryFilter}
+                options={[{ value: "all", label: "Todas las categorias" }, ...categories.map(cat => ({ value: cat.id, label: String(cat.name || "") }))]}
+                placeholder="Categoría"
+                triggerClassName="min-w-[160px] w-auto border-none bg-transparent focus:ring-0 h-9 font-bold text-xs uppercase tracking-wider px-3"
+                minItemsForSearch={5}
+              />
               
               <div className="w-px h-4 bg-border/60 mx-1" aria-hidden="true" />
 
