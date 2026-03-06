@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { AdminTopNav } from "./admin-top-nav"
 import { CommandPalette } from "@/components/admin/command-palette"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { PageLoader } from "@/components/shared/page-loader"
 import { useAuth } from "@/contexts/auth-context"
 import { cn } from "@/lib/utils"
@@ -137,7 +137,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     const isCollapsed = !sidebarOpen && !isMobile
 
     return (
-      <div className="flex flex-col h-full bg-background dark:bg-card select-none border-r border-neutral-100 dark:border-white/5 transition-colors">
+      <div className="flex flex-col h-full bg-white dark:bg-background select-none border-r border-neutral-100 dark:border-white/5 transition-colors">
         {/* Header: Logo & Branding */}
         <div className={cn(
           "flex h-20 items-center px-6 shrink-0",
@@ -173,7 +173,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                       onClick={() => isMobile && setIsMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center gap-3 py-2.5 rounded-xl transition-all duration-200 ease-in-out group relative",
-                        isCollapsed ? "justify-center px-0 w-11 mx-auto" : "px-4",
+                        isCollapsed ? "justify-center px-0 w-12 mx-auto" : "px-4",
                         isActive
                           ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary font-black shadow-[0_0_20px_rgba(16,185,129,0.15)]"
                           : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800/60 dark:hover:text-neutral-100 font-bold text-sm"
@@ -262,7 +262,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         <aside
           className={cn(
             "fixed left-0 top-0 z-40 h-screen transition-all duration-200 ease-out hidden md:block border-r border-border/30",
-            sidebarOpen ? "w-56" : "w-[60px]"
+            sidebarOpen ? "w-56" : "w-20"
           )}
         >
           <SidebarContent />
@@ -271,6 +271,8 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         {/* Mobile Sidebar (Sheet) */}
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetContent side="left" className="p-0 w-[280px] border-none shadow-2xl [&>button]:opacity-0">
+            <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
+            <SheetDescription className="sr-only">Panel de navegación del administrador</SheetDescription>
             <div className="animate-in slide-in-from-left duration-200">
               <SidebarContent isMobile />
             </div>
@@ -279,7 +281,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
 
         <div className={cn(
           "transition-all duration-200 ease-out min-h-screen flex flex-col",
-          sidebarOpen ? "md:ml-56" : "md:ml-[60px]"
+          sidebarOpen ? "md:ml-56" : "md:ml-20"
         )}>
           <AdminTopNav
             onMenuClick={() => setIsMobileMenuOpen(true)}

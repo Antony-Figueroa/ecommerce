@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
- 
+
 import { formatUSD, formatBS } from "@/lib/utils"
 import { api, API_BASE } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -111,7 +111,7 @@ export function FinancialDashboard() {
     open: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   })
 
   const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
@@ -213,9 +213,9 @@ export function FinancialDashboard() {
       // Usar la API real para el BCV
       const rateData = await api.getBCVStatus()
       if (rateData && rateData.currentRate) {
-        setBcvRate({ 
-          rate: Number(rateData.currentRate.rate) || 375.00, 
-          timestamp: rateData.currentRate.createdAt || rateData.currentRate.timestamp || new Date().toISOString() 
+        setBcvRate({
+          rate: Number(rateData.currentRate.rate) || 375.00,
+          timestamp: rateData.currentRate.createdAt || rateData.currentRate.timestamp || new Date().toISOString()
         })
       }
 
@@ -316,7 +316,7 @@ export function FinancialDashboard() {
             // En el futuro, esto debería venir de una tabla de notificaciones persistentes
             const today = new Date();
             today.setHours(12, 0, 0, 0); // Mediodía para evitar problemas de zona horaria
-            
+
             events.push({
               id: `lowstock-${prod.id}`,
               type: 'LOW_STOCK',
@@ -349,7 +349,7 @@ export function FinancialDashboard() {
     // Validación de fecha pasada
     const today = startOfDay(new Date())
     const eventDate = startOfDay(selectedDate)
-    
+
     if (isBefore(eventDate, today)) {
       toast({
         title: "Fecha inválida",
@@ -417,11 +417,11 @@ export function FinancialDashboard() {
 
   const handleEditEvent = (event: BusinessEvent) => {
     // Solo permitir editar eventos que no sean generados por el sistema (que tienen prefijos)
-    const isSystemEvent = event.id.toString().includes('-') && 
-                         (event.id.toString().startsWith('sale-') || 
-                          event.id.toString().startsWith('req-') || 
-                          event.id.toString().startsWith('lowstock-'))
-    
+    const isSystemEvent = event.id.toString().includes('-') &&
+      (event.id.toString().startsWith('sale-') ||
+        event.id.toString().startsWith('req-') ||
+        event.id.toString().startsWith('lowstock-'))
+
     if (isSystemEvent) {
       toast({
         title: "Evento del sistema",
@@ -445,11 +445,11 @@ export function FinancialDashboard() {
 
   const handleDeleteEvent = (id: string) => {
     // Solo permitir eliminar eventos que no sean generados por el sistema
-    const isSystemEvent = id.toString().includes('-') && 
-                         (id.toString().startsWith('sale-') || 
-                          id.toString().startsWith('req-') || 
-                          id.toString().startsWith('lowstock-'))
-    
+    const isSystemEvent = id.toString().includes('-') &&
+      (id.toString().startsWith('sale-') ||
+        id.toString().startsWith('req-') ||
+        id.toString().startsWith('lowstock-'))
+
     if (isSystemEvent) {
       toast({
         title: "Evento del sistema",
@@ -487,7 +487,7 @@ export function FinancialDashboard() {
   const onDateClick = (date: Date) => {
     const today = startOfDay(new Date())
     const clickedDate = startOfDay(date)
-    
+
     if (isBefore(clickedDate, today)) {
       toast({
         title: "Acción no permitida",
@@ -511,18 +511,18 @@ export function FinancialDashboard() {
         try {
           const result = await api.forceBCVUpdate()
           console.log("Resultado de actualización BCV:", result)
-          
+
           const newRate = Number(result.record?.rate || result.rate)
-          
+
           if (isNaN(newRate) || newRate <= 0) {
             throw new Error("La API devolvió una tasa inválida")
           }
 
-          setBcvRate({ 
-            rate: newRate, 
-            timestamp: result.record?.createdAt || result.record?.timestamp || new Date().toISOString() 
+          setBcvRate({
+            rate: newRate,
+            timestamp: result.record?.createdAt || result.record?.timestamp || new Date().toISOString()
           })
-          
+
           toast({
             title: "Tasa actualizada",
             description: `La tasa BCV se ha actualizado a Bs ${formatBS(newRate)}`,
@@ -535,7 +535,7 @@ export function FinancialDashboard() {
             variant: "destructive",
           })
         } finally {
-            setIsUpdatingBcv(false)
+          setIsUpdatingBcv(false)
         }
       }
     })
@@ -560,9 +560,9 @@ export function FinancialDashboard() {
         try {
           const result = await api.setBCVRateManual(newRate)
           const confirmedRate = Number(result.rate)
-          setBcvRate({ 
-            rate: isNaN(confirmedRate) ? newRate : confirmedRate, 
-            timestamp: result.record?.createdAt || new Date().toISOString() 
+          setBcvRate({
+            rate: isNaN(confirmedRate) ? newRate : confirmedRate,
+            timestamp: result.record?.createdAt || new Date().toISOString()
           })
           toast({
             title: "Tasa actualizada manualmente",
@@ -661,35 +661,35 @@ export function FinancialDashboard() {
   return (
     <>
       <div className="space-y-6 pb-20 md:pb-0">
-        <AdminPageHeader 
+        <AdminPageHeader
           title="Gestión Financiera"
           subtitle="Inventario, ventas y análisis de rentabilidad"
           icon={Calculator}
           rightContent={
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/20 px-4 py-2 rounded-xl border border-green-200 dark:border-green-900/30 shadow-sm">
+              <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/30 px-4 py-2 rounded-xl border border-green-200 dark:border-green-900/40 shadow-sm">
                 <DollarSign className="h-6 w-6 text-green-600 shrink-0" />
                 <div className="flex-1">
                   <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Tasa BCV</p>
                   <div className="flex flex-row sm:flex-col items-baseline sm:items-start justify-between gap-2 sm:gap-0">
                     <p className="text-xl font-black text-green-700 dark:text-green-400 leading-none">Bs {formatBS(bcvRate?.rate || 0)}</p>
                     <p className="text-[10px] text-green-600/70 mt-0 sm:mt-1 font-medium">
-                      {bcvRate?.timestamp ? new Date(bcvRate.timestamp).toLocaleString('es-VE', { 
-                        day: '2-digit', 
-                        month: '2-digit', 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: true 
+                      {bcvRate?.timestamp ? new Date(bcvRate.timestamp).toLocaleString('es-VE', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
                       }) : 'Cargando...'}
                     </p>
                   </div>
                 </div>
               </div>
-              
+
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     disabled={isUpdatingBcv}
                     className="h-11 rounded-xl border-slate-200/50 dark:border-border/50 bg-white dark:bg-card font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow-md transition-all"
                   >
@@ -725,8 +725,8 @@ export function FinancialDashboard() {
                               }
                             }}
                           />
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             onClick={(e) => {
                               const input = e.currentTarget.previousElementSibling as HTMLInputElement
                               handleManualBcvUpdate(parseFloat(input.value))
@@ -744,9 +744,9 @@ export function FinancialDashboard() {
                           <span className="bg-background px-2 text-muted-foreground">O también</span>
                         </div>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="w-full"
                         onClick={handleUpdateBcv}
                         disabled={isUpdatingBcv}
@@ -768,34 +768,34 @@ export function FinancialDashboard() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max h-auto">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mr-2 self-end pb-2">Vista:</span>
-            <TabsTrigger value="overview" className="gap-2">
-              <TrendingUp className="h-3.5 w-3.5" />
-              Resumen
-            </TabsTrigger>
-            <TabsTrigger value="pos" className="gap-2">
-              <Calculator className="h-3.5 w-3.5" />
-              Punto de Venta
-            </TabsTrigger>
-            <TabsTrigger value="inventory" className="gap-2">
-              <Package className="h-3.5 w-3.5" />
-              Inventario
-            </TabsTrigger>
-            <TabsTrigger value="sales" className="gap-2">
-              <FileText className="h-3.5 w-3.5" />
-              Ventas
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="gap-2">
-              <History className="h-3.5 w-3.5" />
-              Reportes
-            </TabsTrigger>
-          </TabsList>
+            <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max h-auto">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground mr-2 self-end pb-2">Vista:</span>
+              <TabsTrigger value="overview" className="gap-2">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Resumen
+              </TabsTrigger>
+              <TabsTrigger value="pos" className="gap-2">
+                <Calculator className="h-3.5 w-3.5" />
+                Punto de Venta
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="gap-2">
+                <Package className="h-3.5 w-3.5" />
+                Inventario
+              </TabsTrigger>
+              <TabsTrigger value="sales" className="gap-2">
+                <FileText className="h-3.5 w-3.5" />
+                Ventas
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="gap-2">
+                <History className="h-3.5 w-3.5" />
+                Reportes
+              </TabsTrigger>
+            </TabsList>
           </div>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
-            <BusinessEventsCalendar 
-              events={businessEvents} 
+            <BusinessEventsCalendar
+              events={businessEvents}
               isLoading={isLoadingEvents}
               onDateClick={onDateClick}
               onEditEvent={handleEditEvent}
@@ -805,15 +805,15 @@ export function FinancialDashboard() {
             <Dialog open={isAddEventOpen} onOpenChange={(open) => {
               setIsAddEventOpen(open)
               if (!open) {
-                  setEditingEventId(null)
-                  setNewEvent({
-                    type: 'CUSTOM',
-                    title: '',
-                    description: '',
-                    time: '12:00',
-                    isFuture: true
-                  })
-                }
+                setEditingEventId(null)
+                setNewEvent({
+                  type: 'CUSTOM',
+                  title: '',
+                  description: '',
+                  time: '12:00',
+                  isFuture: true
+                })
+              }
             }}>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -828,9 +828,9 @@ export function FinancialDashboard() {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="type" className="text-right font-bold text-xs uppercase">Tipo</Label>
-                    <Select 
-                      value={newEvent.type} 
-                      onValueChange={(v) => setNewEvent({...newEvent, type: v})}
+                    <Select
+                      value={newEvent.type}
+                      onValueChange={(v) => setNewEvent({ ...newEvent, type: v })}
                     >
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Selecciona el tipo" />
@@ -848,7 +848,7 @@ export function FinancialDashboard() {
                     <Input
                       id="title"
                       value={newEvent.title}
-                      onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                      onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
                       placeholder="Ej: Reunión con proveedor"
                       className="col-span-3"
                     />
@@ -858,7 +858,7 @@ export function FinancialDashboard() {
                     <Input
                       id="description"
                       value={newEvent.description}
-                      onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                      onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                       placeholder="Descripción del evento"
                       className="col-span-3"
                     />
@@ -869,15 +869,15 @@ export function FinancialDashboard() {
                       id="time"
                       type="time"
                       value={newEvent.time}
-                      onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
+                      onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
                       className="col-span-3"
                     />
                   </div>
                   <div className="flex items-center space-x-2 ml-[100px]">
-                    <Checkbox 
-                      id="isFuture" 
+                    <Checkbox
+                      id="isFuture"
                       checked={newEvent.isFuture}
-                      onCheckedChange={(checked) => setNewEvent({...newEvent, isFuture: !!checked})}
+                      onCheckedChange={(checked) => setNewEvent({ ...newEvent, isFuture: !!checked })}
                     />
                     <Label htmlFor="isFuture" className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                       Recibir alerta en la bandeja de notificaciones
@@ -968,7 +968,7 @@ export function FinancialDashboard() {
                         <p className="text-lg font-semibold">${formatUSD(totals.totalUSD)}</p>
                       </div>
                     </div>
-                    
+
                     <div className="pt-4 border-t space-y-3">
                       <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg">
                         <span className="text-sm font-bold text-muted-foreground uppercase">Total Bolívares</span>
@@ -1004,7 +1004,7 @@ export function FinancialDashboard() {
                           <span className="text-sm font-bold truncate">{product.name}</span>
                           <span className="text-[10px] text-muted-foreground font-medium">SKU: {product.sku}</span>
                         </div>
-                        <Badge 
+                        <Badge
                           className="shrink-0 h-8 flex items-center justify-center min-w-[90px] font-bold"
                           variant={product.stock < 10 ? "destructive" : product.stock < 20 ? "secondary" : "default"}
                         >
@@ -1040,7 +1040,7 @@ export function FinancialDashboard() {
                                 <p className="font-bold text-base truncate">{product.name}</p>
                                 <p className="text-[10px] text-muted-foreground font-medium tracking-tight">SKU: {product.sku}</p>
                               </div>
-                              <Badge 
+                              <Badge
                                 className="shrink-0 text-[10px] font-bold"
                                 variant={product.stock < 10 ? "destructive" : "secondary"}
                               >
@@ -1051,7 +1051,7 @@ export function FinancialDashboard() {
                               <div className="space-y-0.5">
                                 <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Precio Venta</p>
                                 <div className="flex items-baseline gap-1">
-                                  <p className="font-black text-lg text-green-600">${formatUSD(product.price)}</p>
+                                  <p className="font-black text-lg text-green-600 dark:text-green-400">${formatUSD(product.price)}</p>
                                   <p className="text-[10px] text-muted-foreground font-medium">≈ Bs {formatBS(product.price * bcvRate.rate)}</p>
                                 </div>
                               </div>
@@ -1094,8 +1094,8 @@ export function FinancialDashboard() {
                             <div className="flex justify-between items-start gap-2">
                               <div className="min-w-0">
                                 <p className="text-sm font-bold truncate leading-tight">{item.product.name}</p>
-                                <p className="text-[11px] font-black text-green-600 mt-1">
-                                  ${formatUSD(item.product.price * item.quantity)} 
+                                <p className="text-[11px] font-black text-green-600 dark:text-green-400 mt-1">
+                                  ${formatUSD(item.product.price * item.quantity)}
                                   <span className="text-muted-foreground font-medium ml-1">
                                     (Bs {formatBS(item.product.price * item.quantity * bcvRate.rate)})
                                   </span>
@@ -1138,7 +1138,7 @@ export function FinancialDashboard() {
                         ))
                       )}
                     </div>
-                    
+
                     {cart.length > 0 && (
                       <div className="p-4 bg-muted/30 space-y-4 rounded-b-xl border-t">
                         <div className="space-y-1.5">
@@ -1151,7 +1151,7 @@ export function FinancialDashboard() {
                             <span className="text-xl font-black text-primary">Bs {formatBS(totals.totalBs)}</span>
                           </div>
                         </div>
-                        <Button 
+                        <Button
                           className="w-full h-12 md:h-11 font-black text-base shadow-lg shadow-primary/20 gap-2"
                           onClick={processSale}
                         >
@@ -1215,7 +1215,7 @@ export function FinancialDashboard() {
                           <td className="p-4 text-right">
                             <div className="flex flex-col items-end">
                               <span className="font-black text-primary text-base">${formatUSD(product.price)}</span>
-                              <span className="text-[9px] text-green-600 font-bold md:hidden mt-1 uppercase tracking-tighter">
+                              <span className="text-[9px] text-green-600 dark:text-green-400 font-bold md:hidden mt-1 uppercase tracking-tighter">
                                 {Number(product.profitMargin * 100).toFixed(0)}% ganancia
                               </span>
                             </div>
@@ -1253,13 +1253,13 @@ export function FinancialDashboard() {
                           <div className="min-w-0">
                             <p className="font-black text-sm uppercase tracking-tight truncate">{sale.saleNumber}</p>
                             <p className="text-[10px] text-muted-foreground font-medium mt-1">
-                              {new Date(sale.createdAt).toLocaleString('es-VE', { 
-                                day: '2-digit', 
-                                month: '2-digit', 
-                                year: '2-digit', 
-                                hour: '2-digit', 
+                              {new Date(sale.createdAt).toLocaleString('es-VE', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: '2-digit',
+                                hour: '2-digit',
                                 minute: '2-digit',
-                                hour12: true 
+                                hour12: true
                               })}
                             </p>
                           </div>
@@ -1267,7 +1267,7 @@ export function FinancialDashboard() {
                             <p className="font-black text-lg text-primary leading-tight">Bs {formatBS(sale.totalBs)}</p>
                             <div className="flex items-center justify-end gap-1 mt-1">
                               <TrendingUp className="h-3 w-3 text-green-600" />
-                              <p className="text-[10px] text-green-600 font-black uppercase">
+                              <p className="text-[10px] text-green-600 dark:text-green-400 font-black uppercase">
                                 +Bs {formatBS(sale.realProfit)}
                               </p>
                             </div>
@@ -1283,12 +1283,12 @@ export function FinancialDashboard() {
 
           <TabsContent value="reports" className="space-y-6 mt-6">
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-              <Card 
+              <Card
                 className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-blue-500 group"
                 onClick={() => handleGenerateReport("Ventas")}
               >
                 <CardContent className="p-6 text-center">
-                  <div className="bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <div className="bg-blue-50 dark:bg-blue-950/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <FileText className="h-6 w-6 text-blue-500" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">Ventas</h3>
@@ -1297,12 +1297,12 @@ export function FinancialDashboard() {
                   </p>
                 </CardContent>
               </Card>
-              <Card 
+              <Card
                 className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-green-500 group"
                 onClick={() => handleGenerateReport("Inventario")}
               >
                 <CardContent className="p-6 text-center">
-                  <div className="bg-green-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <div className="bg-green-50 dark:bg-green-950/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <Package className="h-6 w-6 text-green-500" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">Inventario</h3>
@@ -1311,12 +1311,12 @@ export function FinancialDashboard() {
                   </p>
                 </CardContent>
               </Card>
-              <Card 
+              <Card
                 className="cursor-pointer hover:shadow-md transition-all border-l-4 border-l-purple-500 group"
                 onClick={() => handleGenerateReport("Financiero")}
               >
                 <CardContent className="p-6 text-center">
-                  <div className="bg-purple-50 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <div className="bg-purple-50 dark:bg-purple-950/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <TrendingUp className="h-6 w-6 text-purple-500" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">Financiero</h3>
@@ -1335,24 +1335,24 @@ export function FinancialDashboard() {
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Fecha Inicio</label>
-                    <Input 
-                      type="date" 
-                      className="h-11 font-medium" 
+                    <Input
+                      type="date"
+                      className="h-11 font-medium"
                       value={reportDates.start}
                       onChange={(e) => setReportDates(prev => ({ ...prev, start: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Fecha Fin</label>
-                    <Input 
-                      type="date" 
-                      className="h-11 font-medium" 
+                    <Input
+                      type="date"
+                      className="h-11 font-medium"
                       value={reportDates.end}
                       onChange={(e) => setReportDates(prev => ({ ...prev, end: e.target.value }))}
                     />
                   </div>
                   <div className="flex items-end">
-                    <Button 
+                    <Button
                       className="w-full h-11 font-black text-sm shadow-lg shadow-primary/20 gap-2"
                       onClick={() => handleGenerateReport("Personalizado")}
                     >
@@ -1383,13 +1383,13 @@ export function FinancialDashboard() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               variant={confirmConfig.variant || "default"}
               onClick={() => {
                 confirmConfig.onConfirm();

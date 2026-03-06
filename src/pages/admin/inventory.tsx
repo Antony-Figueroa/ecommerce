@@ -1299,7 +1299,7 @@ export function AdminInventoryPage() {
         {/* Alertas de reposición */}
         {generateReplenishmentSuggestions.length > 0 && (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 gap-1">
+            <Badge variant="outline" className="bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/50 gap-1">
               <RefreshCw className="h-3 w-3" />
               {generateReplenishmentSuggestions.length} Sugerencias
             </Badge>
@@ -1828,7 +1828,7 @@ export function AdminInventoryPage() {
                     <motion.tr
                       key={item.id}
                       variants={itemVariants}
-                      className="hover:bg-muted/30 transition-colors group"
+                      className="border-b border-border hover:bg-muted/30 transition-colors group"
                     >
                       <td className="p-5">
                         <input
@@ -1843,17 +1843,17 @@ export function AdminInventoryPage() {
                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{item.sku}</p>
                       </td>
                       <td className="p-5">
-                        <Badge variant="outline" className="rounded-full border-slate-100 font-bold text-[9px] uppercase tracking-widest bg-slate-50/50 text-slate-500">
+                        <Badge variant="outline" className="rounded-full border-slate-200 dark:border-white/10 font-bold text-[9px] uppercase tracking-widest bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400">
                           {item.category}
                         </Badge>
                       </td>
                       <td className="p-5">
                         <div className="space-y-2 w-48">
                           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-                            <span className="text-slate-700">{item.currentStock} uds.</span>
-                            <span className="text-slate-400">Máx: {item.maxStock}</span>
+                            <span className="text-slate-700 dark:text-slate-300">{item.currentStock} uds.</span>
+                            <span className="text-slate-400 dark:text-slate-500">Máx: {item.maxStock}</span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow={item.currentStock} aria-valuemin={0} aria-valuemax={item.maxStock} aria-label={`Nivel de stock: ${item.currentStock} de ${item.maxStock}`}>
+                          <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden" role="progressbar" aria-valuenow={item.currentStock} aria-valuemin={0} aria-valuemax={item.maxStock} aria-label={`Nivel de stock: ${item.currentStock} de ${item.maxStock}`}>
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${Math.min(100, (item.currentStock / item.maxStock) * 100)}%` }}
@@ -1869,7 +1869,7 @@ export function AdminInventoryPage() {
                         </Badge>
                       </td>
                       <td className="p-5 text-right">
-                        <p className="font-bold text-slate-800 tracking-tight">${formatUSD(item.currentStock * item.unitCost)}</p>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 tracking-tight">${formatUSD(item.currentStock * item.unitCost)}</p>
                       </td>
                       <td className="p-5">
                         <div className="flex justify-center gap-2">
@@ -1879,7 +1879,7 @@ export function AdminInventoryPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-9 w-9 p-0 border-slate-200 hover:border-primary hover:text-primary rounded-xl transition-all shadow-sm"
+                                  className="h-9 w-9 p-0 border-slate-200 dark:border-white/10 hover:border-primary hover:text-primary rounded-xl transition-all shadow-sm"
                                   onClick={() => openAdjustDialog(item, "entry")}
                                   aria-label={`Aumentar stock de ${item.productName}`}
                                 >
@@ -1896,7 +1896,7 @@ export function AdminInventoryPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-9 w-9 p-0 border-slate-200 hover:border-rose-400 hover:text-rose-500 rounded-xl transition-all shadow-sm"
+                                  className="h-9 w-9 p-0 border-slate-200 dark:border-white/10 hover:border-rose-400 hover:text-rose-500 rounded-xl transition-all shadow-sm"
                                   onClick={() => openAdjustDialog(item, "exit")}
                                   aria-label={`Retirar stock de ${item.productName}`}
                                 >
@@ -1913,7 +1913,7 @@ export function AdminInventoryPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-9 w-9 p-0 border-slate-200 hover:border-primary hover:text-primary rounded-xl transition-all shadow-sm"
+                                  className="h-9 w-9 p-0 border-slate-200 dark:border-white/10 hover:border-primary hover:text-primary rounded-xl transition-all shadow-sm"
                                   onClick={() => openAdjustDialog(item, "adjustment")}
                                   aria-label={`Ajuste manual de ${item.productName}`}
                                 >
@@ -2268,7 +2268,7 @@ export function AdminInventoryPage() {
                               type="number"
                               value={item.quantity}
                               onChange={(e) => updateBatchItem(index, { quantity: parseInt(e.target.value) || 0 })}
-                              className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                              className="h-10 bg-white dark:bg-card border-slate-200 dark:border-white/10 rounded-xl font-bold"
                             />
                           </div>
 
@@ -2291,7 +2291,7 @@ export function AdminInventoryPage() {
 
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Costo (BCV)</label>
-                            <div className="h-10 px-3 flex items-center bg-slate-100/80 border border-slate-200 rounded-xl text-xs font-bold text-slate-600">
+                            <div className="h-10 px-3 flex items-center bg-slate-100/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400">
                               {formatBS(item.unitCostBCV || 0)}
                             </div>
                           </div>
@@ -2303,20 +2303,20 @@ export function AdminInventoryPage() {
                               step="0.01"
                               value={item.unitSaleUSD}
                               onChange={(e) => updateBatchItem(index, { unitSaleUSD: parseFloat(e.target.value) || 0 })}
-                              className="h-10 bg-white border-primary/20 focus:border-primary rounded-xl font-bold text-primary"
+                              className="h-10 bg-white dark:bg-card border-primary/20 focus:border-primary rounded-xl font-bold text-primary"
                             />
                           </div>
 
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia ($)</label>
-                            <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                            <div className="h-10 px-3 flex items-center bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400">
                               +{formatUSD(item.profitUSD || 0)}
                             </div>
                           </div>
 
                           <div className="space-y-1.5">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia (BCV)</label>
-                            <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                            <div className="h-10 px-3 flex items-center bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400">
                               +{formatBS(item.profitBCV || 0)}
                             </div>
                           </div>
@@ -2471,7 +2471,7 @@ export function AdminInventoryPage() {
                             type="number"
                             value={item.quantity}
                             onChange={(e) => updateEditBatchItem(index, { quantity: parseInt(e.target.value) || 0 })}
-                            className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                            className="h-10 bg-white dark:bg-card border-slate-200 dark:border-white/10 rounded-xl font-bold"
                           />
                         </div>
 
@@ -2488,13 +2488,13 @@ export function AdminInventoryPage() {
                                 unitSaleUSD: val * 1.3
                               })
                             }}
-                            className="h-10 bg-white border-slate-200 rounded-xl font-bold"
+                            className="h-10 bg-white dark:bg-card border-slate-200 dark:border-white/10 rounded-xl font-bold"
                           />
                         </div>
 
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Costo (BCV)</label>
-                          <div className="h-10 px-3 flex items-center bg-slate-100/80 border border-slate-200 rounded-xl text-xs font-bold text-slate-600">
+                          <div className="h-10 px-3 flex items-center bg-slate-100/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400">
                             {formatBS(item.unitCostBCV || 0)}
                           </div>
                         </div>
@@ -2506,13 +2506,13 @@ export function AdminInventoryPage() {
                             step="0.01"
                             value={item.unitSaleUSD}
                             onChange={(e) => updateEditBatchItem(index, { unitSaleUSD: parseFloat(e.target.value) || 0 })}
-                            className="h-10 bg-white border-primary/20 focus:border-primary rounded-xl font-bold text-primary"
+                            className="h-10 bg-white dark:bg-card border-primary/20 focus:border-primary rounded-xl font-bold text-primary"
                           />
                         </div>
 
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">Ganancia ($)</label>
-                          <div className="h-10 px-3 flex items-center bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600">
+                          <div className="h-10 px-3 flex items-center bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400">
                             +{formatUSD(item.profitUSD || 0)}
                           </div>
                         </div>

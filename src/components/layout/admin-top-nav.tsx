@@ -167,7 +167,7 @@ export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: Adm
           variant="ghost"
           size="icon"
           onClick={onToggleSidebar || onMenuClick}
-          className="text-neutral-500 hover:text-neutral-900 h-9 w-9 rounded-lg hover:bg-neutral-100 shrink-0"
+          className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white h-9 w-9 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 shrink-0"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -274,29 +274,29 @@ export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: Adm
         </Tooltip>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-900">
+        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white" />}
+          {unreadCount > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-neutral-900" />}
         </Button>
 
         {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full overflow-hidden border border-neutral-200">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700">
               {user?.avatarUrl ? (
                 <img src={user.avatarUrl} alt="User" className="h-full w-full object-cover" />
               ) : (
-                <div className="h-full w-full bg-neutral-200 flex items-center justify-center text-neutral-500 font-bold">
+                <div className="h-full w-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-500 dark:text-neutral-300 font-bold">
                   {user?.name?.charAt(0) || <User className="h-5 w-5" />}
                 </div>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-neutral-200 p-2">
-            <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg" onClick={() => navigate("/admin/settings")}>
+          <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-neutral-200 dark:border-neutral-700 bg-white dark:bg-card p-2">
+            <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg dark:hover:bg-neutral-800" onClick={() => navigate("/admin/settings")}>
               <Settings className="h-4 w-4" /> Configuración
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 text-red-600 cursor-pointer rounded-lg focus:bg-red-50 focus:text-red-700" onClick={handleLogout}>
+            <DropdownMenuItem className="gap-2 text-red-600 cursor-pointer rounded-lg focus:bg-red-50 dark:focus:bg-red-950/30 focus:text-red-700" onClick={handleLogout}>
               <LogOut className="h-4 w-4" /> Salir
             </DropdownMenuItem>
           </DropdownMenuContent>

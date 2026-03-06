@@ -21,6 +21,8 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogTitle,
+    DialogDescription,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 
@@ -110,6 +112,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="p-0 border-0 shadow-2xl max-w-2xl bg-white/95 dark:bg-neutral-950/95 backdrop-blur-xl">
+                <DialogTitle className="sr-only">Paleta de Comandos</DialogTitle>
+                <DialogDescription className="sr-only">Busca rutas, acciones y herramientas del sistema</DialogDescription>
                 <div className="flex flex-col h-full overflow-hidden rounded-xl">
                     {/* Header */}
                     <div className="relative flex items-center px-4 border-b border-neutral-100 dark:border-white/10">
