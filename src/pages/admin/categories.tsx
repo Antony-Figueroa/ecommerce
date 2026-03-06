@@ -37,15 +37,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
-import { BrandManagement } from "@/components/admin/brand-management"
-import { FormatManagement } from "@/components/admin/format-management"
 import { api } from "@/lib/api"
+import { fuzzySearch } from "@/lib/utils"
 import { EmojiPicker } from "@/components/shared/emoji-picker"
 import { useToast } from "@/hooks/use-toast"
 
@@ -78,8 +71,8 @@ interface CategoryErrors {
 export function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const [brandsLoading, setBrandsLoading] = useState(false)
-  const [formatsLoading, setFormatsLoading] = useState(false)
+  const [, setBrandsLoading] = useState(false)
+  const [, setFormatsLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -105,11 +98,11 @@ export function AdminCategoriesPage() {
     open: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   })
-  const [activeTab, setActiveTab] = useState("categories")
-  const [brands, setBrands] = useState<any[]>([])
-  const [formats, setFormats] = useState<any[]>([])
+  const [] = useState("categories")
+  const [, setBrands] = useState<any[]>([])
+  const [, setFormats] = useState<any[]>([])
   const { toast } = useToast()
 
   const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
@@ -118,16 +111,16 @@ export function AdminCategoriesPage() {
 
   const hasChanges = () => {
     if (!editingCategory) {
-      return formData.name !== "" || 
-             formData.description !== "" || 
-             formData.icon !== "" || 
-             formData.sortOrder !== 0
+      return formData.name !== "" ||
+        formData.description !== "" ||
+        formData.icon !== "" ||
+        formData.sortOrder !== 0
     }
 
     return formData.name !== editingCategory.name ||
-           formData.description !== (editingCategory.description || "") ||
-           formData.icon !== (editingCategory.icon || "") ||
-           formData.sortOrder !== editingCategory.sortOrder
+      formData.description !== (editingCategory.description || "") ||
+      formData.icon !== (editingCategory.icon || "") ||
+      formData.sortOrder !== editingCategory.sortOrder
   }
 
   const handleCloseModal = () => {
@@ -148,7 +141,7 @@ export function AdminCategoriesPage() {
     }
   }
 
-    useEffect(() => {
+  useEffect(() => {
     loadCategories()
     loadBrands()
     loadFormats()
@@ -229,7 +222,7 @@ export function AdminCategoriesPage() {
 
     confirmAction({
       title: editingCategory ? "¿Actualizar categoría?" : "¿Crear categoría?",
-      description: editingCategory 
+      description: editingCategory
         ? `¿Estás seguro de que deseas guardar los cambios en "${formData.name}"?`
         : `¿Deseas crear la nueva categoría "${formData.name}"?`,
       confirmText: editingCategory ? "Guardar cambios" : "Crear categoría",
@@ -315,7 +308,7 @@ export function AdminCategoriesPage() {
 
     confirmAction({
       title: currentStatus ? "¿Desactivar categoría?" : "¿Activar categoría?",
-      description: currentStatus 
+      description: currentStatus
         ? `¿Estás seguro de que deseas desactivar "${category.name}"? Los productos de esta categoría podrían no ser visibles.`
         : `¿Deseas activar la categoría "${category.name}"?`,
       confirmText: currentStatus ? "Desactivar" : "Activar",
@@ -341,9 +334,9 @@ export function AdminCategoriesPage() {
   }
 
   const filteredCategories = categories.filter((category) => {
-    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = 
-      statusFilter === "all" || 
+    const matchesSearch = fuzzySearch(searchTerm, category.name)
+    const matchesStatus =
+      statusFilter === "all" ||
       (statusFilter === "active" && category.isActive) ||
       (statusFilter === "inactive" && !category.isActive)
     return matchesSearch && matchesStatus
@@ -360,7 +353,7 @@ export function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader 
+      <AdminPageHeader
         title="Categorías"
         subtitle={`${categories.length} categorías configuradas en tu tienda`}
         icon={LayoutGrid}
@@ -468,8 +461,8 @@ export function AdminCategoriesPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            <Button 
-                              variant="outline" 
+                            <Button
+                              variant="outline"
                               size="sm"
                               disabled
                             >
@@ -483,8 +476,8 @@ export function AdminCategoriesPage() {
                       </Tooltip>
                     </TooltipProvider>
                   ) : (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => toggleCategoryStatus(category.id, category.isActive)}
                     >
@@ -519,8 +512,8 @@ export function AdminCategoriesPage() {
             <div className="grid grid-cols-4 gap-4 items-center">
               <div className="col-span-1">
                 <label className="text-sm font-medium mb-1 block">Icono</label>
-                <EmojiPicker 
-                  onSelect={(icon) => setFormData({ ...formData, icon })} 
+                <EmojiPicker
+                  onSelect={(icon) => setFormData({ ...formData, icon })}
                 >
                   <Button variant="outline" className="w-full text-2xl p-0 h-12">
                     {formData.icon || "📦"}
@@ -607,13 +600,13 @@ export function AdminCategoriesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               variant={confirmConfig.variant || "default"}
               onClick={() => {
                 confirmConfig.onConfirm();
