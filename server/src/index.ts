@@ -30,6 +30,7 @@ import adminBatchRoutes from './infrastructure/web/routes/admin/batch.routes.js'
 import adminBusinessEventRoutes from './infrastructure/web/routes/admin/business-event.routes.js'
 import adminInventoryRoutes from './infrastructure/web/routes/admin/inventory.routes.js'
 import adminCatalogRoutes from './infrastructure/web/routes/admin/catalog.routes.js'
+import adminSyncRoutes from './infrastructure/web/routes/admin/sync.routes.js'
 import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
@@ -155,6 +156,7 @@ app.use('/api/admin/batches', adminBatchRoutes)
 app.use('/api/admin/business-events', adminBusinessEventRoutes)
 app.use('/api/admin/inventory', adminInventoryRoutes)
 app.use('/api/admin/catalog', adminCatalogRoutes)
+app.use('/api/sync', adminSyncRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
 

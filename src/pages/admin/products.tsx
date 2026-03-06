@@ -206,6 +206,11 @@ export function AdminProductsPage() {
     )
   }
 
+  const handleOpenAdd = () => {
+    resetForm()
+    setShowAddDialog(true)
+  }
+
   const handleCloseModal = () => {
     if (hasChanges()) {
       confirmAction({
@@ -771,6 +776,11 @@ export function AdminProductsPage() {
         title="Productos"
         subtitle="Gestiona tu catálogo de productos y existencias"
         icon={Package}
+        action={{
+          label: "Nuevo Producto",
+          onClick: () => handleOpenAdd(),
+          icon: Plus
+        }}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
