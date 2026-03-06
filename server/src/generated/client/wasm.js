@@ -346,6 +346,7 @@ exports.Prisma.SaleScalarFieldEnum = {
   profitBS: 'profitBS',
   isPaid: 'isPaid',
   paidAmountUSD: 'paidAmountUSD',
+  confirmationToken: 'confirmationToken',
   deliveryStatus: 'deliveryStatus',
   notes: 'notes',
   createdAt: 'createdAt',

@@ -17,21 +17,19 @@ interface AdminPageHeaderProps {
 
 export function AdminPageHeader({ title, subtitle, icon: Icon, action, rightContent }: AdminPageHeaderProps) {
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="mb-12 relative"
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-8 relative"
     >
-      <div className="absolute -left-4 lg:-left-8 top-0 w-1.5 h-16 bg-primary rounded-r-full shadow-lg shadow-primary/20" />
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-slate-800 dark:text-foreground flex items-center gap-4">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            {Icon && <Icon className="h-6 w-6 text-primary" />}
             {title}
-            <Icon className="h-8 w-8 text-primary" />
           </h1>
           {subtitle && (
-            <p className="text-slate-500 dark:text-muted-foreground font-medium mt-1 text-sm flex items-center gap-2">
-              <span className="h-px w-8 bg-slate-200 dark:bg-border" />
+            <p className="text-slate-500 font-medium mt-1 text-sm dark:text-slate-400">
               {subtitle}
             </p>
           )}
@@ -39,11 +37,11 @@ export function AdminPageHeader({ title, subtitle, icon: Icon, action, rightCont
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {rightContent}
           {action && (
-            <Button 
+            <Button
               onClick={action.onClick}
-              className="h-11 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-[0.98] rounded-xl px-6"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm rounded-lg px-4 h-10 font-medium text-sm transition-colors"
             >
-              {action.icon && <action.icon className="mr-3 h-4 w-4" />}
+              {action.icon && <action.icon className="mr-2 h-4 w-4" />}
               {action.label}
             </Button>
           )}

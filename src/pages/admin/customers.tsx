@@ -2,26 +2,20 @@ import { useState, useEffect, useMemo } from "react"
 import {
   Search,
   Users,
-  Mail,
-  Phone,
-  ShoppingCart,
   X,
   Check,
   UserPlus,
   Shield,
   Loader2,
   MoreVertical,
-  UserCog,
   ShieldAlert,
   ShieldCheck,
-  AlertCircle,
-  Clock,
   AlertTriangle,
   CheckCircle2,
   Download,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -41,12 +35,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { useAuth } from "@/contexts/auth-context"
 import { api } from "@/lib/api"
 import {
@@ -86,6 +74,8 @@ export function AdminCustomersPage() {
   const [isAddingAdmin, setIsAddingAdmin] = useState(false)
   const [newAdminLoading, setNewAdminLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
   const { toast } = useToast()
   const { refreshUser, user: currentUser } = useAuth()
 
@@ -108,7 +98,7 @@ export function AdminCustomersPage() {
     open: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   })
 
   const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
@@ -116,11 +106,11 @@ export function AdminCustomersPage() {
   }
 
   const hasChanges = () => {
-    return formData.name !== "" || 
-           formData.email !== "" || 
-           formData.password !== "" || 
-           formData.username !== "" || 
-           formData.phone !== ""
+    return formData.name !== "" ||
+      formData.email !== "" ||
+      formData.password !== "" ||
+      formData.username !== "" ||
+      formData.phone !== ""
   }
 
   const handleCloseModal = () => {
@@ -182,7 +172,7 @@ export function AdminCustomersPage() {
       customer.isActive ? "Sí" : "No",
       new Date(customer.createdAt).toLocaleDateString("es-VE")
     ])
-    
+
     const csvContent = [headers, ...rows.map((row: any) => row.join(","))].join("\n")
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
@@ -191,13 +181,13 @@ export function AdminCustomersPage() {
     link.download = `clientes_${new Date().toISOString().split("T")[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
-    
+
     toast({ title: "Exportación Exitosa", description: "Los clientes se han exportado correctamente." })
   }
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     confirmAction({
       title: "¿Crear nuevo administrador?",
       description: `¿Estás seguro de que deseas otorgar permisos de administrador a ${formData.name || formData.email}?`,
@@ -238,7 +228,7 @@ export function AdminCustomersPage() {
 
     confirmAction({
       title: currentStatus ? "¿Desactivar cuenta?" : "¿Activar cuenta?",
-      description: currentStatus 
+      description: currentStatus
         ? `¿Estás seguro de que deseas desactivar la cuenta de ${customer.name || customer.email}? El usuario no podrá iniciar sesión.`
         : `¿Deseas activar la cuenta de ${customer.name || customer.email}?`,
       confirmText: currentStatus ? "Desactivar" : "Activar",
@@ -247,7 +237,7 @@ export function AdminCustomersPage() {
         try {
           setUpdatingId(customerId)
           await api.updateCustomer(customerId, { isActive: !currentStatus })
-          setCustomers(prev => 
+          setCustomers(prev =>
             prev.map(c => c.id === customerId ? { ...c, isActive: !currentStatus } : c)
           )
           toast({
@@ -281,7 +271,7 @@ export function AdminCustomersPage() {
           setUpdatingId(customerId)
           // Assuming api.updateCustomer supports role update or there's a specific endpoint
           await api.updateCustomer(customerId, { role: newRole } as any)
-          setCustomers(prev => 
+          setCustomers(prev =>
             prev.map(c => c.id === customerId ? { ...c, role: newRole } : c)
           )
           toast({
@@ -309,11 +299,12 @@ export function AdminCustomersPage() {
   const filteredData = useMemo(() => {
     const searched = customers.filter((customer) => {
       return (
-        customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone?.includes(searchTerm) ||
         customer.username?.toLowerCase().includes(searchTerm.toLowerCase())
       )
+    }).filter(customer => {
+      const roleMatch = roleFilter === "all" || customer.role === roleFilter
+      const statusMatch = statusFilter === "all" || (statusFilter === "active" ? customer.isActive : !customer.isActive)
+      return roleMatch && statusMatch
     }).sort((a, b) => {
       let comparison = 0
       if (sortBy === "name") comparison = (a.name || "").localeCompare(b.name || "")
@@ -336,341 +327,245 @@ export function AdminCustomersPage() {
     }
   }, [customers, searchTerm, sortBy, sortOrder])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    })
-  }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        <p className="text-muted-foreground font-medium animate-pulse">Cargando usuarios...</p>
+      <div className="animate-pulse space-y-4 p-8">
+        <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded-xl w-1/4"></div>
+        <div className="h-96 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-border"></div>
       </div>
     )
   }
 
-  const UserTable = ({ users, title, description, showEmptyState = true }: { users: Customer[], title?: string, description?: string, showEmptyState?: boolean }) => (
-    <Card className="border-none shadow-none bg-transparent">
-      {(title || description) && (
-        <CardHeader className="px-0 pt-0 pb-4">
-          {title && <CardTitle className="text-lg font-bold flex items-center gap-2">
-            {title === "Usuarios Inactivos" ? <AlertCircle className="h-5 w-5 text-destructive" /> : <Users className="h-5 w-5 text-primary" />}
-            {title}
-            <Badge variant="secondary" className="ml-2">{users.length}</Badge>
-          </CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
-        </CardHeader>
-      )}
-      <div className="rounded-xl border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b bg-muted/30">
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Usuario</th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Contacto</th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Rol</th>
-                <th className="px-4 py-3 text-left font-semibold text-muted-foreground">Estado</th>
-                <th className="px-4 py-3 text-center font-semibold text-muted-foreground">Pedidos</th>
-                <th className="px-4 py-3 text-right font-semibold text-muted-foreground">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {users.map((customer) => (
-                <tr key={customer.id} className={cn(
-                  "hover:bg-muted/30 transition-colors group",
-                  !customer.isActive && "opacity-75 grayscale-[0.5]"
+  const UserTable = ({ users, showEmptyState = true }: { users: Customer[], showEmptyState?: boolean }) => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left bg-white dark:bg-card">
+        <thead className="bg-[#FBFCFD] dark:bg-slate-800 border-y border-slate-100 dark:border-border/60">
+          <tr>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Usuario</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Contacto</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Rol</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-center">Ventas</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Estado</th>
+            <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-border/40">
+          {users.map((customer) => (
+            <tr key={customer.id} className="hover:bg-muted/30 transition-colors">
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "h-9 w-9 rounded-full flex items-center justify-center font-bold text-xs shadow-sm",
+                    customer.role === 'ADMIN' ? "bg-amber-50 text-amber-600" : "bg-primary/10 text-primary"
+                  )}>
+                    {customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      {customer.name || 'Sin nombre'}
+                      {customer.role === 'ADMIN' && <Shield className="h-3 w-3 text-amber-500" />}
+                    </div>
+                    <div className="text-xs text-slate-400">@{customer.username || 'usuario'}</div>
+                  </div>
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex flex-col">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">{customer.email}</span>
+                  <span className="text-[10px] text-slate-400">{customer.phone || 'No phone'}</span>
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <Badge variant="outline" className={cn(
+                  "text-[10px] uppercase font-black px-2 py-0 border",
+                  customer.role === 'ADMIN' ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-primary/10 text-primary border-primary/20"
                 )}>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "h-10 w-10 rounded-full flex items-center justify-center font-bold shadow-sm transition-transform group-hover:scale-105",
-                        customer.role === 'ADMIN' ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" : "bg-primary/10 text-primary"
-                      )}>
-                        {customer.name?.charAt(0) || customer.email.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-foreground leading-none mb-1">
-                          {customer.name || 'Sin nombre'}
-                          {customer.role === 'ADMIN' && <Shield className="h-3 w-3 inline ml-1 text-amber-500" />}
-                        </span>
-                        <span className="text-xs text-muted-foreground">@{customer.username || 'usuario'}</span>
-                        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1 mt-1">
-                          <Clock className="h-2.5 w-2.5" /> {formatDate(customer.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
-                        <Mail className="h-3.5 w-3.5" />
-                        <span className="text-xs truncate max-w-[150px]">{customer.email}</span>
-                      </div>
-                      {customer.phone && (
-                        <div className="flex items-center gap-2 text-muted-foreground group-hover:text-foreground transition-colors">
-                          <Phone className="h-3.5 w-3.5" />
-                          <span className="text-xs">{customer.phone}</span>
-                        </div>
+                  {customer.role}
+                </Badge>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-bold text-slate-900 dark:text-white">
+                {customer._count?.sales || 0}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                  customer.isActive ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
+                )}>
+                  <span className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    customer.isActive ? "bg-emerald-600" : "bg-rose-600"
+                  )} />
+                  {customer.isActive ? 'Activo' : 'Inactivo'}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 rounded-full" disabled={updatingId === customer.id}>
+                      {updatingId === customer.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl border-slate-100">
+                    <DropdownMenuLabel className="text-[10px] uppercase font-black text-slate-400 font-bold tracking-widest">Acciones</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => toggleCustomerStatus(customer.id, customer.isActive)} className={customer.isActive ? "text-rose-600" : "text-emerald-600"}>
+                      {customer.isActive ? (
+                        <><X className="h-4 w-4 mr-2" /> Desactivar Cuenta</>
+                      ) : (
+                        <><Check className="h-4 w-4 mr-2" /> Activar Cuenta</>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-4">
-                    <Badge 
-                      variant={customer.role === 'ADMIN' ? 'default' : 'secondary'}
-                      className={cn(
-                        "font-medium",
-                        customer.role === 'ADMIN' && "bg-amber-500 hover:bg-amber-600 text-white border-none shadow-sm"
-                      )}
-                    >
-                      {customer.role === 'ADMIN' ? 'Administrador' : 'Cliente'}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-4">
-                    <Badge 
-                      variant="outline" 
-                      className={cn(
-                        "font-semibold",
-                        customer.isActive 
-                          ? "border-green-500/50 text-green-600 bg-green-50/50 dark:bg-green-500/10 dark:text-green-400" 
-                          : "border-destructive/50 text-destructive bg-destructive/50 dark:bg-destructive/10 dark:text-destructive-foreground"
-                      )}
-                    >
-                      <span className={cn("h-1.5 w-1.5 rounded-full mr-1.5", customer.isActive ? "bg-green-500" : "bg-destructive")} />
-                      {customer.isActive ? 'Activo' : 'Inactivo'}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-4">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="flex items-center gap-1.5 font-bold text-foreground">
-                        <ShoppingCart className="h-3.5 w-3.5 text-muted-foreground" />
-                        {customer._count?.sales || 0}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" disabled={updatingId === customer.id}>
-                            {updatingId === customer.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Gestión</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          {customer.isActive && customer._count?.sales > 0 ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="w-full">
-                                    <DropdownMenuItem disabled className="opacity-50 cursor-not-allowed">
-                                      <X className="h-4 w-4 mr-2 text-destructive" /> 
-                                      <span className="text-destructive">Desactivar Cuenta</span>
-                                    </DropdownMenuItem>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="left" className="bg-destructive text-destructive-foreground border-none">
-                                  <p className="text-xs font-bold flex items-center gap-1">
-                                    <AlertTriangle className="h-3 w-3" />
-                                    No se puede desactivar: tiene pedidos asociados
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <DropdownMenuItem onClick={() => toggleCustomerStatus(customer.id, customer.isActive)}>
-                              {customer.isActive ? (
-                                <>
-                                  <X className="h-4 w-4 mr-2 text-destructive" /> 
-                                  <span className="text-destructive">Desactivar Cuenta</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                                  <span className="text-green-500">Activar Cuenta</span>
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                          )}
-                          
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel>Cambiar Rol</DropdownMenuLabel>
-                          {customer.role === 'ADMIN' ? (
-                            <DropdownMenuItem onClick={() => changeUserRole(customer.id, 'CUSTOMER')}>
-                              <Users className="h-4 w-4 mr-2" /> Cambiar a Cliente
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => changeUserRole(customer.id, 'ADMIN')}>
-                              <ShieldCheck className="h-4 w-4 mr-2 text-amber-500" /> Cambiar a Admin
-                            </DropdownMenuItem>
-                          )}
-                          
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-muted-foreground">
-                            <UserCog className="h-4 w-4 mr-2" /> Editar Perfil
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && showEmptyState && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="h-10 w-10 text-muted-foreground/30" />
-                      <p className="text-muted-foreground font-medium">No se encontraron usuarios en esta lista.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-[10px] uppercase font-black text-slate-400 font-bold tracking-widest">Seguridad</DropdownMenuLabel>
+                    {customer.role === 'ADMIN' ? (
+                      <DropdownMenuItem onClick={() => changeUserRole(customer.id, 'CUSTOMER')}>
+                        <Users className="h-4 w-4 mr-2" /> Hacer Cliente
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => changeUserRole(customer.id, 'ADMIN')}>
+                        <ShieldCheck className="h-4 w-4 mr-2 text-amber-500" /> Hacer Admin
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {users.length === 0 && showEmptyState && (
+        <div className="p-12 text-center text-slate-400">
+          <Users className="h-10 w-10 mx-auto mb-3 opacity-20" />
+          <p className="text-sm font-medium">No se encontraron usuarios</p>
         </div>
-      </div>
-    </Card>
+      )}
+    </div>
   )
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="flex items-center justify-between">
-        <AdminPageHeader 
-          title="Gestión de Usuarios"
-          subtitle="Administra los usuarios, niveles de acceso y estados de la plataforma"
-          icon={Users}
-        />
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportCustomersToCSV} className="gap-2">
+    <div className="space-y-6 pb-20 md:pb-0">
+      <AdminPageHeader
+        title="Clientes y Usuarios"
+        subtitle="Gestiona tu base de usuarios y permisos de acceso."
+        icon={Users}
+        action={{
+          label: "Añadir Admin",
+          onClick: () => setIsAddingAdmin(true),
+          icon: UserPlus
+        }}
+        rightContent={
+          <Button
+            variant="outline"
+            onClick={exportCustomersToCSV}
+            className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 font-semibold gap-2"
+          >
             <Download className="h-4 w-4" />
             Exportar
           </Button>
-          <Button onClick={() => setIsAddingAdmin(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            Nuevo Administrador
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Stats Summary - Pro Style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Total Clientes", value: filteredData.clients.length, icon: Users, color: "blue" },
+          { label: "Clientes Totales", value: filteredData.clients.length, icon: Users, color: "blue" },
           { label: "Administradores", value: filteredData.admins.length, icon: Shield, color: "amber" },
-          { label: "Usuarios Activos", value: filteredData.active.length, icon: Check, color: "green" },
-          { label: "En Espera / Inactivos", value: filteredData.inactive.length, icon: ShieldAlert, color: "red" },
+          { label: "Usuarios Activos", value: filteredData.active.length, icon: Check, color: "emerald" },
+          { label: "Inactivos", value: filteredData.inactive.length, icon: ShieldAlert, color: "rose" },
         ].map((stat, i) => (
-          <Card key={i} className="overflow-hidden border-none shadow-sm bg-card/50 backdrop-blur-sm">
-            <CardContent className="p-6 relative">
-              <div className={cn(
-                "absolute -right-2 -bottom-2 h-20 w-20 opacity-5",
-                stat.color === "blue" && "text-blue-500",
-                stat.color === "amber" && "text-amber-500",
-                stat.color === "green" && "text-green-500",
-                stat.color === "red" && "text-red-500"
-              )}>
-                <stat.icon className="h-full w-full" />
+          <Card key={i} className="rounded-2xl border border-slate-100 shadow-sm bg-white dark:bg-card dark:border-border overflow-hidden">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">{stat.value}</h3>
               </div>
-              <div className="flex items-center gap-4">
-                <div className={cn(
-                  "h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner",
-                  stat.color === "blue" && "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-                  stat.color === "amber" && "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-                  stat.color === "green" && "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-                  stat.color === "red" && "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                )}>
-                  <stat.icon className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{stat.label}</p>
-                  <h3 className="text-3xl font-black tracking-tight">{stat.value}</h3>
-                </div>
+              <div className={cn(
+                "h-10 w-10 rounded-xl flex items-center justify-center",
+                stat.color === "blue" ? "bg-primary/10 text-primary" :
+                  stat.color === "amber" ? "bg-amber-50 text-amber-600" :
+                    stat.color === "emerald" ? "bg-emerald-50 text-emerald-600" :
+                      "bg-rose-50 text-rose-600"
+              )}>
+                <stat.icon className="h-5 w-5" />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="flex flex-col gap-6">
-        {/* Advanced Filters */}
-        <div className="flex flex-col md:flex-row gap-4 items-end justify-between">
-          <div className="relative flex-1 w-full max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white dark:bg-card dark:border-border overflow-hidden">
+        {/* Top actions */}
+        <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 dark:border-border/60">
+          <div className="relative w-full sm:w-auto">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
-              placeholder="Busca por nombre, email, @usuario o teléfono..."
-              className="pl-10 h-11 bg-card/50 border-muted-foreground/20 rounded-xl focus:ring-primary transition-all shadow-sm"
+              placeholder="Buscar usuarios..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 h-10 w-full sm:w-64 bg-slate-50 border border-slate-200 focus-visible:ring-primary/20 rounded-xl text-sm transition-all dark:bg-background dark:border-border"
             />
           </div>
-          <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
-            <SelectTrigger className="w-[160px] h-11 bg-card/50 border-muted-foreground/20 rounded-xl font-bold text-xs">
-              <SelectValue placeholder="Ordenar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="createdAt" className="font-bold text-xs">
-                Fecha {sortBy === "createdAt" && (sortOrder === "desc" ? "↓" : "↑")}
-              </SelectItem>
-              <SelectItem value="name" className="font-bold text-xs">
-                Nombre {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
-              </SelectItem>
-              <SelectItem value="email" className="font-bold text-xs">
-                Email {sortBy === "email" && (sortOrder === "asc" ? "↑" : "↓")}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <Select value={roleFilter} onValueChange={setRoleFilter}>
+              <SelectTrigger className="h-10 w-32 bg-slate-50 border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider">
+                <SelectValue placeholder="Rol" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los Roles</SelectItem>
+                <SelectItem value="ADMIN">Administradores</SelectItem>
+                <SelectItem value="CUSTOMER">Clientes</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="h-10 w-32 bg-slate-50 border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="active">Activos</SelectItem>
+                <SelectItem value="inactive">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
+              <SelectTrigger className="h-10 w-40 bg-slate-50 border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider">
+                <SelectValue placeholder="Ordenar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt">Fecha Registro</SelectItem>
+                <SelectItem value="name">Nombre</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
-          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-4 min-w-max h-auto">
-            <TabsTrigger value="all">Todos</TabsTrigger>
-            <TabsTrigger value="clients">Clientes</TabsTrigger>
-            <TabsTrigger value="admins">Admins</TabsTrigger>
-            <TabsTrigger value="active">Activos</TabsTrigger>
-          </TabsList>
+          <div className="px-5 border-b border-slate-100 dark:border-border/60">
+            <TabsList className="h-12 bg-transparent gap-6 p-0">
+              <TabsTrigger value="all" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 font-bold text-xs uppercase tracking-widest text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">Todos</TabsTrigger>
+              <TabsTrigger value="clients" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 font-bold text-xs uppercase tracking-widest text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">Clientes</TabsTrigger>
+              <TabsTrigger value="admins" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 font-bold text-xs uppercase tracking-widest text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">Admins</TabsTrigger>
+              <TabsTrigger value="active" className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 font-bold text-xs uppercase tracking-widest text-slate-400 data-[state=active]:text-slate-900 dark:data-[state=active]:text-white">Activos</TabsTrigger>
+            </TabsList>
           </div>
 
-          <TabsContent value="all" className="mt-0 animate-in fade-in-50 duration-300">
-            <div className="space-y-10">
-              <UserTable 
-                users={filteredData.active} 
-                title="Usuarios Activos" 
-                description="Lista principal de usuarios con acceso vigente a la plataforma."
-              />
-              
-              {filteredData.inactive.length > 0 && (
-                <UserTable 
-                  users={filteredData.inactive} 
-                  title="Usuarios Inactivos" 
-                  description="Cuentas desactivadas o suspendidas temporalmente."
-                />
-              )}
-            </div>
+          <TabsContent value="all" className="m-0">
+            <UserTable users={filteredData.all} />
           </TabsContent>
-
-          <TabsContent value="clients" className="mt-0 animate-in fade-in-50 duration-300">
-             <UserTable users={filteredData.clients.filter(u => u.isActive)} title="Clientes Activos" />
-             {filteredData.clients.filter(u => !u.isActive).length > 0 && (
-                <div className="mt-10">
-                  <UserTable users={filteredData.clients.filter(u => !u.isActive)} title="Clientes Inactivos" />
-                </div>
-             )}
+          <TabsContent value="clients" className="m-0">
+            <UserTable users={filteredData.clients} />
           </TabsContent>
-
-          <TabsContent value="admins" className="mt-0 animate-in fade-in-50 duration-300">
-            <UserTable users={filteredData.admins} title="Equipo de Administración" />
+          <TabsContent value="admins" className="m-0">
+            <UserTable users={filteredData.admins} />
           </TabsContent>
-
-          <TabsContent value="active" className="mt-0 animate-in fade-in-50 duration-300">
-            <UserTable users={filteredData.active} title="Todos los Usuarios Activos" />
+          <TabsContent value="active" className="m-0">
+            <UserTable users={filteredData.active} />
           </TabsContent>
         </Tabs>
-      </div>
+      </Card>
 
       {/* Create Admin Dialog */}
       <Dialog open={isAddingAdmin} onOpenChange={(open) => {
@@ -691,119 +586,119 @@ export function AdminCustomersPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Nombre</Label>
-                <Input 
-                  id="name" 
+                <Input
+                  id="name"
                   className="rounded-xl bg-muted/30"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Ana Pérez" 
-                  required 
+                  placeholder="Ana Pérez"
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Usuario</Label>
-                <Input 
-                  id="username" 
+                <Input
+                  id="username"
                   className="rounded-xl bg-muted/30"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  placeholder="ana_admin" 
-                  required 
+                  placeholder="ana_admin"
+                  required
                 />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Email</Label>
-              <Input 
-                id="email" 
+              <Input
+                id="email"
                 type="email"
                 className="rounded-xl bg-muted/30"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="admin@vitality.com" 
-                required 
+                placeholder="admin@vitality.com"
+                required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Teléfono (Opcional)</Label>
-              <Input 
-                id="phone" 
+              <Input
+                id="phone"
                 className="rounded-xl bg-muted/30"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="0412..." 
+                placeholder="0412..."
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Contraseña Temporal</Label>
-              <Input 
-                id="password" 
+              <Input
+                id="password"
                 type="password"
                 className="rounded-xl bg-muted/30"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="••••••••" 
-                required 
+                placeholder="••••••••"
+                required
               />
             </div>
-          <DialogFooter className="gap-2 sm:gap-0 pt-4">
-            <Button variant="outline" onClick={handleCloseModal} className="rounded-xl font-bold">
+            <DialogFooter className="gap-2 sm:gap-0 pt-4">
+              <Button type="button" variant="outline" onClick={handleCloseModal} className="rounded-xl font-bold">
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={newAdminLoading}
+                className="rounded-xl font-bold bg-primary hover:bg-primary/90"
+              >
+                {newAdminLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creando...
+                  </>
+                ) : (
+                  "Crear Administrador"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {confirmConfig.variant === "destructive" ? (
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5 text-primary" />
+              )}
+              {confirmConfig.title}
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              {confirmConfig.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
+            >
               Cancelar
             </Button>
-            <Button 
-              onClick={handleCreateAdmin} 
-              disabled={newAdminLoading}
-              className="rounded-xl font-bold bg-primary hover:bg-primary/90"
+            <Button
+              variant={confirmConfig.variant || "default"}
+              onClick={() => {
+                confirmConfig.onConfirm();
+                setConfirmConfig({ ...confirmConfig, open: false });
+              }}
             >
-              {newAdminLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creando...
-                </>
-              ) : (
-                "Crear Administrador"
-              )}
+              {confirmConfig.confirmText || "Confirmar"}
             </Button>
           </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-
-    {/* Confirmation Dialog */}
-    <Dialog open={confirmConfig.open} onOpenChange={(val) => setConfirmConfig({ ...confirmConfig, open: val })}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {confirmConfig.variant === "destructive" ? (
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-            ) : (
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-            )}
-            {confirmConfig.title}
-          </DialogTitle>
-          <DialogDescription className="pt-2 text-base">
-            {confirmConfig.description}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="mt-4 gap-2 sm:gap-0">
-          <Button 
-            variant="outline" 
-            onClick={() => setConfirmConfig({ ...confirmConfig, open: false })}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            variant={confirmConfig.variant || "default"}
-            onClick={() => {
-              confirmConfig.onConfirm();
-              setConfirmConfig({ ...confirmConfig, open: false });
-            }}
-          >
-            {confirmConfig.confirmText || "Confirmar"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  </div>
-)
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
 }
