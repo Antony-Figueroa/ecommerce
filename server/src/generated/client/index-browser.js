@@ -484,6 +484,15 @@ exports.Prisma.BrandScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.FormatScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SettingScalarFieldEnum = {
   id: 'id',
   key: 'key',
@@ -573,6 +582,7 @@ exports.Prisma.ModelName = {
   InventoryStock: 'InventoryStock',
   InventoryTransfer: 'InventoryTransfer',
   Brand: 'Brand',
+  Format: 'Format',
   Setting: 'Setting',
   SettingHistory: 'SettingHistory',
   Notification: 'Notification',

@@ -1,5 +1,5 @@
 import { PrismaProductRepository } from '../infrastructure/persistence/prisma.product.repository.js'
-import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository, PrismaInventoryLocationRepository, PrismaInventoryStockRepository, PrismaInventoryTransferRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
+import { PrismaCategoryRepository, PrismaBrandRepository, PrismaFormatRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository, PrismaInventoryLocationRepository, PrismaInventoryStockRepository, PrismaInventoryTransferRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
 import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository, PrismaPaymentRepository, PrismaInstallmentRepository, PrismaPaymentProofRepository, PrismaBusinessEventRepository } from '../infrastructure/persistence/prisma.business.repository.js'
 import { PrismaBCVRepository, PrismaSettingsRepository } from '../infrastructure/persistence/prisma.settings.repository.js'
 import { PrismaUserRepository } from '../infrastructure/persistence/prisma.user.repository.js'
@@ -40,6 +40,7 @@ import { PrismaClient } from '../generated/client/index.js'
 export const productRepo = new PrismaProductRepository()
 export const categoryRepo = new PrismaCategoryRepository()
 export const brandRepo = new PrismaBrandRepository()
+export const formatRepo = new PrismaFormatRepository()
 export const logRepo = new PrismaInventoryLogRepository()
 export const providerRepo = new PrismaProviderRepository()
 export const inventoryBatchRepo = new PrismaInventoryBatchRepository()
@@ -120,6 +121,7 @@ export const inventoryService = new InventoryService(
   productRepo,
   categoryRepo,
   brandRepo,
+  formatRepo,
   logRepo,
   providerRepo,
   inventoryBatchRepo,

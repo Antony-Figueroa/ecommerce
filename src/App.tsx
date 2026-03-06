@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom"
 import { useEffect, lazy, useRef } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
+import { SettingsProvider } from "@/contexts/settings-context"
 import { CartProvider } from "@/contexts/cart-context"
 import { FavoritesProvider } from "@/contexts/favorites-context"
 import { ProtectedRoute } from "@/components/shared/protected-route"
@@ -60,6 +61,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <SettingsProvider>
       <FavoritesProvider>
         <CartProvider>
           <div className="flex min-h-screen flex-col">
@@ -112,6 +114,7 @@ function App() {
           </div>
         </CartProvider>
       </FavoritesProvider>
+          </SettingsProvider>
     </AuthProvider>
   )
 }

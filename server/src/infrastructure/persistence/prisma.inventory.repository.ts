@@ -1,5 +1,5 @@
 import { prisma } from './prisma.client.js'
-import { Category, Brand, InventoryLog, CategoryRepository, BrandRepository, InventoryLogRepository, Provider, ProviderRepository, InventoryBatchRepository, InventoryLocationRepository, InventoryStockRepository, InventoryTransferRepository, InventoryLocation, InventoryStock, InventoryTransfer } from '../../domain/repositories/inventory.repository.js'
+import { Category, Brand, Format, InventoryLog, CategoryRepository, BrandRepository, FormatRepository, InventoryLogRepository, Provider, ProviderRepository, InventoryBatchRepository, InventoryLocationRepository, InventoryStockRepository, InventoryTransferRepository, InventoryLocation, InventoryStock, InventoryTransfer } from '../../domain/repositories/inventory.repository.js'
 
 export class PrismaCategoryRepository implements CategoryRepository {
   async findAll(options?: any): Promise<Category[]> {
@@ -18,7 +18,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
   }
 
   async findById(id: string): Promise<Category | null> {
-    const category = await prisma.category.findUnique({ 
+    const category = await prisma.category.findUnique({
       where: { id },
       include: { _count: { select: { products: true } } }
     })
@@ -26,7 +26,7 @@ export class PrismaCategoryRepository implements CategoryRepository {
   }
 
   async findBySlug(slug: string): Promise<Category | null> {
-    const category = await prisma.category.findUnique({ 
+    const category = await prisma.category.findUnique({
       where: { slug },
       include: { _count: { select: { products: true } } }
     })
@@ -68,9 +68,13 @@ export class PrismaCategoryRepository implements CategoryRepository {
 }
 
 export class PrismaBrandRepository implements BrandRepository {
-  async findAll(): Promise<Brand[]> {
+  async findAll(options?: { onlyActive?: boolean }): Promise<Brand[]> {
+    const where: any = {}
+    if (options?.onlyActive !== false) {
+      where.isActive = true
+    }
     const brands = await prisma.brand.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { name: 'asc' },
     })
     return brands as unknown as Brand[]
@@ -86,6 +90,23 @@ export class PrismaBrandRepository implements BrandRepository {
     return brand as unknown as Brand | null
   }
 
+  async create(data: { name: string; description?: string; isActive?: boolean }, tx?: any): Promise<Brand> {
+    const client = tx || prisma
+    const brand = await client.brand.create({ data })
+    return brand as unknown as Brand
+  }
+
+  async update(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, tx?: any): Promise<Brand> {
+    const client = tx || prisma
+    const brand = await client.brand.update({ where: { id }, data })
+    return brand as unknown as Brand
+  }
+
+  async delete(id: string, tx?: any): Promise<void> {
+    const client = tx || prisma
+    await client.brand.delete({ where: { id } })
+  }
+
   async upsert(name: string, tx?: any): Promise<Brand> {
     const client = tx || prisma
     const brand = await client.brand.upsert({
@@ -94,6 +115,69 @@ export class PrismaBrandRepository implements BrandRepository {
       create: { name },
     })
     return brand as unknown as Brand
+  }
+
+  async countProducts(brandId: string): Promise<number> {
+    return prisma.product.count({
+      where: { brandId }
+    })
+  }
+}
+
+export class PrismaFormatRepository implements FormatRepository {
+  async findAll(options?: { onlyActive?: boolean }): Promise<Format[]> {
+    const where: any = {}
+    if (options?.onlyActive !== false) {
+      where.isActive = true
+    }
+    const formats = await prisma.format.findMany({
+      where,
+      orderBy: { name: 'asc' },
+    })
+    return formats as unknown as Format[]
+  }
+
+  async findById(id: string): Promise<Format | null> {
+    const format = await prisma.format.findUnique({ where: { id } })
+    return format as unknown as Format | null
+  }
+
+  async findByName(name: string): Promise<Format | null> {
+    const format = await prisma.format.findUnique({ where: { name } })
+    return format as unknown as Format | null
+  }
+
+  async create(data: { name: string; description?: string; isActive?: boolean }, tx?: any): Promise<Format> {
+    const client = tx || prisma
+    const format = await client.format.create({ data })
+    return format as unknown as Format
+  }
+
+  async update(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, tx?: any): Promise<Format> {
+    const client = tx || prisma
+    const format = await client.format.update({ where: { id }, data })
+    return format as unknown as Format
+  }
+
+  async delete(id: string, tx?: any): Promise<void> {
+    const client = tx || prisma
+    await client.format.delete({ where: { id } })
+  }
+
+  async upsert(name: string, tx?: any): Promise<Format> {
+    const client = tx || prisma
+    const format = await client.format.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    })
+    return format as unknown as Format
+  }
+
+  async countProducts(formatName: string): Promise<number> {
+    return prisma.product.count({
+      where: { format: formatName }
+    })
   }
 }
 
@@ -127,7 +211,7 @@ export class PrismaProviderRepository implements ProviderRepository {
   }
 
   async findByName(name: string): Promise<Provider | null> {
-    const provider = await prisma.provider.findFirst({ 
+    const provider = await prisma.provider.findFirst({
       where: { name },
       include: { _count: { select: { batches: true } } }
     })
@@ -135,7 +219,7 @@ export class PrismaProviderRepository implements ProviderRepository {
   }
 
   async findById(id: string): Promise<Provider | null> {
-    const provider = await prisma.provider.findUnique({ 
+    const provider = await prisma.provider.findUnique({
       where: { id },
       include: { _count: { select: { batches: true } } }
     })

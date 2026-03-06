@@ -27,6 +27,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { NotificationTray } from "./notification-tray"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate, useLocation, Link } from "react-router-dom"
@@ -105,6 +111,8 @@ export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: Adm
       off('notification', handleNewNotification)
     }
   }, [on, off])
+
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -274,10 +282,21 @@ export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: Adm
         </Tooltip>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-neutral-900" />}
-        </Button>
+        <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-10 w-10 rounded-full text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-neutral-900" />}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="p-0 w-[380px] sm:w-[420px] border-none shadow-2xl bg-transparent">
+            <NotificationTray variant="admin" onClose={() => setIsNotificationsOpen(false)} />
+          </PopoverContent>
+        </Popover>
 
         {/* User Profile */}
         <DropdownMenu>

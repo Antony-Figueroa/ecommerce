@@ -23,6 +23,15 @@ export interface Brand {
   updatedAt: Date
 }
 
+export interface Format {
+  id: string
+  name: string
+  description: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface InventoryLog {
   id: string
   productId: string
@@ -81,10 +90,25 @@ export interface CategoryRepository {
 }
 
 export interface BrandRepository {
-  findAll(): Promise<Brand[]>
+  findAll(options?: { onlyActive?: boolean }): Promise<Brand[]>
   findById(id: string): Promise<Brand | null>
   findByName(name: string): Promise<Brand | null>
+  create(data: { name: string; description?: string; isActive?: boolean }, tx?: any): Promise<Brand>
+  update(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, tx?: any): Promise<Brand>
+  delete(id: string, tx?: any): Promise<void>
   upsert(name: string, tx?: any): Promise<Brand>
+  countProducts(brandId: string): Promise<number>
+}
+
+export interface FormatRepository {
+  findAll(options?: { onlyActive?: boolean }): Promise<Format[]>
+  findById(id: string): Promise<Format | null>
+  findByName(name: string): Promise<Format | null>
+  create(data: { name: string; description?: string; isActive?: boolean }, tx?: any): Promise<Format>
+  update(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, tx?: any): Promise<Format>
+  delete(id: string, tx?: any): Promise<void>
+  upsert(name: string, tx?: any): Promise<Format>
+  countProducts(formatName: string): Promise<number>
 }
 
 export interface InventoryLogRepository {

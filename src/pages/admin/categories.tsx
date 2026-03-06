@@ -37,6 +37,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import { BrandManagement } from "@/components/admin/brand-management"
+import { FormatManagement } from "@/components/admin/format-management"
 import { api } from "@/lib/api"
 import { EmojiPicker } from "@/components/shared/emoji-picker"
 import { useToast } from "@/hooks/use-toast"
@@ -70,6 +78,8 @@ interface CategoryErrors {
 export function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [brandsLoading, setBrandsLoading] = useState(false)
+  const [formatsLoading, setFormatsLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -97,6 +107,9 @@ export function AdminCategoriesPage() {
     description: "",
     onConfirm: () => {},
   })
+  const [activeTab, setActiveTab] = useState("categories")
+  const [brands, setBrands] = useState<any[]>([])
+  const [formats, setFormats] = useState<any[]>([])
   const { toast } = useToast()
 
   const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
@@ -135,28 +148,47 @@ export function AdminCategoriesPage() {
     }
   }
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true)
-        // Optimizando carga paralela para eliminar waterfalls (async-parallel)
-        const [categoriesRes] = await Promise.all([
-          api.getAdminCategories()
-        ])
-        setCategories(categoriesRes.categories || [])
-      } catch (error) {
-        console.error("Error fetching categories:", error)
-        toast({
-          title: "Error",
-          description: "No se pudieron cargar las categorías",
-          variant: "destructive"
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
+    useEffect(() => {
+    loadCategories()
+    loadBrands()
+    loadFormats()
   }, [])
+
+  const loadCategories = async () => {
+    setLoading(true)
+    try {
+      const data = await api.getAdminCategories()
+      setCategories(data.categories || [])
+    } catch (error) {
+      console.error("Error al cargar categorías:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadBrands = async () => {
+    setBrandsLoading(true)
+    try {
+      const data = await api.getBrands(false) // Fetch both active and inactive
+      setBrands(data)
+    } catch (error) {
+      console.error("Error al cargar marcas:", error)
+    } finally {
+      setBrandsLoading(false)
+    }
+  }
+
+  const loadFormats = async () => {
+    setFormatsLoading(true)
+    try {
+      const data = await api.getFormats(false)
+      setFormats(data)
+    } catch (error) {
+      console.error("Error al cargar formatos:", error)
+    } finally {
+      setFormatsLoading(false)
+    }
+  }
 
   const resetForm = () => {
     setFormData({

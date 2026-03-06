@@ -34,11 +34,14 @@ import adminSyncRoutes from './infrastructure/web/routes/admin/sync.routes.js'
 import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
+import adminBrandRoutes from './infrastructure/web/routes/admin/brand.routes.js'
+import adminFormatRoutes from './infrastructure/web/routes/admin/format.routes.js'
 import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
 import { notificationService, bcvUpdaterService, cartService, backupService } from './shared/container.js'
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
 import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
+import { prisma } from './infrastructure/persistence/prisma.client.js'
 
 import { createServer } from 'http'
 import { socketService } from './infrastructure/socket.service.js'
@@ -159,6 +162,8 @@ app.use('/api/admin/catalog', adminCatalogRoutes)
 app.use('/api/sync', adminSyncRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
+app.use('/api/admin/brands', adminBrandRoutes)
+app.use('/api/admin/formats', adminFormatRoutes)
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
@@ -228,6 +233,28 @@ if (RUN_TASKS) {
     runBgTask('notificationService.checkExpirations (startup)', () => notificationService.checkExpirations())
     runBgTask('bcvUpdaterService.updateRate (startup)', () => bcvUpdaterService.updateRate())
     runBgTask('cartService.checkAbandonedCarts (startup)', () => cartService.checkAbandonedCarts())
+    // Inicializar configuraciones críticas si no existen
+    runBgTask('init_settings', async () => {
+      try {
+        const showStockBadge = await prisma.setting.findUnique({ where: { key: 'show_stock_badge' } })
+        if (!showStockBadge) {
+          await prisma.setting.create({
+            data: {
+              key: 'show_stock_badge',
+              value: 'false',
+              type: 'boolean',
+              group: 'catalogo',
+              label: 'Mostrar etiqueta de Agotado',
+              description: 'Define si se muestra el indicador "Agotado" en productos sin stock.',
+              isPublic: true
+            }
+          })
+          console.log('✅ Setting "show_stock_badge" initialized as default (false)')
+        }
+      } catch (err) {
+        console.error('Error initializing settings:', err)
+      }
+    })
   }, 30000)
 }
 

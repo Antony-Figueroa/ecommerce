@@ -493,9 +493,54 @@ class ApiClient {
     })
   }
 
-  // Productos
-  async getBrands() {
-    return this.request<string[]>('/admin/products/brands')
+    // Brands
+  async getBrands(onlyActive = true) {
+    return this.request<any[]>(`/admin/brands?onlyActive=${onlyActive}`)
+  }
+
+  async createBrand(data: { name: string; description?: string; isActive?: boolean }) {
+    return this.request<any>('/admin/brands', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateBrand(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
+    return this.request<any>(`/admin/brands/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteBrand(id: string) {
+    return this.request<{ success: boolean }>(`/admin/brands/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Formats
+  async getFormats(onlyActive = true) {
+    return this.request<any[]>(`/admin/formats?onlyActive=${onlyActive}`)
+  }
+
+  async createFormat(data: { name: string; description?: string; isActive?: boolean }) {
+    return this.request<any>('/admin/formats', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateFormat(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
+    return this.request<any>(`/admin/formats/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteFormat(id: string) {
+    return this.request<{ success: boolean }>(`/admin/formats/${id}`, {
+      method: 'DELETE',
+    })
   }
 
   async getPublicProducts(params: { 

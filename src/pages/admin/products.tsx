@@ -127,6 +127,7 @@ interface ProductErrors {
   format?: string
   description?: string
   images?: string
+  price?: string
 }
 
 export function AdminProductsPage() {
@@ -138,8 +139,8 @@ export function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [stockFilter, setStockFilter] = useState("all")
-  const [sortBy, setSortBy] = useState<"name" | "price" | "stock" | "createdAt">("name")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [sortBy, setSortBy] = useState<"name" | "price" | "stock" | "createdAt">("createdAt")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [activeTab, setActiveTab] = useState("active")
   const [viewMode, setViewMode] = useState<"grid" | "list">(() => {
     if (typeof window !== "undefined") {
@@ -155,7 +156,8 @@ export function AdminProductsPage() {
   const [showCustomFormat, setShowCustomFormat] = useState(false)
   const [customBrand, setCustomBrand] = useState("")
   const [showCustomBrand, setShowCustomBrand] = useState(false)
-  const [brands, setBrands] = useState<string[]>([])
+  const [brands, setBrands] = useState<any[]>([])
+  const [formats, setFormats] = useState<any[]>([])
 
   // Bulk selection state
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
@@ -235,23 +237,6 @@ export function AdminProductsPage() {
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
     return `${prefix}-${timestamp}-${random}`
   }
-
-  const FORMAT_OPTIONS = [
-    "Tabletas",
-    "Capsulas",
-    "Polvo",
-    "Jarabe",
-    "Crema",
-    "Gel",
-    "Inyectable",
-    "Gotas",
-    "Spray",
-    "Sobres",
-    "Gomitas",
-    "Ampollas",
-    "Locion",
-    "Parche",
-  ]
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     productCode: "",
@@ -283,11 +268,21 @@ export function AdminProductsPage() {
       await Promise.all([
         fetchProducts(),
         fetchCategories(),
-        fetchBrands()
+        fetchBrands(),
+        fetchFormats()
       ])
     }
     loadData()
   }, [])
+
+    const fetchFormats = async () => {
+    try {
+      const data = await api.getFormats()
+      setFormats(data || [])
+    } catch (error) {
+      console.error("Error fetching formats:", error)
+    }
+  }
 
   const fetchBrands = async () => {
     try {
@@ -300,7 +295,7 @@ export function AdminProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const data = await api.getAdminProducts()
+      const data = await api.getAdminProducts({ limit: 2000 })
       setProducts(data.products || [])
     } catch (error: any) {
       console.error("Error fetching products:", error)
@@ -381,29 +376,36 @@ export function AdminProductsPage() {
     )
   }
 
-  const handleBulkAction = async () => {
+  const handleBulkAction = async (action: 'active' | 'inactive' | 'featured' | 'unfeatured' | 'delete') => {
     if (selectedProducts.length === 0) return
 
-    try {
-      for (const productId of selectedProducts) {
-        if (bulkAction === "delete") {
-          await api.deleteProduct(productId)
-        } else {
-          const updates: any = {}
-          if (bulkAction === "activate") updates.isActive = true
-          if (bulkAction === "deactivate") updates.isActive = false
-          if (bulkAction === "feature") updates.isFeatured = true
-          if (bulkAction === "unfeature") updates.isFeatured = false
-          await api.updateProduct(productId, updates)
+    confirmAction({
+      title: "¿Confirmar acción masiva?",
+      description: `¿Estás seguro de que deseas ejecutar esta acción en ${selectedProducts.length} productos seleccionados?`,
+      confirmText: "Confirmar",
+      variant: action === 'delete' ? 'destructive' : 'default',
+      onConfirm: async () => {
+        try {
+          for (const productId of selectedProducts) {
+            if (action === "delete") {
+              await api.updateProduct(productId, { isActive: false })
+            } else {
+              const updates: any = {}
+              if (action === "active") updates.isActive = true
+              if (action === "inactive") updates.isActive = false
+              if (action === "featured") updates.isFeatured = true
+              if (action === "unfeatured") updates.isFeatured = false
+              await api.updateProduct(productId, updates)
+            }
+          }
+          toast({ title: "Éxito", description: `${selectedProducts.length} productos actualizados` })
+          setSelectedProducts([])
+          fetchProducts()
+        } catch (error) {
+          toast({ title: "Error", description: "Error al procesar acción masiva", variant: "destructive" })
         }
       }
-      toast({ title: "Éxito", description: `${selectedProducts.length} productos actualizados` })
-      setShowBulkDialog(false)
-      setSelectedProducts([])
-      fetchProducts()
-    } catch (error) {
-      toast({ title: "Error", description: "Error al procesar acción masiva", variant: "destructive" })
-    }
+    })
   }
 
   const validateForm = (): boolean => {
@@ -448,6 +450,11 @@ export function AdminProductsPage() {
 
     if (formData.images.length === 0) {
       newErrors.images = "Debes añadir al menos una imagen"
+      isValid = false
+    }
+
+        if (Number(formData.price) < Number(formData.purchasePrice)) {
+      newErrors.price = "El precio de venta no puede ser menor al precio de compra"
       isValid = false
     }
 
@@ -832,10 +839,10 @@ export function AdminProductsPage() {
 
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl w-fit">
-            <TabsTrigger value="active" className="rounded-lg px-4 py-2 text-xs font-bold">Activos</TabsTrigger>
-            <TabsTrigger value="inactive" className="rounded-lg px-4 py-2 text-xs font-bold">Inactivos</TabsTrigger>
-            <TabsTrigger value="all" className="rounded-lg px-4 py-2 text-xs font-bold">Todos</TabsTrigger>
+          <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1 flex-wrap h-auto rounded-xl w-full sm:w-fit justify-start">
+            <TabsTrigger value="active" className="rounded-lg px-4 py-2 text-xs font-bold whitespace-nowrap flex-1 sm:flex-none">Activos</TabsTrigger>
+            <TabsTrigger value="inactive" className="rounded-lg px-4 py-2 text-xs font-bold whitespace-nowrap flex-1 sm:flex-none">Inactivos</TabsTrigger>
+            <TabsTrigger value="all" className="rounded-lg px-4 py-2 text-xs font-bold whitespace-nowrap flex-1 sm:flex-none">Todos</TabsTrigger>
           </TabsList>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -892,18 +899,30 @@ export function AdminProductsPage() {
               </Button>
             </div>
 
-            <Select value={itemsPerPage.toString()} onValueChange={(v) => setItemsPerPage(parseInt(v))}>
-              <SelectTrigger className="w-[70px] h-10 rounded-xl border-slate-200 bg-white dark:bg-card dark:border-border text-xs">
-                <SelectValue placeholder="12" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="12">12</SelectItem>
-                <SelectItem value="24">24</SelectItem>
-                <SelectItem value="48">48</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
+
+        {selectedProducts.length > 0 && (
+          <div className="bg-primary/5 border border-primary/20 dark:bg-primary/10 rounded-xl p-3 flex items-center justify-between mt-4 animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center bg-primary text-primary-foreground text-xs font-bold size-6 rounded-full">
+                {selectedProducts.length}
+              </span>
+              <span className="text-sm font-semibold text-primary dark:text-primary-foreground">
+                productos seleccionados
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="h-8 text-xs border-primary/20 text-primary hover:bg-primary hover:text-white dark:hover:text-primary-foreground" onClick={() => handleBulkAction('featured')}>
+                Destacar
+              </Button>
+              <Button size="sm" variant="destructive" className="h-8 text-xs bg-red-50 text-red-600 hover:bg-red-100 border-0 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40" onClick={() => handleBulkAction('delete')}>
+                <Trash2 className="h-3 w-3 mr-1" />
+                Desactivar Masivamente
+              </Button>
+            </div>
+          </div>
+        )}
 
         <TabsContent value={activeTab} className="mt-0">
           {viewMode === "list" ? (
@@ -1258,36 +1277,31 @@ export function AdminProductsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium" id="brand-label">Marca *</label>
-                <Select
-                  value={formData.brand}
-                  onValueChange={(val) => {
-                    if (val === "custom") {
-                      setShowCustomBrand(true)
-                    } else {
-                      setFormData({ ...formData, brand: val })
-                      setShowCustomBrand(false)
-                      if (errors.brand) setErrors({ ...errors, brand: undefined })
-                    }
+                <MultiSelect
+                  options={brands.map(brand => {
+                    const brandValue = typeof brand === 'string' ? brand : (brand as any).name || "";
+                    return { label: brandValue, value: brandValue }
+                  }).filter(opt => opt.value)}
+                  selected={formData.brand ? [formData.brand] : []}
+                  onChange={(val) => {
+                    const newVal = val[val.length - 1] || "" // Single select logic
+                    setFormData({ ...formData, brand: newVal })
+                    if (errors.brand) setErrors({ ...errors, brand: undefined })
+                    setShowCustomBrand(false)
                   }}
-                >
-                  <SelectTrigger className={errors.brand ? "border-red-500" : ""} aria-labelledby="brand-label">
-                    <SelectValue placeholder="Seleccionar marca" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brands.map((brand, index) => {
-                      const brandValue = typeof brand === 'string' ? brand : (brand as any).name || "";
-                      if (!brandValue) return null;
-                      return (
-                        <SelectItem key={`${brandValue}-${index}`} value={String(brandValue)}>
-                          {String(brandValue)}
-                        </SelectItem>
-                      );
-                    })}
-                    <SelectItem value="custom" className="text-primary font-medium">
-                      + Nueva marca...
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                  onCreateOption={async (label) => {
+                  try {
+                    await api.createBrand({ name: label, isActive: true })
+                    fetchBrands()
+                  } catch (error) {
+                    console.error("Error creating brand:", error)
+                  }
+                  setFormData({ ...formData, brand: label })
+                  return { label, value: label }
+                }}
+                  placeholder="Seleccionar marca"
+                  className={errors.brand ? "border-red-500" : ""}
+                />
 
                 {showCustomBrand && (
                   <div className="flex gap-2 mt-2" role="group" aria-label="Añadir nueva marca">
@@ -1312,8 +1326,8 @@ export function AdminProductsPage() {
                         if (customBrand.trim()) {
                           const newBrand = customBrand.trim()
                           setFormData({ ...formData, brand: newBrand })
-                          if (!brands.includes(newBrand)) {
-                            setBrands(prev => [...prev, newBrand].sort())
+                          if (!brands.some(b => (b.name || b) === newBrand)) {
+                            setBrands(prev => [...prev, { name: newBrand, isActive: true }].sort((a,b) => (a.name||a).localeCompare(b.name||b)))
                           }
                           setShowCustomBrand(false)
                           setCustomBrand("")
@@ -1345,30 +1359,28 @@ export function AdminProductsPage() {
 
             <div>
               <label className="text-sm font-medium" id="format-label">Formato *</label>
-              <Select
-                value={formData.format}
-                onValueChange={(val) => {
-                  if (val === "custom") {
-                    setShowCustomFormat(true)
-                  } else {
-                    setFormData({ ...formData, format: val })
-                    setShowCustomFormat(false)
-                    if (errors.format) setErrors({ ...errors, format: undefined })
-                  }
+              <MultiSelect
+                options={formats.map(f => ({ label: f.name || f, value: f.name || f }))}
+                selected={formData.format ? [formData.format] : []}
+                onChange={(val) => {
+                  const newVal = val[val.length - 1] || "" // Single select logic
+                  setFormData({ ...formData, format: newVal })
+                  if (errors.format) setErrors({ ...errors, format: undefined })
+                  setShowCustomFormat(false)
                 }}
-              >
-                <SelectTrigger className={errors.format ? "border-red-500" : ""} aria-labelledby="format-label">
-                  <SelectValue placeholder="Seleccionar formato" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FORMAT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-                  ))}
-                  <SelectItem value="custom" className="text-primary font-medium">
-                    + Otro formato...
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                onCreateOption={async (label) => {
+                  try {
+                    await api.createFormat({ name: label, isActive: true })
+                    fetchFormats()
+                  } catch (error) {
+                    console.error("Error creating format:", error)
+                  }
+                  setFormData({ ...formData, format: label })
+                  return { label, value: label }
+                }}
+                placeholder="Seleccionar formato"
+                className={errors.format ? "border-red-500" : ""}
+              />
 
               {showCustomFormat && (
                 <div className="flex gap-2 mt-2" role="group" aria-label="Añadir nuevo formato">
@@ -1735,7 +1747,7 @@ export function AdminProductsPage() {
             <Button variant="outline" onClick={() => setShowBulkDialog(false)}>Cancelar</Button>
             <Button
               variant={bulkAction === "delete" ? "destructive" : "default"}
-              onClick={handleBulkAction}
+              onClick={() => handleBulkAction(bulkAction as any)}
             >
               Aplicar a {selectedProducts.length} productos
             </Button>

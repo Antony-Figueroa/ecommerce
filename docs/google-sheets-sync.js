@@ -25,7 +25,12 @@
 
 // ==================== CONFIGURACIÓN ====================
 const CONFIG = {
-  API_BASE_URL: 'http://localhost:3001/api/sync', // ⚠️ CAMBIA en producción
+  // 1️⃣ ENTORNO DE PRODUCCIÓN (Cuando subas la app a Vercel/Render, pega el link aquí)
+  API_URL_PROD: 'https://api.tu-ecommerce.com/api/sync',
+
+  // 2️⃣ ENTORNO DE DESARROLLO (Túnel hacia tu compu, ej: npx localtunnel --port 3001)
+  API_URL_DEV: 'https://tu-url-de-ngrok.loca.lt/api/sync',
+
   SHEET_NAME: 'Inventario',
   PROTECT_OTHER_COLUMNS: true,
   SHOW_PROGRESS: true,
@@ -56,14 +61,37 @@ const COLUMNS = {
 };
 
 const SHEET_HEADERS = [
-  'SKU', 'Nombre', 'Stock', 'Stock Mínimo', 'Precio', 
+  'SKU', 'Nombre', 'Stock', 'Stock Mínimo', 'Precio',
   'Precio Compra', 'Marca', 'En Stock', 'Última Actualización', 'ID', 'Estado'
 ];
+
+/**
+ * Sistema Inteligente Evaluador de Entorno
+ * Comprueba si debe usar API de Producción o API de Desarrollo (Túnel Local)
+ */
+let cachedApiUrl = null;
+function getApiUrl() {
+  if (cachedApiUrl) return cachedApiUrl;
+
+  try {
+    const response = UrlFetchApp.fetch(CONFIG.API_URL_PROD + '/ping', {
+      muteHttpExceptions: true,
+      timeout: 3000
+    });
+    if (response.getResponseCode() === 200) {
+      cachedApiUrl = CONFIG.API_URL_PROD;
+      return cachedApiUrl;
+    }
+  } catch (e) { }
+
+  cachedApiUrl = CONFIG.API_URL_DEV;
+  return cachedApiUrl;
+}
 
 // ==================== MENÚS ====================
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  
+
   ui.createMenu('🔄 Sync E-commerce')
     .addItem('📥 Descargar productos del servidor', 'syncFromServer')
     .addItem('🔄 Forzar sincronización completa', 'fullSync')
@@ -77,20 +105,20 @@ function onOpen() {
     .addItem('📤 Exportar a CSV', 'exportToCSV')
     .addItem('🗑️ Limpiar hoja', 'clearSheet')
     .addToUi();
-  
+
   createTrigger();
 }
 
 function onEdit(e) {
   if (!CONFIG.VALIDATE_ON_EDIT) return;
   if (!e || !e.range) return;
-  
+
   const sheet = e.range.getSheet();
   if (sheet.getName() !== CONFIG.SHEET_NAME) return;
   if (e.range.getRow() === 1) return;
-  
+
   const col = e.range.getColumn();
-  
+
   if (CONFIG.PROTECT_OTHER_COLUMNS && col !== COLUMNS.STOCK) {
     SpreadsheetApp.getActiveSpreadsheet().toast(
       '⚠️ Solo puedes editar la columna Stock',
@@ -100,7 +128,7 @@ function onEdit(e) {
     e.range.clearContent();
     return;
   }
-  
+
   if (col === COLUMNS.STOCK) {
     validateAndSyncStock(e.range);
   }
@@ -109,7 +137,7 @@ function onEdit(e) {
 function createTrigger() {
   const triggers = ScriptApp.getProjectTriggers();
   const hasOpenTrigger = triggers.some(t => t.getHandlerFunction() === 'syncOnOpen');
-  
+
   if (!hasOpenTrigger) {
     ScriptApp.newTrigger('syncOnOpen')
       .forSpreadsheet(SpreadsheetApp.getActiveSpreadsheet())
@@ -128,27 +156,27 @@ function syncOnOpen() {
 function syncFromServer() {
   const sheet = getOrCreateSheet();
   const startTime = Date.now();
-  
+
   try {
     showProgress('Conectando al servidor...', 0);
-    
-    const response = fetchWithTimeout(CONFIG.API_BASE_URL + '/export-products', {
+
+    const response = fetchWithTimeout(getApiUrl() + '/export-products', {
       muteHttpExceptions: true
     });
-    
+
     if (response.getResponseCode() !== 200) {
       throw new Error(`Error del servidor: ${response.getResponseCode()}`);
     }
-    
+
     const data = JSON.parse(response.getContentText());
-    
+
     if (!data.success) {
       throw new Error(data.error || 'Error desconocido');
     }
-    
+
     const products = data.data;
     const total = products.length;
-    
+
     if (total === 0) {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         '⚠️ No hay productos en el sistema',
@@ -157,23 +185,23 @@ function syncFromServer() {
       );
       return;
     }
-    
+
     sheet.clear();
     sheet.appendRow(SHEET_HEADERS);
-    
+
     const headerRange = sheet.getRange(1, 1, 1, SHEET_HEADERS.length);
     headerRange.setFontWeight('bold');
     headerRange.setBackground('#e9ecef');
-    
+
     showProgress(`Sincronizando ${total} productos...`, 20);
-    
+
     let synced = 0;
     let errors = 0;
-    
+
     products.forEach((product, index) => {
       const progress = 20 + Math.floor((index / total) * 60);
       showProgress(`Procesando ${index + 1}/${total}...`, progress);
-      
+
       try {
         const row = [
           product.SKU || '',
@@ -188,34 +216,34 @@ function syncFromServer() {
           product._id || '',
           'Sincronizado'
         ];
-        
+
         sheet.appendRow(row);
-        
+
         const rowNum = index + 2;
         const statusRange = sheet.getRange(rowNum, COLUMNS.STATUS);
         statusRange.setBackground(CONFIG.COLOR_CODES.SYNCED);
-        
+
         synced++;
       } catch (err) {
         errors++;
         console.error(`Error en producto ${index}:`, err);
       }
     });
-    
+
     sheet.getRange(2, 1, synced, SHEET_HEADERS.length)
       .setHorizontalAlignment('left');
-    
+
     sheet.setColumnWidths(1, SHEET_HEADERS.length, 150);
     sheet.autoResizeColumns(1, 5);
-    
+
     protectColumns();
-    
+
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const message = `✅ Sincronizado: ${synced} productos\n⏱️ Tiempo: ${elapsed}s\n❌ Errores: ${errors}`;
-    
+
     SpreadsheetApp.getActiveSpreadsheet().toast(message, 'Sincronización Completa', 10);
     console.log(message);
-    
+
   } catch (error) {
     SpreadsheetApp.getActiveSpreadsheet().toast(
       `❌ Error: ${error.message}`,
@@ -235,7 +263,7 @@ function fullSync() {
     'Esto descargará todos los productos del servidor y sobrescribirá la hoja actual. ¿Continuar?',
     ui.ButtonSet.YES_NO
   );
-  
+
   if (response === ui.Button.YES) {
     syncFromServer();
   }
@@ -246,24 +274,24 @@ function validateAndSyncStock(range) {
   const row = range.getRow();
   const sheet = range.getSheet();
   const newValue = range.getValue();
-  
+
   const skuRange = sheet.getRange(row, COLUMNS.SKU);
   const sku = skuRange.getValue();
-  
+
   if (!sku) {
     showError(row, 'SKU no encontrado');
     return;
   }
-  
+
   const stockValue = parseInt(newValue);
   if (isNaN(stockValue) || stockValue < 0) {
     showError(row, 'Stock debe ser ≥ 0');
     range.setValue('');
     return;
   }
-  
+
   markAsModified(row);
-  
+
   sendStockUpdateWithRetry(sku, stockValue, row);
 }
 
@@ -274,31 +302,31 @@ function sendStockUpdateWithRetry(sku, stock, row, attempt = 1) {
       stock: stock,
       editedBy: Session.getActiveUser().getEmail() || 'sheets-user'
     };
-    
+
     const options = {
       method: 'POST',
       contentType: 'application/json',
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
-    
-    const response = UrlFetchApp.fetch(CONFIG.API_BASE_URL + '/sheet-update', options);
+
+    const response = UrlFetchApp.fetch(getApiUrl() + '/sheet-update', options);
     const data = JSON.parse(response.getResponseCode());
-    
+
     if (response.getResponseCode() === 200 && data.success) {
       const statusRange = SpreadsheetApp.getActiveSpreadsheet()
         .getSheetByName(CONFIG.SHEET_NAME)
         .getRange(row, COLUMNS.STATUS);
-      
+
       statusRange.setValue('Actualizado');
       statusRange.setBackground(CONFIG.COLOR_CODES.SYNCED);
-      
+
       SpreadsheetApp.getActiveSpreadsheet().toast(
         `✅ ${sku}: ${stock}`,
         'Stock Actualizado',
         3
       );
-      
+
       if (data.warnings && data.warnings.length > 0) {
         SpreadsheetApp.getActiveSpreadsheet().toast(
           `⚠️ ${data.warnings.join(', ')}`,
@@ -332,17 +360,17 @@ function sendStockUpdate(sku, stock, editedBy) {
       stock: stock,
       editedBy: editedBy || Session.getActiveUser().getEmail() || 'sheets-user'
     };
-    
+
     const options = {
       method: 'POST',
       contentType: 'application/json',
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
-    
-    const response = UrlFetchApp.fetch(CONFIG.API_BASE_URL + '/sheet-update', options);
+
+    const response = UrlFetchApp.fetch(getApiUrl() + '/sheet-update', options);
     const responseData = JSON.parse(response.getContentText());
-    
+
     if (response.getResponseCode() === 200 && responseData.success) {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         `Stock actualizado: ${sku} → ${stock}`,
@@ -375,59 +403,59 @@ function validateData() {
     SpreadsheetApp.getActiveSpreadsheet().toast('No hay hoja de inventario', 'Error', 3);
     return;
   }
-  
+
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
   const products = data.slice(1);
-  
+
   const errors = [];
   const skuMap = new Map();
-  
+
   products.forEach((row, index) => {
     const rowNum = index + 2;
     const sku = row[COLUMNS.SKU - 1];
     const stock = row[COLUMNS.STOCK - 1];
     const precio = row[COLUMNS.PRECIO - 1];
     const precioCompra = row[COLUMNS.PRECIO_COMPRA - 1];
-    
+
     if (!sku || sku.toString().trim() === '') {
       errors.push({ row: rowNum, error: 'SKU vacío' });
       return;
     }
-    
+
     const skuPattern = /^[A-Za-z0-9\-_]+$/;
     if (!skuPattern.test(sku)) {
       errors.push({ row: rowNum, error: 'SKU con caracteres inválidos' });
     }
-    
+
     if (skuMap.has(sku)) {
       errors.push({ row: rowNum, error: `SKU duplicado (primera aparición: fila ${skuMap.get(sku)})` });
     }
     skuMap.set(sku, rowNum);
-    
+
     if (stock !== '' && (isNaN(stock) || stock < 0)) {
       errors.push({ row: rowNum, error: 'Stock inválido o negativo' });
     }
-    
+
     if (precio !== '' && (isNaN(precio) || precio < 0)) {
       errors.push({ row: rowNum, error: 'Precio inválido o negativo' });
     }
-    
+
     if (precioCompra !== '' && (isNaN(precioCompra) || precioCompra < 0)) {
       errors.push({ row: rowNum, error: 'Precio de compra inválido o negativo' });
     }
   });
-  
-  const message = errors.length === 0 
+
+  const message = errors.length === 0
     ? '✅ Validación passed: Sin errores encontrados'
     : `⚠️ Se encontraron ${errors.length} errores`;
-  
+
   SpreadsheetApp.getActiveSpreadsheet().toast(message, 'Validación', 5);
-  
+
   if (errors.length > 0) {
     console.table(errors);
   }
-  
+
   return errors;
 }
 
@@ -438,31 +466,31 @@ function checkConflicts() {
     SpreadsheetApp.getActiveSpreadsheet().toast('No hay hoja de inventario', 'Error', 3);
     return;
   }
-  
+
   showProgress('Verificando conflictos...', 0);
-  
+
   const data = sheet.getDataRange().getValues();
   const products = data.slice(1).map(row => ({
     sku: row[COLUMNS.SKU - 1],
     stock: row[COLUMNS.STOCK - 1]
   })).filter(p => p.sku);
-  
+
   try {
-    const response = fetchWithTimeout(CONFIG.API_BASE_URL + '/check-conflicts', {
+    const response = fetchWithTimeout(getApiUrl() + '/check-conflicts', {
       method: 'POST',
       contentType: 'application/json',
       payload: JSON.stringify({ products }),
       muteHttpExceptions: true
     });
-    
+
     const result = JSON.parse(response.getContentText());
-    
+
     if (!result.success) {
       throw new Error(result.error);
     }
-    
+
     showProgress('Marcando conflictos...', 80);
-    
+
     if (result.conflictList && result.conflictList.length > 0) {
       result.conflictList.forEach(conflict => {
         const row = products.findIndex(p => p.sku === conflict.sku) + 2;
@@ -470,24 +498,24 @@ function checkConflicts() {
           const statusRange = sheet.getRange(row, COLUMNS.STATUS);
           statusRange.setValue(`⚠️ Conflicto (BD: ${conflict.systemStock})`);
           statusRange.setBackground(
-            conflict.severity === 'high' 
-              ? CONFIG.COLOR_CODES.ERROR 
+            conflict.severity === 'high'
+              ? CONFIG.COLOR_CODES.ERROR
               : CONFIG.COLOR_CODES.CONFLICT
           );
         }
       });
     }
-    
+
     const message = result.conflicts === 0
       ? '✅ No hay conflictos'
       : `⚠️ ${result.conflicts} conflictos encontrados`;
-    
+
     SpreadsheetApp.getActiveSpreadsheet().toast(
       `${message}\nAlta: ${result.summary.high} | Media: ${result.summary.medium} | Baja: ${result.summary.low}`,
       'Conflictos',
       10
     );
-    
+
   } catch (error) {
     SpreadsheetApp.getActiveSpreadsheet().toast(`Error: ${error.message}`, 'Error', 5);
   } finally {
@@ -498,18 +526,18 @@ function checkConflicts() {
 // ==================== ESTADÍSTICAS ====================
 function showStats() {
   try {
-    const response = UrlFetchApp.fetch(CONFIG.API_BASE_URL + '/stats', {
+    const response = UrlFetchApp.fetch(getApiUrl() + '/stats', {
       muteHttpExceptions: true
     });
-    
+
     const data = JSON.parse(response.getContentText());
-    
+
     if (!data.success) {
       throw new Error(data.error);
     }
-    
+
     const s = data.stats;
-    const message = 
+    const message =
       `📊 ESTADÍSTICAS\n\n` +
       `📦 Productos: ${s.products.total}\n` +
       `  ✓ En Stock: ${s.products.inStock}\n` +
@@ -519,9 +547,9 @@ function showStats() {
       `  Total: ${s.inventory.totalStock} unidades\n` +
       `  Promedio: ${s.inventory.averageStock}/producto\n\n` +
       `🔄 Sincronizaciones hoy: ${s.sync.today}`;
-    
+
     SpreadsheetApp.getActiveSpreadsheet().toast(message, 'Estadísticas', 15);
-    
+
   } catch (error) {
     SpreadsheetApp.getActiveSpreadsheet().toast(`Error: ${error.message}`, 'Error', 5);
   }
@@ -529,26 +557,26 @@ function showStats() {
 
 function showConfig() {
   try {
-    const response = UrlFetchApp.fetch(CONFIG.API_BASE_URL + '/config', {
+    const response = UrlFetchApp.fetch(getApiUrl() + '/config', {
       muteHttpExceptions: true
     });
-    
+
     const data = JSON.parse(response.getContentText());
-    
+
     if (!data.success) {
       throw new Error(data.error);
     }
-    
+
     const c = data.config;
-    const message = 
+    const message =
       `⚙️ CONFIGURACIÓN\n\n` +
       `Máx productos/sync: ${c.maxProductsPerSync}\n` +
       `SKU válido: ${c.skuPattern}\n` +
       `Columnas editables: ${c.editableColumns.join(', ')}\n` +
       `Auth requerido: ${c.requireAuth}`;
-    
+
     SpreadsheetApp.getActiveSpreadsheet().toast(message, 'Configuración', 10);
-    
+
   } catch (error) {
     SpreadsheetApp.getActiveSpreadsheet().toast(`Error: ${error.message}`, 'Error', 5);
   }
@@ -558,25 +586,25 @@ function showConfig() {
 function getOrCreateSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
-  
+
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEET_NAME);
   }
-  
+
   return sheet;
 }
 
 function protectColumns() {
   if (!CONFIG.PROTECT_OTHER_COLUMNS) return;
-  
+
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
   if (!sheet) return;
-  
+
   const protection = sheet.protect();
   protection.setWarningOnly(true);
-  
+
   const unprotected = [COLUMNS.STOCK];
-  protection.setUnprotectedRanges(unprotected.map(col => 
+  protection.setUnprotectedRanges(unprotected.map(col =>
     sheet.getRange(2, col, sheet.getLastRow() - 1, 1)
   ));
 }
@@ -597,7 +625,7 @@ function showError(row, message) {
 
 function showProgress(message, percent) {
   if (!CONFIG.SHOW_PROGRESS) return;
-  
+
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
   if (sheet) {
     sheet.getRange('A1').setValue(`${message} (${percent}%)`);
@@ -613,7 +641,7 @@ function hideProgress() {
 
 function fetchWithTimeout(url, options, timeout = CONFIG.TIMEOUT_SECONDS * 1000) {
   const start = Date.now();
-  
+
   while (Date.now() - start < timeout) {
     try {
       return UrlFetchApp.fetch(url, options);
@@ -625,7 +653,7 @@ function fetchWithTimeout(url, options, timeout = CONFIG.TIMEOUT_SECONDS * 1000)
       throw e;
     }
   }
-  
+
   throw new Error('Timeout de conexión');
 }
 
@@ -635,22 +663,22 @@ function exportToCSV() {
     SpreadsheetApp.getActiveSpreadsheet().toast('No hay hoja de inventario', 'Error', 3);
     return;
   }
-  
+
   const range = sheet.getDataRange();
   const values = range.getValues();
-  
+
   const csvContent = values
     .map(row => row.map(cell => {
       if (cell === null || cell === undefined) return '';
-      return typeof cell === 'string' && cell.includes(',') 
-        ? `"${cell.replace(/"/g, '""')}"` 
+      return typeof cell === 'string' && cell.includes(',')
+        ? `"${cell.replace(/"/g, '""')}"`
         : String(cell);
     }).join(','))
     .join('\n');
-  
+
   const blob = Utilities.newBlob(csvContent, 'text/csv', `inventario_${new Date().toISOString().split('T')[0]}.csv`);
   const file = DriveApp.createFile(blob);
-  
+
   SpreadsheetApp.getActiveSpreadsheet().toast(
     `📁 Archivo guardado en Drive:\n${file.getUrl()}`,
     'Exportado',
@@ -665,7 +693,7 @@ function clearSheet() {
     '¿Estás seguro de que quieres limpiar todos los datos? (Los encabezados se mantendrán)',
     ui.ButtonSet.YES_NO
   );
-  
+
   if (response === ui.Button.YES) {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME);
     if (sheet) {
