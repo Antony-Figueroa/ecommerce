@@ -191,8 +191,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id
 
+    // Products use a many-to-many relation with categories (no direct categoryId field)
     const productsCount = await productRepo.count({
-      categoryId: id,
+      categories: {
+        some: { id }
+      }
     })
 
     if (productsCount > 0) {
