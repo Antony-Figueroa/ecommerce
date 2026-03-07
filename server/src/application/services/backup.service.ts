@@ -208,10 +208,12 @@ export class BackupService {
       'Category',
       'Favorite',
       'Brand',
+      'Format',
       // Inventario
       'InventoryBatch',
       'InventoryBatchItem',
       'InventoryStock',
+      'InventoryLocation',
       'InventoryTransfer',
       'InventoryTransferItem',
       'Batch',
@@ -232,9 +234,7 @@ export class BackupService {
       'NotificationSetting',
       // Configuraciones
       'Setting',
-      'SettingHistory',
-      // Auditoría de ventas
-      'SaleAuditLog'
+      'SettingHistory'
     ];
 
     // Usar better-sqlite3 para acceso directo a SQLite

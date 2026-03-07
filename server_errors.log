@@ -1,0 +1,60 @@
+[2026-03-07T19:27:10.253Z] GET /locations: PrismaClientKnownRequestError: 
+Invalid `prisma.inventoryLocation.findMany()` invocation in
+C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:345:54
+
+  342 
+  343 export class PrismaInventoryLocationRepository implements InventoryLocationRepository {
+  344   async findAll(): Promise<InventoryLocation[]> {
+→ 345     const locations = await prisma.inventoryLocation.findMany(
+The table `main.InventoryLocation` does not exist in the current database.
+    at $n.handleRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async PrismaInventoryLocationRepository.findAll (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:345:23)
+    at async <anonymous> (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\web\routes\admin\inventory.routes.ts:11:23)
+[2026-03-07T19:27:10.470Z] GET /transfers: PrismaClientKnownRequestError: 
+Invalid `prisma.inventoryTransfer.findMany()` invocation in
+C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:429:54
+
+  426 const where: any = {}
+  427 if (status) where.status = status
+  428 
+→ 429 const transfers = await prisma.inventoryTransfer.findMany(
+The table `main.InventoryTransfer` does not exist in the current database.
+    at $n.handleRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async PrismaInventoryTransferRepository.findAll (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:429:23)
+    at async <anonymous> (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\web\routes\admin\inventory.routes.ts:64:23)
+[2026-03-07T19:27:12.581Z] GET /locations: PrismaClientKnownRequestError: 
+Invalid `prisma.inventoryLocation.findMany()` invocation in
+C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:345:54
+
+  342 
+  343 export class PrismaInventoryLocationRepository implements InventoryLocationRepository {
+  344   async findAll(): Promise<InventoryLocation[]> {
+→ 345     const locations = await prisma.inventoryLocation.findMany(
+The table `main.InventoryLocation` does not exist in the current database.
+    at $n.handleRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async PrismaInventoryLocationRepository.findAll (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:345:23)
+    at async <anonymous> (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\web\routes\admin\inventory.routes.ts:11:23)
+[2026-03-07T19:27:12.748Z] GET /transfers: PrismaClientKnownRequestError: 
+Invalid `prisma.inventoryTransfer.findMany()` invocation in
+C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:429:54
+
+  426 const where: any = {}
+  427 if (status) where.status = status
+  428 
+→ 429 const transfers = await prisma.inventoryTransfer.findMany(
+The table `main.InventoryTransfer` does not exist in the current database.
+    at $n.handleRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async PrismaInventoryTransferRepository.findAll (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.inventory.repository.ts:429:23)
+    at async <anonymous> (C:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\web\routes\admin\inventory.routes.ts:64:23)

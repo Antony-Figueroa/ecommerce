@@ -342,24 +342,24 @@ class ApiClient {
     return this.request<any[]>('/admin/settings/backups')
   }
 
-  async createBackup(password: string) {
+  async createBackup() {
     return this.request<any>('/admin/settings/backups', {
       method: 'POST',
-      body: JSON.stringify({ password })
+      body: JSON.stringify({})
     })
   }
 
-  async restoreBackup(filename: string, password: string) {
+  async restoreBackup(filename: string, confirmationMessage: string) {
     return this.request<any>('/admin/settings/backups/restore', {
       method: 'POST',
-      body: JSON.stringify({ filename, password })
+      body: JSON.stringify({ filename, confirmationMessage })
     })
   }
 
-  async deleteBackup(filename: string, password: string) {
+  async deleteBackup(filename: string) {
     return this.request<any>(`/admin/settings/backups/${filename}`, {
       method: 'DELETE',
-      body: JSON.stringify({ password })
+      body: JSON.stringify({})
     })
   }
 

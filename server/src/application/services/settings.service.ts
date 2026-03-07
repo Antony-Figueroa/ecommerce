@@ -39,11 +39,7 @@ export class SettingsService {
   /**
    * Crea un respaldo de la base de datos
    */
-  async createBackup(userId: string, password?: string) {
-    if (password) {
-      await this.verifyAdminPassword(userId, password)
-    }
-
+  async createBackup(userId: string) {
     const backup = await this.backupService.createBackup()
     
     if (backup) {
@@ -75,16 +71,19 @@ export class SettingsService {
 
   /**
    * Restaura un respaldo de la base de datos
-   * IMPORTANTE: Requiere contraseña de administrador
+   * Requiere un mensaje de confirmación escrito por el usuario
    */
-  async restoreBackup(userId: string, filename: string, password: string) {
-    // La contraseña es requerida para restaurar
-    if (!password) {
-      throw new ValidationError('Se requiere contraseña de administrador para restaurar un respaldo')
-    }
+  async restoreBackup(userId: string, filename: string, confirmationMessage?: string) {
+    console.log(`[SettingsService] restoreBackup called: filename=${filename}, confirmationMessage=${confirmationMessage}`)
     
-    await this.verifyAdminPassword(userId, password)
+    // Validar mensaje de confirmación
+    const expectedMessage = `RESTAURAR ${filename}`
+    if (confirmationMessage?.trim().toUpperCase() !== expectedMessage) {
+      console.log(`[SettingsService] Invalid confirmation. Expected: ${expectedMessage}, Got: ${confirmationMessage}`)
+      throw new ValidationError(`Para confirmar escribe exactamente: "${expectedMessage}"`)
+    }
 
+    console.log(`[SettingsService] Confirmation valid, proceeding with restore...`)
     const result = await this.backupService.restoreBackup(filename)
     
     await this.auditService.logAction({
@@ -93,7 +92,8 @@ export class SettingsService {
       userId,
       details: { 
         restoredFrom: filename,
-        autoBackupCreated: result.autoBackupFilename
+        autoBackupCreated: result.autoBackupFilename,
+        confirmedBy: confirmationMessage
       }
     })
 
@@ -107,9 +107,11 @@ export class SettingsService {
   /**
    * Elimina un respaldo
    */
-  async deleteBackup(userId: string, filename: string, password?: string) {
-    if (password) {
-      await this.verifyAdminPassword(userId, password)
+  async deleteBackup(userId: string, filename: string, confirmationMessage?: string) {
+    // Validar mensaje de confirmación
+    const expectedMessage = `ELIMINAR ${filename}`
+    if (confirmationMessage?.trim().toUpperCase() !== expectedMessage) {
+      throw new ValidationError(`Para confirmar escribe exactamente: "${expectedMessage}"`)
     }
 
     await this.backupService.deleteBackup(filename)
@@ -118,7 +120,7 @@ export class SettingsService {
       entityType: 'SETTINGS',
       action: 'BACKUP_DELETE',
       userId,
-      details: { filename }
+      details: { filename, confirmedBy: confirmationMessage }
     })
 
     return { message: 'Respaldo eliminado con éxito' }
