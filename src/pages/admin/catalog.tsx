@@ -37,49 +37,6 @@ import {
   X,
 } from "lucide-react"
 
-const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23cccccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E"
-
-async function loadImageWithCORS(src: string): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.crossOrigin = "anonymous"
-    img.onload = () => resolve(src)
-    img.onerror = () => resolve(PLACEHOLDER_IMAGE)
-    img.src = src
-  })
-}
-
-async function getSafeImageMap(products: CatalogProduct[]): Promise<Map<string, string>> {
-  const imageMap = new Map<string, string>()
-  
-  for (const product of products) {
-    if (product.image && product.image.startsWith('http')) {
-      try {
-        const safeImage = await loadImageWithCORS(product.image)
-        imageMap.set(product.image, safeImage)
-      } catch {
-        imageMap.set(product.image, PLACEHOLDER_IMAGE)
-      }
-    }
-  }
-  
-  return imageMap
-}
-
-function replaceImagesInHTML(html: string, imageMap: Map<string, string>): string {
-  let result = html
-  imageMap.forEach((safeUrl, originalUrl) => {
-    if (safeUrl === PLACEHOLDER_IMAGE) {
-      result = result.replace(new RegExp(escapeRegExp(originalUrl), 'g'), PLACEHOLDER_IMAGE)
-    }
-  })
-  return result
-}
-
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
 interface CatalogProduct {
   id: string
   name: string
@@ -134,6 +91,7 @@ export function AdminCatalogPage() {
   const [brandName, setBrandName] = useState<string>("Ana's Supplements")
 
   const previewRef = useRef<HTMLDivElement>(null)
+  const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchCatalogData()
@@ -226,139 +184,228 @@ export function AdminCatalogPage() {
   }
 
   const generatePDF = async () => {
+    if (!printRef.current) {
+      console.error("Print ref not available")
+      return
+    }
     setExporting(true)
     try {
-      const jsPDF = (await import('jspdf')).default
       const html2canvas = (await import('html2canvas')).default
-      const ReactDOMServer = await import('react-dom/server')
-
-      // Verificar qué imágenes son seguras y cuáles necesitan reemplazo
-      const selectedProductsList = products.filter(p => selectedProducts.has(p.id))
-      const imageMap = await getSafeImageMap(selectedProductsList)
-
-      const allPages = renderPreview()
+      const { jsPDF } = await import('jspdf')
 
       const pdf = new jsPDF('portrait', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const pageElements = printRef.current.children
 
-      for (let i = 0; i < allPages.length; i++) {
-        const page = allPages[i]
-        if (!page) continue
+      for (let i = 0; i < pageElements.length; i++) {
+        const el = pageElements[i] as HTMLElement
 
-        const pageElement = document.createElement('div')
-        pageElement.style.width = '794px'
-        pageElement.style.height = '1123px'
-        pageElement.style.backgroundColor = '#FFFFFF'
-        pageElement.style.position = 'fixed'
-        pageElement.style.left = '-9999px'
-        pageElement.style.top = '0'
-        document.body.appendChild(pageElement)
-
-        let html = ReactDOMServer.renderToStaticMarkup(page)
-        
-        // Replace oklch colors with rgb to avoid parsing errors
-        html = html.replace(/oklch\([^)]+\)/g, 'rgb(240 240 240)')
-        
-        // Reemplazar imágenes que fallaron CORS con placeholder
-        html = replaceImagesInHTML(html, imageMap)
-
-        pageElement.innerHTML = html
-
-        // Reemplazar imágenes en el DOM clonado también
-        const images = pageElement.querySelectorAll('img')
-        images.forEach((img) => {
-          const src = img.getAttribute('src')
-          if (src && imageMap.has(src)) {
-            img.setAttribute('src', imageMap.get(src)!)
-          }
-        })
-
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        const canvas = await html2canvas(pageElement, {
+        const canvas = await html2canvas(el, {
           scale: 2,
-          width: 794,
-          height: 1123,
           useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#FFFFFF',
           logging: false,
+          backgroundColor: '#ffffff',
+          windowWidth: 794,
           onclone: (clonedDoc) => {
-            const style = clonedDoc.createElement('style')
-            style.textContent = `
-              * { 
-                background-color: #fff !important; 
-                color: #000 !important;
+            const elements = clonedDoc.getElementsByTagName('*')
+            for (let j = 0; j < elements.length; j++) {
+              const item = elements[j] as HTMLElement
+              const style = window.getComputedStyle(item)
+
+              // Corrección de texto amontonado
+              if (['H1', 'H2', 'H3', 'H4', 'P', 'SPAN'].includes(item.tagName)) {
+                item.style.lineHeight = '1.3'
+                item.style.display = 'block'
               }
-            `
-            clonedDoc.head.appendChild(style)
+
+              // Corrección de colores y sombras
+              if (style.color?.includes('oklch')) item.style.color = '#000000'
+              if (style.backgroundColor?.includes('oklch')) {
+                item.style.backgroundColor = item.tagName === 'DIV' ? 'transparent' : '#ffffff'
+              }
+              item.style.boxShadow = 'none'
+            }
           }
         })
 
-        document.body.removeChild(pageElement)
+        const imgData = canvas.toDataURL('image/jpeg', 0.95)
 
-        const imgData = canvas.toDataURL('image/png')
-        
         if (i > 0) pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297)
       }
 
-      pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`)
+      pdf.save(`Catalogo-${CATALOG_YEAR}.pdf`)
     } catch (error) {
-      console.error("Error generating PDF:", error)
+      console.error('Error detallado:', error)
     } finally {
       setExporting(false)
     }
   }
 
   const renderProductCard = (product: CatalogProduct) => (
-    <div key={product.id} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
-      <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+    <div 
+      key={product.id} 
+      style={{ 
+        backgroundColor: '#ffffff', 
+        borderRadius: '8px', 
+        padding: '16px', 
+        border: '1px solid #e5e7eb',
+        height: '320px',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Imagen con object-contain para que no se deforme */}
+      <div 
+        style={{ 
+          width: '100%', 
+          height: '180px', 
+          backgroundColor: '#f9fafb', 
+          borderRadius: '8px', 
+          marginBottom: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden'
+        }}
+      >
         {product.image ? (
           <img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-contain p-2"
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%', 
+              width: 'auto', 
+              height: 'auto',
+              objectFit: 'contain' 
+            }}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.style.display = 'none'
-              target.parentElement!.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:2rem;">📦</div>'
+              target.parentElement!.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#d1d5db;font-size:36px;">📦</div>'
             }}
           />
         ) : (
-          <div className="text-gray-300 text-4xl font-light">📦</div>
+          <div style={{ color: '#d1d5db', fontSize: '36px' }}>📦</div>
         )}
       </div>
-      <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">{product.brand}</p>
-      <h4 className="font-bold text-gray-800 text-sm leading-tight mb-1 line-clamp-2">{product.name}</h4>
-      <p className="text-xs text-gray-500 mb-2">{product.format}</p>
-      <p className="text-xs text-gray-600 line-clamp-2">{product.description}</p>
+      
+      {/* Marca */}
+      <p style={{ 
+        fontSize: '10px', 
+        color: '#9ca3af', 
+        textTransform: 'uppercase', 
+        letterSpacing: '0.05em', 
+        marginBottom: '4px',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}>
+        {product.brand}
+      </p>
+      
+      {/* Nombre del producto - sin corte */}
+      <h4 style={{ 
+        fontWeight: '700', 
+        color: '#1f2937', 
+        fontSize: '13px', 
+        lineHeight: '1.3', 
+        marginBottom: '4px',
+        overflow: 'visible',
+        display: 'block',
+        whiteSpace: 'normal'
+      }}>
+        {product.name}
+      </h4>
+      
+      {/* Formato */}
+      <p style={{ fontSize: '12px', color: '#6b7280' }}>{product.format}</p>
     </div>
   )
 
   const renderCoverPage = () => (
-    // Añadimos un ID para identificarlo en el onclone y cambiamos bg-white por estilo inline
-    <div id="catalog-capture-area" className="h-[1123px] w-[794px] p-16 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
-
-      {/* Reemplaza los divs de gradientes por colores sólidos o quítalos temporalmente */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, #ecfdf5, #ffffff)' }} />
-
-      <div className="relative z-10">
-        {/* Usar style={{ backgroundColor: '...' }} es mucho más seguro para html2canvas */}
-        <div className="w-24 h-24 mx-auto mb-8 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: '#059669' }}>
-          <span className="text-white text-3xl font-bold">A</span>
+    <div 
+      id="catalog-capture-area" 
+      style={{ 
+        height: '1123px', 
+        width: '794px', 
+        backgroundColor: '#ffffff',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '120px 80px'
+      }}
+    >
+      {/* Fondo simple */}
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: '#ecfdf5' }} />
+      
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* Logo/Icono */}
+        <div 
+          style={{ 
+            width: '120px', 
+            height: '120px', 
+            borderRadius: '24px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginBottom: '60px',
+            backgroundColor: brandColor,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+          }}
+        >
+          <span style={{ color: '#ffffff', fontSize: '56px', fontWeight: '900' }}>A</span>
         </div>
-
-        <h1 className="text-7xl font-bold text-gray-900 tracking-tight mb-4">
+        
+        {/* TÍTULO */}
+        <h1 
+          style={{ 
+            fontSize: '72px', 
+            fontWeight: '900', 
+            color: '#111827', 
+            textTransform: 'uppercase', 
+            textAlign: 'center',
+            lineHeight: 1,
+            marginBottom: '40px',
+            letterSpacing: '-0.02em'
+          }}
+        >
           {catalogTitle}
         </h1>
-        <p className="text-3xl font-medium mb-12" style={{ color: '#10b981' }}>{CATALOG_YEAR}</p>
+        
+        {/* Año */}
+        <p style={{ 
+          fontSize: '42px', 
+          fontWeight: '300', 
+          marginBottom: '50px',
+          color: brandColor 
+        }}>
+          {CATALOG_YEAR}
+        </p>
 
-        <div className="w-32 h-1 mx-auto mb-12" style={{ backgroundColor: '#10b981' }} />
-
-        <p className="text-xl text-gray-500 font-light">
-          Suplementos vitaminicos y nutricionales
+        {/* Línea decorativa */}
+        <div style={{ 
+          width: '150px', 
+          height: '6px', 
+          borderRadius: '999px', 
+          marginBottom: '50px',
+          backgroundColor: brandColor 
+        }} />
+        
+        {/* Subtítulo */}
+        <p style={{ 
+          fontSize: '24px', 
+          color: '#6b7280', 
+          fontWeight: '500', 
+          textAlign: 'center',
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          fontStyle: 'italic'
+        }}>
+          {brandName}
         </p>
       </div>
     </div>
@@ -397,24 +444,39 @@ export function AdminCatalogPage() {
       pages.push(categoryProducts.slice(i, i + gridCols * 2))
     }
 
+    // Calcular ancho de columna según gridCols
+    const gridStyle: React.CSSProperties = gridCols === 3 
+      ? { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }
+      : { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }
+
     return pages.map((pageProducts, pageIndex) => (
-      <div key={`${category.id}-${pageIndex}`} className="h-[1123px] w-[794px] bg-white p-12 flex flex-col">
+      <div 
+        key={`${category.id}-${pageIndex}`} 
+        style={{ 
+          height: '1123px', 
+          width: '794px', 
+          backgroundColor: '#ffffff', 
+          padding: '48px',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         {pageIndex === 0 && (
-          <div className="text-center mb-12 pb-8 border-b border-gray-100">
-            <h2 className="text-5xl font-bold text-gray-900 mb-4">{category.name}</h2>
-            <p className="text-xl text-emerald-600">{category.productCount} productos</p>
+          <div style={{ textAlign: 'center', marginBottom: '48px', paddingBottom: '32px', borderBottom: '1px solid #f3f4f6' }}>
+            <h2 style={{ fontSize: '48px', fontWeight: '700', color: '#111827', marginBottom: '16px' }}>{category.name}</h2>
+            <p style={{ fontSize: '20px', color: '#059669' }}>{category.productCount} productos</p>
           </div>
         )}
 
-        <div className={`grid grid-cols-${gridCols} gap-8 flex-1`}>
+        <div style={{ ...gridStyle, flex: 1 }}>
           {pageProducts.map(product => (
-            <div key={product.id} className="flex flex-col">
+            <div key={product.id} style={{ display: 'flex', flexDirection: 'column' }}>
               {renderProductCard(product)}
             </div>
           ))}
         </div>
 
-        <div className="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400">
+        <div style={{ marginTop: 'auto', paddingTop: '32px', borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#9ca3af' }}>
           <span>{catalogTitle} {CATALOG_YEAR}</span>
           <span>{category.name}</span>
         </div>
@@ -579,12 +641,19 @@ export function AdminCatalogPage() {
           <div className="flex justify-center">
             <div
               ref={previewRef}
-              id="catalog-capture-area" // Añade este ID
+              id="catalog-capture-area"
               className="scale-[0.7] origin-top shadow-2xl"
               style={{ width: '794px', height: '1123px' }}
             >
               {renderPreview()[currentPage]}
             </div>
+          </div>
+
+          {/* Contenedor oculto para todas las páginas del PDF */}
+          <div ref={printRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+            {renderPreview().map((page, index) => (
+              <div key={index}>{page}</div>
+            ))}
           </div>
         </div>
       ) : (
