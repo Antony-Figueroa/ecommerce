@@ -182,7 +182,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
                         isCollapsed ? "left-0 top-1/2 -translate-y-1/2 w-0.5 h-3" : "left-0 top-1/2 -translate-y-1/2 w-0.5 h-3"
                       )} />
                     )}
-                    
+
                     <div className={cn(
                       "flex items-center justify-center transition-colors duration-150 shrink-0",
                       isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
@@ -319,8 +319,8 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         sidebarOpen ? "md:ml-56" : "md:ml-[60px]"
       )}>
         <AdminTopNav onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="p-4 md:p-6 flex-1">
-          <div className="max-w-7xl mx-auto w-full animate-in fade-in duration-200">
+        <main className="p-4 md:px-5 md:py-6 flex-1 overflow-hidden">
+          <div className="max-w-full mx-auto w-full animate-in fade-in duration-200">
             <Suspense fallback={<PageLoader />}>
               {children || <Outlet />}
             </Suspense>

@@ -1,0 +1,38 @@
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+Error: Transform failed with 1 error:
+/eval.ts:1:7: ERROR: Unterminated string literal
+    at failureErrorWithLog (c:\Users\Server Admin\Documents\GitHub\ecommerce\node_modules\tsx\node_modules\esbuild\lib\main.js:1467:15)
+    at c:\Users\Server Admin\Documents\GitHub\ecommerce\node_modules\tsx\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (c:\Users\Server Admin\Documents\GitHub\ecommerce\node_modules\tsx\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (c:\Users\Server Admin\Documents\GitHub\ecommerce\node_modules\tsx\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (c:\Users\Server Admin\Documents\GitHub\ecommerce\node_modules\tsx\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  errors: [
+    {
+      detail: undefined,
+      id: '',
+      location: {
+        column: 7,
+        file: '/eval.ts',
+        length: 0,
+        line: 1,
+        lineText: '"import',
+        namespace: '',
+        suggestion: ''
+      },
+      notes: [],
+      pluginName: '',
+      text: 'Unterminated string literal'
+    }
+  ],
+  warnings: []
+}
+
+Node.js v24.13.0

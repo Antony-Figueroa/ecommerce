@@ -1,0 +1,112 @@
+[dotenv@17.2.3] injecting env (19) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+🚀 Iniciando importación robusta de productos...
+👤 Usando usuario auditor: antonysamuel0903@gmail.com
+⚠️ Saltando: Triple Omega 3-6-9 (Ya existe)
+⚠️ Saltando: Glucosamine Chondroitin (Ya existe)
+⚠️ Saltando: Biotina (Ya existe)
+⚠️ Saltando: Centrum Silver Women (Ya existe)
+prisma:error 
+Invalid `client.product.create()` invocation in
+c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.product.repository.ts:119:27
+
+  116 
+  117 async create(data: any, tx?: any) {
+  118   const client = tx || prisma
+→ 119   return client.product.create(
+Unique constraint failed on the fields: (`slug`)
+❌ Error importando Calcio, Magnesio y Zinc + D3: PrismaClientKnownRequestError: 
+Invalid `client.product.create()` invocation in
+c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.product.repository.ts:119:27
+
+  116 
+  117 async create(data: any, tx?: any) {
+  118   const client = tx || prisma
+→ 119   return client.product.create(
+Unique constraint failed on the fields: (`slug`)
+    at $n.handleRequestError (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async <anonymous> (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\application\services\product-manager.service.ts:153:23)
+    at async Proxy._transactionWithCallback (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:8000)
+    at async ProductManager.createProduct (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\application\services\product-manager.service.ts:150:12)
+    at async main (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\scripts\import-products.ts:187:23) {
+  code: 'P2002',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Product', target: [ 'slug' ] }
+}
+⚠️ Saltando: Vitamina C con Rose Hips (Ya existe)
+⚠️ Saltando: Zinc High Potency (Ya existe)
+⚠️ Saltando: Nutrex Creatina Drive (Ya existe)
+✅ Importado: Centrum Silver Adults (SKU: MUL-CEN-CEN-0002)
+⚠️ Saltando: Vinagre de Manzana (Ya existe)
+⚠️ Saltando: Ácido Fólico (Ya existe)
+prisma:error 
+Invalid `client.product.create()` invocation in
+c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.product.repository.ts:119:27
+
+  116 
+  117 async create(data: any, tx?: any) {
+  118   const client = tx || prisma
+→ 119   return client.product.create(
+Unique constraint failed on the fields: (`slug`)
+❌ Error importando Colágeno + Biotina: PrismaClientKnownRequestError: 
+Invalid `client.product.create()` invocation in
+c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.product.repository.ts:119:27
+
+  116 
+  117 async create(data: any, tx?: any) {
+  118   const client = tx || prisma
+→ 119   return client.product.create(
+Unique constraint failed on the fields: (`slug`)
+    at $n.handleRequestError (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async <anonymous> (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\application\services\product-manager.service.ts:153:23)
+    at async Proxy._transactionWithCallback (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:8000)
+    at async ProductManager.createProduct (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\application\services\product-manager.service.ts:150:12)
+    at async main (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\scripts\import-products.ts:187:23) {
+  code: 'P2002',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Product', target: [ 'slug' ] }
+}
+⚠️ Saltando: Vitamina E 400 IU (Ya existe)
+prisma:error 
+Invalid `client.product.create()` invocation in
+c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.product.repository.ts:119:27
+
+  116 
+  117 async create(data: any, tx?: any) {
+  118   const client = tx || prisma
+→ 119   return client.product.create(
+Unique constraint failed on the fields: (`slug`)
+❌ Error importando Turmeric Curcumin + Jengibre: PrismaClientKnownRequestError: 
+Invalid `client.product.create()` invocation in
+c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\infrastructure\persistence\prisma.product.repository.ts:119:27
+
+  116 
+  117 async create(data: any, tx?: any) {
+  118   const client = tx || prisma
+→ 119   return client.product.create(
+Unique constraint failed on the fields: (`slug`)
+    at $n.handleRequestError (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:7315)
+    at $n.handleAndLogRequestError (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6623)
+    at $n.request (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:121:6307)
+    at async l (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:9633)
+    at async <anonymous> (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\application\services\product-manager.service.ts:153:23)
+    at async Proxy._transactionWithCallback (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\generated\client\runtime\library.js:130:8000)
+    at async ProductManager.createProduct (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\src\application\services\product-manager.service.ts:150:12)
+    at async main (c:\Users\Server Admin\Documents\GitHub\ecommerce\server\scripts\import-products.ts:187:23) {
+  code: 'P2002',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Product', target: [ 'slug' ] }
+}
+⚠️ Saltando: Ajo (Garlic) 1000 mg (Ya existe)
+
+--- Resumen de Importación ---
+Total procesados: 15
+Éxito:           1
+Saltados:        11
+-----------------------------
+

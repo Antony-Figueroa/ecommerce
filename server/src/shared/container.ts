@@ -33,6 +33,8 @@ import { NotificationManager } from '../application/services/notification-manage
 import { UserService } from '../application/services/user.service.js'
 import { BusinessEventService } from '../application/services/business-event.service.js'
 import { BackupService } from '../application/services/backup.service.js'
+import { googleDriveBackupService } from '../application/services/google-drive-backup.service.js'
+export { googleDriveBackupService }
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
 import { PrismaClient } from '../generated/client/index.js'
 

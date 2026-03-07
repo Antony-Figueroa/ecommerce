@@ -164,6 +164,7 @@ async function main() {
       categoryIds: [category.id],
       brand: item.marca,
       format: item.formato,
+      productCode: item.nombre.toLowerCase().replace(/\s+/g, '-').slice(0, 20),
       isActive: true,
       minStock: 2
     }, 'SYSTEM-SEED');

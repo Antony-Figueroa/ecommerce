@@ -17,10 +17,10 @@ interface AdminPageHeaderProps {
 
 export function AdminPageHeader({ title, subtitle, icon: Icon, action, rightContent }: AdminPageHeaderProps) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="mb-12 relative"
+      className="mb-8 relative"
     >
       <div className="absolute -left-4 lg:-left-8 top-0 w-1.5 h-16 bg-primary rounded-r-full shadow-lg shadow-primary/20" />
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -39,7 +39,7 @@ export function AdminPageHeader({ title, subtitle, icon: Icon, action, rightCont
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           {rightContent}
           {action && (
-            <Button 
+            <Button
               onClick={action.onClick}
               className="h-11 bg-primary hover:bg-primary/90 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-[0.98] rounded-xl px-6"
             >

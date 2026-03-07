@@ -11,7 +11,9 @@ router.get('/locations', async (_req: Request, res: Response) => {
     const locations = await inventoryLocationRepo.findAll()
     res.json({ locations })
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener ubicaciones' })
+    console.error('Error in GET /locations:', error)
+    import('fs').then(fs => fs.appendFileSync('server_errors.log', `[${new Date().toISOString()}] GET /locations: ${error instanceof Error ? error.stack : String(error)}\n`))
+    res.status(500).json({ error: 'Error al obtener ubicaciones', message: error instanceof Error ? error.message : String(error) })
   }
 })
 
@@ -62,7 +64,9 @@ router.get('/transfers', async (req: Request, res: Response) => {
     const transfers = await inventoryTransferRepo.findAll({ status: status as string })
     res.json({ transfers })
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener transferencias' })
+    console.error('Error in GET /transfers:', error)
+    import('fs').then(fs => fs.appendFileSync('server_errors.log', `[${new Date().toISOString()}] GET /transfers: ${error instanceof Error ? error.stack : String(error)}\n`))
+    res.status(500).json({ error: 'Error al obtener transferencias', message: error instanceof Error ? error.message : String(error) })
   }
 })
 

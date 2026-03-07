@@ -101,8 +101,7 @@ export class PrismaInventoryLogRepository implements InventoryLogRepository {
   async create(data: any, tx?: any): Promise<InventoryLog> {
     const client = tx || prisma
     const log = await client.inventoryLog.create({
-      data,
-      include: { product: true }
+      data
     })
     return log as unknown as InventoryLog
   }

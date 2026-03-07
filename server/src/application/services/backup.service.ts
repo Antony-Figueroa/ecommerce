@@ -43,10 +43,8 @@ export class BackupService {
         return null;
       }
 
-      // Asegurar que la carpeta de respaldos existe
       await fs.mkdir(this.backupDir, { recursive: true });
 
-      // Generar nombre de archivo con fecha y hora
       const now = new Date();
       const timestamp = now.toISOString()
         .replace(/:/g, '-')
@@ -56,12 +54,10 @@ export class BackupService {
       const backupFilename = `db_backup_${timestamp}.db`;
       const destination = path.join(this.backupDir, backupFilename);
 
-      // Copiar el archivo
       await fs.copyFile(this.dbPath, destination);
 
       console.log(`✅ Respaldo creado exitosamente: ${backupFilename}`);
       
-      // Opcional: Limpiar respaldos antiguos (mantener los últimos 30 días)
       await this.cleanupOldBackups();
       
       return {
@@ -73,6 +69,26 @@ export class BackupService {
       console.error('❌ Error creando respaldo:', error);
       throw error;
     }
+  }
+
+  /**
+   * Crea respaldo y sincroniza a Google Drive
+   */
+  async createAndSyncBackup(): Promise<{ success: boolean; filename?: string; message: string }> {
+    const result = await this.createBackup()
+    
+    if (!result) {
+      return { success: false, message: 'Error al crear respaldo local' }
+    }
+
+    const { googleDriveBackupService } = await import('../../shared/container.js')
+    const uploadResult = await googleDriveBackupService.uploadBackup(result.filename)
+    
+    if (uploadResult.success) {
+      return { success: true, filename: result.filename, message: `Respaldo creado y sincronizado a Google Drive` }
+    }
+    
+    return { success: true, filename: result.filename, message: `Respaldo creado (sincronización a Drive pendiente: ${uploadResult.message})` }
   }
 
   /**
@@ -206,6 +222,40 @@ export class BackupService {
       }
     } catch (error) {
       console.error('Error limpiando respaldos antiguos:', error);
+    }
+  }
+
+  /**
+   * Obtiene el respaldo más reciente
+   */
+  async getLatestBackup() {
+    const backups = await this.listBackups();
+    return backups.length > 0 ? backups[0] : null;
+  }
+
+  /**
+   * Restaura automáticamente el respaldo más reciente
+   * Útil para mantener sincronizada la base de datos entre máquinas
+   */
+  async restoreLatestBackup(): Promise<{ success: boolean; filename?: string; message: string }> {
+    try {
+      const latestBackup = await this.getLatestBackup();
+      
+      if (!latestBackup) {
+        return { success: false, message: 'No hay respaldos disponibles' };
+      }
+
+      console.log(`[${new Date().toISOString()}] Restaurando respaldo más reciente: ${latestBackup.filename}`);
+      await this.restoreBackup(latestBackup.filename);
+      
+      return { 
+        success: true, 
+        filename: latestBackup.filename, 
+        message: `Restaurado desde: ${latestBackup.filename}` 
+      };
+    } catch (error) {
+      console.error('❌ Error restaurando respaldo más reciente:', error);
+      return { success: false, message: `Error: ${error}` };
     }
   }
 }

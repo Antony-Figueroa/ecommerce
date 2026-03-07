@@ -34,10 +34,12 @@ import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
 import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
-import { notificationService, bcvUpdaterService, cartService, backupService } from './shared/container.js'
+import { notificationService, bcvUpdaterService, cartService, backupService, googleDriveBackupService } from './shared/container.js'
+import { sheetsSyncService } from './application/services/sheets-sync.service.js'
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
 import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
+import syncRoutes from './infrastructure/web/routes/sync.routes.js'
 
 import { createServer } from 'http'
 import { socketService } from './infrastructure/socket.service.js'
@@ -157,6 +159,7 @@ app.use('/api/admin/inventory', adminInventoryRoutes)
 app.use('/api/admin/catalog', adminCatalogRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
+app.use('/api/sync', syncRoutes)
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
@@ -219,6 +222,41 @@ if (RUN_TASKS) {
   // Ejecutar un respaldo inicial al arrancar
   runBgTask('backupService.createBackup (initial)', () => backupService.createBackup())
 
+  // Restaurar respaldo más reciente si la variable AUTO_RESTORE_DB está habilitada
+  if (process.env.AUTO_RESTORE_DB === 'true') {
+    setTimeout(() => {
+      console.log('[AutoRestore] Intentando restaurar respaldo más reciente...')
+      runBgTask('backupService.restoreLatestBackup (auto)', async () => {
+        const result = await backupService.restoreLatestBackup()
+        if (result.success) {
+          console.log(`[AutoRestore] ✅ ${result.message}`)
+        } else {
+          console.log(`[AutoRestore] ℹ️ ${result.message}`)
+        }
+      })
+    }, 5000)
+  }
+
+  // Sincronizar desde Google Drive al iniciar
+  if (process.env.GOOGLE_DRIVE_ENABLED === 'true' && process.env.AUTO_RESTORE_DB === 'true') {
+    setTimeout(() => {
+      console.log('[DriveSync] Iniciando sincronización desde Google Drive...')
+      runBgTask('googleDriveBackupService.syncFromRemote (auto)', async () => {
+        const result = await googleDriveBackupService.syncFromRemote()
+        if (result.success) {
+          console.log(`[DriveSync] ✅ ${result.message}`)
+          // Una vez descargado, restaurar a la BD
+          const restoreResult = await backupService.restoreLatestBackup()
+          if (restoreResult.success) {
+            console.log(`[DriveSync] ✅ Base de datos actualizada: ${restoreResult.message}`)
+          }
+        } else {
+          console.log(`[DriveSync] ℹ️ ${result.message}`)
+        }
+      })
+    }, 8000)
+  }
+
   // Ejecución inicial después de un retraso
   setTimeout(() => {
     console.log('Ejecutando tareas iniciales de segundo plano...')
@@ -227,6 +265,20 @@ if (RUN_TASKS) {
     runBgTask('bcvUpdaterService.updateRate (startup)', () => bcvUpdaterService.updateRate())
     runBgTask('cartService.checkAbandonedCarts (startup)', () => cartService.checkAbandonedCarts())
   }, 30000)
+
+  // Inicializar sincronización con Google Drive (respaldos)
+  setTimeout(() => {
+    googleDriveBackupService.initialize().catch((err) => {
+      console.error('[GoogleDrive] Error al inicializar:', err)
+    })
+  }, 3000)
+
+  // Inicializar sincronización con Google Sheets
+  setTimeout(() => {
+    sheetsSyncService.initialize().catch((err) => {
+      console.error('[SheetsSync] Error al inicializar:', err)
+    })
+  }, 5000)
 }
 
 httpServer.on('error', (err) => {
