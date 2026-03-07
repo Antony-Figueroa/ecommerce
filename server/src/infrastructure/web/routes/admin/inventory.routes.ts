@@ -29,7 +29,7 @@ router.post('/locations', async (req: Request, res: Response) => {
 
 router.put('/locations/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     const { name, description, address, isActive, isDefault } = req.body
     const location = await inventoryLocationRepo.update(id, { name, description, address, isActive, isDefault })
     res.json(location)
@@ -40,7 +40,7 @@ router.put('/locations/:id', async (req: Request, res: Response) => {
 
 router.delete('/locations/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     await inventoryLocationRepo.delete(id)
     res.status(204).send()
   } catch (error) {
@@ -50,7 +50,7 @@ router.delete('/locations/:id', async (req: Request, res: Response) => {
 
 router.get('/locations/:id/stock', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     const stock = await inventoryStockRepo.findAll(id)
     res.json({ stock })
   } catch (error) {
@@ -98,7 +98,7 @@ router.post('/transfers', async (req: Request, res: Response) => {
 
 router.post('/transfers/:id/complete', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     const transfer = await inventoryTransferRepo.complete(id)
     res.json(transfer)
   } catch (error) {
@@ -108,7 +108,7 @@ router.post('/transfers/:id/complete', async (req: Request, res: Response) => {
 
 router.post('/transfers/:id/cancel', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     const transfer = await inventoryTransferRepo.cancel(id)
     res.json(transfer)
   } catch (error) {

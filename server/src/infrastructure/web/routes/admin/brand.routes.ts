@@ -35,7 +35,8 @@ router.put('/:id', async (req: Request, res: Response) => {
         const userId = (req as any).user?.id
         const ipAddress = req.ip
         const userAgent = req.get('User-Agent')
-        const brand = await inventoryService.updateBrand(req.params.id, req.body, userId, ipAddress, userAgent)
+        const brandId = req.params.id as string
+        const brand = await inventoryService.updateBrand(brandId, req.body, userId, ipAddress, userAgent)
         res.json(brand)
     } catch (error) {
         console.error('Error al actualizar marca:', error)
@@ -48,7 +49,8 @@ router.delete('/:id', async (req: Request, res: Response) => {
         const userId = (req as any).user?.id
         const ipAddress = req.ip
         const userAgent = req.get('User-Agent')
-        await inventoryService.deleteBrand(req.params.id, userId, ipAddress, userAgent)
+        const brandId = req.params.id as string
+        await inventoryService.deleteBrand(brandId, userId, ipAddress, userAgent)
         res.json({ success: true })
     } catch (error) {
         console.error('Error al eliminar marca:', error)

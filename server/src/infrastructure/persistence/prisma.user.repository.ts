@@ -40,12 +40,12 @@ export class PrismaUserRepository implements UserRepository {
 
   async create(data: any): Promise<User> {
     const user = await prisma.user.create({ data })
-    return user as User
+    return user as unknown as User
   }
 
   async update(id: string, data: any): Promise<User> {
     const user = await prisma.user.update({ where: { id }, data })
-    return user as User
+    return user as unknown as User
   }
 
   async delete(id: string): Promise<void> {
@@ -58,6 +58,6 @@ export class PrismaUserRepository implements UserRepository {
 
   async findAll(options: any): Promise<User[]> {
     const users = await prisma.user.findMany(options)
-    return users as User[]
+    return users as unknown as User[]
   }
 }

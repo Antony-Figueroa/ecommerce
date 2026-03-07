@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { settingsService } from '../../../../shared/container.js'
+import { googleDriveBackupService } from '../../../../application/services/google-drive-backup.service.js'
 import { authenticate, authorize } from '../../middleware/auth.middleware.js'
 import { validate } from '../../middleware/validation.middleware.js'
 import { z } from 'zod'
@@ -107,6 +108,100 @@ router.delete('/backups/:filename', async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(error.status || 500).json({ error: error.message || 'Error al eliminar respaldo' })
   }
+})
+
+/**
+ * GET /api/admin/settings/backups/remote
+ * Lista los respaldos disponibles en Google Drive
+ */
+router.get('/backups/remote', async (_req: Request, res: Response) => {
+  try {
+    const backups = await googleDriveBackupService.listRemoteBackups()
+    res.json(backups)
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Error al listar respaldos remotos' })
+  }
+})
+
+/**
+ * POST /api/admin/settings/backups/:filename/upload
+ * Sube un respaldo local a Google Drive
+ */
+router.post('/backups/:filename/upload', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const { filename } = req.params as { filename: string }
+    const { password } = req.body
+    
+    // Verificar contraseña de admin
+    await settingsService.verifyAdminPassword(userId, password)
+    
+    const result = await googleDriveBackupService.uploadBackup(filename)
+    res.json(result)
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al subir respaldo' })
+  }
+})
+
+/**
+ * POST /api/admin/settings/backups/:filename/download
+ * Descarga un respaldo desde Google Drive al servidor local
+ */
+router.post('/backups/:filename/download', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const { filename } = req.params as { filename: string }
+    const { password } = req.body
+    
+    // Verificar contraseña de admin
+    await settingsService.verifyAdminPassword(userId, password)
+    
+    const result = await googleDriveBackupService.downloadBackup(filename)
+    res.json(result)
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al descargar respaldo' })
+  }
+})
+
+/**
+ * POST /api/admin/settings/backups/remote/:filename/restore
+ * Descarga y restaura un respaldo desde Google Drive (requiere contraseña)
+ */
+router.post('/backups/remote/:filename/restore', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id
+    const { filename } = req.params as { filename: string }
+    const { password } = req.body
+    
+    // Verificar contraseña de admin (requerida)
+    await settingsService.verifyAdminPassword(userId, password)
+    
+    // Descargar desde Google Drive
+    const downloadResult = await googleDriveBackupService.downloadBackup(filename)
+    if (!downloadResult.success) {
+      res.status(400).json({ error: downloadResult.message })
+      return
+    }
+    
+    // Restaurar el respaldo descargado
+    const restoreResult = await settingsService.restoreBackup(userId, filename, password)
+    res.json({ 
+      successMessage: 'Restaurado desde Google Drive',
+      ...restoreResult
+    })
+  } catch (error: any) {
+    res.status(error.status || 500).json({ error: error.message || 'Error al restaurar desde Drive' })
+  }
+})
+
+/**
+ * GET /api/admin/settings/backups/google-drive/status
+ * Verifica el estado de conexión con Google Drive
+ */
+router.get('/backups/google-drive/status', async (_req: Request, res: Response) => {
+  res.json({ 
+    configured: googleDriveBackupService.isConfigured 
+  })
 })
 
 /**

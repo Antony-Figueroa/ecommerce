@@ -12,7 +12,7 @@ interface DriveBackupConfig {
   enabled: boolean
 }
 
-interface RemoteBackupFile {
+export interface RemoteBackupFile {
   filename: string
   id: string
   modifiedTime: string

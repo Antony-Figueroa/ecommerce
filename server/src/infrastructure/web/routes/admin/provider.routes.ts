@@ -30,7 +30,7 @@ router.post('/', validate(providerCreateSchema), async (req: Request, res: Respo
 
 router.put('/:id', validate(providerUpdateSchema), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     const userId = (req as any).user?.id
     const ipAddress = req.ip
     const userAgent = req.get('User-Agent')
@@ -46,7 +46,7 @@ router.put('/:id', validate(providerUpdateSchema), async (req: Request, res: Res
 
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params
+    const { id } = req.params as { id: string }
     const userId = (req as any).user?.id
     const ipAddress = req.ip
     const userAgent = req.get('User-Agent')
