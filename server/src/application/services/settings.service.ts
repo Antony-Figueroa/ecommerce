@@ -66,12 +66,24 @@ export class SettingsService {
   }
 
   /**
-   * Restaura un respaldo de la base de datos
+   * Lista los respaldos remotos (Google Drive)
    */
-  async restoreBackup(userId: string, filename: string, password?: string) {
-    if (password) {
-      await this.verifyAdminPassword(userId, password)
+  async listRemoteBackups() {
+    const { googleDriveBackupService } = await import('../../shared/container.js')
+    return await googleDriveBackupService.listRemoteBackups()
+  }
+
+  /**
+   * Restaura un respaldo de la base de datos
+   * IMPORTANTE: Requiere contraseña de administrador
+   */
+  async restoreBackup(userId: string, filename: string, password: string) {
+    // La contraseña es requerida para restaurar
+    if (!password) {
+      throw new ValidationError('Se requiere contraseña de administrador para restaurar un respaldo')
     }
+    
+    await this.verifyAdminPassword(userId, password)
 
     const result = await this.backupService.restoreBackup(filename)
     

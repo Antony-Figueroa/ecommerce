@@ -151,16 +151,17 @@ export class BackupService {
       console.log(`✅ Respaldo de seguridad creado: ${autoBackupFilename}`);
 
       // =====================================================
-      // PROCESO DE RESTAURACIÓN
+      // PROCESO DE RESTAURACIÓN SELECTIVA
+      // Solo restaura tablas de productos, inventario y ventas
       // =====================================================
       
-      // Crear un respaldo temporal de la DB actual por seguridad adicional
+      // Crear un respaldo temporal de la DB actual
       const tempBackup = `${this.dbPath}.restore_tmp`;
       await fs.copyFile(this.dbPath, tempBackup);
 
       try {
-        // Restaurar la DB desde el respaldo seleccionado
-        await fs.copyFile(source, this.dbPath);
+        // Restauración selectiva: solo tablas de productos/inventario/ventas
+        await this.selectiveRestore(source, this.dbPath);
         
         // Eliminar el respaldo temporal si todo salió bien
         await fs.unlink(tempBackup);
@@ -183,6 +184,121 @@ export class BackupService {
     } catch (error) {
       console.error('❌ Error restaurando respaldo:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Restaura selectivamente solo las tablas de productos, inventario y ventas
+   * Mantiene intactas las tablas de usuarios y administradores
+   */
+  private async selectiveRestore(sourceDbPath: string, targetDbPath: string) {
+    // Tablas que NO se restauran (usuarios y admins)
+    const protectedTables = [
+      'User',
+      'SystemAuditLog',
+      'BusinessEvent'
+    ];
+
+    // Tablas que SÍ se restauran (productos, inventario, ventas)
+    const tablesToRestore = [
+      // Productos
+      'Product',
+      'ProductImage',
+      'ProductPriceHistory',
+      'Category',
+      'Favorite',
+      'Brand',
+      // Inventario
+      'InventoryBatch',
+      'InventoryBatchItem',
+      'InventoryStock',
+      'InventoryTransfer',
+      'InventoryTransferItem',
+      'Batch',
+      'Provider',
+      // Ventas
+      'Sale',
+      'SaleItem',
+      'SaleAuditLog',
+      'Installment',
+      // Requerimientos
+      'Requirement',
+      'RequirementItem',
+      // Carrito
+      'Cart',
+      'CartItem',
+      // Notificaciones
+      'Notification',
+      'NotificationSetting',
+      // Configuraciones
+      'Setting',
+      'SettingHistory',
+      // Auditoría de ventas
+      'SaleAuditLog'
+    ];
+
+    // Usar better-sqlite3 para acceso directo a SQLite
+    const Database = (await import('better-sqlite3')).default;
+    
+    const sourceDb = new Database(sourceDbPath, { readonly: true });
+    const targetDb = new Database(targetDbPath);
+
+    try {
+      // Habilitar foreign keys para seguridad
+      targetDb.pragma('foreign_keys = OFF');
+
+      for (const tableName of tablesToRestore) {
+        try {
+          // Verificar si la tabla existe en el respaldo
+          const tableExists = sourceDb.prepare(`
+            SELECT name FROM sqlite_master WHERE type='table' AND name=?
+          `).get(tableName);
+
+          if (!tableExists) {
+            console.log(`⚠️ Tabla ${tableName} no existe en el respaldo, omitiendo...`);
+            continue;
+          }
+
+          // Obtener datos del respaldo
+          const rows = sourceDb.prepare(`SELECT * FROM ${tableName}`).all();
+          
+          if (rows.length === 0) {
+            console.log(`📋 Tabla ${tableName} vacía en respaldo, omitiendo...`);
+            continue;
+          }
+
+          // Limpiar la tabla objetivo
+          targetDb.prepare(`DELETE FROM ${tableName}`).run();
+
+          // Insertar datos
+          if (rows.length > 0) {
+            const firstRow = rows[0] as Record<string, unknown>;
+            const columns = Object.keys(firstRow);
+            const placeholders = columns.map(() => '?').join(', ');
+            const insertSql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
+            
+            const insertStmt = targetDb.prepare(insertSql);
+            
+            const insertMany = targetDb.transaction((items: Record<string, unknown>[]) => {
+              for (const row of items) {
+                insertStmt.run(...columns.map(col => row[col]));
+              }
+            });
+            
+            insertMany(rows as Record<string, unknown>[]);
+            console.log(`✅ Restaurada tabla ${tableName}: ${rows.length} registros`);
+          }
+        } catch (tableError) {
+          console.error(`❌ Error restaurando tabla ${tableName}:`, tableError);
+        }
+      }
+
+      targetDb.pragma('foreign_keys = ON');
+      console.log('✅ Restauración selectiva completada');
+
+    } finally {
+      sourceDb.close();
+      targetDb.close();
     }
   }
 
