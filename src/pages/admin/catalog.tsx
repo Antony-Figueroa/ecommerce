@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { api } from "@/lib/api"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
@@ -90,6 +90,12 @@ export function AdminCatalogPage() {
   const [brandLogo, setBrandLogo] = useState<string>("")
   const [brandColor, setBrandColor] = useState<string>("#10b981")
   const [brandName, setBrandName] = useState<string>("Ana's Supplements")
+  const [catalogEditionName, setCatalogEditionName] = useState<string>("Collection")
+  const [catalogWebsite, setCatalogWebsite] = useState<string>("www.anas-supplements.com")
+  const [introStatement, setIntroStatement] = useState<string>("Curating health\nwith scientific\nprecision.")
+  const [introDescription, setIntroDescription] = useState<string>(
+    `En ${brandName}, creemos que el bienestar no es un destino, sino un viaje continuo de mejora y equilibrio. Nuestra misión es proporcionar los suplementos más puros y efectivos, respaldados por la ciencia y seleccionados con un estándar de calidad inigualable.\n\nEste catálogo presenta nuestra colección ${CATALOG_YEAR}, una selección curada de vitaminas, minerales y fórmulas diseñadas para potenciar cada aspecto de su salud. Desde el apoyo inmunológico hasta la optimización del rendimiento, cada producto ha sido elegido para reflejar nuestro compromiso con la excelencia.`
+  )
   
   const previewRef = useRef<HTMLDivElement>(null)
 
@@ -100,13 +106,22 @@ export function AdminCatalogPage() {
   // Derived filters
   const formats = Array.from(new Set(products.map(p => p.format).filter(Boolean)))
   
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = useMemo(() => products.filter(p => 
     p.visible && 
     (selectedCategory === "all" || p.categoryId === selectedCategory) &&
     (brandFilter === "all" || p.brand === brandFilter) &&
     (formatFilter === "all" || p.format === formatFilter) &&
-    (selectedProducts.size === 0 || selectedProducts.has(p.id))
-  )
+    (selectedProducts.size === 0 || selectedProducts.has(p.id)) &&
+    (exportCategory === "all" || p.categoryId === exportCategory)
+  ), [products, selectedCategory, brandFilter, formatFilter, selectedProducts, exportCategory])
+
+  const filteredCategories = useMemo(() => {
+    const categoryIds = new Set(filteredProducts.map(p => p.categoryId).filter(Boolean))
+    return categories.filter(c => categoryIds.has(c.id)).map(c => ({
+      ...c,
+      productCount: filteredProducts.filter(p => p.categoryId === c.id).length
+    }))
+  }, [categories, filteredProducts])
 
   const productsWithoutImage = products.filter(p => !p.image && p.visible)
 
@@ -174,38 +189,73 @@ export function AdminCatalogPage() {
   }
 
   const getCategoryPageNumber = (categoryId: string) => {
-    let page = 2
-    for (const cat of categories) {
+    let page = 4
+    for (const cat of filteredCategories) {
       if (cat.id === categoryId) break
-      const catProducts = products.filter(p => p.categoryId === cat.id && p.visible)
-      page += Math.ceil(catProducts.length / (gridCols * 2)) + 1
+      const catProducts = filteredProducts.filter(p => p.categoryId === cat.id)
+      page += Math.ceil(catProducts.length / (gridCols * 2)) || 1
     }
     return page
   }
 
   const generatePDF = async () => {
-    if (!previewRef.current) return
-    
     setExporting(true)
     try {
-      const html2canvas = (await import('html2canvas')).default
       const jsPDF = (await import('jspdf')).default
+      const html2canvas = (await import('html2canvas')).default
+      const ReactDOMServer = await import('react-dom/server')
 
-      const element = previewRef.current
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 794,
-        windowHeight: 1123
-      })
-      
-      const imgData = canvas.toDataURL('image/png')
+      const allPages = renderPreview()
+
       const pdf = new jsPDF('portrait', 'mm', 'a4')
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+
+      const container = document.createElement('div')
+      container.style.cssText = 'position: fixed; left: 0; top: 0; width: 794px; min-height: 1123px; background: white; z-index: 99999;'
+      document.body.appendChild(container)
+
+      for (let i = 0; i < allPages.length; i++) {
+        container.innerHTML = ''
+        
+        const page = allPages[i]
+        if (!page) continue
+
+        let html = ReactDOMServer.renderToStaticMarkup(page)
+        
+        // Remove ALL className attributes completely
+        html = html.replace(/class="[^"]*"/g, '')
+        
+        // Also remove any style attributes that might have oklch
+        html = html.replace(/style="[^"]*oklch[^"]*"/g, '')
+        
+        // Remove any remaining oklch references
+        html = html.replace(/oklch\([^)]*\)/g, '#000000')
+        
+        // Remove any hsl references
+        html = html.replace(/hsl\([^)]+\)/g, '#000000')
+        
+        // Remove all remaining style="..." that might cause issues
+        html = html.replace(/style="[^"]*"/g, '')
+        
+        container.innerHTML = html
+
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          windowWidth: 794,
+          windowHeight: 1123,
+          backgroundColor: '#FFFFFF'
+        })
+
+        const imgData = canvas.toDataURL('image/png')
+        
+        if (i > 0) pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+      }
+
+      document.body.removeChild(container)
       pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`)
     } catch (error) {
       console.error("Error generating PDF:", error)
@@ -324,14 +374,48 @@ export function AdminCatalogPage() {
     ))
   }
 
+  const renderCategoryPageFiltered = (category: CatalogCategory) => {
+    const categoryProducts = filteredProducts.filter(p => p.categoryId === category.id)
+    if (categoryProducts.length === 0) return []
+
+    const pages: CatalogProduct[][] = []
+    for (let i = 0; i < categoryProducts.length; i += gridCols * 2) {
+      pages.push(categoryProducts.slice(i, i + gridCols * 2))
+    }
+    
+    return pages.map((pageProducts, pageIndex) => (
+      <div key={`${category.id}-filtered-${pageIndex}`} className="h-[1123px] w-[794px] bg-white p-12 flex flex-col">
+        {pageIndex === 0 && (
+          <div className="text-center mb-12 pb-8 border-b border-gray-100">
+            <h2 className="text-5xl font-bold text-gray-900 mb-4">{category.name}</h2>
+            <p className="text-xl text-emerald-600">{pageProducts.length} productos</p>
+          </div>
+        )}
+        
+        <div className={`grid grid-cols-${gridCols} gap-8 flex-1`}>
+          {pageProducts.map(product => (
+            <div key={product.id} className="flex flex-col">
+              {renderProductCard(product)}
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400">
+          <span>{catalogTitle} {CATALOG_YEAR}</span>
+          <span>{category.name}</span>
+        </div>
+      </div>
+    ))
+  }
+
   const renderPreview = () => {
     const pages: JSX.Element[] = []
     
     pages.push(renderCoverPage())
     pages.push(renderTOCPage())
     
-    categories.forEach(category => {
-      pages.push(...renderCategoryPage(category))
+    filteredCategories.forEach(category => {
+      pages.push(...renderCategoryPageFiltered(category))
     })
     
     return pages

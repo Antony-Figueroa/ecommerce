@@ -1,237 +1,137 @@
-# 🛠️ Guía de Desarrollo y Estándares - Ana's Supplements
+# AGENTS.md - Ana's Supplements Development Guide
 
-Esta guía proporciona la información técnica necesaria para el desarrollo, mantenimiento y despliegue del ecosistema Ana's Supplements.
+## 🚀 Commands
 
----
-
-## 🚀 Comandos de Desarrollo
-
-### Instalación
-
+### Installation
 ```bash
 npm install
 ```
 
-### Frontend (Vite)
+### Development
+- `npm run dev` - Start both frontend (5173) and backend (3001)
+- `npm run dev:frontend` - Frontend only (Vite)
+- `npm run dev:backend` - Backend only (Express + tsx)
 
-- `npm run dev`:  Inicia el servidor de desarrollo (puerto 5173).
-- `npm run build`: Compilación TypeScript + Build de producción.
-- `npm run preview`: Previsualiza el build de producción.
+### Build
+- `npm run build` - Build frontend (TypeScript + Vite)
+- `npm run server:build` - Build backend (TypeScript)
+- `npm run preview` - Preview production build
 
-### Backend (Express + Prisma)
+### Database (Prisma)
+- `npm run db:generate` - Generate Prisma client
+- `npm run db:push` - Sync schema to database
+- `npm run db:seed` - Seed with test data
+- `npm run db:studio` - Open Prisma Studio GUI
 
-- `npm run server`:  Inicia el servidor con `tsx` (puerto 3001).
-- `npm run server:build`: Compila el TypeScript del servidor.
-- `cd server && node dist/index.js`: Inicia el servidor de producción.
+### Quality
+- `npm run lint` - Run ESLint
+- `npm run lint -- --fix` - Auto-fix lint errors
+- `tsc --noEmit` - TypeScript check
 
-### Base de Datos (Prisma)
-
-- `npm run db:generate`:  Genera el cliente Prisma.
-- `npm run db:push`: Sincroniza el esquema con la base de datos.
-- `npm run db:seed`: Puebla la base de datos con datos de prueba.
-- `npm run db:studio`: Abre la interfaz GUI de Prisma Studio.
-
-### Calidad de Código
-
-- `npm run lint`:  Ejecuta ESLint.
-- `npm run lint -- --fix`: Corrige errores de linting automáticamente.
-- `tsc --noEmit`: Verificación de tipos sin emisión de archivos.
+### Testing (Jest)
+- `npm test` - Run all tests
+- `npm test -- --testPathPattern=<pattern>` - Run tests matching pattern
+- `npm test -- --testNamePattern=<name>` - Run tests with specific name
+- `npm test -- <file>` - Run single test file
 
 ---
 
-## ⚙️ Configuración del Entorno
+## ⚙️ Environment Setup
 
-Cree archivos `.env` en la raíz y en `server/`:
+Create `.env` files:
 
-### Frontend (`.env`)
-
-```bash
+**Frontend (`.env`)**
+```
 VITE_API_URL=http://localhost:3001/api
 ```
 
-### Backend (`server/.env`)
-
-```bash
+**Backend (`server/.env`)**
+```
 DATABASE_URL="file:./dev.db"
-JWT_SECRET=tu-clave-secreta
+JWT_SECRET=your-secret-key
 PORT=3001
 ```
 
 ---
 
-## 🎨 Estándares de Código
+## 🎨 Code Style
 
-### Orden de Importación
+### Import Order
+1. React and Hooks
+2. External libraries (Router, etc.)
+3. UI components (`@/components/ui`)
+4. Admin components (`@/components/admin`)
+5. Utilities (`@/lib/utils`)
+6. Contexts and custom hooks
+7. Types and Interfaces
+8. API and Services
 
-Siga este orden para mantener la consistencia:
+### Naming Conventions
+- **Components**: `PascalCase` (e.g., `ProductCard.tsx`)
+- **Hooks**: `useCamelCase` (e.g., `useCart.ts`)
+- **Utilities**: `camelCase` (e.g., `formatPrice.ts`)
+- **Constants**: `SCREAMING_SNAKE_CASE` (e.g., `API_BASE`)
+- **Types/Interfaces**: `PascalCase` (no `I` prefix)
+- **Files**: `kebab-case.tsx` for general components
 
-1. React y Hooks
-2. Librerías externas (Router, etc.)
-3. Componentes de UI (`@/components/ui`)
-4. Componentes Admin (`@/components/admin`)
-5. Utilidades (`@/lib/utils`)
-6. Contextos y Hooks propios
-7. Tipos e Interfaces
-8. API y Servicios
+### TypeScript
+- Prefer **Interfaces** for objects, **Types** for unions
+- Use `Zod` for validation (required in both frontend and backend)
+- Avoid `any`, use `unknown` when type is uncertain
 
-### Convenciones de Nomenclatura
-
-- **Componentes**:  `PascalCase` (`ProductCard.tsx`)
-- **Hooks**: `useCamelCase` (`useCart.ts`)
-- **Utilidades**: `camelCase` (`formatPrice.ts`)
-- **Constantes**: `SCREAMING_SNAKE_CASE` (`API_BASE`)
-- **Interfaces/Types**: `PascalCase` (sin prefijo `I`)
-- **Archivos**: `kebab-case.tsx` para componentes generales.
+### React Patterns
+- Use `forwardRef` for components accepting refs (shadcn/ui standard)
+- Use **Context Provider** pattern for shared state
+- Use `cn()` from `@/lib/utils` for conditional Tailwind classes
 
 ---
 
-## 🏗️ Arquitectura y Estructura
+## 🏗️ Project Structure
 
-### Estructura de Carpetas
+```
+src/                    # Frontend (Vite + React)
+├── components/         # UI, Layout, Shop, Cart, Product
+│   └── admin/         # Admin components (use these!)
+├── pages/             # Routes and pages
+├── contexts/          # Global state
+├── hooks/             # Reusable hooks
+├── lib/               # API clients, utilities
+└── types/             # TypeScript definitions
 
-```text
-├── src/                # Frontend
-│   ├── components/     # UI, Layout, Shop, Cart, Product
-│   │   └── admin/     # Componentes admin unificados
-│   ├── pages/         # Páginas y rutas
-│   ├── contexts/      # Gestión de estado global
-│   ├── hooks/         # Lógica reutilizable
-│   ├── lib/           # Clientes API y utilidades
-│   └── types/         # Definiciones de TypeScript
-├── server/            # Backend
-│   ├── src/           # Controladores, Rutas, Servicios
-│   └── prisma/       # Esquema y migraciones
+server/                 # Backend (Express + Prisma)
+├── src/               # Controllers, Routes, Services
+└── prisma/            # Schema and migrations
 ```
 
-### Patrones React
+---
 
-- Preferir **Interfaces** para objetos y **Types** para uniones.
-- Usar `forwardRef` para componentes que aceptan refs (estándar shadcn/ui).
-- Implementar el patrón **Context Provider** para estados compartidos.
-- Utilizar `cn()` para la gestión condicional de clases Tailwind.
+## 🎯 Required Admin Components
+
+Use these unified components from `@/components/admin/`:
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| AdminCard | `admin-card.tsx` | Content containers |
+| AdminTable | `admin-table.tsx` | Data tables |
+| AdminBadge | `admin-badge.tsx` | Status labels |
+| AdminButton | `admin-button.tsx` | Buttons with variants |
+| FilterSelect | `admin-filter-select.tsx` | State filters (NOT buttons) |
+| Pagination | `pagination.tsx` | Table pagination |
+| ConfirmDialog | `confirm-dialog.tsx` | Confirmation modals |
 
 ---
 
-## 🎯 Componentes Admin Unificados
+## 🛡️ Error Handling
 
-**IMPORTANTE**: Para mantener consistencia en toda la interfaz admin, USE los siguientes componentes creados en `@/components/admin/`:
-
-### AdminCard
-- Uso: Contenedores de contenido con estilos consistentes
-- Props: `hover`, `padding` ("none" | "sm" | "md" | "lg")
-- Archivo: `src/components/admin/admin-card.tsx`
-
-### AdminTable
-- Uso: Tablas de datos con estilos consistentes
-- Incluye: `AdminTable`, `AdminTableHeader`, `AdminTableBody`, `AdminTableRow`, `AdminTableHead`, `AdminTableCell`, `AdminTableEmpty`
-- Archivo: `src/components/admin/admin-table.tsx`
-
-### AdminBadge
-- Uso: Etiquetas de estado y categorización
-- Variantes: `default`, `success`, `warning`, `danger`, `info`, `neutral`, `outline`
-- Tamaños: `sm`, `md`, `lg`
-- Incluye helper `StatusBadge` para estados de pedido
-- Archivo: `src/components/admin/admin-badge.tsx`
-
-### AdminButton
-- Uso: Botones con estilos consistentes
-- Variantes: `primary`, `secondary`, `outline`, `ghost`, `danger`, `success`, `link`
-- Tamaños: `sm`, `md`, `lg`, `icon`
-- Soporte: `loading`
-- Archivo: `src/components/admin/admin-button.tsx`
-
-### FilterSelect (Select)
-- Uso: Filtros y selects de búsqueda
-- **OBLIGATORIO**: Usar Select para filtros de estado, NO botones
-- Componente: `src/components/admin/admin-filter-select.tsx`
-- Archivo UI: `@/components/ui/select`
-
-### Pagination
-- Uso: Paginación en tablas de resultados
-- Props: `currentPage`, `totalPages`, `totalItems`, `itemsPerPage`, `onPageChange`, `showItemsPerPage`
-- Opciones de items por página: 10, 25, 50, 100
-- Archivo: `src/components/admin/pagination.tsx`
-
-### ConfirmDialog
-- Uso: Diálogos de confirmación reutilizables
-- Hook: `useConfirmDialog()` que retorna `confirmAction`, `confirmConfig`, `ConfirmDialogComponent`
-- Variantes: default, destructive, success
-- Iconos: warning, success, info, error
-- Archivo: `src/components/admin/confirm-dialog.tsx`
+- Use **Zod** for validation on both frontend and backend
+- Handle API errors with descriptive HTTP status codes
+- JWT stored in `localStorage`, validated on protected routes
 
 ---
 
-## 🛡️ Seguridad y Errores
+## 📊 Recharts
 
-- **Validación**: Uso obligatorio de `Zod` tanto en frontend como backend.
-- **Errores API**: Captura centralizada con estados HTTP descriptivos.
-- **Autenticación**: JWT almacenado en `localStorage` con validación en cada ruta protegida.
-
----
-
-## 🧠 Uso Obligatorio de Skills (Agentes AI)
-
-> **NOTA**: Antes de cualquier tarea, el agente DEBE invocar la skill apropiada y seguir sus principios.
-
-### 🎨 Interface Design (PRIORIDAD MÁXIMA)
-
-**Ubicación**: `.agents/skills/interface-design/SKILL.md`
-
-- **Uso**: Cualquier modificación de UI, componentes o flujos de usuario.
-- **MANDATO OBLIGATORIO**:
-  - Aplicar 'Intent First' - responder: ¿Quién es el usuario? ¿Qué debe lograr? ¿Cómo debe sentirse?
-  - Aplicar 'Subtle Layering' - superficies barely different pero distinguibles
-  - Realizar 'Squint Test' - con ojos borrosos debe percibirse jerarquía
-  - Realizar 'Signature Test' - 5 elementos específicos que hacen único este producto
-  - **NO generar interfaces genéricas** - cada componente debe emerger del propósito específico
-
-### ⚡ Vercel React Best Practices (PRIORIDAD ALTA)
-
-- **Uso**: Refactorización, creación de componentes o lógica de fetching.
-- **Mandato**: Eliminar waterfalls con `Promise.all()`, optimizar re-renders y reducir bundle size.
-
-### 💡 Brainstorming (PRIORIDAD ALTA)
-
-- **Uso**: Antes de cualquier trabajo creativo, creación de features o cambios de comportamiento.
-- **Mandato**: Explorar la intención del usuario y requerimientos antes de implementar.
-
-### 🛡️ Error Handling Patterns (PRIORIDAD ALTA)
-
-- **Uso**: Al diseñar APIs o implementar robustez en el código.
-- **Mandato**: Usar patrones de Result, Graceful degradation y validación estricta con Zod.
-
----
-
-### 🔍 Systematic Debugging
-
-- **Uso**: Ante cualquier error, bug o comportamiento inesperado.
-- **MANDATO**: 
-  - Seguir el proceso de diagnóstico raíz antes de proponer soluciones
-  - **IMPORTANTE**: El agente debe monitorear proactivamente la terminal y la consola durante cada implementación para detectar y corregir errores "al trote" sin intervención del usuario
-
-### 📝 Changelog Generator
-
-- **Uso**: Al finalizar tareas significativas para documentar cambios.
-- **Mandato**: Transformar commits técnicos en notas de lanzamiento amigables.
-
-### 🛠️ API Design Principles
-
-- **Uso**: Al diseñar APIs o recursos del servidor.
-- **Mandato**: Usar principios REST/GraphQL y consistencia en endpoints.
-
-### 🌐 Agent Browser
-
-- **Uso**: Automatización web, scraping, testing y navegación.
-- **Mandato**: Usar el sistema de refs `@e` y seguir el flujo Open-Interact-Snapshot-Close.
-
----
-
-## 🧪 Recharts - Gráficos
-
-Para evitar warnings de dimensiones negativas:
-- **SIEMPRE** validar que los datos existan antes de renderizar
-- Usar estado `isReady` con timeout de 100ms
-- Mostrar estado de carga cuando no hay datos
+Always validate data exists before rendering:
 
 ```tsx
 {isReady && data.length > 0 ? (
@@ -243,12 +143,20 @@ Para evitar warnings de dimensiones negativas:
 
 ---
 
-## 🔗 Documentación Relacionada
+## 🧠 Skills (Use Before Working)
 
-- [Análisis Funcional](docs/analisis-funcional.md)
-- [Referencia API](docs/api-reference.md)
-- [Arquitectura de Sistemas](docs/ARQUITECTURA.md)
-- [Flujos de Negocio](docs/flujos-negocio.md)
-- [Documentación Chat IA](docs/ai-chat.md)
+| Skill | When to Use |
+|-------|-------------|
+| `interface-design` | UI modifications, components, user flows |
+| `vercel-react-best-practices` | Refactoring, data fetching, performance |
+| `brainstorming` | Creative work, new features |
+| `error-handling-patterns` | API design, robustness |
+| `systematic-debugging` | Bugs, test failures, unexpected behavior |
 
-Última actualización: 2026-03-02
+---
+
+## 📖 Documentation
+
+- [API Reference](docs/api-reference.md)
+- [Architecture](docs/ARQUITECTURA.md)
+- [Functional Analysis](docs/analisis-funcional.md)
