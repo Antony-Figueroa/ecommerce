@@ -223,6 +223,7 @@ export function AdminCatalogPage() {
         }
       });
 
+<<<<<<< Updated upstream
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('portrait', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -230,6 +231,59 @@ export function AdminCatalogPage() {
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`);
+=======
+      // Create iframe to isolate from parent CSS
+      const iframe = document.createElement('iframe')
+      iframe.style.position = 'fixed'
+      iframe.style.left = '-9999px'
+      iframe.style.top = '0'
+      iframe.style.width = '794px'
+      iframe.style.height = '1123px'
+      iframe.style.border = 'none'
+      document.body.appendChild(iframe)
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
+      if (!iframeDoc) throw new Error('Could not access iframe document')
+
+      for (let i = 0; i < allPages.length; i++) {
+        iframeDoc.body.innerHTML = ''
+        
+        const page = allPages[i]
+        if (!page) continue
+
+        let html = ReactDOMServer.renderToStaticMarkup(page)
+        
+        // Remove ALL className attributes
+        html = html.replace(/class="[^"]*"/g, '')
+        html = html.replace(/class='[^']*'/g, '')
+        
+        // Remove ALL style attributes
+        html = html.replace(/style="[^"]*"/g, '')
+        
+        // Remove oklch and hsl references
+        html = html.replace(/oklch\([^)]*\)/g, '#000000')
+        html = html.replace(/hsl\([^)]+\)/g, '#000000')
+        
+        iframeDoc.body.innerHTML = html
+
+        const canvas = await html2canvas(iframeDoc.body, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          windowWidth: 794,
+          windowHeight: 1123,
+          backgroundColor: '#FFFFFF'
+        })
+
+        const imgData = canvas.toDataURL('image/png')
+        
+        if (i > 0) pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+      }
+
+      document.body.removeChild(iframe)
+      pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`)
+>>>>>>> Stashed changes
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Hubo un error al generar el PDF. Revisa la consola.");
