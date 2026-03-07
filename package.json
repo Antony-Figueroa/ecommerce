@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "server": "tsx server/src/index.ts",
     "server:build": "cd server && tsc",
-    "server:start": "cd server && node dist/index.js",
+    "server:start": "node server/dist/index.js",
     "db:generate": "cd server && npx prisma generate",
     "db:push": "cd server && npx prisma db push",
     "db:seed": "cd server && npx tsx -r ../node_modules/dotenv/config prisma/seed.ts DOTENV_CONFIG_PATH=../.env",
