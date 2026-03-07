@@ -9,10 +9,10 @@ import { ProductCard } from "@/components/shop/product-card"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { useFavorites } from "@/contexts/favorites-context"
-import { useSettings } from "@/contexts/settings-context"
+import { toast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
-import { cn, formatUSD, formatBS } from "@/lib/utils"
+import { formatUSD, formatBS, cn } from "@/lib/utils"
+import { useSettings } from "@/contexts/settings-context"
 import type { Product } from "@/types"
 
 interface ProductDetailProps {
@@ -24,8 +24,7 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
   const { addItem } = useCart()
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
-  const { settings: _settings } = useSettings()
-  const { toast } = useToast()
+  const { settings } = useSettings()
   const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState("description")

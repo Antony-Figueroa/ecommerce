@@ -447,7 +447,7 @@ export function AdminProductsPage() {
       isValid = false
     }
 
-    if (Number(formData.price) > 0 && Number(formData.price) < Number(formData.purchasePrice)) {
+    if (Number(formData.price) < Number(formData.purchasePrice)) {
       newErrors.price = "El precio de venta no puede ser menor al precio de compra"
       isValid = false
     }
@@ -1406,68 +1406,6 @@ export function AdminProductsPage() {
                 aria-labelledby="description-label"
               />
               {errors.description && <p className="text-xs text-red-500 mt-1" role="alert">{errors.description}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="text-sm font-medium">Precio de venta (USD) *</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price || ""}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 0 : parseFloat(e.target.value)
-                    setFormData({ ...formData, price: value })
-                    if (errors.price) setErrors({ ...errors, price: undefined })
-                  }}
-                  placeholder="0.00"
-                  className={errors.price ? "border-red-500" : ""}
-                />
-                {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
-              </div>
-              <div>
-                <label className="text-sm font-medium">Precio de compra (USD)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.purchasePrice || ""}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 0 : parseFloat(e.target.value)
-                    setFormData({ ...formData, purchasePrice: value })
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Margen de ganancia</label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.profitMargin || ""}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 1.5 : parseFloat(e.target.value)
-                    setFormData({ ...formData, profitMargin: value })
-                  }}
-                  placeholder="1.5"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Stock inicial</label>
-                <Input
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={formData.stock || ""}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 0 : parseInt(e.target.value)
-                    setFormData({ ...formData, stock: value })
-                  }}
-                  placeholder="0"
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
