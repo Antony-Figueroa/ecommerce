@@ -469,6 +469,15 @@ model Brand {
   products    Product[]
 }
 
+model Format {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Setting {
   id          String           @id @default(uuid())
   key         String           @unique

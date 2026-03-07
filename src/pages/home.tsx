@@ -29,9 +29,9 @@ const staggerContainer = {
 };
 
 // Componente de sección optimizado
-const SectionHeader = memo(({ title, subtitle, highlight, badge, action }: { 
-  title: string, 
-  subtitle: string, 
+const SectionHeader = memo(({ title, subtitle, highlight, badge, action }: {
+  title: string,
+  subtitle: string,
   highlight?: string,
   badge?: string,
   action?: { label: string, href: string }
@@ -78,7 +78,7 @@ export function HomePage() {
             return { rate: 42.50 }
           }),
         ])
-        
+
         setFeaturedProducts(featuredRes.products || [])
         setBcvRate(bcvRes.rate || 42.50)
       } finally {
@@ -114,15 +114,15 @@ export function HomePage() {
       <GoalSelector />
 
       {/* Carrusel de Productos Destacados - Reemplaza Categorías */}
-      <ProductCarousel 
-        products={featuredProducts} 
-        bcvRate={bcvRate} 
+      <ProductCarousel
+        products={featuredProducts}
+        bcvRate={bcvRate}
         title="Productos Destacados"
         subtitle="Nuestra selección premium para potenciar tu bienestar diario."
       />
 
       {/* Trust Badges Section - Zen Style */}
-      <motion.section 
+      <motion.section
         className="py-32 relative overflow-hidden"
         initial="initial"
         whileInView="animate"
@@ -137,38 +137,38 @@ export function HomePage() {
             <div className="w-20 h-2 bg-primary mx-auto rounded-full" />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             className="grid gap-8 md:grid-cols-3"
           >
             {[
-              { 
-                icon: Shield, 
-                title: "Calidad Garantizada", 
+              {
+                icon: Shield,
+                title: "Calidad Garantizada",
                 desc: "Productos originales certificados para asegurar tu salud y tranquilidad.",
-                color: "bg-blue-50 text-blue-500 dark:bg-blue-500/10 dark:text-blue-400"
+                color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-emerald-400"
               },
-              { 
-                icon: Zap, 
-                title: "Entrega Ágil", 
+              {
+                icon: Zap,
+                title: "Entrega Ágil",
                 desc: "Recibe tus suplementos rápidamente para no interrumpir tu rutina de cuidado.",
-                color: "bg-amber-50 text-amber-500 dark:bg-amber-500/10 dark:text-amber-400"
+                color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-emerald-400"
               },
-              { 
-                icon: Award, 
-                title: "Asesoría Experta", 
+              {
+                icon: Award,
+                title: "Asesoría Experta",
                 desc: "Estamos para guiarte en tu elección según tus metas personales.",
-                color: "bg-emerald-50 text-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-400"
+                color: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-emerald-400"
               }
             ].map((feature, i) => (
               <motion.div key={i} variants={fadeInUp}>
-                <Card className="h-full border-0 bg-white dark:bg-card shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2rem] p-4 group">
+                <Card className="h-full border border-border/50 bg-card hover:bg-secondary/20 dark:hover:bg-secondary/10 shadow-sm hover:shadow-xl transition-all duration-500 rounded-[2.5rem] p-6 group">
                   <CardContent className="p-8 text-center flex flex-col items-center">
-                    <div className={`mb-8 flex h-20 w-20 items-center justify-center rounded-3xl ${feature.color} transform group-hover:scale-110 transition-transform duration-500 shadow-sm`}>
-                      <feature.icon className="h-10 w-10" />
+                    <div className={`mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] ${feature.color} transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner`}>
+                      <feature.icon className="h-12 w-12" />
                     </div>
-                    <h3 className="text-xl font-bold tracking-tight text-slate-800 dark:text-foreground mb-4 uppercase">{feature.title}</h3>
-                    <p className="text-slate-500 dark:text-muted-foreground font-medium leading-relaxed">{feature.desc}</p>
+                    <h3 className="text-2xl font-black tracking-tight text-foreground mb-4 uppercase">{feature.title}</h3>
+                    <p className="text-muted-foreground font-medium leading-relaxed">{feature.desc}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -181,7 +181,7 @@ export function HomePage() {
       <section className="bg-primary/10 dark:bg-primary/5 py-24 relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-center gap-16 text-center md:text-left">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -195,9 +195,9 @@ export function HomePage() {
                 <p className="text-4xl md:text-5xl font-bold tracking-tight text-slate-800 dark:text-foreground">04121234567</p>
               </div>
             </motion.div>
-            
+
             <div className="h-16 w-px bg-slate-200 dark:bg-border hidden md:block" />
-            
+
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}

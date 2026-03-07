@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
-import { 
-  Save, 
-  History, 
-  AlertTriangle, 
+import {
+  Save,
+  History,
+  AlertTriangle,
   RotateCcw,
   Loader2,
   Settings,
@@ -27,17 +27,19 @@ import {
   Wallet,
   Calculator,
   Calendar,
+  Grid,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -49,7 +51,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
- 
+
 interface Setting {
   id: string
   key: string
@@ -82,7 +84,7 @@ export function AdminSettingsPage() {
   const [history, setHistory] = useState<SettingHistory[]>([])
   const [updateReason, setUpdateReason] = useState("")
   const [showConfirm, setShowConfirm] = useState(false)
-  
+
   // Backup States
   const [backups, setBackups] = useState<any[]>([])
   const [loadingBackups, setLoadingBackups] = useState(false)
@@ -93,12 +95,12 @@ export function AdminSettingsPage() {
     filename?: string
   } | null>(null)
   const [processingBackup, setProcessingBackup] = useState(false)
-  
+
   // Multi-Moneda State
   const [bcvRate, setBcvRate] = useState<number>(0)
   const [baseCurrency, setBaseCurrency] = useState<string>("USD")
   const [enableMultiCurrency, setEnableMultiCurrency] = useState<boolean>(false)
-  
+
   // User Roles State
   const [roles, _setRoles] = useState<Array<{
     id: string
@@ -112,7 +114,7 @@ export function AdminSettingsPage() {
     { id: '1', name: 'Administrador', description: 'Acceso total al sistema', canViewProfits: true, canEditProducts: true, canManageOrders: true, canViewReports: true },
     { id: '2', name: 'Vendedor', description: 'Solo puede procesar ventas', canViewProfits: false, canEditProducts: false, canManageOrders: true, canViewReports: false },
   ])
-  
+
   // Shipping Logistics State
   const [shippingZones, _setShippingZones] = useState<Array<{
     id: string
@@ -125,7 +127,7 @@ export function AdminSettingsPage() {
     { id: '1', name: 'Zona Local', baseCost: 2, costPerKg: 0.5, freeShippingThreshold: 50, estimatedDays: '1-2' },
     { id: '2', name: 'Nacional', baseCost: 5, costPerKg: 1, freeShippingThreshold: 100, estimatedDays: '3-5' },
   ])
-  
+
   // Business Info State
   const [businessInfo, setBusinessInfo] = useState({
     storeName: "Ana's Supplements",
@@ -135,7 +137,7 @@ export function AdminSettingsPage() {
     website: "www.anas-supplements.com",
     rif: "J-12345678-9",
   })
-  
+
   // Order Settings State
   const [orderSettings, setOrderSettings] = useState({
     autoConfirmPending: true,
@@ -145,7 +147,7 @@ export function AdminSettingsPage() {
     lowStockAlert: true,
     lowStockThreshold: 10,
   })
-  
+
   // Payment Methods State
   const [paymentMethods, setPaymentMethods] = useState([
     { id: '1', name: 'Efectivo', enabled: true, description: 'Pago en tienda o delivery' },
@@ -154,7 +156,7 @@ export function AdminSettingsPage() {
     { id: '4', name: 'Pago Móvil', enabled: true, description: 'Transferencia móvil BS' },
     { id: '5', name: 'Tarjeta Débito/Crédito', enabled: false, description: 'Procesador de pagos' },
   ])
-  
+
   // Tax Settings State
   const [taxSettings, setTaxSettings] = useState({
     taxEnabled: false,
@@ -162,7 +164,7 @@ export function AdminSettingsPage() {
     taxLabel: "IVA",
     includeTaxInPrice: false,
   })
-  
+
   // Notification Settings State
   const [notificationSettings, setNotificationSettings] = useState({
     emailNewOrder: true,
@@ -171,7 +173,7 @@ export function AdminSettingsPage() {
     whatsappNewOrder: true,
     smsLowStock: false,
   })
-  
+
   const { toast } = useToast()
 
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -185,7 +187,7 @@ export function AdminSettingsPage() {
     open: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   })
 
   const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
@@ -260,7 +262,7 @@ export function AdminSettingsPage() {
         const result = await api.restoreBackup(backupAction.filename, backupPassword)
         toast({
           title: "Restauración completada",
-          description: result?.autoBackupFilename 
+          description: result?.autoBackupFilename
             ? `Base de datos restaurada. Se creó un respaldo de seguridad: ${result.autoBackupFilename}`
             : "Base de datos restaurada correctamente. El sistema puede requerir reiniciar la sesión.",
         })
@@ -271,7 +273,7 @@ export function AdminSettingsPage() {
           description: "Respaldo eliminado correctamente",
         })
       }
-      
+
       setShowBackupAuth(false)
       setBackupAction(null)
       setBackupPassword("")
@@ -315,11 +317,6 @@ export function AdminSettingsPage() {
     setModifiedSettings(prev => ({ ...prev, [key]: value }))
   }
 
-  const getSettingValue = (setting: Setting) => {
-    return modifiedSettings[setting.key] !== undefined 
-      ? modifiedSettings[setting.key] 
-      : setting.value
-  }
 
   const handleSaveClick = () => {
     if (Object.keys(modifiedSettings).length === 0) return
@@ -341,12 +338,12 @@ export function AdminSettingsPage() {
           }))
 
           await api.updateSettingsBulk(updates)
-          
+
           toast({
             title: "Éxito",
             description: "Configuraciones actualizadas correctamente",
           })
-          
+
           setModifiedSettings({})
           setUpdateReason("")
           setShowConfirm(false)
@@ -413,14 +410,14 @@ export function AdminSettingsPage() {
   }
 
   const groups = Object.keys(settingsGrouped || {})
-  
+
   const hasGroups = groups.length > 0
   const defaultTab = hasGroups ? groups[0] : 'negocio'
 
   return (
     <>
       <div className="space-y-6">
-        <AdminPageHeader 
+        <AdminPageHeader
           title="Configuración"
           subtitle="Gestiona los parámetros globales del sistema"
           icon={Settings}
@@ -434,43 +431,47 @@ export function AdminSettingsPage() {
         <Tabs defaultValue={defaultTab} className="w-full" onValueChange={(v) => console.log('Tab changed to:', v)}>
           <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
             <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px mb-6 min-w-max h-auto">
-            <TabsTrigger value="negocio" className="gap-2">
-              <Store className="h-3.5 w-3.5" />
-              Negocio
-            </TabsTrigger>
-            <TabsTrigger value="pedidos" className="gap-2">
-              <ShoppingCart className="h-3.5 w-3.5" />
-              Pedidos
-            </TabsTrigger>
-            <TabsTrigger value="pagos" className="gap-2">
-              <Wallet className="h-3.5 w-3.5" />
-              Pagos
-            </TabsTrigger>
-            <TabsTrigger value="impuestos" className="gap-2">
-              <Receipt className="h-3.5 w-3.5" />
-              Impuestos
-            </TabsTrigger>
-            <TabsTrigger value="notificaciones" className="gap-2">
-              <Bell className="h-3.5 w-3.5" />
-              Notificaciones
-            </TabsTrigger>
-            <TabsTrigger value="moneda" className="gap-2">
-              <DollarSign className="h-3.5 w-3.5" />
-              Moneda
-            </TabsTrigger>
-            <TabsTrigger value="roles" className="gap-2">
-              <Users className="h-3.5 w-3.5" />
-              Roles
-            </TabsTrigger>
-            <TabsTrigger value="envio" className="gap-2">
-              <Truck className="h-3.5 w-3.5" />
-              Envío
-            </TabsTrigger>
-            <TabsTrigger value="backups" className="gap-2">
-              <Database className="h-3.5 w-3.5" />
-              Respaldos
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="negocio" className="gap-2">
+                <Store className="h-3.5 w-3.5" />
+                Negocio
+              </TabsTrigger>
+              <TabsTrigger value="catalogo" className="gap-2">
+                <Grid className="h-3.5 w-3.5" />
+                Catálogo
+              </TabsTrigger>
+              <TabsTrigger value="pedidos" className="gap-2">
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Pedidos
+              </TabsTrigger>
+              <TabsTrigger value="pagos" className="gap-2">
+                <Wallet className="h-3.5 w-3.5" />
+                Pagos
+              </TabsTrigger>
+              <TabsTrigger value="impuestos" className="gap-2">
+                <Receipt className="h-3.5 w-3.5" />
+                Impuestos
+              </TabsTrigger>
+              <TabsTrigger value="notificaciones" className="gap-2">
+                <Bell className="h-3.5 w-3.5" />
+                Notificaciones
+              </TabsTrigger>
+              <TabsTrigger value="moneda" className="gap-2">
+                <DollarSign className="h-3.5 w-3.5" />
+                Moneda
+              </TabsTrigger>
+              <TabsTrigger value="roles" className="gap-2">
+                <Users className="h-3.5 w-3.5" />
+                Roles
+              </TabsTrigger>
+              <TabsTrigger value="envio" className="gap-2">
+                <Truck className="h-3.5 w-3.5" />
+                Envío
+              </TabsTrigger>
+              <TabsTrigger value="backups" className="gap-2">
+                <Database className="h-3.5 w-3.5" />
+                Respaldos
+              </TabsTrigger>
+            </TabsList>
           </div>
 
           {/* Static Tab Contents - No依赖API */}
@@ -487,7 +488,7 @@ export function AdminSettingsPage() {
                       Crea y restaura copias de seguridad de la base de datos. Requiere contraseña de administrador.
                     </CardDescription>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => handleBackupAuth('create')}
                     className="font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
                   >
@@ -511,7 +512,7 @@ export function AdminSettingsPage() {
                 ) : (
                   <div className="space-y-3">
                     {backups.map((backup) => (
-                      <div 
+                      <div
                         key={backup.filename}
                         className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card hover:bg-secondary/10 transition-all group"
                       >
@@ -534,8 +535,8 @@ export function AdminSettingsPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className="h-8 text-[10px] font-bold border-primary/20 hover:bg-primary/5 hover:text-primary"
                             onClick={() => handleBackupAuth('restore', backup.filename)}
@@ -543,8 +544,8 @@ export function AdminSettingsPage() {
                             <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                             Restaurar
                           </Button>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                             onClick={() => handleBackupAuth('delete', backup.filename)}
@@ -563,8 +564,8 @@ export function AdminSettingsPage() {
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-amber-700 dark:text-amber-500">Advertencia de Seguridad</p>
                     <p className="text-[10px] text-muted-foreground leading-relaxed">
-                      La restauración de un respaldo reemplazará completamente la base de datos actual. 
-                      Asegúrate de haber creado un respaldo reciente antes de proceder con una restauración. 
+                      La restauración de un respaldo reemplazará completamente la base de datos actual.
+                      Asegúrate de haber creado un respaldo reciente antes de proceder con una restauración.
                       Esta acción es irreversible una vez completada.
                     </p>
                   </div>
@@ -572,7 +573,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* Multi-Moneda Content */}
           <TabsContent value="moneda" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -596,12 +597,12 @@ export function AdminSettingsPage() {
                       <p className="text-xs text-emerald-700 dark:text-emerald-300">Habilitar conversión de divisas</p>
                     </div>
                   </div>
-                  <Checkbox 
-                    checked={enableMultiCurrency} 
+                  <Checkbox
+                    checked={enableMultiCurrency}
                     onCheckedChange={(c) => setEnableMultiCurrency(!!c)}
                   />
                 </div>
-                
+
                 {enableMultiCurrency && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -619,10 +620,10 @@ export function AdminSettingsPage() {
                         </Select>
                         <p className="text-xs text-muted-foreground mt-1">Moneda principal para precios</p>
                       </div>
-                      
+
                       <div>
                         <Label className="text-sm font-bold mb-2 block">Tasa BCV Actual</Label>
-                        <Input 
+                        <Input
                           type="number"
                           value={bcvRate}
                           onChange={(e) => setBcvRate(Number(e.target.value))}
@@ -631,7 +632,7 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground mt-1">Tasa oficial del Banco Central</p>
                       </div>
                     </div>
-                    
+
                     <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
                       <p className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-2">Impacto en tu negocio:</p>
                       <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
@@ -651,7 +652,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* Roles Content */}
           <TabsContent value="roles" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -688,7 +689,7 @@ export function AdminSettingsPage() {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                   <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
@@ -700,7 +701,7 @@ export function AdminSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           {/* Envío Content */}
           <TabsContent value="envio" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -738,7 +739,7 @@ export function AdminSettingsPage() {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
                   <p className="text-sm font-bold text-purple-800 dark:text-purple-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-purple-700 dark:text-purple-300 space-y-1">
@@ -756,7 +757,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* Negocio Content */}
           <TabsContent value="negocio" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -773,55 +774,55 @@ export function AdminSettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label className="text-sm font-bold mb-2 block">Nombre de la Tienda</Label>
-                    <Input 
+                    <Input
                       value={businessInfo.storeName}
-                      onChange={(e) => setBusinessInfo({...businessInfo, storeName: e.target.value})}
+                      onChange={(e) => setBusinessInfo({ ...businessInfo, storeName: e.target.value })}
                       placeholder="Nombre de tu tienda"
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-bold mb-2 block">RIF / Identificación Fiscal</Label>
-                    <Input 
+                    <Input
                       value={businessInfo.rif}
-                      onChange={(e) => setBusinessInfo({...businessInfo, rif: e.target.value})}
+                      onChange={(e) => setBusinessInfo({ ...businessInfo, rif: e.target.value })}
                       placeholder="J-12345678-9"
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-bold mb-2 block">Correo Electrónico</Label>
-                    <Input 
+                    <Input
                       type="email"
                       value={businessInfo.email}
-                      onChange={(e) => setBusinessInfo({...businessInfo, email: e.target.value})}
+                      onChange={(e) => setBusinessInfo({ ...businessInfo, email: e.target.value })}
                       placeholder="contact@tu-tienda.com"
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-bold mb-2 block">Teléfono</Label>
-                    <Input 
+                    <Input
                       value={businessInfo.phone}
-                      onChange={(e) => setBusinessInfo({...businessInfo, phone: e.target.value})}
+                      onChange={(e) => setBusinessInfo({ ...businessInfo, phone: e.target.value })}
                       placeholder="+58 412-123-4567"
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-bold mb-2 block">Sitio Web</Label>
-                    <Input 
+                    <Input
                       value={businessInfo.website}
-                      onChange={(e) => setBusinessInfo({...businessInfo, website: e.target.value})}
+                      onChange={(e) => setBusinessInfo({ ...businessInfo, website: e.target.value })}
                       placeholder="www.tu-tienda.com"
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-bold mb-2 block">Dirección</Label>
-                    <Input 
+                    <Input
                       value={businessInfo.address}
-                      onChange={(e) => setBusinessInfo({...businessInfo, address: e.target.value})}
+                      onChange={(e) => setBusinessInfo({ ...businessInfo, address: e.target.value })}
                       placeholder="Ciudad, País"
                     />
                   </div>
                 </div>
-                
+
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                   <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
@@ -839,7 +840,61 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
+          {/* Catálogo Content */}
+          <TabsContent value="catalogo" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Grid className="h-6 w-6 text-primary" />
+                  Configuración del Catálogo
+                </CardTitle>
+                <CardDescription>
+                  Gestiona cómo se muestran los productos en el e-commerce.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-secondary/20 rounded-xl border border-border/50">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-bold">Mostrar etiqueta de "Agotado"</p>
+                      <p className="text-xs text-muted-foreground">Si se debe mostrar el indicador en productos sin inventario</p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={
+                      (modifiedSettings['show_stock_badge'] !== undefined
+                        ? modifiedSettings['show_stock_badge']
+                        : (groups.flatMap(g => settingsGrouped[g]).find(s => s.key === 'show_stock_badge')?.value || 'false')) === 'true'
+                    }
+                    onCheckedChange={(checked) => handleInputChange('show_stock_badge', checked.toString())}
+                  />
+                </div>
+
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en el E-commerce:</p>
+                  <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <li>• Si está desativado, los productos sin stock no mostrarán el aviso de "Agotado"</li>
+                    <li>• Útil si no deseas mostrar cantidades disponibles al público</li>
+                    <li>• Los clientes podrán seguir viendo los detalles del producto</li>
+                  </ul>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between items-center border-t border-border/50 pt-6">
+                <p className="text-xs text-muted-foreground italic">
+                  * Esta configuración es global y afecta a todos los usuarios.
+                </p>
+                <Button className="font-bold bg-primary" onClick={handleSaveClick}>
+                  <Save className="h-4 w-4 mr-2" />
+                  Guardar Cambios
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
           {/* Pedidos Content */}
           <TabsContent value="pedidos" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -864,12 +919,12 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Los pedidos se confirman al instante</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={orderSettings.autoConfirmPending}
-                      onCheckedChange={(c) => setOrderSettings({...orderSettings, autoConfirmPending: !!c})}
+                      onCheckedChange={(c) => setOrderSettings({ ...orderSettings, autoConfirmPending: !!c })}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-full flex items-center justify-center">
@@ -880,12 +935,12 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Libera inventario automáticamente</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={orderSettings.autoCancelUnpaid}
-                      onCheckedChange={(c) => setOrderSettings({...orderSettings, autoCancelUnpaid: !!c})}
+                      onCheckedChange={(c) => setOrderSettings({ ...orderSettings, autoCancelUnpaid: !!c })}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
@@ -896,12 +951,12 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Recibe alertas instantáneas</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={orderSettings.sendOrderNotifications}
-                      onCheckedChange={(c) => setOrderSettings({...orderSettings, sendOrderNotifications: !!c})}
+                      onCheckedChange={(c) => setOrderSettings({ ...orderSettings, sendOrderNotifications: !!c })}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center">
@@ -912,42 +967,42 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Notifica cuando un producto está por agotarse</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={orderSettings.lowStockAlert}
-                      onCheckedChange={(c) => setOrderSettings({...orderSettings, lowStockAlert: !!c})}
+                      onCheckedChange={(c) => setOrderSettings({ ...orderSettings, lowStockAlert: !!c })}
                     />
                   </div>
                 </div>
-                
+
                 {orderSettings.lowStockAlert && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-secondary/30 rounded-xl border border-border/50">
                     <div>
                       <Label className="text-sm font-bold mb-2 block">Umbral de Stock Bajo</Label>
-                      <Input 
+                      <Input
                         type="number"
                         value={orderSettings.lowStockThreshold}
-                        onChange={(e) => setOrderSettings({...orderSettings, lowStockThreshold: Number(e.target.value)})}
+                        onChange={(e) => setOrderSettings({ ...orderSettings, lowStockThreshold: Number(e.target.value) })}
                         min={1}
                       />
                       <p className="text-xs text-muted-foreground mt-1">Unidades mínimas antes de alertar</p>
                     </div>
                   </div>
                 )}
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label className="text-sm font-bold mb-2 block">Tiempo máximo de pago (horas)</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={orderSettings.paymentTimeoutHours}
-                      onChange={(e) => setOrderSettings({...orderSettings, paymentTimeoutHours: Number(e.target.value)})}
+                      onChange={(e) => setOrderSettings({ ...orderSettings, paymentTimeoutHours: Number(e.target.value) })}
                       min={1}
                       max={168}
                     />
                     <p className="text-xs text-muted-foreground mt-1">Después de este tiempo se cancela el pedido</p>
                   </div>
                 </div>
-                
+
                 <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
                   <p className="text-sm font-bold text-purple-800 dark:text-purple-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-purple-700 dark:text-purple-300 space-y-1">
@@ -965,7 +1020,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* Pagos Content */}
           <TabsContent value="pagos" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -999,10 +1054,10 @@ export function AdminSettingsPage() {
                         ) : (
                           <Badge variant="outline">Inactivo</Badge>
                         )}
-                        <Checkbox 
+                        <Checkbox
                           checked={method.enabled}
                           onCheckedChange={(c) => {
-                            const updated = paymentMethods.map(pm => 
+                            const updated = paymentMethods.map(pm =>
                               pm.id === method.id ? { ...pm, enabled: !!c } : pm
                             )
                             setPaymentMethods(updated)
@@ -1012,7 +1067,7 @@ export function AdminSettingsPage() {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                   <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
@@ -1030,7 +1085,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* Impuestos Content */}
           <TabsContent value="impuestos" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -1054,39 +1109,39 @@ export function AdminSettingsPage() {
                       <p className="text-xs text-emerald-700 dark:text-emerald-300">Aplicar impuesto a los productos</p>
                     </div>
                   </div>
-                  <Checkbox 
+                  <Checkbox
                     checked={taxSettings.taxEnabled}
-                    onCheckedChange={(c) => setTaxSettings({...taxSettings, taxEnabled: !!c})}
+                    onCheckedChange={(c) => setTaxSettings({ ...taxSettings, taxEnabled: !!c })}
                   />
                 </div>
-                
+
                 {taxSettings.taxEnabled && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <Label className="text-sm font-bold mb-2 block">Tasa de Impuesto (%)</Label>
-                        <Input 
+                        <Input
                           type="number"
                           value={taxSettings.taxRate}
-                          onChange={(e) => setTaxSettings({...taxSettings, taxRate: Number(e.target.value)})}
+                          onChange={(e) => setTaxSettings({ ...taxSettings, taxRate: Number(e.target.value) })}
                           min={0}
                           max={100}
                           step={0.1}
                         />
                         <p className="text-xs text-muted-foreground mt-1">Porcentaje estándar: 16% (IVA Venezuela)</p>
                       </div>
-                      
+
                       <div>
                         <Label className="text-sm font-bold mb-2 block">Nombre del Impuesto</Label>
-                        <Input 
+                        <Input
                           value={taxSettings.taxLabel}
-                          onChange={(e) => setTaxSettings({...taxSettings, taxLabel: e.target.value})}
+                          onChange={(e) => setTaxSettings({ ...taxSettings, taxLabel: e.target.value })}
                           placeholder="IVA, ITBMS, etc."
                         />
                         <p className="text-xs text-muted-foreground mt-1">Nombre que aparecerá en facturas</p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-amber-100 dark:bg-amber-800 rounded-full flex items-center justify-center">
@@ -1097,14 +1152,14 @@ export function AdminSettingsPage() {
                           <p className="text-xs text-muted-foreground">El impuesto ya está incluido en el precio mostrado</p>
                         </div>
                       </div>
-                      <Checkbox 
+                      <Checkbox
                         checked={taxSettings.includeTaxInPrice}
-                        onCheckedChange={(c) => setTaxSettings({...taxSettings, includeTaxInPrice: !!c})}
+                        onCheckedChange={(c) => setTaxSettings({ ...taxSettings, includeTaxInPrice: !!c })}
                       />
                     </div>
                   </>
                 )}
-                
+
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
                   <p className="text-sm font-bold text-amber-800 dark:text-amber-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-1">
@@ -1122,7 +1177,7 @@ export function AdminSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          
+
           {/* Notificaciones Content */}
           <TabsContent value="notificaciones" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <Card>
@@ -1138,7 +1193,7 @@ export function AdminSettingsPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Correo Electrónico</p>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center">
@@ -1149,12 +1204,12 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Recibe correo cuando alguien compra</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={notificationSettings.emailNewOrder}
-                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, emailNewOrder: !!c})}
+                      onCheckedChange={(c) => setNotificationSettings({ ...notificationSettings, emailNewOrder: !!c })}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center">
@@ -1165,12 +1220,12 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Alerta cuando un producto se agota</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={notificationSettings.emailLowStock}
-                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, emailLowStock: !!c})}
+                      onCheckedChange={(c) => setNotificationSettings({ ...notificationSettings, emailLowStock: !!c })}
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center">
@@ -1181,16 +1236,16 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Un correo al día con las ventas</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={notificationSettings.emailDailySummary}
-                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, emailDailySummary: !!c})}
+                      onCheckedChange={(c) => setNotificationSettings({ ...notificationSettings, emailDailySummary: !!c })}
                     />
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">WhatsApp</p>
-                  
+
                   <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow-md transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">
@@ -1201,13 +1256,13 @@ export function AdminSettingsPage() {
                         <p className="text-xs text-muted-foreground">Notificación inmediata por WhatsApp</p>
                       </div>
                     </div>
-                    <Checkbox 
+                    <Checkbox
                       checked={notificationSettings.whatsappNewOrder}
-                      onCheckedChange={(c) => setNotificationSettings({...notificationSettings, whatsappNewOrder: !!c})}
+                      onCheckedChange={(c) => setNotificationSettings({ ...notificationSettings, whatsappNewOrder: !!c })}
                     />
                   </div>
                 </div>
-                
+
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                   <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mb-2">Impacto en tu negocio:</p>
                   <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
@@ -1246,16 +1301,16 @@ export function AdminSettingsPage() {
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">Confirmar Operación</p>
                   <p className="text-[11px] text-amber-700/80 dark:text-amber-500/80 leading-relaxed font-medium">
-                    {backupAction?.type === 'create' ? "Estás a punto de crear una copia de seguridad del estado actual del sistema." : 
-                     backupAction?.type === 'restore' ? "ATENCIÓN: Se sobrescribirán todos los datos actuales con la versión del respaldo seleccionado." :
-                     "Se eliminará permanentemente este archivo de respaldo."}
+                    {backupAction?.type === 'create' ? "Estás a punto de crear una copia de seguridad del estado actual del sistema." :
+                      backupAction?.type === 'restore' ? "ATENCIÓN: Se sobrescribirán todos los datos actuales con la versión del respaldo seleccionado." :
+                        "Se eliminará permanentemente este archivo de respaldo."}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="backup-password text-xs font-bold uppercase tracking-wider">Contraseña de Administrador</Label>
-                <Input 
+                <Input
                   id="backup-password"
                   type="password"
                   placeholder="Ingrese contraseña maestra..."
@@ -1276,8 +1331,8 @@ export function AdminSettingsPage() {
               <Button variant="ghost" onClick={() => setShowBackupAuth(false)} disabled={processingBackup}>
                 Cancelar
               </Button>
-              <Button 
-                onClick={executeBackupAction} 
+              <Button
+                onClick={executeBackupAction}
                 disabled={!backupPassword || processingBackup}
                 variant={backupAction?.type === 'delete' ? "destructive" : "default"}
                 className="font-bold min-w-[120px]"
@@ -1337,7 +1392,7 @@ export function AdminSettingsPage() {
                 <Label htmlFor="reason" className="text-xs font-bold uppercase text-muted-foreground">
                   Motivo (opcional)
                 </Label>
-                <Textarea 
+                <Textarea
                   id="reason"
                   placeholder="Explica brevemente por qué realizas este cambio..."
                   value={updateReason}
@@ -1394,22 +1449,22 @@ export function AdminSettingsPage() {
                           <span className="text-[10px] font-bold text-primary">
                             {new Date(entry.createdAt).toLocaleString()}
                           </span>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="h-6 text-[9px] font-bold"
                             onClick={() => handleRevert(entry.id)}
                           >
                             <RotateCcw className="h-3 w-3 mr-1" /> Revertir
                           </Button>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 text-xs mb-2">
                           <span className="text-muted-foreground line-through opacity-50">{entry.oldValue}</span>
                           <span className="text-muted-foreground">→</span>
                           <span className="font-bold">{entry.newValue}</span>
                         </div>
-                        
+
                         {entry.reason && (
                           <p className="text-[10px] text-muted-foreground italic mb-2 bg-background/50 p-1.5 rounded">
                             "{entry.reason}"
@@ -1446,7 +1501,7 @@ export function AdminSettingsPage() {
               "h-2 w-full",
               confirmConfig.variant === "destructive" ? "bg-red-500" : "bg-primary"
             )} />
-            
+
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className={cn(

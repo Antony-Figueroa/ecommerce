@@ -1,6 +1,6 @@
-import { NotFoundError } from '../../shared/errors/app.errors.js'
+import { NotFoundError, ConflictError } from '../../shared/errors/app.errors.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
-import { CategoryRepository, BrandRepository, InventoryLogRepository, ProviderRepository, InventoryBatchRepository } from '../../domain/repositories/inventory.repository.js'
+import { CategoryRepository, BrandRepository, FormatRepository, InventoryLogRepository, ProviderRepository, InventoryBatchRepository } from '../../domain/repositories/inventory.repository.js'
 import { NotificationService } from './notification.service.js'
 import { FavoriteRepository } from '../../domain/repositories/favorite.repository.js'
 import { BatchManager } from './batch-manager.service.js'
@@ -13,6 +13,7 @@ export class InventoryService {
     private productRepo: ProductRepository,
     private categoryRepo: CategoryRepository,
     private brandRepo: BrandRepository,
+    private formatRepo: FormatRepository,
     private logRepo: InventoryLogRepository,
     private providerRepo: ProviderRepository,
     private inventoryBatchRepo: InventoryBatchRepository,
@@ -21,7 +22,7 @@ export class InventoryService {
     private batchManager: BatchManager,
     private productManager: ProductManager,
     private auditService: AuditService
-  ) {}
+  ) { }
 
   /**
    * Actualiza precios basado en la tasa BCV.
@@ -51,14 +52,14 @@ export class InventoryService {
       await Promise.all(batch.map(async (product) => {
         const currentPrice = Number(product.price)
         const newPrice = currentPrice * ratio
-        
+
         await this.productRepo.update(product.id, { price: newPrice })
 
         if (Math.abs(newPrice - currentPrice) > 0.01) {
           try {
             const interestedUsers = await this.favoriteRepo.findAllByProductId(product.id)
             // No bloqueamos el flujo principal por notificaciones
-            Promise.all(interestedUsers.map(fav => 
+            Promise.all(interestedUsers.map(fav =>
               this.notificationService.createNotification({
                 type: 'PRICE_UPDATE',
                 category: 'FAVORITES',
@@ -93,7 +94,7 @@ export class InventoryService {
     if (!product) {
       throw new NotFoundError('Producto')
     }
-    
+
     // Marcamos como inactivo en lugar de borrar físicamente
     await this.productRepo.update(id, { isActive: false })
 
@@ -115,24 +116,24 @@ export class InventoryService {
   }
 
   async getAllProducts(options?: any) {
-    const { 
-      categoryId = null, 
-      categoryIds = null, 
-      search = '', 
-      page = 1, 
-      limit = 20, 
+    const {
+      categoryId = null,
+      categoryIds = null,
+      search = '',
+      page = 1,
+      limit = 20,
       onlyActive = true, // Cambiado a true por defecto
-      isActive = undefined 
+      isActive = undefined
     } = options || {}
-    
-    const { products, total } = await this.productRepo.findAll({ 
-      categoryId, 
-      categoryIds, 
-      search, 
-      page, 
-      limit, 
+
+    const { products, total } = await this.productRepo.findAll({
+      categoryId,
+      categoryIds,
+      search,
+      page,
+      limit,
       onlyActive,
-      isActive 
+      isActive
     })
 
     return {
@@ -142,31 +143,151 @@ export class InventoryService {
   }
 
   async getPublicProducts(options?: any) {
-    const { 
-      categoryId = null, 
-      categoryIds = null, 
-      search = '', 
+    const {
+      categoryId = null,
+      categoryIds = null,
+      search = '',
       isFeatured = undefined,
       isOffer = undefined,
-      limit = 1000 
+      limit = 1000
     } = options || {}
-    
-    const { products } = await this.productRepo.findAll({ 
-      categoryId, 
-      categoryIds, 
-      search, 
-      onlyActive: true, 
+
+    const { products } = await this.productRepo.findAll({
+      categoryId,
+      categoryIds,
+      search,
+      onlyActive: true,
       isFeatured: isFeatured === 'true' || isFeatured === true ? true : (isFeatured === 'false' || isFeatured === false ? false : undefined),
       isOffer: isOffer === 'true' || isOffer === true ? true : (isOffer === 'false' || isOffer === false ? false : undefined),
-      limit 
+      limit
     })
     return products
   }
 
-  // --- Gestión de Marcas y Proveedores ---
+  // --- Gestión de Marcas, Formatos y Proveedores ---
 
-  async getAllBrands() {
-    return this.productRepo.getAllBrands()
+  async getAllBrands(options?: { onlyActive?: boolean }) {
+    return this.brandRepo.findAll(options)
+  }
+
+  async createBrand(data: { name: string; description?: string; isActive?: boolean }, userId?: string, ipAddress?: string, userAgent?: string) {
+    const brand = await this.brandRepo.create(data)
+    await this.auditService.logAction({
+      entityType: 'BRAND',
+      entityId: brand.id,
+      action: 'CREATE',
+      userId,
+      details: { name: brand.name },
+      ipAddress,
+      userAgent
+    })
+    return brand
+  }
+
+  async updateBrand(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, userId?: string, ipAddress?: string, userAgent?: string) {
+    if (data.isActive === false) {
+      const productCount = await this.brandRepo.countProducts(id)
+      if (productCount > 0) {
+        throw new ConflictError('No se puede inactivar una marca que está siendo utilizada por productos.')
+      }
+    }
+
+    const brand = await this.brandRepo.update(id, data)
+    await this.auditService.logAction({
+      entityType: 'BRAND',
+      entityId: id,
+      action: 'UPDATE',
+      userId,
+      details: { name: brand.name, ...data },
+      ipAddress,
+      userAgent
+    })
+    return brand
+  }
+
+  async deleteBrand(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    const productCount = await this.brandRepo.countProducts(id)
+    if (productCount > 0) {
+      throw new ConflictError('No se puede eliminar o inactivar una marca que está siendo utilizada por productos.')
+    }
+
+    await this.brandRepo.delete(id)
+
+    await this.auditService.logAction({
+      entityType: 'BRAND',
+      entityId: id,
+      action: 'DELETE',
+      userId,
+      details: { productCount },
+      ipAddress,
+      userAgent
+    })
+    return { success: true }
+  }
+
+  async getAllFormats(options?: { onlyActive?: boolean }) {
+    return this.formatRepo.findAll(options)
+  }
+
+  async createFormat(data: { name: string; description?: string; isActive?: boolean }, userId?: string, ipAddress?: string, userAgent?: string) {
+    const format = await this.formatRepo.create(data)
+    await this.auditService.logAction({
+      entityType: 'FORMAT',
+      entityId: format.id,
+      action: 'CREATE',
+      userId,
+      details: { name: format.name },
+      ipAddress,
+      userAgent
+    })
+    return format
+  }
+
+  async updateFormat(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, userId?: string, ipAddress?: string, userAgent?: string) {
+    if (data.isActive === false) {
+      const format = await this.formatRepo.findById(id)
+      if (format) {
+        const productCount = await this.formatRepo.countProducts(format.name)
+        if (productCount > 0) {
+          throw new ConflictError('No se puede inactivar un formato que está siendo utilizado por productos.')
+        }
+      }
+    }
+
+    const format = await this.formatRepo.update(id, data)
+    await this.auditService.logAction({
+      entityType: 'FORMAT',
+      entityId: id,
+      action: 'UPDATE',
+      userId,
+      details: { name: format.name, ...data },
+      ipAddress,
+      userAgent
+    })
+    return format
+  }
+
+  async deleteFormat(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
+    const format = await this.formatRepo.findById(id)
+    if (!format) throw new NotFoundError('Formato')
+
+    const productCount = await this.formatRepo.countProducts(format.name)
+    if (productCount > 0) {
+      throw new ConflictError('No se puede eliminar o inactivar un formato que está siendo utilizado por productos.')
+    }
+
+    await this.formatRepo.delete(id)
+
+    await this.auditService.logAction({
+      entityType: 'FORMAT',
+      entityId: id,
+      action: 'DELETE',
+      userId,
+      details: { name: format.name, productCount },
+      ipAddress,
+      userAgent
+    })
+    return { success: true }
   }
 
   async getProviders() {
@@ -272,17 +393,17 @@ export class InventoryService {
     })
 
     const { products } = await this.productRepo.findAll({ limit: 1000 })
-    
+
     const lowStock = products.filter(p => p.stock <= p.minStock && p.stock > 0)
     const outOfStock = products.filter(p => p.stock === 0)
-    
+
     const totalCost = products.reduce((sum, p) => sum + (Number(p.purchasePrice || 0) * p.stock), 0)
     const totalValue = products.reduce((sum, p) => sum + (Number(p.price || 0) * p.stock), 0)
 
     // Fetch near expiry batches (e.g., next 90 days)
     const ninetyDaysFromNow = new Date()
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90)
-    
+
     const nearExpiryItems = await this.inventoryBatchRepo.findAll({
       limit: 100 // Adjust as needed
     }).then(batches => {

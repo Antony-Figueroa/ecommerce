@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
 import { api } from "@/lib/api"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
@@ -6,16 +6,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
   SelectWithSearch,
-  SelectWithAdd,
 } from "@/components/ui/select"
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -24,12 +23,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { 
-  BookOpen, 
-  Download, 
-  Eye, 
-  GripVertical, 
-  Loader2, 
+import {
+  BookOpen,
+  Download,
+  Eye,
+  GripVertical,
+  Loader2,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -78,25 +77,19 @@ export function AdminCatalogPage() {
   const [catalogTitle, setCatalogTitle] = useState("CATÁLOGO DE PRODUCTOS")
   const [currentPage, setCurrentPage] = useState(0)
   const [exporting, setExporting] = useState(false)
-  
+
   // New features state
   const [brandFilter, setBrandFilter] = useState<string>("all")
   const [formatFilter, setFormatFilter] = useState<string>("all")
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
   const [showImageWarning, setShowImageWarning] = useState(true)
   const [exportCategory, setExportCategory] = useState<string>("all")
-  
+
   // Brand customization (in settings)
   const [brandLogo, setBrandLogo] = useState<string>("")
   const [brandColor, setBrandColor] = useState<string>("#10b981")
   const [brandName, setBrandName] = useState<string>("Ana's Supplements")
-  const [catalogEditionName, setCatalogEditionName] = useState<string>("Collection")
-  const [catalogWebsite, setCatalogWebsite] = useState<string>("www.anas-supplements.com")
-  const [introStatement, setIntroStatement] = useState<string>("Curating health\nwith scientific\nprecision.")
-  const [introDescription, setIntroDescription] = useState<string>(
-    `En ${brandName}, creemos que el bienestar no es un destino, sino un viaje continuo de mejora y equilibrio. Nuestra misión es proporcionar los suplementos más puros y efectivos, respaldados por la ciencia y seleccionados con un estándar de calidad inigualable.\n\nEste catálogo presenta nuestra colección ${CATALOG_YEAR}, una selección curada de vitaminas, minerales y fórmulas diseñadas para potenciar cada aspecto de su salud. Desde el apoyo inmunológico hasta la optimización del rendimiento, cada producto ha sido elegido para reflejar nuestro compromiso con la excelencia.`
-  )
-  
+
   const previewRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -105,23 +98,14 @@ export function AdminCatalogPage() {
 
   // Derived filters
   const formats = Array.from(new Set(products.map(p => p.format).filter(Boolean)))
-  
-  const filteredProducts = useMemo(() => products.filter(p => 
-    p.visible && 
+
+  const filteredProducts = products.filter(p =>
+    p.visible &&
     (selectedCategory === "all" || p.categoryId === selectedCategory) &&
     (brandFilter === "all" || p.brand === brandFilter) &&
     (formatFilter === "all" || p.format === formatFilter) &&
-    (selectedProducts.size === 0 || selectedProducts.has(p.id)) &&
-    (exportCategory === "all" || p.categoryId === exportCategory)
-  ), [products, selectedCategory, brandFilter, formatFilter, selectedProducts, exportCategory])
-
-  const filteredCategories = useMemo(() => {
-    const categoryIds = new Set(filteredProducts.map(p => p.categoryId).filter(Boolean))
-    return categories.filter(c => categoryIds.has(c.id)).map(c => ({
-      ...c,
-      productCount: filteredProducts.filter(p => p.categoryId === c.id).length
-    }))
-  }, [categories, filteredProducts])
+    (selectedProducts.size === 0 || selectedProducts.has(p.id))
+  )
 
   const productsWithoutImage = products.filter(p => !p.image && p.visible)
 
@@ -131,12 +115,12 @@ export function AdminCatalogPage() {
       const data = await api.getCatalogData()
       setProducts(data.products || [])
       setCategories(data.categories || [])
-      
+
       // Extract unique brands
       const uniqueBrands = Array.from(new Set(data.products.map((p: CatalogProduct) => p.brand).filter(Boolean)))
         .map((name, index) => ({ id: String(index), name: name as string }))
       setBrands(uniqueBrands)
-      
+
       // Auto-select all visible products
       const visibleIds = data.products.filter((p: CatalogProduct) => p.visible).map((p: CatalogProduct) => p.id)
       setSelectedProducts(new Set(visibleIds))
@@ -150,7 +134,7 @@ export function AdminCatalogPage() {
   const toggleVisibility = async (productId: string, visible: boolean) => {
     try {
       await api.updateCatalogProductVisibility(productId, visible)
-      setProducts(prev => prev.map(p => 
+      setProducts(prev => prev.map(p =>
         p.id === productId ? { ...p, visible } : p
       ))
       setSelectedProducts(prev => {
@@ -189,87 +173,77 @@ export function AdminCatalogPage() {
   }
 
   const getCategoryPageNumber = (categoryId: string) => {
-    let page = 4
-    for (const cat of filteredCategories) {
+    let page = 2
+    for (const cat of categories) {
       if (cat.id === categoryId) break
-      const catProducts = filteredProducts.filter(p => p.categoryId === cat.id)
-      page += Math.ceil(catProducts.length / (gridCols * 2)) || 1
+      const catProducts = products.filter(p => p.categoryId === cat.id && p.visible)
+      page += Math.ceil(catProducts.length / (gridCols * 2)) + 1
     }
     return page
   }
 
   const generatePDF = async () => {
-    setExporting(true)
+    if (!previewRef.current) return;
+
+    setExporting(true);
     try {
-      const jsPDF = (await import('jspdf')).default
-      const html2canvas = (await import('html2canvas')).default
-      const ReactDOMServer = await import('react-dom/server')
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
 
-      const allPages = renderPreview()
+      const canvas = await html2canvas(previewRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794,
+        windowHeight: 1123,
+        // ESTE BLOQUE ES EL "ANTI-OKLCH" DEFINITIVO
+        onclone: (clonedDoc) => {
+          const elements = clonedDoc.getElementsByTagName("*");
+          for (let i = 0; i < elements.length; i++) {
+            const el = elements[i] as HTMLElement;
+            const style = window.getComputedStyle(el);
 
-      const pdf = new jsPDF('portrait', 'mm', 'a4')
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
+            // 1. Limpiar background-color
+            if (style.backgroundColor.includes("oklch")) {
+              el.style.backgroundColor = "#ffffff";
+            }
+            // 2. Limpiar color de texto
+            if (style.color.includes("oklch")) {
+              el.style.color = "#000000";
+            }
+            // 3. Limpiar bordes
+            if (style.borderColor.includes("oklch")) {
+              el.style.borderColor = "#e5e7eb";
+            }
+            // 4. ELIMINAR SOMBRAS (Causan mucho error de oklch en Tailwind v3.4+)
+            if (style.boxShadow.includes("oklch") || style.boxShadow !== "none") {
+              el.style.boxShadow = "none";
+            }
+          }
+        }
+      });
 
-      const container = document.createElement('div')
-      container.style.cssText = 'position: fixed; left: 0; top: 0; width: 794px; min-height: 1123px; background: white; z-index: 99999;'
-      document.body.appendChild(container)
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('portrait', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      for (let i = 0; i < allPages.length; i++) {
-        container.innerHTML = ''
-        
-        const page = allPages[i]
-        if (!page) continue
-
-        let html = ReactDOMServer.renderToStaticMarkup(page)
-        
-        // Remove ALL className attributes completely
-        html = html.replace(/class="[^"]*"/g, '')
-        
-        // Also remove any style attributes that might have oklch
-        html = html.replace(/style="[^"]*oklch[^"]*"/g, '')
-        
-        // Remove any remaining oklch references
-        html = html.replace(/oklch\([^)]*\)/g, '#000000')
-        
-        // Remove any hsl references
-        html = html.replace(/hsl\([^)]+\)/g, '#000000')
-        
-        // Remove all remaining style="..." that might cause issues
-        html = html.replace(/style="[^"]*"/g, '')
-        
-        container.innerHTML = html
-
-        const canvas = await html2canvas(container, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          windowWidth: 794,
-          windowHeight: 1123,
-          backgroundColor: '#FFFFFF'
-        })
-
-        const imgData = canvas.toDataURL('image/png')
-        
-        if (i > 0) pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-      }
-
-      document.body.removeChild(container)
-      pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`)
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`);
     } catch (error) {
-      console.error("Error generating PDF:", error)
+      console.error("Error generating PDF:", error);
+      alert("Hubo un error al generar el PDF. Revisa la consola.");
     } finally {
-      setExporting(false)
+      setExporting(false);
     }
-  }
+  };
 
   const renderProductCard = (product: CatalogProduct) => (
     <div key={product.id} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
       <div className="aspect-square bg-gray-50 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
         {product.image ? (
-          <img 
-            src={product.image} 
+          <img
+            src={product.image}
             alt={product.name}
             className="w-full h-full object-contain p-2"
           />
@@ -285,31 +259,30 @@ export function AdminCatalogPage() {
   )
 
   const renderCoverPage = () => (
-    <div className="h-[1123px] w-[794px] bg-white p-16 flex flex-col items-center justify-center text-center relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/30" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-200/20 rounded-full blur-3xl" />
-      
+    // Añadimos un ID para identificarlo en el onclone y cambiamos bg-white por estilo inline
+    <div id="catalog-capture-area" className="h-[1123px] w-[794px] p-16 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{ backgroundColor: '#ffffff' }}>
+
+      {/* Reemplaza los divs de gradientes por colores sólidos o quítalos temporalmente */}
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom right, #ecfdf5, #ffffff)' }} />
+
       <div className="relative z-10">
-        <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl shadow-lg shadow-emerald-600/20 flex items-center justify-center">
+        {/* Usar style={{ backgroundColor: '...' }} es mucho más seguro para html2canvas */}
+        <div className="w-24 h-24 mx-auto mb-8 rounded-2xl flex items-center justify-center shadow-lg" style={{ backgroundColor: '#059669' }}>
           <span className="text-white text-3xl font-bold">A</span>
         </div>
-        
+
         <h1 className="text-7xl font-bold text-gray-900 tracking-tight mb-4">
           {catalogTitle}
         </h1>
-        <p className="text-3xl text-emerald-600 font-medium mb-12">{CATALOG_YEAR}</p>
-        
-        <div className="w-32 h-1 mx-auto bg-gradient-to-r from-transparent via-emerald-500 to-transparent mb-12" />
-        
+        <p className="text-3xl font-medium mb-12" style={{ color: '#10b981' }}>{CATALOG_YEAR}</p>
+
+        <div className="w-32 h-1 mx-auto mb-12" style={{ backgroundColor: '#10b981' }} />
+
         <p className="text-xl text-gray-500 font-light">
           Suplementos vitaminicos y nutricionales
         </p>
-        <p className="text-lg text-gray-400 mt-2">
-          Para una vida saludable
-        </p>
       </div>
-      
+
       <div className="absolute bottom-16 left-0 right-0 text-center">
         <p className="text-sm text-gray-400">www.anas-supplements.com</p>
       </div>
@@ -319,7 +292,7 @@ export function AdminCatalogPage() {
   const renderTOCPage = () => (
     <div className="h-[1123px] w-[794px] bg-white p-16">
       <h2 className="text-4xl font-bold text-gray-900 mb-12">Índice</h2>
-      
+
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b border-gray-200 pb-4">
           <div>
@@ -327,7 +300,7 @@ export function AdminCatalogPage() {
           </div>
           <span className="text-lg text-gray-400">1</span>
         </div>
-        
+
         {categories.map((category) => (
           <div key={category.id} className="flex items-center justify-between border-b border-gray-100 pb-4">
             <div>
@@ -344,11 +317,11 @@ export function AdminCatalogPage() {
   const renderCategoryPage = (category: CatalogCategory) => {
     const categoryProducts = products.filter(p => p.categoryId === category.id && p.visible)
     const pages: CatalogProduct[][] = []
-    
+
     for (let i = 0; i < categoryProducts.length; i += gridCols * 2) {
       pages.push(categoryProducts.slice(i, i + gridCols * 2))
     }
-    
+
     return pages.map((pageProducts, pageIndex) => (
       <div key={`${category.id}-${pageIndex}`} className="h-[1123px] w-[794px] bg-white p-12 flex flex-col">
         {pageIndex === 0 && (
@@ -357,7 +330,7 @@ export function AdminCatalogPage() {
             <p className="text-xl text-emerald-600">{category.productCount} productos</p>
           </div>
         )}
-        
+
         <div className={`grid grid-cols-${gridCols} gap-8 flex-1`}>
           {pageProducts.map(product => (
             <div key={product.id} className="flex flex-col">
@@ -365,41 +338,7 @@ export function AdminCatalogPage() {
             </div>
           ))}
         </div>
-        
-        <div className="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400">
-          <span>{catalogTitle} {CATALOG_YEAR}</span>
-          <span>{category.name}</span>
-        </div>
-      </div>
-    ))
-  }
 
-  const renderCategoryPageFiltered = (category: CatalogCategory) => {
-    const categoryProducts = filteredProducts.filter(p => p.categoryId === category.id)
-    if (categoryProducts.length === 0) return []
-
-    const pages: CatalogProduct[][] = []
-    for (let i = 0; i < categoryProducts.length; i += gridCols * 2) {
-      pages.push(categoryProducts.slice(i, i + gridCols * 2))
-    }
-    
-    return pages.map((pageProducts, pageIndex) => (
-      <div key={`${category.id}-filtered-${pageIndex}`} className="h-[1123px] w-[794px] bg-white p-12 flex flex-col">
-        {pageIndex === 0 && (
-          <div className="text-center mb-12 pb-8 border-b border-gray-100">
-            <h2 className="text-5xl font-bold text-gray-900 mb-4">{category.name}</h2>
-            <p className="text-xl text-emerald-600">{pageProducts.length} productos</p>
-          </div>
-        )}
-        
-        <div className={`grid grid-cols-${gridCols} gap-8 flex-1`}>
-          {pageProducts.map(product => (
-            <div key={product.id} className="flex flex-col">
-              {renderProductCard(product)}
-            </div>
-          ))}
-        </div>
-        
         <div className="mt-auto pt-8 border-t border-gray-100 flex justify-between text-sm text-gray-400">
           <span>{catalogTitle} {CATALOG_YEAR}</span>
           <span>{category.name}</span>
@@ -410,14 +349,14 @@ export function AdminCatalogPage() {
 
   const renderPreview = () => {
     const pages: JSX.Element[] = []
-    
+
     pages.push(renderCoverPage())
     pages.push(renderTOCPage())
-    
-    filteredCategories.forEach(category => {
-      pages.push(...renderCategoryPageFiltered(category))
+
+    categories.forEach(category => {
+      pages.push(...renderCategoryPage(category))
     })
-    
+
     return pages
   }
 
@@ -462,24 +401,24 @@ export function AdminCatalogPage() {
       />
 
       <div className="flex gap-4 mb-6 flex-wrap">
-        <SelectWithSearch 
-          value={selectedCategory} 
+        <SelectWithSearch
+          value={selectedCategory}
           onValueChange={setSelectedCategory}
           options={[{ value: "all", label: "Todas las categorías" }, ...categories.map(cat => ({ value: cat.id, label: cat.name }))]}
           placeholder="Categoría"
           triggerClassName="w-[180px]"
           minItemsForSearch={5}
         />
-        
-        <SelectWithSearch 
-          value={brandFilter} 
+
+        <SelectWithSearch
+          value={brandFilter}
           onValueChange={setBrandFilter}
           options={[{ value: "all", label: "Todas las marcas" }, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]}
           placeholder="Marca"
           triggerClassName="w-[150px]"
           minItemsForSearch={5}
         />
-        
+
         <Select value={formatFilter} onValueChange={setFormatFilter}>
           <SelectTrigger className="w-[140px]">
             <SelectValue placeholder="Formato" />
@@ -491,7 +430,7 @@ export function AdminCatalogPage() {
             ))}
           </SelectContent>
         </Select>
-        
+
         <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
           <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="Columnas" />
@@ -501,7 +440,7 @@ export function AdminCatalogPage() {
             <SelectItem value="3">3x3</SelectItem>
           </SelectContent>
         </Select>
-        
+
         {showImageWarning && productsWithoutImage.length > 0 && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
             <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -513,9 +452,9 @@ export function AdminCatalogPage() {
             </button>
           </div>
         )}
-        
+
         <div className="flex-1" />
-        
+
         <div className="flex gap-2">
           <Button
             variant={viewMode === "preview" ? "default" : "outline"}
@@ -561,10 +500,11 @@ export function AdminCatalogPage() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="flex justify-center">
-            <div 
+            <div
               ref={previewRef}
+              id="catalog-capture-area" // Añade este ID
               className="scale-[0.7] origin-top shadow-2xl"
               style={{ width: '794px', height: '1123px' }}
             >
@@ -599,7 +539,7 @@ export function AdminCatalogPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="grid gap-4">
               <div className="grid grid-cols-12 gap-4 text-xs font-bold text-gray-500 uppercase tracking-wider pb-2 border-b">
                 <div className="col-span-1">#</div>
@@ -614,7 +554,7 @@ export function AdminCatalogPage() {
                 <div className="col-span-2">Imagen</div>
                 <div className="col-span-2 text-center">Visible</div>
               </div>
-              
+
               {filteredProducts.map((product, index) => (
                 <div key={product.id} className="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-50 hover:bg-muted/30 rounded-lg px-2">
                   <div className="col-span-1 flex items-center gap-2">
@@ -682,7 +622,7 @@ export function AdminCatalogPage() {
               Personaliza el diseño y contenido de tu catálogo digital
             </DialogDescription>
           </DialogHeader>
-          
+
           <ScrollArea className="h-[calc(85vh-180px)] pr-4">
             <div className="space-y-6 py-4">
               {/* Título y Diseño */}
@@ -691,7 +631,7 @@ export function AdminCatalogPage() {
                   <BookOpen className="h-4 w-4" />
                   Diseño del Catálogo
                 </h3>
-                
+
                 <div className="grid gap-4">
                   <div>
                     <label className="text-sm font-semibold mb-2 block">Título Principal</label>
@@ -703,7 +643,7 @@ export function AdminCatalogPage() {
                     />
                     <p className="text-xs text-muted-foreground mt-1">Este título aparece en la portada</p>
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-semibold mb-2 block">Diseño de Grilla</label>
                     <Select value={String(gridCols)} onValueChange={(v) => setGridCols(Number(v) as 2 | 3)}>
@@ -743,14 +683,14 @@ export function AdminCatalogPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Personalización de Marca */}
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                   <Settings className="h-4 w-4" />
                   Identidad de Marca
                 </h3>
-                
+
                 <div className="grid gap-4">
                   <div>
                     <label className="text-sm font-semibold mb-2 block">Nombre de la Empresa</label>
@@ -761,7 +701,7 @@ export function AdminCatalogPage() {
                       className="font-medium"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-semibold mb-2 block">Color de Acento</label>
                     <div className="flex gap-3">
@@ -779,13 +719,13 @@ export function AdminCatalogPage() {
                         placeholder="#10b981"
                         className="flex-1 font-mono"
                       />
-                      <div 
-                        className="w-10 h-10 rounded-lg border" 
+                      <div
+                        className="w-10 h-10 rounded-lg border"
                         style={{ backgroundColor: brandColor }}
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-semibold mb-2 block">URL del Logo</label>
                     <Input
@@ -797,7 +737,7 @@ export function AdminCatalogPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Estadísticas */}
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
@@ -822,7 +762,7 @@ export function AdminCatalogPage() {
                     <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{renderPreview().length}</p>
                   </div>
                 </div>
-                
+
                 {productsWithoutImage.length > 0 && (
                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                     <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
@@ -833,7 +773,7 @@ export function AdminCatalogPage() {
               </div>
             </div>
           </ScrollArea>
-          
+
           <DialogFooter className="pt-4 border-t">
             <Button onClick={() => setShowSettings(false)} className="font-bold w-full sm:w-auto">
               Listo

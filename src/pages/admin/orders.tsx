@@ -12,24 +12,16 @@ import {
   Truck,
   User,
   TrendingUp,
-  ShoppingBag,
+  PlusCircle,
   CreditCard,
   Calendar,
   AlertCircle,
-  PlusCircle,
 } from "lucide-react"
-import { AdminPageHeader } from "@/components/admin/page-header"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Pagination } from "@/components/admin/pagination"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import {
   Select,
   SelectContent,
@@ -37,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -47,16 +40,10 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
-import { formatUSD } from "@/lib/utils"
+import { formatUSD, cn } from "@/lib/utils"
 
 interface OrderItem {
   id: string
@@ -110,8 +97,8 @@ export function AdminOrdersPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [sortBy, setSortBy] = useState<"saleNumber" | "customerName" | "totalUSD" | "createdAt">("createdAt")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [sortBy] = useState<"saleNumber" | "customerName" | "totalUSD" | "createdAt">("createdAt")
+  const [sortOrder] = useState<"asc" | "desc">("desc")
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false)
   const [rejectionOrderId, setRejectionOrderId] = useState<string | null>(null)
@@ -133,14 +120,13 @@ export function AdminOrdersPage() {
 
   // Payment confirmation states
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
-  const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null)
   const [paymentAmount, setPaymentAmount] = useState<string>("")
   const [paymentReason, setPaymentReason] = useState("")
 
   // Delivery status states
   const [deliveryModalOpen, setDeliveryModalOpen] = useState(false)
-  const [deliveryOrderId, setDeliveryOrderId] = useState<string | null>(null)
-  const [newDeliveryStatus, setNewDeliveryStatus] = useState<string>("")
+  const [deliveryOrderId] = useState<string | null>(null)
+  const [newDeliveryStatus] = useState<string>("")
   const [deliveryReason, setDeliveryReason] = useState("")
 
   // Installment plan states
@@ -173,7 +159,7 @@ export function AdminOrdersPage() {
     open: false,
     title: "",
     description: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
   })
 
   const confirmAction = (config: Omit<typeof confirmConfig, "open">) => {
@@ -225,8 +211,6 @@ export function AdminOrdersPage() {
         variant: "destructive",
         onConfirm: () => {
           setPaymentModalOpen(false)
-          setPaymentAmount("")
-          setPaymentReason("")
         }
       })
     } else {
@@ -304,7 +288,7 @@ export function AdminOrdersPage() {
       const data = await api.getSales()
       console.log("Fetched orders:", data.sales) // Depuración
       setOrders(data.sales || [])
-      
+
       // If there's a selected order, refresh its payment status
       if (selectedOrder) {
         refreshPaymentStatus(selectedOrder.id)
@@ -347,7 +331,7 @@ export function AdminOrdersPage() {
       order.deliveryStatus,
       order.isPaid ? "Sí" : "No"
     ])
-    
+
     const csvContent = [headers, ...rows.map(row => row.join(","))].join("\n")
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
@@ -356,7 +340,7 @@ export function AdminOrdersPage() {
     link.download = `pedidos_${new Date().toISOString().split("T")[0]}.csv`
     link.click()
     URL.revokeObjectURL(url)
-    
+
     toast({ title: "Exportación Exitosa", description: "Los pedidos se han exportado correctamente." })
   }
 
@@ -382,11 +366,11 @@ export function AdminOrdersPage() {
       const currDate = new Date(newInstallments[i].dueDate);
       const diffTime = currDate.getTime() - prevDate.getTime();
       const diffDays = diffTime / (1000 * 3600 * 24);
-      
+
       if (Math.abs(diffDays - 14) > 0.5) { // Permitir pequeño margen por zona horaria
         toast({
           title: "Intervalo inválido",
-          description: `Las cuotas ${i} y ${i+1} deben tener 14 días de diferencia (quincena).`,
+          description: `Las cuotas ${i} y ${i + 1} deben tener 14 días de diferencia (quincena).`,
           variant: "destructive"
         })
         return
@@ -433,77 +417,57 @@ export function AdminOrdersPage() {
 
   const formatStatus = (status: string) => {
     const statusMap: Record<string, { label: string; class: string; color: string }> = {
-      PENDING: { 
-        label: "Pendiente (por revisión)", 
-        class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800", 
-        color: "yellow" 
+      PENDING: {
+        label: "Pendiente (por revisión)",
+        class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
+        color: "yellow"
       },
-      PROCESSING: { 
-        label: "Procesando (pendiente por pedir)", 
-        class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800", 
-        color: "blue" 
+      PROCESSING: {
+        label: "Procesando (pendiente por pedir)",
+        class: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-primary/20 dark:border-primary/40",
+        color: "primary"
       },
-      ACCEPTED: { 
-        label: "Aceptado (ya viene en camino)", 
-        class: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800", 
-        color: "green" 
+      ACCEPTED: {
+        label: "Aceptado (ya viene en camino)",
+        class: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
+        color: "green"
       },
-      REJECTED: { 
-        label: "Rechazado", 
-        class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800", 
-        color: "red" 
+      REJECTED: {
+        label: "Rechazado",
+        class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800",
+        color: "red"
       },
-      COMPLETED: { 
-        label: "Completado", 
-        class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
-        color: "emerald" 
+      COMPLETED: {
+        label: "Completado",
+        class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+        color: "emerald"
       },
-      PROPOSED: { 
-        label: "Propuesta Enviada", 
-        class: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800", 
-        color: "purple" 
+      PROPOSED: {
+        label: "Propuesta Enviada",
+        class: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800",
+        color: "purple"
       },
-      CANCELLED: { 
-        label: "Cancelado", 
-        class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700", 
-        color: "gray" 
+      CANCELLED: {
+        label: "Cancelado",
+        class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700",
+        color: "gray"
       },
     }
     return statusMap[status] || { label: status, class: "bg-gray-100 text-gray-800", color: "gray" }
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return <Clock className="h-4 w-4 text-yellow-500" />
-      case "PROCESSING":
-        return <Clock className="h-4 w-4 text-blue-500" />
-      case "ACCEPTED":
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "REJECTED":
-        return <XCircle className="h-4 w-4 text-red-500" />
-      case "COMPLETED":
-        return <CheckCircle className="h-4 w-4 text-emerald-500" />
-      case "PROPOSED":
-        return <MessageCircle className="h-4 w-4 text-purple-500" />
-      case "CANCELLED":
-        return <XCircle className="h-4 w-4 text-gray-500" />
-      default:
-        return <Package className="h-4 w-4 text-gray-500" />
-    }
-  }
 
   const formatDeliveryStatus = (status: string) => {
     const statusMap: Record<string, { label: string; class: string; color: string }> = {
-      NOT_DELIVERED: { 
-        label: "No entregado", 
-        class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700", 
-        color: "gray" 
+      NOT_DELIVERED: {
+        label: "No entregado",
+        class: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700",
+        color: "gray"
       },
-      DELIVERED: { 
-        label: "Entregado", 
-        class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800", 
-        color: "emerald" 
+      DELIVERED: {
+        label: "Entregado",
+        class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
+        color: "emerald"
       },
     }
     return statusMap[status] || { label: status === "IN_TRANSIT" ? "En tránsito (obsoleto)" : (status || "Pendiente"), class: "bg-gray-100 text-gray-800", color: "gray" }
@@ -533,9 +497,6 @@ export function AdminOrdersPage() {
   const handleAcceptClick = async (order: Order) => {
     setAcceptanceOrder(order)
     setInitialPaymentUSD("0")
-    setInstallmentCount(0)
-    setIsFinancingEnabled(false)
-    setCustomInstallments([])
     setFinancingModalMode("acceptance")
     setAcceptanceModalOpen(true)
 
@@ -546,8 +507,8 @@ export function AdminOrdersPage() {
         const response = await api.getCustomers({ search: order.customerEmail })
         const customer = response.customers.find((c: any) => c.email === order.customerEmail)
         if (customer) {
-          const history = await api.getCustomerOrders(customer.id)
-          setCustomerOrders(history.orders || [])
+          const ordersData = await api.getCustomerOrders(customer.id)
+          setCustomerOrders(ordersData.orders || [])
         }
       } catch (error) {
         console.error("Error fetching solvency history:", error)
@@ -561,17 +522,14 @@ export function AdminOrdersPage() {
     if (!acceptanceOrder) return
 
     const initial = parseFloat(initialPaymentUSD) || 0
-    const financing = (isFinancingEnabled || initial > 0) ? {
+    const financing = (initial > 0) ? {
       initialPaymentUSD: initial,
-      installmentPlan: isFinancingEnabled ? customInstallments.map(inst => ({
-        amountUSD: parseFloat(inst.amountUSD),
-        dueDate: new Date(inst.dueDate)
-      })) : []
+      installmentPlan: []
     } : undefined
 
     confirmAction({
       title: "¿Aceptar pedido?",
-      description: `¿Estás seguro de que deseas aceptar el pedido de ${acceptanceOrder.customerName}? ${isFinancingEnabled ? "Se creará un plan de financiamiento." : ""}`,
+      description: `¿Estás seguro de que deseas aceptar el pedido de ${acceptanceOrder.customerName}?`,
       confirmText: "Aceptar Pedido",
       onConfirm: async () => {
         setUpdatingId(acceptanceOrder.id)
@@ -579,9 +537,7 @@ export function AdminOrdersPage() {
           await api.updateSaleStatus(acceptanceOrder.id, 'ACCEPTED', undefined, financing)
           toast({
             title: "Pedido Aceptado",
-            description: isFinancingEnabled 
-              ? `El pedido ha sido aceptado con un plan de ${customInstallments.length} cuotas.`
-              : "El pedido ha sido aceptado correctamente.",
+            description: "El pedido ha sido aceptado correctamente.",
           })
           setAcceptanceModalOpen(false)
           await fetchOrders()
@@ -671,14 +627,13 @@ export function AdminOrdersPage() {
       confirmText: "Confirmar",
       variant: status === 'REJECTED' ? "destructive" : "default",
       onConfirm: async () => {
-        setUpdatingItemId(itemId)
         try {
           await api.updateSaleItemStatus(orderId, itemId, status)
           toast({
             title: "Item actualizado",
             description: `El producto ha sido marcado como ${label}`,
           })
-          
+
           // Refresh order data
           await fetchOrders()
         } catch (error: any) {
@@ -687,8 +642,6 @@ export function AdminOrdersPage() {
             description: error.message || "No se pudo actualizar el item",
             variant: "destructive"
           })
-        } finally {
-          setUpdatingItemId(null)
         }
       }
     })
@@ -707,8 +660,7 @@ export function AdminOrdersPage() {
             title: "Cantidad actualizada",
             description: "La cantidad del producto ha sido ajustada correctamente",
           })
-          
-          setEditingQuantity(null)
+
           // Refresh order data
           await fetchOrders()
         } catch (error: any) {
@@ -737,7 +689,7 @@ export function AdminOrdersPage() {
             title: "Items aceptados",
             description: "Todos los productos han sido marcados como aceptados",
           })
-          
+
           // Refresh order data
           await fetchOrders()
         } catch (error: any) {
@@ -755,7 +707,7 @@ export function AdminOrdersPage() {
 
   const updateDeliveryStatus = async (orderId: string, deliveryStatus: string, reason?: string) => {
     const label = formatDeliveryStatus(deliveryStatus).label
-    
+
     confirmAction({
       title: "¿Actualizar estado de entrega?",
       description: `¿Estás seguro de que deseas marcar la entrega como "${label}"?`,
@@ -769,7 +721,6 @@ export function AdminOrdersPage() {
             description: `El estado de entrega ha sido marcado como ${label}`,
           })
           setDeliveryModalOpen(false)
-          setDeliveryReason("")
           await fetchOrders()
         } catch (error: any) {
           toast({
@@ -784,12 +735,6 @@ export function AdminOrdersPage() {
     })
   }
 
-  const handleDeliveryStatusClick = (orderId: string, status: string) => {
-    setDeliveryOrderId(orderId)
-    setNewDeliveryStatus(status)
-    setDeliveryReason("")
-    setDeliveryModalOpen(true)
-  }
 
   const confirmDeliveryStatus = () => {
     if (deliveryOrderId && newDeliveryStatus) {
@@ -823,9 +768,6 @@ export function AdminOrdersPage() {
       })
       return
     }
-    setPaymentOrderId(order.id)
-    setPaymentAmount(order.totalUSD.toString())
-    setPaymentReason("")
     setPaymentModalOpen(true)
   }
 
@@ -841,17 +783,17 @@ export function AdminOrdersPage() {
     setIsProcessingProof(true)
     try {
       await api.verifyPaymentProof(selectedProof.id, { status, notes: adminNotes })
-      
+
       toast({
         title: status === 'APPROVED' ? "Comprobante Aprobado" : "Comprobante Rechazado",
-        description: status === 'APPROVED' 
-          ? "El pago ha sido registrado y la cuota actualizada." 
+        description: status === 'APPROVED'
+          ? "El pago ha sido registrado y la cuota actualizada."
           : "El comprobante ha sido rechazado.",
       })
 
       setProofModalOpen(false)
       setSelectedProof(null)
-      
+
       if (selectedOrder) {
         refreshPaymentStatus(selectedOrder.id)
         fetchOrders()
@@ -868,9 +810,9 @@ export function AdminOrdersPage() {
   }
 
   const confirmPayment = async () => {
-    if (!paymentOrderId) return
-    
-    const amount = parseFloat(paymentAmount)
+    if (!selectedOrder) return
+
+    const amount = parseFloat(selectedOrder.totalUSD.toString())
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: "Monto inválido",
@@ -880,23 +822,23 @@ export function AdminOrdersPage() {
       return
     }
 
-    setUpdatingId(paymentOrderId)
+    setUpdatingId(selectedOrder.id)
     try {
       // Use the new registerPayment method from api.ts
-      await api.registerPayment(paymentOrderId, {
+      await api.registerPayment(selectedOrder.id, {
         amountUSD: amount,
         paymentMethod: 'CASH', // Default to cash for now, could be improved
-        notes: paymentReason
+        notes: ""
       })
-      
+
       toast({
         title: "Pago registrado",
         description: `Se ha registrado el pago de ${formatUSD(amount)}`,
       })
       setPaymentModalOpen(false)
       await fetchOrders()
-      if (selectedOrder?.id === paymentOrderId) {
-        refreshPaymentStatus(paymentOrderId)
+      if (selectedOrder?.id === selectedOrder.id) {
+        refreshPaymentStatus(selectedOrder.id)
       }
     } catch (error: any) {
       toast({
@@ -1090,530 +1032,252 @@ export function AdminOrdersPage() {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 bg-muted rounded w-1/4"></div>
-        <div className="h-64 bg-muted rounded"></div>
+      <div className="animate-pulse space-y-4 p-8">
+        <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded-xl w-1/4"></div>
+        <div className="h-96 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-border"></div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6" role="main" aria-label="Gestión de Ventas">
-      <AdminPageHeader 
-        title="Gestión de Ventas"
-        subtitle="Supervisa y procesa los pedidos de tus clientes en tiempo real."
-        icon={ShoppingBag}
-      />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div className="flex flex-col gap-1 md:hidden">
-          <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
-            <ShoppingBag className="h-8 w-8 text-primary" aria-hidden="true" />
-            Gestión de Ventas
-          </h1>
-          <p className="text-muted-foreground font-medium">Supervisa y procesa los pedidos de tus clientes en tiempo real.</p>
+    <div className="space-y-6 pb-20 md:pb-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Pedidos</h1>
+          <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">Gestiona y rastrea las ventas de tus clientes</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Última actualización</span>
-            <span className="text-xs font-bold text-primary flex items-center gap-1">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
-              En vivo
-            </span>
-          </div>
-          <Button 
-            variant="outline" 
-            className="rounded-xl border-2 hover:bg-primary/5 transition-all font-bold gap-2"
+          <Button
+            variant="outline"
             onClick={fetchOrders}
-            disabled={loading}
-            aria-label="Refrescar lista de pedidos"
+            className="h-10 px-4 rounded-xl border-slate-200 text-slate-600 font-semibold gap-2 bg-white hover:bg-slate-50 transition-all dark:bg-card dark:text-slate-300 dark:border-border"
           >
-            <Clock className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-            <span className="hidden sm:inline">Actualizar</span>
+            <Clock className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Sincronizar
           </Button>
-          <Button 
-            variant="outline" 
-            className="rounded-xl border-2 hover:bg-primary/5 transition-all font-bold gap-2"
+          <Button
             onClick={exportOrdersToCSV}
-            aria-label="Exportar pedidos"
+            className="h-10 px-4 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold transition-all shadow-sm shadow-primary/20"
           >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Exportar</span>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
-            <Input
-              placeholder="Buscar por # pedido, cliente, email o teléfono..."
-              className="pl-11 h-12 bg-white dark:bg-card border-2 border-border/40 focus:border-primary/50 rounded-2xl transition-all shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="Buscar pedidos"
-            />
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4 border-slate-100 dark:border-border/60 shadow-sm bg-white dark:bg-card rounded-2xl">
           <div className="flex items-center gap-3">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] h-10 bg-white dark:bg-card border-2 border-border/40 rounded-xl font-bold text-xs uppercase tracking-wider">
-                <SelectValue placeholder="Filtrar por estado" />
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+              <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Pedidos</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{statusCounts.all}</h3>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 border-slate-100 dark:border-border/60 shadow-sm bg-white dark:bg-card rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pendientes</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{statusCounts.PENDING + statusCounts.PROCESSING}</h3>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 border-slate-100 dark:border-border/60 shadow-sm bg-white dark:bg-card rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+              <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Completados</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">{statusCounts.COMPLETED}</h3>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 border-slate-100 dark:border-border/60 shadow-sm bg-white dark:bg-card rounded-2xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-xl">
+              <TrendingUp className="h-5 w-5 text-slate-600 dark:text-slate-300" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ingresos (USD)</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                {formatUSD(orders.reduce((sum, o) => sum + (o.totalUSD || 0), 0))}
+              </h3>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="all" value={statusFilter} onValueChange={setStatusFilter} className="space-y-6 mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <TabsList className="bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl w-fit">
+            <TabsTrigger value="all" className="rounded-lg px-4 py-2 text-xs font-bold">Todos</TabsTrigger>
+            <TabsTrigger value="PENDING" className="rounded-lg px-4 py-2 text-xs font-bold">Pendientes</TabsTrigger>
+            <TabsTrigger value="ACCEPTED" className="rounded-lg px-4 py-2 text-xs font-bold">Aceptados</TabsTrigger>
+            <TabsTrigger value="COMPLETED" className="rounded-lg px-4 py-2 text-xs font-bold">Completados</TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Buscar por número o cliente..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-10 w-full sm:w-64 bg-white border border-slate-200 focus-visible:ring-primary/20 rounded-xl text-xs transition-all dark:bg-card dark:border-border"
+              />
+            </div>
+            <Select value={itemsPerPage.toString()} onValueChange={(v) => setItemsPerPage(parseInt(v))}>
+              <SelectTrigger className="w-[70px] h-10 rounded-xl border-slate-200 bg-white dark:bg-card dark:border-border text-xs">
+                <SelectValue placeholder="10" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all" className="font-bold text-xs">
-                  <span className="flex items-center justify-between gap-3">
-                    Todos
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.all}</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="PENDING" className="font-bold text-xs">
-                  <span className="flex items-center justify-between gap-3">
-                    Pendientes
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.PENDING}</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="ACCEPTED" className="font-bold text-xs">
-                  <span className="flex items-center justify-between gap-3">
-                    Aceptados
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.ACCEPTED}</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="COMPLETED" className="font-bold text-xs">
-                  <span className="flex items-center justify-between gap-3">
-                    Completados
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.COMPLETED}</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="REJECTED" className="font-bold text-xs">
-                  <span className="flex items-center justify-between gap-3">
-                    Rechazados
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.REJECTED}</span>
-                  </span>
-                </SelectItem>
-                <SelectItem value="CANCELLED" className="font-bold text-xs">
-                  <span className="flex items-center justify-between gap-3">
-                    Cancelados
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{statusCounts.CANCELLED}</span>
-                  </span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={(v) => { setSortBy(v as any); setSortOrder(sortOrder === "asc" ? "desc" : "asc") }}>
-              <SelectTrigger className="w-[150px] h-10 bg-white dark:bg-card border-2 border-border/40 rounded-xl font-bold text-xs uppercase tracking-wider">
-                <SelectValue placeholder="Ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="createdAt" className="font-bold text-xs">
-                  Fecha {sortBy === "createdAt" && (sortOrder === "desc" ? "↓" : "↑")}
-                </SelectItem>
-                <SelectItem value="saleNumber" className="font-bold text-xs">
-                  # Pedido {sortBy === "saleNumber" && (sortOrder === "desc" ? "↓" : "↑")}
-                </SelectItem>
-                <SelectItem value="customerName" className="font-bold text-xs">
-                  Cliente {sortBy === "customerName" && (sortOrder === "desc" ? "↓" : "↑")}
-                </SelectItem>
-                <SelectItem value="totalUSD" className="font-bold text-xs">
-                  Total {sortBy === "totalUSD" && (sortOrder === "desc" ? "↓" : "↑")}
-                </SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-        <div className="grid gap-4 mt-6" role="list" aria-label="Lista de pedidos">
-          {paginatedOrders.length > 0 ? (
-            paginatedOrders.map((order) => {
-                  const status = formatStatus(order.status)
-                  const items = Array.isArray(order.items) ? order.items : []
-                  
-                  return (
-                    <Card 
-                      key={order.id} 
-                      className="group hover:shadow-md transition-all duration-300 border border-border/60 overflow-hidden rounded-2xl"
-                      role="listitem"
-                      aria-labelledby={`order-heading-${order.id}`}
-                    >
-                      <CardContent className="p-0">
-                        <div className="p-6">
-                          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                            <div className="flex items-start gap-4">
-                              <div 
-                                className={`p-3 rounded-2xl ${status.color === 'yellow' ? 'bg-yellow-50 dark:bg-yellow-900/20' : 
-                                               status.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' :
-                                               status.color === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
-                                               status.color === 'red' ? 'bg-red-50 dark:bg-red-900/20' :
-                                               status.color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/20' :
-                                               'bg-gray-50 dark:bg-gray-800'} shrink-0 transition-colors group-hover:scale-110 duration-300`}
-                                aria-hidden="true"
-                              >
-                                {getStatusIcon(order.status)}
-                              </div>
-                              <div className="min-w-0 space-y-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h3 id={`order-heading-${order.id}`} className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">
-                                    Pedido {order.saleNumber}
-                                  </h3>
-                                  <Select
-                                    disabled={updatingId === order.id}
-                                    value={order.deliveryStatus}
-                                    onValueChange={(value) => handleDeliveryStatusClick(order.id, value)}
-                                  >
-                                    <SelectTrigger 
-                                      className="h-7 w-[140px] bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-xs"
-                                      aria-label={`Estado de entrega para pedido ${order.saleNumber}`}
-                                    >
-                                      <SelectValue placeholder="Estado Entrega" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="NOT_DELIVERED">No entregado</SelectItem>
-                                      <SelectItem value="DELIVERED">Entregado</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-
-                                  <Select
-                                    disabled={updatingId === order.id}
-                                    value={order.status}
-                                    onValueChange={(value) => {
-                                      if (value === 'REJECTED') {
-                                        handleRejectClick(order.id)
-                                      } else {
-                                        updateOrderStatus(order.id, value)
-                                      }
-                                    }}
-                                  >
-                                    <SelectTrigger 
-                                      className={`h-7 w-[130px] ${status.class} font-medium border-current/20 text-xs`}
-                                      aria-label={`Estado de orden para pedido ${order.saleNumber}`}
-                                    >
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="PENDING">Pendiente</SelectItem>
-                                      <SelectItem value="PROCESSING">Procesando</SelectItem>
-                                      <SelectItem value="ACCEPTED">Aceptado</SelectItem>
-                                      {order.status === 'PROPOSED' && (
-                                        <SelectItem value="PROPOSED">Propuesta Enviada</SelectItem>
-                                      )}
-                                      <SelectItem value="REJECTED">Rechazado</SelectItem>
-                                      <SelectItem value="COMPLETED">Completado</SelectItem>
-                                      <SelectItem value="CANCELLED">Cancelado</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  {order.isPaid ? (
-                                    <Badge className="bg-emerald-500 text-white dark:bg-emerald-600 border-none" aria-label="Pagado">
-                                      <CheckCircle className="h-3 w-3 mr-1" aria-hidden="true" />
-                                      Pagado
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border-amber-200 dark:border-amber-800/50" aria-label="Pendiente de pago">
-                                      <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
-                                      Pendiente de Pago
-                                    </Badge>
-                                  )}
-                                  {order.paymentMethod === 'WHATSAPP' && (
-                                    <Badge variant="outline" className="bg-green-50/50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-800/50" aria-label="Método de pago WhatsApp">
-                                      <MessageCircle className="h-3 w-3 mr-1" aria-hidden="true" />
-                                      WhatsApp
-                                    </Badge>
-                                  )}
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-1 text-sm">
-                                  <p className="font-medium text-gray-700 dark:text-gray-300">
-                                    {order.customerName}
-                                  </p>
-                                  <span className="hidden sm:inline text-gray-300 dark:text-gray-700">•</span>
-                                  <p className="text-muted-foreground truncate max-w-[200px]">
-                                    {order.customerEmail || "Sin email"}
-                                  </p>
-                                </div>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                  <Clock className="h-3 w-3" />
-                                  {formatDate(order.createdAt)}
-                                </p>
-                              </div>
+        <TabsContent value={statusFilter} className="mt-0">
+          <Card className="rounded-2xl border border-slate-100 shadow-sm bg-white dark:bg-card dark:border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left bg-white dark:bg-card">
+                <thead className="bg-[#FBFCFD] dark:bg-slate-800 border-b border-slate-100 dark:border-border/60">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center w-20">#</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">CLIENTE</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">FECHA</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-center">ESTADO</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">TOTAL</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-right">ACCIÓN</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-border/40">
+                  {paginatedOrders.map((order) => {
+                    const status = formatStatus(order.status)
+                    return (
+                      <tr key={order.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                            {order.saleNumber}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-border">
+                              {order.customerName?.charAt(0) || 'C'}
                             </div>
-                            
-                            <div className="flex items-center justify-between md:justify-end gap-6">
-                              <div className="text-right">
-                                <p className="text-2xl font-black text-gray-900 dark:text-white">${formatUSD(order.totalUSD)}</p>
-                                <p className="text-xs font-medium text-muted-foreground bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full inline-block mt-1">
-                                  {items.length} producto{items.length !== 1 ? "s" : ""}
-                                </p>
-                              </div>
-                              
-                              <div className="flex gap-2">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button 
-                                        variant="outline" 
-                                        size="icon" 
-                                        className="rounded-full hover:bg-primary hover:text-primary-foreground transition-colors" 
-                                        onClick={() => setSelectedOrder(order)}
-                                        aria-label={`Ver detalles del pedido ${order.saleNumber}`}
-                                      >
-                                        <Eye className="h-4 w-4" aria-hidden="true" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Ver detalles de la orden</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="icon" className="rounded-full" aria-label={`Más acciones para pedido ${order.saleNumber}`}>
-                                      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem onClick={() => setSelectedOrder(order)}>
-                                      <Eye className="h-4 w-4 mr-2" aria-hidden="true" />
-                                      Ver detalles
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => sendWhatsAppReminder(order)}>
-                                      <MessageCircle className="h-4 w-4 mr-2 text-green-500" aria-hidden="true" />
-                                      Enviar WhatsApp
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => generateInvoicePDF(order)}>
-                                      <Download className="h-4 w-4 mr-2 text-blue-500" aria-hidden="true" />
-                                      Descargar factura
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
+                            <div>
+                              <div className="text-sm font-bold text-slate-900 dark:text-white">{order.customerName}</div>
+                              <div className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-semibold">{order.customerEmail}</div>
                             </div>
                           </div>
-                        </div>
-
-                        <div className="px-6 pb-6">
-                          {/* Quick Actions for Pending & Accepted */}
-                          {(order.status === 'PENDING' || order.status === 'ACCEPTED' || order.status === 'PROPOSED') && (
-                            <div 
-                              className={`p-4 border rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm mb-4 ${
-                                order.status === 'PENDING' 
-                                  ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/50' 
-                                  : order.status === 'ACCEPTED'
-                                    ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/50'
-                                    : 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-100 dark:border-purple-800/50'
-                              }`}
-                              role="region"
-                              aria-label={`Acciones rápidas para pedido ${order.saleNumber}`}
-                            >
-                            <div className="flex items-center gap-3">
-                              <div 
-                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                  order.status === 'PENDING' 
-                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
-                                    : order.status === 'ACCEPTED'
-                                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-                                      : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                                }`}
-                                aria-hidden="true"
-                              >
-                                {order.status === 'PENDING' ? <Clock className="h-5 w-5" /> : order.status === 'ACCEPTED' ? <CheckCircle className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
-                              </div>
-                              <div>
-                                <span className={`text-sm font-semibold block ${
-                                  order.status === 'PENDING' 
-                                    ? 'text-blue-900 dark:text-blue-300' 
-                                    : order.status === 'ACCEPTED'
-                                      ? 'text-emerald-900 dark:text-emerald-300'
-                                      : 'text-purple-900 dark:text-purple-300'
-                                }`}>
-                                  {order.status === 'PENDING' ? 'Nuevo pedido pendiente' : order.status === 'ACCEPTED' ? 'Pedido aceptado' : 'Propuesta enviada'}
-                                </span>
-                                <span className={`text-xs ${
-                                  order.status === 'PENDING' 
-                                    ? 'text-blue-700/70 dark:text-blue-400/70' 
-                                    : order.status === 'ACCEPTED'
-                                      ? 'text-emerald-700/70 dark:text-emerald-400/70'
-                                      : 'text-purple-700/70 dark:text-purple-400/70'
-                                }`}>
-                                  {order.status === 'PENDING' ? 'Revisa los detalles antes de aceptar' : order.status === 'ACCEPTED' ? 'Esperando confirmación de pago' : 'Esperando respuesta del cliente'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      size="sm" 
-                                      disabled={updatingId === order.id || order.status !== 'ACCEPTED'}
-                                      className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1 sm:flex-none h-10 px-4"
-                                      onClick={() => handlePaymentClick(order)}
-                                      aria-label={`Confirmar pago para pedido ${order.saleNumber}`}
-                                    >
-                                      {updatingId === order.id ? (
-                                        <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin sm:mr-2" aria-hidden="true" />
-                                      ) : (
-                                        <CheckCircle className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                                      )}
-                                      <span className="hidden sm:inline">Confirmar Pago</span>
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Confirmar Pago</p>
-                                  </TooltipContent>
-                                </Tooltip>
-
-                                {order.status === 'PENDING' && (
-                                  <>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button 
-                                          size="sm" 
-                                          disabled={updatingId === order.id}
-                                          className={`${
-                                            order.items.some(item => item.status === 'REJECTED') 
-                                              ? 'bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800' 
-                                              : 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800'
-                                          } text-white flex-1 sm:flex-none h-10 px-4`}
-                                          onClick={() => {
-                                            const hasRejected = order.items.some(item => item.status === 'REJECTED');
-                                            if (hasRejected) {
-                                              updateOrderStatus(order.id, 'PROPOSED');
-                                            } else {
-                                              handleAcceptClick(order);
-                                            }
-                                          }}
-                                          aria-label={order.items.some(item => item.status === 'REJECTED') ? `Enviar propuesta para pedido ${order.saleNumber}` : `Aceptar pedido ${order.saleNumber}`}
-                                        >
-                                          {updatingId === order.id ? (
-                                            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin sm:mr-2" aria-hidden="true" />
-                                          ) : (
-                                            order.items.some(item => item.status === 'REJECTED') ? (
-                                              <MessageCircle className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                                            ) : (
-                                              <CheckCircle className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                                            )
-                                          )}
-                                          <span className="hidden sm:inline">
-                                            {order.items.some(item => item.status === 'REJECTED') ? 'Enviar Propuesta' : 'Aceptar'}
-                                          </span>
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>{order.items.some(item => item.status === 'REJECTED') ? 'Enviar Propuesta' : 'Aceptar'}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button 
-                                          size="sm" 
-                                          variant="destructive" 
-                                          disabled={updatingId === order.id}
-                                          className="flex-1 sm:flex-none h-10 px-4"
-                                          onClick={() => handleRejectClick(order.id)}
-                                          aria-label={`Rechazar pedido ${order.saleNumber}`}
-                                        >
-                                          <XCircle className="h-4 w-4 sm:mr-2" aria-hidden="true" />
-                                          <span className="hidden sm:inline">Rechazar</span>
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Rechazar</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </>
-                                )}
-                              </TooltipProvider>
-                            </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                            <Calendar className="h-3.5 w-3.5 opacity-50" />
+                            {new Date(order.createdAt).toLocaleDateString()}
                           </div>
-                        )}
-                      </div>
-
-                        {/* Order Items Preview */}
-                        <div className="mt-4 pt-4 border-t dark:border-gray-800">
-                          <div className="flex flex-wrap gap-2" role="list" aria-label={`Vista previa de productos del pedido ${order.saleNumber}`}>
-                            {items.slice(0, 3).map((item, idx) => (
-                              <div 
-                                key={idx} 
-                                className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm"
-                                role="listitem"
-                              >
-                                <span className="truncate max-w-[200px] text-gray-800 dark:text-gray-200 font-medium">{item.name}</span>
-                                <span className="text-muted-foreground">x{item.quantity}</span>
-                              </div>
-                            ))}
-                            {items.length > 3 && (
-                              <span className="px-3 py-1 text-sm text-muted-foreground bg-gray-50 dark:bg-gray-900/50 rounded-full border border-dashed border-gray-200 dark:border-gray-700">
-                                +{items.length - 3} más
-                              </span>
-                            )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                            status.color === 'emerald' ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/10 dark:text-emerald-400 dark:border-emerald-900/30" :
+                              status.color === 'blue' ? "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/10 dark:text-blue-400 dark:border-blue-900/30" :
+                                status.color === 'yellow' ? "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/10 dark:text-amber-400 dark:border-amber-900/30" :
+                                  status.color === 'red' ? "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/10 dark:text-rose-400 dark:border-rose-900/30" :
+                                    "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/10 dark:text-slate-400 dark:border-slate-800"
+                          )}>
+                            <span className={cn(
+                              "h-1.5 w-1.5 rounded-full",
+                              status.color === 'emerald' ? "bg-emerald-600 dark:bg-emerald-400" :
+                                status.color === 'blue' ? "bg-blue-600 dark:bg-blue-400" :
+                                  status.color === 'yellow' ? "bg-amber-600 dark:bg-amber-400" :
+                                    status.color === 'red' ? "bg-rose-600 dark:bg-rose-400" :
+                                      "bg-slate-600 dark:bg-slate-400"
+                            )} />
+                            {status.label}
                           </div>
-                        </div>
-
-                        {/* Order Detail Link */}
-                        <div className="mt-4 pt-4 border-t dark:border-gray-800 flex items-center justify-end">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <span className="text-sm font-bold text-slate-900 dark:text-white">
+                            {formatUSD(order.totalUSD)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setSelectedOrder(order)}
-                            aria-label={`Ver historial y detalles completos del pedido ${order.saleNumber}`}
+                            className="h-8 px-3 text-primary hover:text-primary hover:bg-primary/5 rounded-lg font-bold text-xs transition-all"
                           >
-                            Ver Historial y Detalles
+                            Detalles
                           </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })
-              ) : (
-                <Card>
-                  <CardContent className="py-16 text-center">
-                    <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No hay ordenes</h3>
-                    <p className="text-muted-foreground">No se encontraron ordenes con los criterios de busqueda.</p>
-                  </CardContent>
-                </Card>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+
+              {paginatedOrders.length === 0 && (
+                <div className="p-12 text-center text-slate-400">
+                  <Package className="h-10 w-10 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm font-medium">No se encontraron pedidos</p>
+                </div>
               )}
             </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
-            {/* Pagination */}
-            {filteredOrders.length > 0 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={filteredOrders.length}
-                itemsPerPage={itemsPerPage}
-                onPageChange={setCurrentPage}
-                onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
-                showItemsPerPage
-              />
-            )}
+      {/* Pagination */}
+      {
+        filteredOrders.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredOrders.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(count) => { setItemsPerPage(count); setCurrentPage(1); }}
+            showItemsPerPage
+          />
+        )
+      }
 
-        {/* Order Detail Modal */}
-        <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
-            {selectedOrder && (
-              <>
-                <div className="p-6 border-b bg-muted/30 dark:bg-muted/10 shrink-0">
-                  <DialogHeader className="flex flex-col pr-8">
-                    <div className="flex items-center justify-between">
-                      <DialogTitle className="text-2xl font-black">Orden {selectedOrder?.saleNumber}</DialogTitle>
-                      <Badge 
-                        className={`${formatStatus(selectedOrder?.status || 'PENDING').class} text-sm px-3 py-1`}
-                        aria-label={`Estado actual: ${formatStatus(selectedOrder?.status || 'PENDING').label}`}
-                      >
-                        {formatStatus(selectedOrder?.status || 'PENDING').label}
-                      </Badge>
-                    </div>
-                    <DialogDescription className="mt-1">
-                      Gestiona los productos, revisa el historial y realiza acciones sobre el pedido.
-                    </DialogDescription>
-                  </DialogHeader>
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-6 space-y-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Order Detail Modal */}
+      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+          {selectedOrder && (
+            <>
+              <div className="p-6 border-b bg-muted/30 dark:bg-muted/10 shrink-0">
+                <DialogHeader className="flex flex-col pr-8">
+                  <div className="flex items-center justify-between">
+                    <DialogTitle className="text-2xl font-black">Orden {selectedOrder?.saleNumber}</DialogTitle>
+                    <Badge
+                      className={`${formatStatus(selectedOrder?.status || 'PENDING').class} text-sm px-3 py-1`}
+                      aria-label={`Estado actual: ${formatStatus(selectedOrder?.status || 'PENDING').label}`}
+                    >
+                      {formatStatus(selectedOrder?.status || 'PENDING').label}
+                    </Badge>
+                  </div>
+                  <DialogDescription className="mt-1">
+                    Gestiona los productos, revisa el historial y realiza acciones sobre el pedido.
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-6 space-y-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Customer & Payment Info */}
                     <div className="lg:col-span-2 space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border bg-card dark:border-gray-800" role="region" aria-label="Información del cliente y pedido">
@@ -1627,14 +1291,14 @@ export function AdminOrdersPage() {
                             <div className="space-y-1 mt-2">
                               {selectedOrder?.customerEmail && (
                                 <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <Search className="h-3 w-3" aria-hidden="true" /> 
+                                  <Search className="h-3 w-3" aria-hidden="true" />
                                   <span className="sr-only">Email: </span>
                                   {selectedOrder.customerEmail}
                                 </p>
                               )}
                               {selectedOrder?.customerPhone && (
                                 <p className="text-sm text-muted-foreground flex items-center gap-2">
-                                  <MessageCircle className="h-3 w-3" aria-hidden="true" /> 
+                                  <MessageCircle className="h-3 w-3" aria-hidden="true" />
                                   <span className="sr-only">Teléfono: </span>
                                   {selectedOrder.customerPhone}
                                 </p>
@@ -1660,8 +1324,8 @@ export function AdminOrdersPage() {
                               </div>
                               <div className="flex items-center justify-between">
                                 <span className="text-sm text-muted-foreground">Estado Entrega:</span>
-                                <Badge 
-                                  variant="outline" 
+                                <Badge
+                                  variant="outline"
                                   className={`${formatDeliveryStatus(selectedOrder?.deliveryStatus || '').class} text-xs border-current/20`}
                                   aria-label={`Estado de entrega: ${formatDeliveryStatus(selectedOrder?.deliveryStatus || '').label}`}
                                 >
@@ -1700,9 +1364,9 @@ export function AdminOrdersPage() {
                             Resumen de Productos ({Array.isArray(selectedOrder?.items) ? selectedOrder?.items.length : 0})
                           </h4>
                           {selectedOrder?.status === 'PENDING' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
+                            <Button
+                              size="sm"
+                              variant="outline"
                               className="h-8 text-xs border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
                               onClick={() => selectedOrder && acceptAllOrderItems(selectedOrder.id)}
                               disabled={updatingId === selectedOrder?.id}
@@ -1756,9 +1420,9 @@ export function AdminOrdersPage() {
                                                 min={1}
                                                 max={item.originalQuantity || item.quantity}
                                               />
-                                              <Button 
-                                                size="icon" 
-                                                variant="ghost" 
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
                                                 className="h-8 w-8 text-green-600"
                                                 onClick={() => selectedOrder && updateOrderItemQuantity(selectedOrder.id, item.id, editingQuantity.quantity)}
                                                 disabled={updatingItemId === item.id}
@@ -1770,9 +1434,9 @@ export function AdminOrdersPage() {
                                                   <CheckCircle className="h-4 w-4" aria-hidden="true" />
                                                 )}
                                               </Button>
-                                              <Button 
-                                                size="icon" 
-                                                variant="ghost" 
+                                              <Button
+                                                size="icon"
+                                                variant="ghost"
                                                 className="h-8 w-8 text-red-600"
                                                 onClick={() => setEditingQuantity(null)}
                                                 aria-label={`Cancelar edición de cantidad para ${item.name}`}
@@ -1867,7 +1531,7 @@ export function AdminOrdersPage() {
                           </table>
                         </div>
                       </div>
-                  </div>
+                    </div>
 
                     {/* Sidebar: Status & History */}
                     <div className="space-y-6">
@@ -1904,16 +1568,16 @@ export function AdminOrdersPage() {
                                         {Math.round((paymentStatus.paidAmountUSD / selectedOrder!.totalUSD) * 100)}%
                                       </span>
                                     </div>
-                                    <div 
-                                      className="w-full bg-amber-200 dark:bg-amber-900/40 rounded-full h-1.5 mb-2" 
-                                      role="progressbar" 
-                                      aria-valuenow={Math.round((paymentStatus.paidAmountUSD / selectedOrder!.totalUSD) * 100)} 
-                                      aria-valuemin={0} 
+                                    <div
+                                      className="w-full bg-amber-200 dark:bg-amber-900/40 rounded-full h-1.5 mb-2"
+                                      role="progressbar"
+                                      aria-valuenow={Math.round((paymentStatus.paidAmountUSD / selectedOrder!.totalUSD) * 100)}
+                                      aria-valuemin={0}
                                       aria-valuemax={100}
                                       aria-label="Progreso de pago"
                                     >
-                                      <div 
-                                        className="bg-amber-600 dark:bg-amber-500 h-1.5 rounded-full" 
+                                      <div
+                                        className="bg-amber-600 dark:bg-amber-500 h-1.5 rounded-full"
                                         style={{ width: `${Math.min(100, (paymentStatus.paidAmountUSD / selectedOrder!.totalUSD) * 100)}%` }}
                                       />
                                     </div>
@@ -1930,74 +1594,71 @@ export function AdminOrdersPage() {
                                       {paymentStatus.installments.map((inst: any) => (
                                         <React.Fragment key={inst.id}>
                                           <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-[11px]" aria-label={`Cuota de ${formatUSD(inst.amountUSD)} vencimiento ${formatDate(inst.dueDate).split(',')[0]}, estado ${inst.status}`}>
-                                          <div className="flex items-center gap-2">
-                                            {inst.status === 'PAID' ? (
-                                              <CheckCircle className="h-3 w-3 text-emerald-500" aria-hidden="true" />
-                                            ) : inst.status === 'OVERDUE' ? (
-                                              <AlertCircle className="h-3 w-3 text-red-500" aria-hidden="true" />
-                                            ) : (
-                                              <Calendar className="h-3 w-3 text-blue-500" aria-hidden="true" />
-                                            )}
-                                            <span className="font-medium">{formatDate(inst.dueDate).split(',')[0]}</span>
+                                            <div className="flex items-center gap-2">
+                                              {inst.status === 'PAID' ? (
+                                                <CheckCircle className="h-3 w-3 text-emerald-500" aria-hidden="true" />
+                                              ) : inst.status === 'OVERDUE' ? (
+                                                <AlertCircle className="h-3 w-3 text-red-500" aria-hidden="true" />
+                                              ) : (
+                                                <Calendar className="h-3 w-3 text-blue-500" aria-hidden="true" />
+                                              )}
+                                              <span className="font-medium">{formatDate(inst.dueDate).split(',')[0]}</span>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="font-bold">{formatUSD(inst.amountUSD)}</p>
+                                              <p className={`text-[9px] uppercase font-black ${inst.status === 'PAID' ? 'text-emerald-600' :
+                                                inst.status === 'OVERDUE' ? 'text-red-600' : 'text-blue-600'
+                                                }`}>
+                                                {inst.status === 'PAID' ? 'Pagado' : inst.status === 'OVERDUE' ? 'Vencido' : 'Pendiente'}
+                                              </p>
+                                            </div>
                                           </div>
-                                          <div className="text-right">
-                                            <p className="font-bold">{formatUSD(inst.amountUSD)}</p>
-                                            <p className={`text-[9px] uppercase font-black ${
-                                              inst.status === 'PAID' ? 'text-emerald-600' : 
-                                              inst.status === 'OVERDUE' ? 'text-red-600' : 'text-blue-600'
-                                            }`}>
-                                              {inst.status === 'PAID' ? 'Pagado' : inst.status === 'OVERDUE' ? 'Vencido' : 'Pendiente'}
-                                            </p>
-                                          </div>
-                                        </div>
-                                        {inst.proofs && inst.proofs.length > 0 && (
-                                          <div className="mt-1 pl-6 space-y-1">
-                                            {inst.proofs.map((proof: any) => (
-                                              <div 
-                                                key={proof.id} 
-                                                className={`flex items-center justify-between p-2 rounded border text-[10px] ${
-                                                  proof.status === 'PENDING' ? 'bg-yellow-50 border-yellow-100' :
-                                                  proof.status === 'APPROVED' ? 'bg-emerald-50 border-emerald-100' :
-                                                  'bg-red-50 border-red-100'
-                                                }`}
-                                              >
-                                                <div className="flex items-center gap-2">
-                                                  <a 
-                                                    href={proof.proofUrl} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:underline font-bold"
-                                                  >
-                                                    Ver Comprobante
-                                                  </a>
-                                                  <span className="text-muted-foreground">• {formatUSD(proof.amountUSD)}</span>
+                                          {inst.proofs && inst.proofs.length > 0 && (
+                                            <div className="mt-1 pl-6 space-y-1">
+                                              {inst.proofs.map((proof: any) => (
+                                                <div
+                                                  key={proof.id}
+                                                  className={`flex items-center justify-between p-2 rounded border text-[10px] ${proof.status === 'PENDING' ? 'bg-yellow-50 border-yellow-100' :
+                                                    proof.status === 'APPROVED' ? 'bg-emerald-50 border-emerald-100' :
+                                                      'bg-red-50 border-red-100'
+                                                    }`}
+                                                >
+                                                  <div className="flex items-center gap-2">
+                                                    <a
+                                                      href={proof.proofUrl}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className="text-blue-600 hover:underline font-bold"
+                                                    >
+                                                      Ver Comprobante
+                                                    </a>
+                                                    <span className="text-muted-foreground">• {formatUSD(proof.amountUSD)}</span>
+                                                  </div>
+                                                  {proof.status === 'PENDING' ? (
+                                                    <Button
+                                                      size="sm"
+                                                      className="h-6 text-[9px] px-2"
+                                                      onClick={() => handleVerifyProof(proof)}
+                                                    >
+                                                      Verificar
+                                                    </Button>
+                                                  ) : (
+                                                    <Badge variant="outline" className={`text-[8px] h-4 ${proof.status === 'APPROVED' ? 'text-emerald-700 border-emerald-200' : 'text-red-700 border-red-200'
+                                                      }`}>
+                                                      {proof.status === 'APPROVED' ? 'APROBADO' : 'RECHAZADO'}
+                                                    </Badge>
+                                                  )}
                                                 </div>
-                                                {proof.status === 'PENDING' ? (
-                                                  <Button 
-                                                    size="sm" 
-                                                    className="h-6 text-[9px] px-2"
-                                                    onClick={() => handleVerifyProof(proof)}
-                                                  >
-                                                    Verificar
-                                                  </Button>
-                                                ) : (
-                                                  <Badge variant="outline" className={`text-[8px] h-4 ${
-                                                    proof.status === 'APPROVED' ? 'text-emerald-700 border-emerald-200' : 'text-red-700 border-red-200'
-                                                  }`}>
-                                                    {proof.status === 'APPROVED' ? 'APROBADO' : 'RECHAZADO'}
-                                                  </Badge>
-                                                )}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </React.Fragment>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </React.Fragment>
                                       ))}
                                     </div>
                                   )}
 
                                   {!paymentStatus.hasInstallmentPlan && (
-                                    <Button 
+                                    <Button
                                       variant="outline"
                                       className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold h-9 text-xs"
                                       onClick={() => {
@@ -2013,7 +1674,7 @@ export function AdminOrdersPage() {
                                     </Button>
                                   )}
 
-                                  <Button 
+                                  <Button
                                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10"
                                     onClick={() => {
                                       const remaining = paymentStatus?.remainingUSD ?? paymentStatus?.pendingAmountUSD ?? 0
@@ -2033,7 +1694,7 @@ export function AdminOrdersPage() {
                                       PENDIENTE
                                     </div>
                                   </div>
-                                  <Button 
+                                  <Button
                                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10"
                                     onClick={() => selectedOrder && handlePaymentClick(selectedOrder)}
                                     disabled={selectedOrder?.status !== 'ACCEPTED' && selectedOrder?.status !== 'PROCESSING'}
@@ -2042,7 +1703,7 @@ export function AdminOrdersPage() {
                                   </Button>
                                 </div>
                               )}
-                              
+
                               {(selectedOrder?.status !== 'ACCEPTED' && selectedOrder?.status !== 'PROCESSING' && selectedOrder?.status !== 'COMPLETED') && (
                                 <p className="text-[10px] text-center text-muted-foreground italic">
                                   El pago solo se puede confirmar cuando la orden ha sido aceptada o está en proceso.
@@ -2065,12 +1726,12 @@ export function AdminOrdersPage() {
                               <div key={log.id} className="relative" role="listitem">
                                 <div className="absolute -left-[21px] top-1 h-3 w-3 rounded-full bg-background border-2 border-primary shadow-sm" aria-hidden="true" />
                                 <p className="text-xs font-bold dark:text-gray-200 leading-tight">
-                                  {log.action === 'STATUS_CHANGE' 
+                                  {log.action === 'STATUS_CHANGE'
                                     ? `Cambio de Estado: ${formatStatus(log.newStatus || '').label}`
                                     : log.action === 'DELIVERY_STATUS_CHANGE'
                                       ? `Cambio de Entrega: ${formatDeliveryStatus(log.newDeliveryStatus || '').label}`
-                                      : log.action === 'CREATED' 
-                                        ? 'Pedido recibido' 
+                                      : log.action === 'CREATED'
+                                        ? 'Pedido recibido'
                                         : log.action}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -2093,678 +1754,670 @@ export function AdminOrdersPage() {
                 </div>
               </ScrollArea>
 
-                {/* Footer Actions */}
-                <div className="p-6 border-t bg-muted/30 dark:bg-muted/10 shrink-0">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {selectedOrder?.status === 'PENDING' && (
-                      <div className="flex flex-1 gap-3" role="group" aria-label="Acciones principales del pedido">
-                        <Button 
-                          className={`flex-1 h-12 font-bold shadow-lg transition-all active:scale-95 ${
-                            selectedOrder?.items.some(item => item.status === 'REJECTED') 
-                              ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                              : 'bg-green-600 hover:bg-green-700 text-white'
+              {/* Footer Actions */}
+              <div className="p-6 border-t bg-muted/30 dark:bg-muted/10 shrink-0">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {selectedOrder?.status === 'PENDING' && (
+                    <div className="flex flex-1 gap-3" role="group" aria-label="Acciones principales del pedido">
+                      <Button
+                        className={`flex-1 h-12 font-bold shadow-lg transition-all active:scale-95 ${selectedOrder?.items.some(item => item.status === 'REJECTED')
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                          : 'bg-green-600 hover:bg-green-700 text-white'
                           }`}
-                          onClick={() => {
-                            if (selectedOrder) {
-                              const hasRejected = selectedOrder.items.some(item => item.status === 'REJECTED');
-                              if (hasRejected) {
-                                updateOrderStatus(selectedOrder.id, 'PROPOSED');
-                              } else {
-                                handleAcceptClick(selectedOrder);
-                              }
+                        onClick={() => {
+                          if (selectedOrder) {
+                            const hasRejected = selectedOrder.items.some(item => item.status === 'REJECTED');
+                            if (hasRejected) {
+                              updateOrderStatus(selectedOrder.id, 'PROPOSED');
+                            } else {
+                              handleAcceptClick(selectedOrder);
                             }
-                          }}
-                          disabled={updatingId === selectedOrder?.id}
-                          aria-label={selectedOrder?.items.some(item => item.status === 'REJECTED') ? 'Enviar propuesta al cliente' : 'Aceptar el pedido definitivamente'}
-                        >
-                          {updatingId === selectedOrder?.id ? (
-                            <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
-                          ) : (
-                            selectedOrder?.items.some(item => item.status === 'REJECTED') ? (
-                              <MessageCircle className="h-5 w-5 mr-2" aria-hidden="true" />
-                            ) : (
-                              <CheckCircle className="h-5 w-5 mr-2" aria-hidden="true" />
-                            )
-                          )}
-                          {selectedOrder?.items.some(item => item.status === 'REJECTED') ? 'ENVIAR PROPUESTA' : 'ACEPTAR PEDIDO'}
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          className="flex-1 h-12 font-bold shadow-lg transition-all active:scale-95" 
-                          onClick={() => selectedOrder && handleRejectClick(selectedOrder.id)}
-                          disabled={updatingId === selectedOrder?.id}
-                          aria-label="Rechazar el pedido definitivamente"
-                        >
-                          <XCircle className="h-5 w-5 mr-2" aria-hidden="true" />
-                          RECHAZAR PEDIDO
-                        </Button>
-                      </div>
-                    )}
-                    <div className="flex gap-2 shrink-0" role="group" aria-label="Acciones de comunicación y documentos">
-                      <Button 
-                        variant="outline"
-                        className="h-12 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-bold px-6" 
-                        onClick={() => selectedOrder && sendWhatsAppReminder(selectedOrder)}
-                        aria-label={`Enviar recordatorio por WhatsApp al cliente ${selectedOrder?.customerName}`}
+                          }
+                        }}
+                        disabled={updatingId === selectedOrder?.id}
+                        aria-label={selectedOrder?.items.some(item => item.status === 'REJECTED') ? 'Enviar propuesta al cliente' : 'Aceptar el pedido definitivamente'}
                       >
-                        <MessageCircle className="h-5 w-5 sm:mr-2" aria-hidden="true" />
-                        <span className="hidden sm:inline">WhatsApp</span>
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="h-12 font-bold px-6" 
-                        onClick={() => selectedOrder && generateInvoicePDF(selectedOrder)}
-                        aria-label={`Generar y descargar factura PDF del pedido ${selectedOrder?.saleNumber}`}
-                      >
-                        <Download className="h-5 w-5 sm:mr-2" aria-hidden="true" />
-                        <span className="hidden sm:inline">Factura PDF</span>
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        className="h-12 font-bold text-muted-foreground" 
-                        onClick={() => setSelectedOrder(null)}
-                        aria-label="Cerrar detalles del pedido"
-                      >
-                        Cerrar
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Acceptance & Financing Modal */}
-        <Dialog open={acceptanceModalOpen} onOpenChange={(open) => {
-          if (!open) handleCloseAcceptanceModal()
-          else setAcceptanceModalOpen(true)
-        }}>
-          <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-primary text-xl font-black">
-                {financingModalMode === "acceptance" ? (
-                  <>
-                    <CheckCircle className="h-6 w-6" aria-hidden="true" />
-                    Aceptar Pedido y Configurar Financiamiento
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="h-6 w-6" aria-hidden="true" />
-                    Crear Plan de Cuotas
-                  </>
-                )}
-              </DialogTitle>
-              <DialogDescription>
-                {financingModalMode === "acceptance" ? (
-                  <>
-                    Confirma la aceptación del pedido <strong>{acceptanceOrder?.saleNumber}</strong> para <strong>{acceptanceOrder?.customerName}</strong>. 
-                    Configura el pago inicial y las cuotas si aplica.
-                  </>
-                ) : (
-                  <>
-                    Define las fechas y montos para el pago de esta orden. El total debe coincidir con el saldo pendiente: <strong>{formatUSD(paymentStatus?.remainingUSD || 0)}</strong>.
-                  </>
-                )}
-              </DialogDescription>
-            </DialogHeader>
-
-            {financingModalMode === "acceptance" ? (
-              <>
-                <div className="py-6 space-y-6">
-                  <div className="p-4 bg-muted/50 rounded-xl border flex justify-between items-center" role="region" aria-label="Resumen del pedido a aceptar">
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total del Pedido</p>
-                      <p className="text-2xl font-black text-primary" aria-label={`Total del pedido: ${formatUSD(acceptanceOrder?.totalUSD || 0)}`}>{formatUSD(acceptanceOrder?.totalUSD || 0)}</p>
-                    </div>
-                    <Badge variant="outline" className="bg-background font-bold px-3 py-1" aria-label={`${(acceptanceOrder?.items || []).length} productos en el pedido`}>
-                      {(acceptanceOrder?.items || []).length} Productos
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <label htmlFor="initial-payment" className="text-sm font-bold flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-primary" aria-hidden="true" />
-                        Pago Inicial (USD)
-                      </label>
-                      <span className="text-xs text-muted-foreground">Opcional</span>
-                    </div>
-                    <Input
-                      id="initial-payment"
-                      type="number"
-                      step="0.01"
-                      max={acceptanceOrderTotal}
-                      placeholder="0.00"
-                      value={initialPaymentUSD}
-                      onChange={(e) => {
-                        setInitialPaymentUSD(e.target.value)
-                        if (isFinancingEnabled && installmentCount > 0) {
-                          calculateAutomaticInstallments(installmentCount, parseFloat(e.target.value) || 0)
-                        }
-                      }}
-                      className="text-lg font-bold h-12"
-                      aria-label="Monto del pago inicial en dólares"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
-                    <div className="space-y-0.5">
-                      <label htmlFor="enable-financing" className="text-sm font-bold flex items-center gap-2 cursor-pointer">
-                        <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
-                        Habilitar Plan de Cuotas
-                      </label>
-                      <p className="text-xs text-muted-foreground">Dividir el saldo restante en pagos quincenales.</p>
-                    </div>
-                    <Checkbox 
-                      id="enable-financing"
-                      checked={isFinancingEnabled}
-                      onCheckedChange={(checked) => {
-                        setIsFinancingEnabled(!!checked)
-                        if (checked && installmentCount === 0) {
-                          setInstallmentCount(2)
-                          calculateAutomaticInstallments(2, parseFloat(initialPaymentUSD) || 0)
-                        }
-                      }}
-                      className="h-5 w-5"
-                      aria-label="Habilitar plan de financiamiento en cuotas"
-                    />
-                  </div>
-
-                  {isFinancingEnabled && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="space-y-3">
-                        <label htmlFor="installment-count" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Número de Cuotas (Quincenales)</label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            id="installment-count"
-                            type="number"
-                            min={1}
-                            step={1}
-                            value={installmentCount}
-                            onChange={(e) => {
-                              const nextCount = Math.max(1, parseInt(e.target.value, 10) || 1)
-                              setInstallmentCount(nextCount)
-                              calculateAutomaticInstallments(nextCount, parseFloat(initialPaymentUSD) || 0)
-                            }}
-                            className="h-10 text-sm font-bold"
-                            aria-label="Cantidad de cuotas para el financiamiento"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Detalle del Plan</label>
-                        </div>
-                        <div className="space-y-2" role="group" aria-label="Detalles de las cuotas">
-                          {customInstallments.length === 0 && (
-                            <div className="text-center py-4 border border-dashed rounded-lg bg-muted/20">
-                              <p className="text-[10px] font-medium text-muted-foreground">No hay cuotas definidas. Ajusta el número de cuotas.</p>
-                            </div>
-                          )}
-                          {customInstallments.map((inst, idx) => (
-                            <div key={idx} className="flex gap-2 items-end p-3 border rounded-lg bg-background group relative animate-in zoom-in-95 duration-200">
-                              <div className="flex-[1.2]">
-                                <label htmlFor={`inst-amount-${idx}`} className="text-[9px] font-bold text-muted-foreground uppercase mb-1 block">Monto (USD)</label>
-                                <Input
-                                  id={`inst-amount-${idx}`}
-                                  type="number"
-                                  value={inst.amountUSD}
-                                  readOnly
-                                  className="h-8 text-xs font-bold"
-                                  aria-label={`Monto de la cuota ${idx + 1}`}
-                                />
-                              </div>
-                              <div className="flex-[1.5]">
-                                <label htmlFor={`inst-date-${idx}`} className="text-[9px] font-bold text-muted-foreground uppercase mb-1 block">Vencimiento</label>
-                                <Input
-                                  id={`inst-date-${idx}`}
-                                  type="date"
-                                  value={inst.dueDate}
-                                  onChange={(e) => {
-                                    const updated = [...customInstallments]
-                                    updated[idx].dueDate = e.target.value
-                                    setCustomInstallments(updated)
-                                  }}
-                                  className="h-8 text-xs"
-                                  aria-label={`Fecha de vencimiento de la cuota ${idx + 1}`}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className={`p-3 border rounded-lg flex gap-3 items-start transition-colors duration-300 ${
-                        loadingSolvency 
-                          ? "bg-gray-50 border-gray-200" 
-                          : customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                            : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"
-                      }`} role="status" aria-live="polite">
-                        {loadingSolvency ? (
-                          <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin mt-0.5" role="presentation" />
-                        ) : (
-                          <AlertCircle className={`h-4 w-4 mt-0.5 ${
-                            customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                              ? "text-amber-600 dark:text-amber-400"
-                              : "text-blue-600 dark:text-blue-400"
-                          }`} aria-hidden="true" />
-                        )}
-                        <div>
-                          <p className={`text-xs font-bold ${
-                            customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                              ? "text-amber-800 dark:text-amber-300"
-                              : "text-blue-800 dark:text-blue-300"
-                          }`}>
-                            Validación de Solvencia
-                          </p>
-                          {loadingSolvency ? (
-                            <p className="text-[10px] text-muted-foreground animate-pulse">Analizando historial del cliente...</p>
-                          ) : (
-                            <p className={`text-[10px] ${
-                              customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                                ? "text-amber-700 dark:text-amber-400/80"
-                                : "text-blue-700 dark:text-blue-400/80"
-                            }`}>
-                              {customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                                ? `ATENCIÓN: El cliente tiene ${customerOrders.filter(o => o.status === 'ACCEPTED' && !o.isPaid).length} pedido(s) pendiente(s) de pago.`
-                                : "Cliente sin deudas pendientes detectadas en su historial."}
-                              {" El plan propuesto es quincenal (cada 14 días)."}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <DialogFooter className="bg-muted/30 p-4 -mx-6 -mb-6 mt-4 border-t">
-                  <div className="flex flex-col w-full gap-3">
-                    <div className="flex justify-between items-center px-2" role="region" aria-label="Resumen de financiamiento">
-                      <div className="text-left">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Resumen Final</p>
-                        <p className="text-sm font-bold">
-                      {formatUSD(initialPaymentValue)} Inicial + {formatUSD(financedTotalValue)} Financiado
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Diferencia</p>
-                        <p className={`text-sm font-black ${
-                      Math.abs(totalCombinedValue - acceptanceOrderTotal) < 0.01
-                            ? 'text-emerald-600'
-                            : 'text-destructive'
-                        }`} aria-live="polite">
-                      {formatUSD(totalCombinedValue - acceptanceOrderTotal)}
-                        </p>
-                    {exceedsOrderTotal && (
-                      <p className="text-[10px] font-bold text-destructive" role="alert">La suma supera el total del pedido.</p>
-                    )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <Button variant="outline" className="flex-1 font-bold" onClick={handleCloseAcceptanceModal} aria-label="Cancelar aceptación del pedido">
-                        Cancelar
-                      </Button>
-                      <Button 
-                        className="flex-[2] font-black bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                        onClick={confirmAcceptance}
-                        disabled={
-                          updatingId !== null || 
-                      exceedsOrderTotal ||
-                      (isFinancingEnabled && Math.abs(totalCombinedValue - acceptanceOrderTotal) >= 0.01)
-                        }
-                        aria-label="Confirmar aceptación del pedido y plan de financiamiento"
-                      >
-                        {updatingId !== null ? (
+                        {updatingId === selectedOrder?.id ? (
                           <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
                         ) : (
-                          <CheckCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                          selectedOrder?.items.some(item => item.status === 'REJECTED') ? (
+                            <MessageCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                          ) : (
+                            <CheckCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                          )
                         )}
-                        CONFIRMAR ACEPTACIÓN
+                        {selectedOrder?.items.some(item => item.status === 'REJECTED') ? 'ENVIAR PROPUESTA' : 'ACEPTAR PEDIDO'}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1 h-12 font-bold shadow-lg transition-all active:scale-95"
+                        onClick={() => selectedOrder && handleRejectClick(selectedOrder.id)}
+                        disabled={updatingId === selectedOrder?.id}
+                        aria-label="Rechazar el pedido definitivamente"
+                      >
+                        <XCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                        RECHAZAR PEDIDO
                       </Button>
                     </div>
-                  </div>
-                </DialogFooter>
-              </>
-            ) : (
-              <>
-                <div className="py-4 space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="plan-installment-count" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Número de Cuotas (Quincenales)</label>
-                    <Input
-                      id="plan-installment-count"
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={installmentPlanCount}
-                      onChange={(e) => {
-                        const nextCount = Math.max(1, parseInt(e.target.value, 10) || 1)
-                        setInstallmentPlanCount(nextCount)
-                      }}
-                      aria-label="Número de cuotas quincenales"
-                    />
-                  </div>
-                  <div className="space-y-3" role="group" aria-label="Detalle de nuevas cuotas">
-                    {newInstallments.map((inst, idx) => (
-                      <div key={idx} className="flex gap-4 items-end p-3 border rounded-lg bg-muted/30">
-                        <div className="flex-1 space-y-2">
-                          <label htmlFor={`plan-amount-${idx}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Monto (USD)</label>
-                          <Input
-                            id={`plan-amount-${idx}`}
-                            type="number"
-                            step="0.01"
-                            value={inst.amountUSD}
-                            readOnly
-                            placeholder="0.00"
-                            aria-label={`Monto de la nueva cuota ${idx + 1}`}
-                          />
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          <label htmlFor={`plan-date-${idx}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha de Vencimiento</label>
-                          <Input
-                            id={`plan-date-${idx}`}
-                            type="date"
-                            value={inst.dueDate}
-                            onChange={(e) => {
-                              const updated = [...newInstallments];
-                              updated[idx].dueDate = e.target.value;
-                              setNewInstallments(updated);
-                            }}
-                            aria-label={`Fecha de vencimiento de la nueva cuota ${idx + 1}`}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/10" role="region" aria-label="Resumen del nuevo plan de cuotas">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-medium">Total en cuotas:</span>
-                      <span className={`font-black ${
-                        Math.abs(planTotalValue - planRemainingValue) < 0.01
-                          ? 'text-emerald-600'
-                          : 'text-destructive'
-                      }`} aria-live="polite">
-                        {formatUSD(planTotalValue)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs text-muted-foreground mt-1">
-                      <span>Saldo pendiente:</span>
-                      <span>{formatUSD(planRemainingValue)}</span>
-                    </div>
-                    {planExceedsRemaining && (
-                      <p className="text-[10px] font-bold text-destructive mt-1" role="alert">La suma supera el saldo pendiente.</p>
-                    )}
+                  )}
+                  <div className="flex gap-2 shrink-0" role="group" aria-label="Acciones de comunicación y documentos">
+                    <Button
+                      variant="outline"
+                      className="h-12 border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-bold px-6"
+                      onClick={() => selectedOrder && sendWhatsAppReminder(selectedOrder)}
+                      aria-label={`Enviar recordatorio por WhatsApp al cliente ${selectedOrder?.customerName}`}
+                    >
+                      <MessageCircle className="h-5 w-5 sm:mr-2" aria-hidden="true" />
+                      <span className="hidden sm:inline">WhatsApp</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-12 font-bold px-6"
+                      onClick={() => selectedOrder && generateInvoicePDF(selectedOrder)}
+                      aria-label={`Generar y descargar factura PDF del pedido ${selectedOrder?.saleNumber}`}
+                    >
+                      <Download className="h-5 w-5 sm:mr-2" aria-hidden="true" />
+                      <span className="hidden sm:inline">Factura PDF</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="h-12 font-bold text-muted-foreground"
+                      onClick={() => setSelectedOrder(null)}
+                      aria-label="Cerrar detalles del pedido"
+                    >
+                      Cerrar
+                    </Button>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setAcceptanceModalOpen(false)} aria-label="Cancelar creación de plan de cuotas">
-                    Cancelar
-                  </Button>
-                  <Button 
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground" 
-                    onClick={handleCreateInstallmentPlan}
-                    disabled={
-                      updatingId !== null || 
-                      Math.abs(planTotalValue - planRemainingValue) >= 0.01
-                    }
-                    aria-label="Confirmar nuevo plan de cuotas"
-                  >
-                    {updatingId !== null ? (
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                    )}
-                    Confirmar Plan
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
-        {/* Payment Confirmation Modal */}
-        <Dialog open={paymentModalOpen} onOpenChange={(open) => {
-          if (!open) handleClosePaymentModal()
-          else setPaymentModalOpen(true)
-        }}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-primary">
-                <CheckCircle className="h-5 w-5" aria-hidden="true" />
-                Confirmar Pago del Pedido
-              </DialogTitle>
-              <DialogDescription>
-                Ingresa el monto recibido y opcionalmente una nota. El pedido se marcará como <strong>PAGADO</strong> y <strong>COMPLETADO</strong>.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="payment-amount" className="text-sm font-medium">Monto Recibido (USD)</label>
-                <Input
-                  id="payment-amount"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  className="font-bold text-lg"
-                  autoFocus
-                  aria-label="Monto recibido en dólares"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="payment-notes" className="text-sm font-medium">Notas de Pago (Opcional)</label>
-                <Textarea
-                  id="payment-notes"
-                  placeholder="Ej: Pago recibido vía Zelle, transferencia Banesco, efectivo..."
-                  value={paymentReason}
-                  onChange={(e) => setPaymentReason(e.target.value)}
-                  className="min-h-[80px] resize-none"
-                  aria-label="Notas u observaciones sobre el pago"
-                />
-              </div>
-            </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={handleClosePaymentModal} aria-label="Cancelar registro de pago">
-                Cancelar
-              </Button>
-              <Button 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground" 
-                onClick={confirmPayment}
-                disabled={!paymentAmount || parseFloat(paymentAmount) <= 0 || updatingId !== null}
-                aria-label="Confirmar pago y completar pedido"
-              >
-                {updatingId !== null ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+      {/* Acceptance & Financing Modal */}
+      <Dialog open={acceptanceModalOpen} onOpenChange={(open) => {
+        if (!open) handleCloseAcceptanceModal()
+        else setAcceptanceModalOpen(true)
+      }}>
+        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary text-xl font-black">
+              {financingModalMode === "acceptance" ? (
+                <>
+                  <CheckCircle className="h-6 w-6" aria-hidden="true" />
+                  Aceptar Pedido y Configurar Financiamiento
+                </>
+              ) : (
+                <>
+                  <Calendar className="h-6 w-6" aria-hidden="true" />
+                  Crear Plan de Cuotas
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {financingModalMode === "acceptance" ? (
+                <>
+                  Confirma la aceptación del pedido <strong>{acceptanceOrder?.saleNumber}</strong> para <strong>{acceptanceOrder?.customerName}</strong>.
+                  Configura el pago inicial y las cuotas si aplica.
+                </>
+              ) : (
+                <>
+                  Define las fechas y montos para el pago de esta orden. El total debe coincidir con el saldo pendiente: <strong>{formatUSD(paymentStatus?.remainingUSD || 0)}</strong>.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {financingModalMode === "acceptance" ? (
+            <>
+              <div className="py-6 space-y-6">
+                <div className="p-4 bg-muted/50 rounded-xl border flex justify-between items-center" role="region" aria-label="Resumen del pedido a aceptar">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total del Pedido</p>
+                    <p className="text-2xl font-black text-primary" aria-label={`Total del pedido: ${formatUSD(acceptanceOrder?.totalUSD || 0)}`}>{formatUSD(acceptanceOrder?.totalUSD || 0)}</p>
+                  </div>
+                  <Badge variant="outline" className="bg-background font-bold px-3 py-1" aria-label={`${(acceptanceOrder?.items || []).length} productos en el pedido`}>
+                    {(acceptanceOrder?.items || []).length} Productos
+                  </Badge>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="initial-payment" className="text-sm font-bold flex items-center gap-2">
+                      <CreditCard className="h-4 w-4 text-primary" aria-hidden="true" />
+                      Pago Inicial (USD)
+                    </label>
+                    <span className="text-xs text-muted-foreground">Opcional</span>
+                  </div>
+                  <Input
+                    id="initial-payment"
+                    type="number"
+                    step="0.01"
+                    max={acceptanceOrderTotal}
+                    placeholder="0.00"
+                    value={initialPaymentUSD}
+                    onChange={(e) => {
+                      setInitialPaymentUSD(e.target.value)
+                      if (isFinancingEnabled && installmentCount > 0) {
+                        calculateAutomaticInstallments(installmentCount, parseFloat(e.target.value) || 0)
+                      }
+                    }}
+                    className="text-lg font-bold h-12"
+                    aria-label="Monto del pago inicial en dólares"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
+                  <div className="space-y-0.5">
+                    <label htmlFor="enable-financing" className="text-sm font-bold flex items-center gap-2 cursor-pointer">
+                      <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
+                      Habilitar Plan de Cuotas
+                    </label>
+                    <p className="text-xs text-muted-foreground">Dividir el saldo restante en pagos quincenales.</p>
+                  </div>
+                  <Checkbox
+                    id="enable-financing"
+                    checked={isFinancingEnabled}
+                    onCheckedChange={(checked) => {
+                      setIsFinancingEnabled(!!checked)
+                      if (checked && installmentCount === 0) {
+                        setInstallmentCount(2)
+                        calculateAutomaticInstallments(2, parseFloat(initialPaymentUSD) || 0)
+                      }
+                    }}
+                    className="h-5 w-5"
+                    aria-label="Habilitar plan de financiamiento en cuotas"
+                  />
+                </div>
+
+                {isFinancingEnabled && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-3">
+                      <label htmlFor="installment-count" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Número de Cuotas (Quincenales)</label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="installment-count"
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={installmentCount}
+                          onChange={(e) => {
+                            const nextCount = Math.max(1, parseInt(e.target.value, 10) || 1)
+                            setInstallmentCount(nextCount)
+                            calculateAutomaticInstallments(nextCount, parseFloat(initialPaymentUSD) || 0)
+                          }}
+                          className="h-10 text-sm font-bold"
+                          aria-label="Cantidad de cuotas para el financiamiento"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Detalle del Plan</label>
+                      </div>
+                      <div className="space-y-2" role="group" aria-label="Detalles de las cuotas">
+                        {customInstallments.length === 0 && (
+                          <div className="text-center py-4 border border-dashed rounded-lg bg-muted/20">
+                            <p className="text-[10px] font-medium text-muted-foreground">No hay cuotas definidas. Ajusta el número de cuotas.</p>
+                          </div>
+                        )}
+                        {customInstallments.map((inst, idx) => (
+                          <div key={idx} className="flex gap-2 items-end p-3 border rounded-lg bg-background group relative animate-in zoom-in-95 duration-200">
+                            <div className="flex-[1.2]">
+                              <label htmlFor={`inst-amount-${idx}`} className="text-[9px] font-bold text-muted-foreground uppercase mb-1 block">Monto (USD)</label>
+                              <Input
+                                id={`inst-amount-${idx}`}
+                                type="number"
+                                value={inst.amountUSD}
+                                readOnly
+                                className="h-8 text-xs font-bold"
+                                aria-label={`Monto de la cuota ${idx + 1}`}
+                              />
+                            </div>
+                            <div className="flex-[1.5]">
+                              <label htmlFor={`inst-date-${idx}`} className="text-[9px] font-bold text-muted-foreground uppercase mb-1 block">Vencimiento</label>
+                              <Input
+                                id={`inst-date-${idx}`}
+                                type="date"
+                                value={inst.dueDate}
+                                onChange={(e) => {
+                                  const updated = [...customInstallments]
+                                  updated[idx].dueDate = e.target.value
+                                  setCustomInstallments(updated)
+                                }}
+                                className="h-8 text-xs"
+                                aria-label={`Fecha de vencimiento de la cuota ${idx + 1}`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={`p-3 border rounded-lg flex gap-3 items-start transition-colors duration-300 ${loadingSolvency
+                      ? "bg-gray-50 border-gray-200"
+                      : customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
+                        ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+                        : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"
+                      }`} role="status" aria-live="polite">
+                      {loadingSolvency ? (
+                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin mt-0.5" role="presentation" />
+                      ) : (
+                        <AlertCircle className={`h-4 w-4 mt-0.5 ${customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-blue-600 dark:text-blue-400"
+                          }`} aria-hidden="true" />
+                      )}
+                      <div>
+                        <p className={`text-xs font-bold ${customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
+                          ? "text-amber-800 dark:text-amber-300"
+                          : "text-blue-800 dark:text-blue-300"
+                          }`}>
+                          Validación de Solvencia
+                        </p>
+                        {loadingSolvency ? (
+                          <p className="text-[10px] text-muted-foreground animate-pulse">Analizando historial del cliente...</p>
+                        ) : (
+                          <p className={`text-[10px] ${customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
+                            ? "text-amber-700 dark:text-amber-400/80"
+                            : "text-blue-700 dark:text-blue-400/80"
+                            }`}>
+                            {customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
+                              ? `ATENCIÓN: El cliente tiene ${customerOrders.filter(o => o.status === 'ACCEPTED' && !o.isPaid).length} pedido(s) pendiente(s) de pago.`
+                              : "Cliente sin deudas pendientes detectadas en su historial."}
+                            {" El plan propuesto es quincenal (cada 14 días)."}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
-                Confirmar y Completar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              </div>
 
-        {/* Rejection Reason Modal */}
-        <Dialog open={rejectionModalOpen} onOpenChange={(open) => {
-          if (!open) handleCloseRejectionModal()
-          else setRejectionModalOpen(true)
-        }}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive">
-                <XCircle className="h-5 w-5" aria-hidden="true" />
-                Rechazar Pedido
-              </DialogTitle>
-              <DialogDescription id="rejection-description">
-                Por favor, indica el motivo del rechazo. Este mensaje será visible en el historial del pedido.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4" role="region" aria-labelledby="rejection-description">
-              <label htmlFor="rejection-reason" className="sr-only">Motivo del rechazo</label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Ej: Producto agotado, problemas con el pago, zona de entrega no disponible..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                className="min-h-[100px] resize-none"
+              <DialogFooter className="bg-muted/30 p-4 -mx-6 -mb-6 mt-4 border-t">
+                <div className="flex flex-col w-full gap-3">
+                  <div className="flex justify-between items-center px-2" role="region" aria-label="Resumen de financiamiento">
+                    <div className="text-left">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Resumen Final</p>
+                      <p className="text-sm font-bold">
+                        {formatUSD(initialPaymentValue)} Inicial + {formatUSD(financedTotalValue)} Financiado
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Diferencia</p>
+                      <p className={`text-sm font-black ${Math.abs(totalCombinedValue - acceptanceOrderTotal) < 0.01
+                        ? 'text-emerald-600'
+                        : 'text-destructive'
+                        }`} aria-live="polite">
+                        {formatUSD(totalCombinedValue - acceptanceOrderTotal)}
+                      </p>
+                      {exceedsOrderTotal && (
+                        <p className="text-[10px] font-bold text-destructive" role="alert">La suma supera el total del pedido.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex-1 font-bold" onClick={handleCloseAcceptanceModal} aria-label="Cancelar aceptación del pedido">
+                      Cancelar
+                    </Button>
+                    <Button
+                      className="flex-[2] font-black bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+                      onClick={confirmAcceptance}
+                      disabled={
+                        updatingId !== null ||
+                        exceedsOrderTotal ||
+                        (isFinancingEnabled && Math.abs(totalCombinedValue - acceptanceOrderTotal) >= 0.01)
+                      }
+                      aria-label="Confirmar aceptación del pedido y plan de financiamiento"
+                    >
+                      {updatingId !== null ? (
+                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
+                      ) : (
+                        <CheckCircle className="h-5 w-5 mr-2" aria-hidden="true" />
+                      )}
+                      CONFIRMAR ACEPTACIÓN
+                    </Button>
+                  </div>
+                </div>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="plan-installment-count" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Número de Cuotas (Quincenales)</label>
+                  <Input
+                    id="plan-installment-count"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={installmentPlanCount}
+                    onChange={(e) => {
+                      const nextCount = Math.max(1, parseInt(e.target.value, 10) || 1)
+                      setInstallmentPlanCount(nextCount)
+                    }}
+                    aria-label="Número de cuotas quincenales"
+                  />
+                </div>
+                <div className="space-y-3" role="group" aria-label="Detalle de nuevas cuotas">
+                  {newInstallments.map((inst, idx) => (
+                    <div key={idx} className="flex gap-4 items-end p-3 border rounded-lg bg-muted/30">
+                      <div className="flex-1 space-y-2">
+                        <label htmlFor={`plan-amount-${idx}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Monto (USD)</label>
+                        <Input
+                          id={`plan-amount-${idx}`}
+                          type="number"
+                          step="0.01"
+                          value={inst.amountUSD}
+                          readOnly
+                          placeholder="0.00"
+                          aria-label={`Monto de la nueva cuota ${idx + 1}`}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <label htmlFor={`plan-date-${idx}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha de Vencimiento</label>
+                        <Input
+                          id={`plan-date-${idx}`}
+                          type="date"
+                          value={inst.dueDate}
+                          onChange={(e) => {
+                            const updated = [...newInstallments];
+                            updated[idx].dueDate = e.target.value;
+                            setNewInstallments(updated);
+                          }}
+                          aria-label={`Fecha de vencimiento de la nueva cuota ${idx + 1}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-3 bg-primary/5 rounded-lg border border-primary/10" role="region" aria-label="Resumen del nuevo plan de cuotas">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-medium">Total en cuotas:</span>
+                    <span className={`font-black ${Math.abs(planTotalValue - planRemainingValue) < 0.01
+                      ? 'text-emerald-600'
+                      : 'text-destructive'
+                      }`} aria-live="polite">
+                      {formatUSD(planTotalValue)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground mt-1">
+                    <span>Saldo pendiente:</span>
+                    <span>{formatUSD(planRemainingValue)}</span>
+                  </div>
+                  {planExceedsRemaining && (
+                    <p className="text-[10px] font-bold text-destructive mt-1" role="alert">La suma supera el saldo pendiente.</p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setAcceptanceModalOpen(false)} aria-label="Cancelar creación de plan de cuotas">
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  onClick={handleCreateInstallmentPlan}
+                  disabled={
+                    updatingId !== null ||
+                    Math.abs(planTotalValue - planRemainingValue) >= 0.01
+                  }
+                  aria-label="Confirmar nuevo plan de cuotas"
+                >
+                  {updatingId !== null ? (
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
+                  ) : (
+                    <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+                  )}
+                  Confirmar Plan
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Confirmation Modal */}
+      <Dialog open={paymentModalOpen} onOpenChange={(open) => {
+        if (!open) handleClosePaymentModal()
+        else setPaymentModalOpen(true)
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <CheckCircle className="h-5 w-5" aria-hidden="true" />
+              Confirmar Pago del Pedido
+            </DialogTitle>
+            <DialogDescription>
+              Ingresa el monto recibido y opcionalmente una nota. El pedido se marcará como <strong>PAGADO</strong> y <strong>COMPLETADO</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="payment-amount" className="text-sm font-medium">Monto Recibido (USD)</label>
+              <Input
+                id="payment-amount"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                className="font-bold text-lg"
                 autoFocus
-                aria-required="true"
-                aria-label="Motivo por el cual se rechaza el pedido"
+                aria-label="Monto recibido en dólares"
               />
             </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={handleCloseRejectionModal} aria-label="Cancelar y volver al detalle">
-                Cancelar
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={confirmRejection}
-                disabled={!rejectionReason.trim() || updatingId !== null}
-                aria-label="Confirmar rechazo del pedido"
-              >
-                {updatingId !== null ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
-                ) : (
-                  <XCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                )}
-                Confirmar Rechazo
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Proof Verification Modal */}
-        <Dialog open={proofModalOpen} onOpenChange={setProofModalOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-primary">
-                <CheckCircle className="h-5 w-5" aria-hidden="true" />
-                Verificar Comprobante
-              </DialogTitle>
-              <DialogDescription id="proof-verification-description">
-                Revisa el comprobante y aprueba o rechaza el pago de <strong>{formatUSD(selectedProof?.amountUSD || 0)}</strong>.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4" role="region" aria-labelledby="proof-verification-description">
-              {selectedProof && (
-                <div className="aspect-video relative rounded-lg overflow-hidden border" role="img" aria-label={`Comprobante de pago por ${formatUSD(selectedProof.amountUSD)}`}>
-                  <img 
-                    src={selectedProof.proofUrl} 
-                    alt={`Comprobante de pago enviado por el cliente`} 
-                    className="object-contain w-full h-full"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50">
-                    <a 
-                      href={selectedProof.proofUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-white font-bold flex items-center gap-2"
-                      aria-label="Ver comprobante en pantalla completa (abre en nueva pestaña)"
-                    >
-                      <Eye className="h-4 w-4" aria-hidden="true" />
-                      Ver pantalla completa
-                    </a>
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <label htmlFor="payment-notes" className="text-sm font-medium">Notas de Pago (Opcional)</label>
+              <Textarea
+                id="payment-notes"
+                placeholder="Ej: Pago recibido vía Zelle, transferencia Banesco, efectivo..."
+                value={paymentReason}
+                onChange={(e) => setPaymentReason(e.target.value)}
+                className="min-h-[80px] resize-none"
+                aria-label="Notas u observaciones sobre el pago"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleClosePaymentModal} aria-label="Cancelar registro de pago">
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              onClick={confirmPayment}
+              disabled={!paymentAmount || parseFloat(paymentAmount) <= 0 || updatingId !== null}
+              aria-label="Confirmar pago y completar pedido"
+            >
+              {updatingId !== null ? (
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
               )}
-              <div className="space-y-2">
-                <label htmlFor="admin-proof-notes" className="text-sm font-medium">Notas del Administrador (Opcional)</label>
-                <Textarea
-                  id="admin-proof-notes"
-                  placeholder="Ej: Pago recibido correctamente, el monto no coincide, etc."
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  className="min-h-[80px] resize-none"
-                  aria-label="Notas adicionales sobre la verificación del comprobante"
-                />
-              </div>
-            </div>
-            <DialogFooter className="flex gap-2 sm:gap-0">
-              <Button 
-                variant="destructive" 
-                className="flex-1"
-                onClick={() => confirmProofVerification('REJECTED')}
-                disabled={isProcessingProof}
-                aria-label="Rechazar comprobante de pago"
-              >
-                {isProcessingProof ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status" aria-label="Procesando..." />
-                ) : (
-                  <XCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                )}
-                Rechazar
-              </Button>
-              <Button 
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => confirmProofVerification('APPROVED')}
-                disabled={isProcessingProof}
-                aria-label="Aprobar comprobante de pago"
-              >
-                {isProcessingProof ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status" aria-label="Procesando..." />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                )}
-                Aprobar Pago
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              Confirmar y Completar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-        {/* Delivery Status Modal */}
-        <Dialog open={deliveryModalOpen} onOpenChange={(open) => {
-          if (!open) handleCloseDeliveryModal()
-          else setDeliveryModalOpen(true)
-        }}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-primary">
-                <Truck className="h-5 w-5" aria-hidden="true" />
-                Actualizar Estado de Entrega
-              </DialogTitle>
-              <DialogDescription id="delivery-status-description">
-                Cambiar el estado de entrega a: <strong>{formatDeliveryStatus(newDeliveryStatus).label}</strong>.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4" role="region" aria-labelledby="delivery-status-description">
-              <div className="space-y-2">
-                <label htmlFor="delivery-notes" className="text-sm font-medium">Nota u Observación (Opcional)</label>
-                <Textarea
-                  id="delivery-notes"
-                  placeholder="Ej: Entregado al cliente, En camino con el repartidor..."
-                  value={deliveryReason}
-                  onChange={(e) => setDeliveryReason(e.target.value)}
-                  className="min-h-[100px] resize-none"
-                  aria-label="Notas sobre el cambio de estado de entrega"
+      {/* Rejection Reason Modal */}
+      <Dialog open={rejectionModalOpen} onOpenChange={(open) => {
+        if (!open) handleCloseRejectionModal()
+        else setRejectionModalOpen(true)
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <XCircle className="h-5 w-5" aria-hidden="true" />
+              Rechazar Pedido
+            </DialogTitle>
+            <DialogDescription id="rejection-description">
+              Por favor, indica el motivo del rechazo. Este mensaje será visible en el historial del pedido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4" role="region" aria-labelledby="rejection-description">
+            <label htmlFor="rejection-reason" className="sr-only">Motivo del rechazo</label>
+            <Textarea
+              id="rejection-reason"
+              placeholder="Ej: Producto agotado, problemas con el pago, zona de entrega no disponible..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="min-h-[100px] resize-none"
+              autoFocus
+              aria-required="true"
+              aria-label="Motivo por el cual se rechaza el pedido"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleCloseRejectionModal} aria-label="Cancelar y volver al detalle">
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmRejection}
+              disabled={!rejectionReason.trim() || updatingId !== null}
+              aria-label="Confirmar rechazo del pedido"
+            >
+              {updatingId !== null ? (
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+              )}
+              Confirmar Rechazo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Proof Verification Modal */}
+      <Dialog open={proofModalOpen} onOpenChange={setProofModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <CheckCircle className="h-5 w-5" aria-hidden="true" />
+              Verificar Comprobante
+            </DialogTitle>
+            <DialogDescription id="proof-verification-description">
+              Revisa el comprobante y aprueba o rechaza el pago de <strong>{formatUSD(selectedProof?.amountUSD || 0)}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4" role="region" aria-labelledby="proof-verification-description">
+            {selectedProof && (
+              <div className="aspect-video relative rounded-lg overflow-hidden border" role="img" aria-label={`Comprobante de pago por ${formatUSD(selectedProof.amountUSD)}`}>
+                <img
+                  src={selectedProof.proofUrl}
+                  alt={`Comprobante de pago enviado por el cliente`}
+                  className="object-contain w-full h-full"
                 />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/50">
+                  <a
+                    href={selectedProof.proofUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white font-bold flex items-center gap-2"
+                    aria-label="Ver comprobante en pantalla completa (abre en nueva pestaña)"
+                  >
+                    <Eye className="h-4 w-4" aria-hidden="true" />
+                    Ver pantalla completa
+                  </a>
+                </div>
               </div>
+            )}
+            <div className="space-y-2">
+              <label htmlFor="admin-proof-notes" className="text-sm font-medium">Notas del Administrador (Opcional)</label>
+              <Textarea
+                id="admin-proof-notes"
+                placeholder="Ej: Pago recibido correctamente, el monto no coincide, etc."
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                className="min-h-[80px] resize-none"
+                aria-label="Notas adicionales sobre la verificación del comprobante"
+              />
             </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={handleCloseDeliveryModal} aria-label="Cancelar y volver">
-                Cancelar
-              </Button>
-              <Button 
-                className="bg-primary hover:bg-primary/90 text-primary-foreground" 
-                onClick={confirmDeliveryStatus}
-                disabled={updatingId !== null}
-                aria-label={`Confirmar cambio de estado de entrega a ${formatDeliveryStatus(newDeliveryStatus).label}`}
-              >
-                {updatingId !== null ? (
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Actualizando..." />
-                ) : (
-                  <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                )}
-                Confirmar Cambio
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
+          </div>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={() => confirmProofVerification('REJECTED')}
+              disabled={isProcessingProof}
+              aria-label="Rechazar comprobante de pago"
+            >
+              {isProcessingProof ? (
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status" aria-label="Procesando..." />
+              ) : (
+                <XCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+              )}
+              Rechazar
+            </Button>
+            <Button
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={() => confirmProofVerification('APPROVED')}
+              disabled={isProcessingProof}
+              aria-label="Aprobar comprobante de pago"
+            >
+              {isProcessingProof ? (
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" role="status" aria-label="Procesando..." />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+              )}
+              Aprobar Pago
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delivery Status Modal */}
+      <Dialog open={deliveryModalOpen} onOpenChange={(open) => {
+        if (!open) handleCloseDeliveryModal()
+        else setDeliveryModalOpen(true)
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Truck className="h-5 w-5" aria-hidden="true" />
+              Actualizar Estado de Entrega
+            </DialogTitle>
+            <DialogDescription id="delivery-status-description">
+              Cambiar el estado de entrega a: <strong>{formatDeliveryStatus(newDeliveryStatus).label}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4" role="region" aria-labelledby="delivery-status-description">
+            <div className="space-y-2">
+              <label htmlFor="delivery-notes" className="text-sm font-medium">Nota u Observación (Opcional)</label>
+              <Textarea
+                id="delivery-notes"
+                placeholder="Ej: Entregado al cliente, En camino con el repartidor..."
+                value={deliveryReason}
+                onChange={(e) => setDeliveryReason(e.target.value)}
+                className="min-h-[100px] resize-none"
+                aria-label="Notas sobre el cambio de estado de entrega"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleCloseDeliveryModal} aria-label="Cancelar y volver">
+              Cancelar
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              onClick={confirmDeliveryStatus}
+              disabled={updatingId !== null}
+              aria-label={`Confirmar cambio de estado de entrega a ${formatDeliveryStatus(newDeliveryStatus).label}`}
+            >
+              {updatingId !== null ? (
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Actualizando..." />
+              ) : (
+                <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
+              )}
+              Confirmar Cambio
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
   )
 }

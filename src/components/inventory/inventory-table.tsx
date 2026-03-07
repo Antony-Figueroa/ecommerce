@@ -18,21 +18,21 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 }
 
-function InventoryTableRowComponent({ 
-  item, 
-  isSelected, 
-  onToggleSelect, 
+function InventoryTableRowComponent({
+  item,
+  isSelected,
+  onToggleSelect,
   onAdjust,
-  getStockIndicatorColor 
+  getStockIndicatorColor
 }: InventoryTableRowProps) {
   const getStatusConfig = (status: string) => {
     const statusMap: Record<string, { label: string; class: string; icon: any }> = {
-      normal: { label: "Óptimo", class: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: CheckCircle2 },
-      low: { label: "Alerta Baja", class: "bg-amber-50 text-amber-600 border-amber-100", icon: AlertTriangle },
-      critical: { label: "Crítico", class: "bg-rose-50 text-rose-600 border-rose-100", icon: TrendingDown },
-      overstock: { label: "Excedente", class: "bg-sky-50 text-sky-600 border-sky-100", icon: ArrowUp },
+      normal: { label: "Óptimo", class: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/30", icon: CheckCircle2 },
+      low: { label: "Alerta Baja", class: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/30", icon: AlertTriangle },
+      critical: { label: "Crítico", class: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/30", icon: TrendingDown },
+      overstock: { label: "Excedente", class: "bg-sky-50 text-sky-600 border-sky-100 dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-800/30", icon: ArrowUp },
     }
-    return statusMap[status] || { label: status, class: "bg-slate-50 text-slate-600 border-slate-100", icon: Package }
+    return statusMap[status] || { label: status, class: "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-800", icon: Package }
   }
 
   const statusConfig = getStatusConfig(item.status)
@@ -47,8 +47,8 @@ function InventoryTableRowComponent({
       )}
     >
       <td className="p-5">
-        <input 
-          type="checkbox" 
+        <input
+          type="checkbox"
           checked={isSelected}
           onChange={() => onToggleSelect(item.id)}
           className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
@@ -59,17 +59,17 @@ function InventoryTableRowComponent({
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">{item.sku}</p>
       </td>
       <td className="p-5">
-        <Badge variant="outline" className="rounded-full border-slate-100 font-bold text-[9px] uppercase tracking-widest bg-slate-50/50 text-slate-500">
+        <Badge variant="outline" className="rounded-full border-slate-100 dark:border-white/10 font-bold text-[9px] uppercase tracking-widest bg-slate-50/50 dark:bg-white/5 text-slate-500 dark:text-slate-400">
           {item.category}
         </Badge>
       </td>
       <td className="p-5">
         <div className="space-y-2 w-48">
           <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
-            <span className="text-slate-700">{item.currentStock} uds.</span>
-            <span className="text-slate-400">Máx: {item.maxStock}</span>
+            <span className="text-slate-700 dark:text-slate-300">{item.currentStock} uds.</span>
+            <span className="text-slate-400 dark:text-slate-500">Máx: {item.maxStock}</span>
           </div>
-          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow={item.currentStock} aria-valuemin={0} aria-valuemax={item.maxStock}>
+          <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden" role="progressbar" aria-valuenow={item.currentStock} aria-valuemin={0} aria-valuemax={item.maxStock}>
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(100, (item.currentStock / item.maxStock) * 100)}%` }}
@@ -97,8 +97,8 @@ function InventoryTableRowComponent({
           aria-label={`Ajustar stock de ${item.productName}`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 20h9"/>
-            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
           </svg>
         </button>
       </td>
@@ -124,17 +124,17 @@ interface InventoryKPICardProps {
 }
 
 const colorMap = {
-  emerald: { bg: "from-emerald-50 to-emerald-100/50", text: "text-emerald-700", bar: "bg-emerald-500", icon: "text-emerald-600" },
-  blue: { bg: "from-blue-50 to-blue-100/50", text: "text-blue-700", bar: "bg-blue-500", icon: "text-blue-600" },
-  amber: { bg: "from-amber-50 to-amber-100/50", text: "text-amber-700", bar: "bg-amber-500", icon: "text-amber-600" },
-  rose: { bg: "from-rose-50 to-rose-100/50", text: "text-rose-700", bar: "bg-rose-500", icon: "text-rose-600" },
-  violet: { bg: "from-violet-50 to-violet-100/50", text: "text-violet-700", bar: "bg-violet-500", icon: "text-violet-600" },
-  slate: { bg: "from-slate-50 to-slate-100/50", text: "text-slate-700", bar: "bg-slate-500", icon: "text-slate-600" },
+  emerald: { bg: "from-emerald-50 to-emerald-100/50 dark:from-emerald-950/20 dark:to-emerald-900/10", text: "text-emerald-700 dark:text-emerald-400", bar: "bg-emerald-500", icon: "text-emerald-600 dark:text-emerald-400" },
+  blue: { bg: "from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10", text: "text-blue-700 dark:text-blue-400", bar: "bg-blue-500", icon: "text-blue-600 dark:text-blue-400" },
+  amber: { bg: "from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10", text: "text-amber-700 dark:text-amber-400", bar: "bg-amber-500", icon: "text-amber-600 dark:text-amber-400" },
+  rose: { bg: "from-rose-50 to-rose-100/50 dark:from-rose-950/20 dark:to-rose-900/10", text: "text-rose-700 dark:text-rose-400", bar: "bg-rose-500", icon: "text-rose-600 dark:text-rose-400" },
+  violet: { bg: "from-violet-50 to-violet-100/50 dark:from-violet-950/20 dark:to-violet-900/10", text: "text-violet-700 dark:text-violet-400", bar: "bg-violet-500", icon: "text-violet-600 dark:text-violet-400" },
+  slate: { bg: "from-slate-50 to-slate-100/50 dark:from-slate-800/20 dark:to-slate-900/10", text: "text-slate-700 dark:text-slate-400", bar: "bg-slate-500", icon: "text-slate-600 dark:text-slate-400" },
 }
 
 export const InventoryKPICard = memo(function InventoryKPICard({ label, value, color, icon, progress }: InventoryKPICardProps) {
   const colors = colorMap[color]
-  
+
   return (
     <div className={cn(
       "border-0 shadow-sm bg-gradient-to-br overflow-hidden rounded-2xl",
@@ -146,15 +146,15 @@ export const InventoryKPICard = memo(function InventoryKPICard({ label, value, c
             <p className={cn("text-[10px] font-bold uppercase tracking-widest", colors.text, "opacity/70")}>{label}</p>
             <p className={cn("text-2xl font-bold", colors.text)}>{value}</p>
           </div>
-          <div className={cn("p-2.5 rounded-xl", colors.icon, "bg-white/50")}>
+          <div className={cn("p-2.5 rounded-xl", colors.icon, "bg-white/50 dark:bg-black/20")}>
             {icon}
           </div>
         </div>
         {progress !== undefined && (
           <div className="mt-2 h-1.5 bg-black/5 rounded-full overflow-hidden">
-            <div 
-              className={cn("h-full rounded-full", colors.bar)} 
-              style={{ width: `${Math.min(100, progress)}%` }} 
+            <div
+              className={cn("h-full rounded-full", colors.bar)}
+              style={{ width: `${Math.min(100, progress)}%` }}
             />
           </div>
         )}

@@ -154,6 +154,11 @@ export type InventoryTransfer = $Result.DefaultSelection<Prisma.$InventoryTransf
  */
 export type Brand = $Result.DefaultSelection<Prisma.$BrandPayload>
 /**
+ * Model Format
+ * 
+ */
+export type Format = $Result.DefaultSelection<Prisma.$FormatPayload>
+/**
  * Model Setting
  * 
  */
@@ -576,6 +581,16 @@ export class PrismaClient<
     * ```
     */
   get brand(): Prisma.BrandDelegate<ExtArgs>;
+
+  /**
+   * `prisma.format`: Exposes CRUD operations for the **Format** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Formats
+    * const formats = await prisma.format.findMany()
+    * ```
+    */
+  get format(): Prisma.FormatDelegate<ExtArgs>;
 
   /**
    * `prisma.setting`: Exposes CRUD operations for the **Setting** model.
@@ -1085,6 +1100,7 @@ export namespace Prisma {
     InventoryStock: 'InventoryStock',
     InventoryTransfer: 'InventoryTransfer',
     Brand: 'Brand',
+    Format: 'Format',
     Setting: 'Setting',
     SettingHistory: 'SettingHistory',
     Notification: 'Notification',
@@ -1104,7 +1120,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "systemAuditLog" | "businessEvent" | "user" | "favorite" | "product" | "provider" | "inventoryBatch" | "inventoryBatchItem" | "cart" | "cartItem" | "productImage" | "batch" | "productPriceHistory" | "category" | "requirement" | "requirementItem" | "sale" | "payment" | "installment" | "paymentProof" | "saleItem" | "saleAuditLog" | "bCVRate" | "inventoryLog" | "inventoryLocation" | "inventoryStock" | "inventoryTransfer" | "brand" | "setting" | "settingHistory" | "notification" | "notificationSetting"
+      modelProps: "systemAuditLog" | "businessEvent" | "user" | "favorite" | "product" | "provider" | "inventoryBatch" | "inventoryBatchItem" | "cart" | "cartItem" | "productImage" | "batch" | "productPriceHistory" | "category" | "requirement" | "requirementItem" | "sale" | "payment" | "installment" | "paymentProof" | "saleItem" | "saleAuditLog" | "bCVRate" | "inventoryLog" | "inventoryLocation" | "inventoryStock" | "inventoryTransfer" | "brand" | "format" | "setting" | "settingHistory" | "notification" | "notificationSetting"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3065,6 +3081,76 @@ export namespace Prisma {
           count: {
             args: Prisma.BrandCountArgs<ExtArgs>
             result: $Utils.Optional<BrandCountAggregateOutputType> | number
+          }
+        }
+      }
+      Format: {
+        payload: Prisma.$FormatPayload<ExtArgs>
+        fields: Prisma.FormatFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.FormatFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.FormatFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>
+          }
+          findFirst: {
+            args: Prisma.FormatFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.FormatFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>
+          }
+          findMany: {
+            args: Prisma.FormatFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>[]
+          }
+          create: {
+            args: Prisma.FormatCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>
+          }
+          createMany: {
+            args: Prisma.FormatCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.FormatCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>[]
+          }
+          delete: {
+            args: Prisma.FormatDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>
+          }
+          update: {
+            args: Prisma.FormatUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>
+          }
+          deleteMany: {
+            args: Prisma.FormatDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.FormatUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.FormatUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FormatPayload>
+          }
+          aggregate: {
+            args: Prisma.FormatAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateFormat>
+          }
+          groupBy: {
+            args: Prisma.FormatGroupByArgs<ExtArgs>
+            result: $Utils.Optional<FormatGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.FormatCountArgs<ExtArgs>
+            result: $Utils.Optional<FormatCountAggregateOutputType> | number
           }
         }
       }
@@ -33416,6 +33502,894 @@ export namespace Prisma {
 
 
   /**
+   * Model Format
+   */
+
+  export type AggregateFormat = {
+    _count: FormatCountAggregateOutputType | null
+    _min: FormatMinAggregateOutputType | null
+    _max: FormatMaxAggregateOutputType | null
+  }
+
+  export type FormatMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    description: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type FormatMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    description: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type FormatCountAggregateOutputType = {
+    id: number
+    name: number
+    description: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type FormatMinAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type FormatMaxAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type FormatCountAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type FormatAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Format to aggregate.
+     */
+    where?: FormatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Formats to fetch.
+     */
+    orderBy?: FormatOrderByWithRelationInput | FormatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: FormatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Formats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Formats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Formats
+    **/
+    _count?: true | FormatCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: FormatMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: FormatMaxAggregateInputType
+  }
+
+  export type GetFormatAggregateType<T extends FormatAggregateArgs> = {
+        [P in keyof T & keyof AggregateFormat]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateFormat[P]>
+      : GetScalarType<T[P], AggregateFormat[P]>
+  }
+
+
+
+
+  export type FormatGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FormatWhereInput
+    orderBy?: FormatOrderByWithAggregationInput | FormatOrderByWithAggregationInput[]
+    by: FormatScalarFieldEnum[] | FormatScalarFieldEnum
+    having?: FormatScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: FormatCountAggregateInputType | true
+    _min?: FormatMinAggregateInputType
+    _max?: FormatMaxAggregateInputType
+  }
+
+  export type FormatGroupByOutputType = {
+    id: string
+    name: string
+    description: string | null
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: FormatCountAggregateOutputType | null
+    _min: FormatMinAggregateOutputType | null
+    _max: FormatMaxAggregateOutputType | null
+  }
+
+  type GetFormatGroupByPayload<T extends FormatGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<FormatGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof FormatGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], FormatGroupByOutputType[P]>
+            : GetScalarType<T[P], FormatGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type FormatSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["format"]>
+
+  export type FormatSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["format"]>
+
+  export type FormatSelectScalar = {
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+
+  export type $FormatPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Format"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      description: string | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["format"]>
+    composites: {}
+  }
+
+  type FormatGetPayload<S extends boolean | null | undefined | FormatDefaultArgs> = $Result.GetResult<Prisma.$FormatPayload, S>
+
+  type FormatCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<FormatFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: FormatCountAggregateInputType | true
+    }
+
+  export interface FormatDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Format'], meta: { name: 'Format' } }
+    /**
+     * Find zero or one Format that matches the filter.
+     * @param {FormatFindUniqueArgs} args - Arguments to find a Format
+     * @example
+     * // Get one Format
+     * const format = await prisma.format.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends FormatFindUniqueArgs>(args: SelectSubset<T, FormatFindUniqueArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Format that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {FormatFindUniqueOrThrowArgs} args - Arguments to find a Format
+     * @example
+     * // Get one Format
+     * const format = await prisma.format.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends FormatFindUniqueOrThrowArgs>(args: SelectSubset<T, FormatFindUniqueOrThrowArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Format that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatFindFirstArgs} args - Arguments to find a Format
+     * @example
+     * // Get one Format
+     * const format = await prisma.format.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends FormatFindFirstArgs>(args?: SelectSubset<T, FormatFindFirstArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Format that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatFindFirstOrThrowArgs} args - Arguments to find a Format
+     * @example
+     * // Get one Format
+     * const format = await prisma.format.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends FormatFindFirstOrThrowArgs>(args?: SelectSubset<T, FormatFindFirstOrThrowArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Formats that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Formats
+     * const formats = await prisma.format.findMany()
+     * 
+     * // Get first 10 Formats
+     * const formats = await prisma.format.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const formatWithIdOnly = await prisma.format.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends FormatFindManyArgs>(args?: SelectSubset<T, FormatFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Format.
+     * @param {FormatCreateArgs} args - Arguments to create a Format.
+     * @example
+     * // Create one Format
+     * const Format = await prisma.format.create({
+     *   data: {
+     *     // ... data to create a Format
+     *   }
+     * })
+     * 
+     */
+    create<T extends FormatCreateArgs>(args: SelectSubset<T, FormatCreateArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Formats.
+     * @param {FormatCreateManyArgs} args - Arguments to create many Formats.
+     * @example
+     * // Create many Formats
+     * const format = await prisma.format.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends FormatCreateManyArgs>(args?: SelectSubset<T, FormatCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Formats and returns the data saved in the database.
+     * @param {FormatCreateManyAndReturnArgs} args - Arguments to create many Formats.
+     * @example
+     * // Create many Formats
+     * const format = await prisma.format.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Formats and only return the `id`
+     * const formatWithIdOnly = await prisma.format.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends FormatCreateManyAndReturnArgs>(args?: SelectSubset<T, FormatCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Format.
+     * @param {FormatDeleteArgs} args - Arguments to delete one Format.
+     * @example
+     * // Delete one Format
+     * const Format = await prisma.format.delete({
+     *   where: {
+     *     // ... filter to delete one Format
+     *   }
+     * })
+     * 
+     */
+    delete<T extends FormatDeleteArgs>(args: SelectSubset<T, FormatDeleteArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Format.
+     * @param {FormatUpdateArgs} args - Arguments to update one Format.
+     * @example
+     * // Update one Format
+     * const format = await prisma.format.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends FormatUpdateArgs>(args: SelectSubset<T, FormatUpdateArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Formats.
+     * @param {FormatDeleteManyArgs} args - Arguments to filter Formats to delete.
+     * @example
+     * // Delete a few Formats
+     * const { count } = await prisma.format.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends FormatDeleteManyArgs>(args?: SelectSubset<T, FormatDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Formats.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Formats
+     * const format = await prisma.format.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends FormatUpdateManyArgs>(args: SelectSubset<T, FormatUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Format.
+     * @param {FormatUpsertArgs} args - Arguments to update or create a Format.
+     * @example
+     * // Update or create a Format
+     * const format = await prisma.format.upsert({
+     *   create: {
+     *     // ... data to create a Format
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Format we want to update
+     *   }
+     * })
+     */
+    upsert<T extends FormatUpsertArgs>(args: SelectSubset<T, FormatUpsertArgs<ExtArgs>>): Prisma__FormatClient<$Result.GetResult<Prisma.$FormatPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Formats.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatCountArgs} args - Arguments to filter Formats to count.
+     * @example
+     * // Count the number of Formats
+     * const count = await prisma.format.count({
+     *   where: {
+     *     // ... the filter for the Formats we want to count
+     *   }
+     * })
+    **/
+    count<T extends FormatCountArgs>(
+      args?: Subset<T, FormatCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], FormatCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Format.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends FormatAggregateArgs>(args: Subset<T, FormatAggregateArgs>): Prisma.PrismaPromise<GetFormatAggregateType<T>>
+
+    /**
+     * Group by Format.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FormatGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends FormatGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: FormatGroupByArgs['orderBy'] }
+        : { orderBy?: FormatGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, FormatGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFormatGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Format model
+   */
+  readonly fields: FormatFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Format.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__FormatClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Format model
+   */ 
+  interface FormatFieldRefs {
+    readonly id: FieldRef<"Format", 'String'>
+    readonly name: FieldRef<"Format", 'String'>
+    readonly description: FieldRef<"Format", 'String'>
+    readonly isActive: FieldRef<"Format", 'Boolean'>
+    readonly createdAt: FieldRef<"Format", 'DateTime'>
+    readonly updatedAt: FieldRef<"Format", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Format findUnique
+   */
+  export type FormatFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * Filter, which Format to fetch.
+     */
+    where: FormatWhereUniqueInput
+  }
+
+  /**
+   * Format findUniqueOrThrow
+   */
+  export type FormatFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * Filter, which Format to fetch.
+     */
+    where: FormatWhereUniqueInput
+  }
+
+  /**
+   * Format findFirst
+   */
+  export type FormatFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * Filter, which Format to fetch.
+     */
+    where?: FormatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Formats to fetch.
+     */
+    orderBy?: FormatOrderByWithRelationInput | FormatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Formats.
+     */
+    cursor?: FormatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Formats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Formats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Formats.
+     */
+    distinct?: FormatScalarFieldEnum | FormatScalarFieldEnum[]
+  }
+
+  /**
+   * Format findFirstOrThrow
+   */
+  export type FormatFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * Filter, which Format to fetch.
+     */
+    where?: FormatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Formats to fetch.
+     */
+    orderBy?: FormatOrderByWithRelationInput | FormatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Formats.
+     */
+    cursor?: FormatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Formats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Formats.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Formats.
+     */
+    distinct?: FormatScalarFieldEnum | FormatScalarFieldEnum[]
+  }
+
+  /**
+   * Format findMany
+   */
+  export type FormatFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * Filter, which Formats to fetch.
+     */
+    where?: FormatWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Formats to fetch.
+     */
+    orderBy?: FormatOrderByWithRelationInput | FormatOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Formats.
+     */
+    cursor?: FormatWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Formats from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Formats.
+     */
+    skip?: number
+    distinct?: FormatScalarFieldEnum | FormatScalarFieldEnum[]
+  }
+
+  /**
+   * Format create
+   */
+  export type FormatCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * The data needed to create a Format.
+     */
+    data: XOR<FormatCreateInput, FormatUncheckedCreateInput>
+  }
+
+  /**
+   * Format createMany
+   */
+  export type FormatCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Formats.
+     */
+    data: FormatCreateManyInput | FormatCreateManyInput[]
+  }
+
+  /**
+   * Format createManyAndReturn
+   */
+  export type FormatCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Formats.
+     */
+    data: FormatCreateManyInput | FormatCreateManyInput[]
+  }
+
+  /**
+   * Format update
+   */
+  export type FormatUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * The data needed to update a Format.
+     */
+    data: XOR<FormatUpdateInput, FormatUncheckedUpdateInput>
+    /**
+     * Choose, which Format to update.
+     */
+    where: FormatWhereUniqueInput
+  }
+
+  /**
+   * Format updateMany
+   */
+  export type FormatUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Formats.
+     */
+    data: XOR<FormatUpdateManyMutationInput, FormatUncheckedUpdateManyInput>
+    /**
+     * Filter which Formats to update
+     */
+    where?: FormatWhereInput
+  }
+
+  /**
+   * Format upsert
+   */
+  export type FormatUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * The filter to search for the Format to update in case it exists.
+     */
+    where: FormatWhereUniqueInput
+    /**
+     * In case the Format found by the `where` argument doesn't exist, create a new Format with this data.
+     */
+    create: XOR<FormatCreateInput, FormatUncheckedCreateInput>
+    /**
+     * In case the Format was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<FormatUpdateInput, FormatUncheckedUpdateInput>
+  }
+
+  /**
+   * Format delete
+   */
+  export type FormatDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+    /**
+     * Filter which Format to delete.
+     */
+    where: FormatWhereUniqueInput
+  }
+
+  /**
+   * Format deleteMany
+   */
+  export type FormatDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Formats to delete
+     */
+    where?: FormatWhereInput
+  }
+
+  /**
+   * Format without action
+   */
+  export type FormatDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Format
+     */
+    select?: FormatSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Model Setting
    */
 
@@ -37839,6 +38813,18 @@ export namespace Prisma {
   export type BrandScalarFieldEnum = (typeof BrandScalarFieldEnum)[keyof typeof BrandScalarFieldEnum]
 
 
+  export const FormatScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    description: 'description',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type FormatScalarFieldEnum = (typeof FormatScalarFieldEnum)[keyof typeof FormatScalarFieldEnum]
+
+
   export const SettingScalarFieldEnum: {
     id: 'id',
     key: 'key',
@@ -40355,6 +41341,63 @@ export namespace Prisma {
     isActive?: BoolWithAggregatesFilter<"Brand"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Brand"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Brand"> | Date | string
+  }
+
+  export type FormatWhereInput = {
+    AND?: FormatWhereInput | FormatWhereInput[]
+    OR?: FormatWhereInput[]
+    NOT?: FormatWhereInput | FormatWhereInput[]
+    id?: StringFilter<"Format"> | string
+    name?: StringFilter<"Format"> | string
+    description?: StringNullableFilter<"Format"> | string | null
+    isActive?: BoolFilter<"Format"> | boolean
+    createdAt?: DateTimeFilter<"Format"> | Date | string
+    updatedAt?: DateTimeFilter<"Format"> | Date | string
+  }
+
+  export type FormatOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FormatWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name?: string
+    AND?: FormatWhereInput | FormatWhereInput[]
+    OR?: FormatWhereInput[]
+    NOT?: FormatWhereInput | FormatWhereInput[]
+    description?: StringNullableFilter<"Format"> | string | null
+    isActive?: BoolFilter<"Format"> | boolean
+    createdAt?: DateTimeFilter<"Format"> | Date | string
+    updatedAt?: DateTimeFilter<"Format"> | Date | string
+  }, "id" | "name">
+
+  export type FormatOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: FormatCountOrderByAggregateInput
+    _max?: FormatMaxOrderByAggregateInput
+    _min?: FormatMinOrderByAggregateInput
+  }
+
+  export type FormatScalarWhereWithAggregatesInput = {
+    AND?: FormatScalarWhereWithAggregatesInput | FormatScalarWhereWithAggregatesInput[]
+    OR?: FormatScalarWhereWithAggregatesInput[]
+    NOT?: FormatScalarWhereWithAggregatesInput | FormatScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Format"> | string
+    name?: StringWithAggregatesFilter<"Format"> | string
+    description?: StringNullableWithAggregatesFilter<"Format"> | string | null
+    isActive?: BoolWithAggregatesFilter<"Format"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Format"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Format"> | Date | string
   }
 
   export type SettingWhereInput = {
@@ -43327,6 +44370,69 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type FormatCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FormatUncheckedCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FormatUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FormatUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FormatCreateManyInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type FormatUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FormatUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type SettingCreateInput = {
     id?: string
     key: string
@@ -45546,6 +46652,33 @@ export namespace Prisma {
   }
 
   export type BrandMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FormatCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FormatMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type FormatMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
@@ -55912,6 +57045,10 @@ export namespace Prisma {
      * @deprecated Use BrandDefaultArgs instead
      */
     export type BrandArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = BrandDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use FormatDefaultArgs instead
+     */
+    export type FormatArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = FormatDefaultArgs<ExtArgs>
     /**
      * @deprecated Use SettingDefaultArgs instead
      */

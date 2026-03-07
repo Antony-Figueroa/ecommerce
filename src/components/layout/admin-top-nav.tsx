@@ -1,23 +1,19 @@
 import { useState, useEffect } from "react"
-import { 
-  Bell, 
-  Sun, 
-  Moon, 
-  Search, 
-  User, 
-  LogOut, 
+import {
+  Bell,
+  Sun,
+  Moon,
+  Search,
+  User,
+  LogOut,
   RefreshCw,
   TrendingUp,
   Settings,
-  HelpCircle,
-  ChevronRight,
-  Home,
   Plus,
   ExternalLink,
   Menu
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,38 +25,40 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { NotificationTray } from "./notification-tray"
 import { api } from "@/lib/api"
-import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useNavigate, useLocation, Link } from "react-router-dom"
-import { Separator } from "@/components/ui/separator"
-import { formatDistanceToNow } from "date-fns"
-import { es } from "date-fns/locale"
 import { useSocket } from "@/hooks/use-socket"
 import { toast } from "@/hooks/use-toast"
 
 interface AdminTopNavProps {
   onMenuClick?: () => void
+  onToggleSidebar?: () => void
+  onSearchClick?: () => void
 }
 
-export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
+export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: AdminTopNavProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [bcvRate, setBcvRate] = useState<number | null>(null)
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
-      return document.documentElement.classList.contains("dark") || 
-             localStorage.getItem("theme") === "dark"
+      return document.documentElement.classList.contains("dark") ||
+        localStorage.getItem("theme") === "dark"
     }
     return false
   })
   const [updatingBcv, setUpdatingBcv] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
-  const [loadingNotifications, setLoadingNotifications] = useState(false)
   const { on, off } = useSocket()
 
   // Breadcrumb mapping
@@ -68,7 +66,7 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   const breadcrumbs = pathnames.map((name, index) => {
     const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`
     const isLast = index === pathnames.length - 1
-    
+
     // Format label
     let label = name.charAt(0).toUpperCase() + name.slice(1)
     if (name === "admin") label = "Inicio"
@@ -87,7 +85,7 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   useEffect(() => {
     fetchBCVRate()
     fetchNotifications()
-    
+
     // Refresh notifications every 2 minutes
     const interval = setInterval(fetchNotifications, 2 * 60 * 1000)
 
@@ -95,7 +93,7 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
     const handleNewNotification = (notification: any) => {
       console.log("New real-time notification received:", notification)
       setNotifications(prev => [notification, ...prev])
-      
+
       // Show toast for urgent notifications
       if (notification.priority === 'URGENT') {
         toast({
@@ -113,6 +111,8 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
       off('notification', handleNewNotification)
     }
   }, [on, off])
+
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -139,41 +139,13 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
 
   const fetchNotifications = async () => {
     try {
-      setLoadingNotifications(true)
       const data = await api.getAdminUnreadNotifications()
       setNotifications(data)
     } catch (error) {
       console.error("Error fetching notifications:", error)
-    } finally {
-      setLoadingNotifications(false)
     }
   }
 
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      await api.markAdminNotificationRead(id)
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n))
-    } catch (error) {
-      console.error("Error marking notification as read:", error)
-    }
-  }
-
-  const handleMarkAllRead = async () => {
-    try {
-      await api.markAllAdminNotificationsRead()
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error)
-    }
-  }
-
-  const formatTime = (dateString: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true, locale: es })
-    } catch (e) {
-      return "Recientemente"
-    }
-  }
 
   const handleUpdateBcv = async () => {
     setUpdatingBcv(true)
@@ -196,262 +168,159 @@ export function AdminTopNav({ onMenuClick }: AdminTopNavProps) {
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b border-border/40 bg-card/60 px-3 md:px-5 backdrop-blur-xl">
-      <TooltipProvider>
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMenuClick}
-            className="md:hidden text-muted-foreground hover:text-primary h-9 w-9 rounded-lg hover:bg-primary/5 shrink-0"
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-white dark:bg-background border-b border-neutral-100 dark:border-white/5 px-6 md:px-8">
+      <div className="flex items-center gap-4">
+        {/* Mobile menu button / Sidebar toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar || onMenuClick}
+          className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white h-9 w-9 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 shrink-0"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
-          {/* Breadcrumbs */}
-          <nav className="hidden sm:flex items-center gap-2 text-xs font-semibold text-muted-foreground/60 min-w-0">
-            <Link to="/admin" className="hover:text-primary transition-colors p-1 rounded-md hover:bg-primary/5 shrink-0">
-              <Home className="h-3.5 w-3.5" />
-            </Link>
-            {breadcrumbs.map((breadcrumb) => (
-              breadcrumb.routeTo !== "/admin" && (
-                <div key={breadcrumb.routeTo} className="flex items-center gap-1.5 min-w-0">
-                  <ChevronRight size={10} className="text-muted-foreground/30 shrink-0" strokeWidth={3} />
-                  <Link 
-                    to={breadcrumb.routeTo} 
-                    className={cn(
-                      "transition-colors hover:text-primary px-1.5 py-0.5 rounded-md hover:bg-primary/5 truncate max-w-[120px]",
-                      breadcrumb.isLast && "text-foreground font-bold"
-                    )}
-                  >
-                    {breadcrumb.label}
-                  </Link>
-                </div>
-              )
-            ))}
-          </nav>
-        </div>
+        <h2 className="hidden text-base font-bold text-neutral-900 dark:text-white md:block">
+          {breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].label : 'Dashboard'}
+        </h2>
+      </div>
 
-        {/* Right side: Actions */}
-        <div className="flex items-center gap-2 md:gap-3 shrink-0">
-          {/* Search - hidden on small screens */}
-          <div className="hidden xl:flex items-center gap-2 mr-1">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
-              <Input 
-                placeholder="Buscar..." 
-                className="w-48 pl-8 h-8 bg-secondary/30 border-none focus-visible:ring-primary/20 rounded-lg text-xs font-medium transition-all focus:w-56"
-              />
-            </div>
+      {/* Right side: Actions */}
+      <div className="flex items-center gap-4 shrink-0">
+        {/* Search Trigger */}
+        <button
+          onClick={onSearchClick}
+          className="hidden md:flex items-center gap-3 px-3 py-2 bg-neutral-50 dark:bg-card border border-neutral-200 dark:border-white/10 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-all text-neutral-400 group"
+        >
+          <Search className="h-4 w-4 group-hover:text-primary transition-colors" />
+          <span className="text-sm font-medium pr-8">Buscar en el sistema...</span>
+          <div className="flex items-center gap-1 opacity-60">
+            <kbd className="h-5 select-none items-center gap-1 rounded bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-white/10 px-1.5 font-mono text-[10px] font-bold">⌘</kbd>
+            <kbd className="h-5 select-none items-center gap-1 rounded bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-white/10 px-1.5 font-mono text-[10px] font-bold">K</kbd>
           </div>
-          
-          {/* View Shop */}
+        </button>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-neutral-500 hover:text-primary transition-colors font-semibold text-xs px-2 h-9 rounded-lg"
+              asChild
+            >
+              <Link to="/">
+                <ExternalLink className="h-4 w-4" />
+                <span className="hidden lg:inline ml-2">Ver Tienda</span>
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="text-[10px] font-bold">Ver Tienda</TooltipContent>
+        </Tooltip>
+
+        <DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-primary transition-colors font-semibold text-xs px-2 h-8"
-                asChild
-              >
-                <Link to="/">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  <span className="hidden lg:inline ml-1.5">Ver Tienda</span>
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Ver Tienda</TooltipContent>
-          </Tooltip>
-
-          {/* Quick Actions */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="sm" className="flex gap-1.5 font-semibold text-xs shadow-sm h-8 px-2.5">
-                    <Plus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Nueva</span>
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Nueva Acción Rápida</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs">Crear Nuevo</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/products?action=new")}>
-                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Producto</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/categories?action=new")}>
-                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Categoría</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/orders?action=new")}>
-                <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Orden</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* BCV Rate - hidden on smaller screens */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="hidden 2xl:flex items-center gap-2 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold">
-                <TrendingUp className="h-3 w-3" />
-                <span>BCV: {typeof bcvRate === 'number' && !isNaN(bcvRate) ? `${bcvRate.toFixed(2)} Bs/$` : "..."}</span>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 rounded-full hover:bg-primary/20 hover:text-primary"
-                  onClick={handleUpdateBcv}
-                  disabled={updatingBcv}
-                >
-                  <RefreshCw className={`h-2.5 w-2.5 ${updatingBcv ? 'animate-spin' : ''}`} />
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" size="sm" className="flex gap-2 font-bold text-xs shadow-sm h-9 px-3 rounded-lg bg-primary hover:bg-primary/90">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Nueva</span>
                 </Button>
-              </div>
+              </DropdownMenuTrigger>
             </TooltipTrigger>
-            <TooltipContent>Actualizar Tasa BCV</TooltipContent>
+            <TooltipContent className="text-[10px] font-bold">Nueva Acción</TooltipContent>
           </Tooltip>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-xs">Crear Nuevo</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/products?action=new")}>
+              <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Producto</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/categories?action=new")}>
+              <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Categoría</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/orders?action=new")}>
+              <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Orden</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          {/* Theme Toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
+        {/* BCV Rate - hidden on smaller screens */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="hidden 2xl:flex items-center gap-2 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold">
+              <TrendingUp className="h-3 w-3" />
+              <span>BCV: {typeof bcvRate === 'number' && !isNaN(bcvRate) ? `${bcvRate.toFixed(2)} Bs/$` : "..."}</span>
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsDark(!isDark)}
-                className="text-muted-foreground hover:text-primary transition-colors h-9 w-9 rounded-lg hover:bg-primary/5"
+                className="h-5 w-5 rounded-full hover:bg-primary/20 hover:text-primary"
+                onClick={handleUpdateBcv}
+                disabled={updatingBcv}
               >
-                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                <RefreshCw className={`h-2.5 w-2.5 ${updatingBcv ? 'animate-spin' : ''}`} />
               </Button>
-            </TooltipTrigger>
-            <TooltipContent>Modo {isDark ? "claro" : "oscuro"}</TooltipContent>
-          </Tooltip>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Actualizar Tasa BCV</TooltipContent>
+        </Tooltip>
 
-          {/* Notifications */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-primary transition-colors h-9 w-9 rounded-lg hover:bg-primary/5">
-                    <Bell className="h-4 w-4" />
-                    {unreadCount > 0 && (
-                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Notificaciones</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-72">
-              <DropdownMenuLabel className="flex items-center justify-between text-xs">
-                Notificaciones
-                {unreadCount > 0 && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-auto px-1.5 py-0.5 text-[10px] text-primary font-semibold"
-                    onClick={handleMarkAllRead}
-                  >
-                    Marcar leídas
-                  </Button>
-                )}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <div className="max-h-64 overflow-y-auto">
-                {loadingNotifications && notifications.length === 0 ? (
-                  <div className="p-3 text-center text-[10px] text-muted-foreground">Cargando...</div>
-                ) : notifications.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-muted-foreground">
-                    No hay notificaciones nuevas
-                  </div>
-                ) : (
-                  notifications.slice(0, 5).map((notification) => (
-                    <DropdownMenuItem 
-                      key={notification.id} 
-                      className={cn(
-                        "flex flex-col items-start gap-1 p-2.5 cursor-pointer transition-colors",
-                        notification.isRead ? "opacity-60 bg-transparent" : "bg-primary/5 hover:bg-primary/10"
-                      )}
-                      onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}
-                    >
-                      <div className="flex w-full items-center justify-between">
-                        <span className={cn("text-xs text-foreground", !notification.isRead && "font-semibold")}>
-                          {notification.title}
-                        </span>
-                        {!notification.isRead && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0 ml-1" />}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground line-clamp-2">
-                        {notification.message}
-                      </p>
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                className="justify-center text-[10px] font-semibold text-primary cursor-pointer"
-                onClick={() => navigate("/admin/notifications")}
-              >
-                Ver todas
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsDark(!isDark)}
+              className="text-neutral-500 hover:text-primary transition-colors h-9 w-9 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-900"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="text-[10px] font-bold">Modo {isDark ? "claro" : "oscuro"}</TooltipContent>
+        </Tooltip>
 
-          <Separator orientation="vertical" className="h-5 mx-0.5 hidden md:block" />
+        {/* Notifications */}
+        <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-10 w-10 rounded-full text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border-2 border-white dark:border-neutral-900" />}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="p-0 w-[380px] sm:w-[420px] border-none shadow-2xl bg-transparent">
+            <NotificationTray variant="admin" onClose={() => setIsNotificationsOpen(false)} />
+          </PopoverContent>
+        </Popover>
 
-          {/* User Profile */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 px-1.5 hover:bg-secondary/50 transition-all rounded-lg h-9">
-                    <div className="h-7 w-7 rounded-md bg-primary/20 text-primary flex items-center justify-center font-bold text-[10px] shadow-sm overflow-hidden">
-                      {user?.avatarUrl ? (
-                        <img 
-                          src={user.avatarUrl} 
-                          alt={user.name || ''} 
-                          className="h-full w-full object-cover"
-                          referrerPolicy="no-referrer"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
-                          }}
-                        />
-                      ) : (
-                        user?.name?.charAt(0) || <User className="h-3.5 w-3.5" />
-                      )}
-                    </div>
-                    <div className="hidden md:flex flex-col items-start">
-                      <span className="text-[11px] font-semibold leading-tight">{user?.name || "Admin"}</span>
-                      <span className="text-[9px] text-muted-foreground leading-tight">Admin</span>
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>Perfil</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs">Mi Cuenta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 cursor-pointer text-xs" onClick={() => navigate("/admin/settings")}>
-                <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Configuración</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2 cursor-pointer text-xs">
-                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Ayuda</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2 text-destructive cursor-pointer focus:text-destructive focus:bg-destructive/10 text-xs" onClick={handleLogout}>
-                <LogOut className="h-3.5 w-3.5" />
-                <span>Cerrar Sesión</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </TooltipProvider>
+        {/* User Profile */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-700">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt="User" className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-neutral-500 dark:text-neutral-300 font-bold">
+                  {user?.name?.charAt(0) || <User className="h-5 w-5" />}
+                </div>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-neutral-200 dark:border-neutral-700 bg-white dark:bg-card p-2">
+            <DropdownMenuItem className="gap-2 cursor-pointer rounded-lg dark:hover:bg-neutral-800" onClick={() => navigate("/admin/settings")}>
+              <Settings className="h-4 w-4" /> Configuración
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 text-red-600 cursor-pointer rounded-lg focus:bg-red-50 dark:focus:bg-red-950/30 focus:text-red-700" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" /> Salir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   )
 }

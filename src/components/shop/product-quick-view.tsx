@@ -12,6 +12,7 @@ import { formatUSD, formatBS, cn } from "@/lib/utils"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { useFavorites } from "@/contexts/favorites-context"
+import { useSettings } from "@/contexts/settings-context"
 import type { Product } from "@/types"
 
 interface ProductQuickViewProps {
@@ -25,6 +26,7 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
   const { items, addItem, updateQuantity, removeItem } = useCart()
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
+  const { settings } = useSettings()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -85,7 +87,7 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
                 </Badge>
               )}
             </div>
-            {!product.inStock && (
+            {!product.inStock && (settings.show_stock_badge ?? false) && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-[2px] z-10">
                 <Badge variant="outline" className="bg-background text-foreground border-border font-extrabold px-6 py-2 text-lg">
                   AGOTADO
@@ -98,11 +100,11 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
               className="absolute right-6 top-6 rounded-full shadow-lg size-10 bg-card hover:bg-primary hover:text-primary-foreground transition-colors z-20"
               onClick={handleToggleFavorite}
             >
-              <Heart 
+              <Heart
                 className={cn(
                   "h-5 w-5 transition-colors",
                   isFavorite(product.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                )} 
+                )}
               />
             </Button>
           </div>
@@ -157,8 +159,8 @@ export function ProductQuickView({ product, isOpen, onClose, bcvRate }: ProductQ
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Categorías</p>
                   <p className="text-sm font-bold">
-                    {product.categories && product.categories.length > 0 
-                      ? product.categories.map(c => c.name).join(", ") 
+                    {product.categories && product.categories.length > 0
+                      ? product.categories.map(c => c.name).join(", ")
                       : product.category?.name || "General"}
                   </p>
                 </div>
