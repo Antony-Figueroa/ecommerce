@@ -189,6 +189,7 @@ export function AdminCatalogPage() {
       const html2canvas = (await import('html2canvas')).default
       const ReactDOMServer = await import('react-dom/server')
 
+<<<<<<< Updated upstream
       const allPages = renderPreview()
 
       const pdf = new jsPDF('portrait', 'mm', 'a4')
@@ -227,6 +228,64 @@ export function AdminCatalogPage() {
           }
         </style>
       `
+=======
+      // Clonar el contenedor para no afectar el DOM de React
+      const container = previewRef.current;
+      
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 794,
+        windowHeight: 1123,
+        backgroundColor: '#ffffff',
+        onclone: (clonedDoc) => {
+          // Encontrar el elemento clonado correspondiente
+          const clonedElement = clonedDoc.getElementById(container.id);
+          if (!clonedElement) return;
+          
+          const elements = clonedElement.getElementsByTagName('*');
+          
+          for (let i = 0; i < elements.length; i++) {
+            const el = elements[i] as HTMLElement;
+            
+            // Forzar colores seguros en todos los elementos
+            const computedStyle = el.style;
+            
+            // Si tiene background, asegurar que sea un color válido
+            if (computedStyle.backgroundColor && computedStyle.backgroundColor !== 'transparent') {
+              // Los colores oklch no se pueden convertir fácilmente, mejor usar blanco
+              try {
+                // Intentar parsear el color - si falla, usar blanco
+                const testDiv = document.createElement('div');
+                testDiv.style.color = computedStyle.backgroundColor;
+                document.body.appendChild(testDiv);
+                const computed = window.getComputedStyle(testDiv).color;
+                document.body.removeChild(testDiv);
+                
+                // Si el color computado contiene oklch, forzar blanco
+                if (computed.includes('oklch') || computed.includes('color(')) {
+                  computedStyle.backgroundColor = '#ffffff';
+                }
+              } catch {
+                computedStyle.backgroundColor = '#ffffff';
+              }
+            }
+            
+            // Eliminar sombras que pueden causar problemas
+            computedStyle.boxShadow = 'none';
+            
+            // Eliminar gradientes
+            if (computedStyle.backgroundImage && computedStyle.backgroundImage !== 'none') {
+              computedStyle.backgroundImage = 'none';
+            }
+          }
+          
+          // Forzar fondo blanco en el contenedor principal
+          clonedElement.style.backgroundColor = '#ffffff';
+        }
+      });
+>>>>>>> Stashed changes
 
       for (let i = 0; i < allPages.length; i++) {
         iframeDoc.body.innerHTML = ''
