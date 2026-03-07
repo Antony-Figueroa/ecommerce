@@ -183,56 +183,18 @@ export function AdminCatalogPage() {
   }
 
   const generatePDF = async () => {
-    if (!previewRef.current) return;
-
-    setExporting(true);
+    setExporting(true)
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const jsPDF = (await import('jspdf')).default;
+      const jsPDF = (await import('jspdf')).default
+      const html2canvas = (await import('html2canvas')).default
+      const ReactDOMServer = await import('react-dom/server')
 
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 794,
-        windowHeight: 1123,
-        // ESTE BLOQUE ES EL "ANTI-OKLCH" DEFINITIVO
-        onclone: (clonedDoc) => {
-          const elements = clonedDoc.getElementsByTagName("*");
-          for (let i = 0; i < elements.length; i++) {
-            const el = elements[i] as HTMLElement;
-            const style = window.getComputedStyle(el);
+      const allPages = renderPreview()
 
-            // 1. Limpiar background-color
-            if (style.backgroundColor.includes("oklch")) {
-              el.style.backgroundColor = "#ffffff";
-            }
-            // 2. Limpiar color de texto
-            if (style.color.includes("oklch")) {
-              el.style.color = "#000000";
-            }
-            // 3. Limpiar bordes
-            if (style.borderColor.includes("oklch")) {
-              el.style.borderColor = "#e5e7eb";
-            }
-            // 4. ELIMINAR SOMBRAS (Causan mucho error de oklch en Tailwind v3.4+)
-            if (style.boxShadow.includes("oklch") || style.boxShadow !== "none") {
-              el.style.boxShadow = "none";
-            }
-          }
-        }
-      });
+      const pdf = new jsPDF('portrait', 'mm', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
 
-<<<<<<< Updated upstream
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('portrait', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`);
-=======
-      // Create iframe to isolate from parent CSS
       const iframe = document.createElement('iframe')
       iframe.style.position = 'fixed'
       iframe.style.left = '-9999px'
@@ -245,26 +207,52 @@ export function AdminCatalogPage() {
       const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
       if (!iframeDoc) throw new Error('Could not access iframe document')
 
+      // Load Tailwind in iframe
+      iframeDoc.head.innerHTML = `
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        <style>
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background: white !important; margin: 0 !important; }
+          .page { 
+            width: 794px !important; 
+            height: 1123px !important; 
+            position: relative !important;
+            overflow: hidden !important;
+            page-break-after: always;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .page-footer { 
+            margin-top: auto !important; 
+          }
+        </style>
+      `
+
       for (let i = 0; i < allPages.length; i++) {
         iframeDoc.body.innerHTML = ''
         
         const page = allPages[i]
         if (!page) continue
 
-        let html = ReactDOMServer.renderToStaticMarkup(page)
+        const html = ReactDOMServer.renderToStaticMarkup(page)
         
-        // Remove ALL className attributes
-        html = html.replace(/class="[^"]*"/g, '')
-        html = html.replace(/class='[^']*'/g, '')
+        // Add emerald color fix and footer class to last div
+        // Add footer class to the last div that contains the footer info
+        const fixedHtml = html
+          .replace(/text-emerald-600/g, 'text-emerald-600" style="color: #059669 !important;"')
+          .replace(/(<div[^>]*class="[^"]*flex justify-between[^"]*"[^>]*>[\s\S]*?<\/div>)/g, '<div class="page-footer">$1</div>')
         
-        // Remove ALL style attributes
-        html = html.replace(/style="[^"]*"/g, '')
+        // Wrap in page container
+        const pageHtml = `
+          <div class="page" style="width: 794px; height: 1123px; background: white; overflow: hidden;">
+            ${fixedHtml}
+          </div>
+        `
         
-        // Remove oklch and hsl references
-        html = html.replace(/oklch\([^)]*\)/g, '#000000')
-        html = html.replace(/hsl\([^)]+\)/g, '#000000')
-        
-        iframeDoc.body.innerHTML = html
+        iframeDoc.body.innerHTML = pageHtml
+
+        // Wait for styles to apply
+        await new Promise(resolve => setTimeout(resolve, 100))
 
         const canvas = await html2canvas(iframeDoc.body, {
           scale: 2,
@@ -276,21 +264,19 @@ export function AdminCatalogPage() {
         })
 
         const imgData = canvas.toDataURL('image/png')
-        
+
         if (i > 0) pdf.addPage()
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
       }
 
       document.body.removeChild(iframe)
       pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`)
->>>>>>> Stashed changes
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Hubo un error al generar el PDF. Revisa la consola.");
+      console.error("Error generating PDF:", error)
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
-  };
+  }
 
   const renderProductCard = (product: CatalogProduct) => (
     <div key={product.id} className="bg-white rounded-lg p-4 border border-gray-100 shadow-sm">
@@ -335,10 +321,6 @@ export function AdminCatalogPage() {
         <p className="text-xl text-gray-500 font-light">
           Suplementos vitaminicos y nutricionales
         </p>
-      </div>
-
-      <div className="absolute bottom-16 left-0 right-0 text-center">
-        <p className="text-sm text-gray-400">www.anas-supplements.com</p>
       </div>
     </div>
   )
