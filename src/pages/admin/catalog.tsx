@@ -37,6 +37,49 @@ import {
   X,
 } from "lucide-react"
 
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23cccccc' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E"
+
+async function loadImageWithCORS(src: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.onload = () => resolve(src)
+    img.onerror = () => resolve(PLACEHOLDER_IMAGE)
+    img.src = src
+  })
+}
+
+async function getSafeImageMap(products: CatalogProduct[]): Promise<Map<string, string>> {
+  const imageMap = new Map<string, string>()
+  
+  for (const product of products) {
+    if (product.image && product.image.startsWith('http')) {
+      try {
+        const safeImage = await loadImageWithCORS(product.image)
+        imageMap.set(product.image, safeImage)
+      } catch {
+        imageMap.set(product.image, PLACEHOLDER_IMAGE)
+      }
+    }
+  }
+  
+  return imageMap
+}
+
+function replaceImagesInHTML(html: string, imageMap: Map<string, string>): string {
+  let result = html
+  imageMap.forEach((safeUrl, originalUrl) => {
+    if (safeUrl === PLACEHOLDER_IMAGE) {
+      result = result.replace(new RegExp(escapeRegExp(originalUrl), 'g'), PLACEHOLDER_IMAGE)
+    }
+  })
+  return result
+}
+
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 interface CatalogProduct {
   id: string
   name: string
@@ -189,6 +232,10 @@ export function AdminCatalogPage() {
       const html2canvas = (await import('html2canvas')).default
       const ReactDOMServer = await import('react-dom/server')
 
+      // Verificar qué imágenes son seguras y cuáles necesitan reemplazo
+      const selectedProductsList = products.filter(p => selectedProducts.has(p.id))
+      const imageMap = await getSafeImageMap(selectedProductsList)
+
       const allPages = renderPreview()
 
       const pdf = new jsPDF('portrait', 'mm', 'a4')
@@ -212,8 +259,20 @@ export function AdminCatalogPage() {
         
         // Replace oklch colors with rgb to avoid parsing errors
         html = html.replace(/oklch\([^)]+\)/g, 'rgb(240 240 240)')
+        
+        // Reemplazar imágenes que fallaron CORS con placeholder
+        html = replaceImagesInHTML(html, imageMap)
 
         pageElement.innerHTML = html
+
+        // Reemplazar imágenes en el DOM clonado también
+        const images = pageElement.querySelectorAll('img')
+        images.forEach((img) => {
+          const src = img.getAttribute('src')
+          if (src && imageMap.has(src)) {
+            img.setAttribute('src', imageMap.get(src)!)
+          }
+        })
 
         await new Promise(resolve => setTimeout(resolve, 100))
 
@@ -261,9 +320,14 @@ export function AdminCatalogPage() {
             src={product.image}
             alt={product.name}
             className="w-full h-full object-contain p-2"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              target.parentElement!.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-size:2rem;">📦</div>'
+            }}
           />
         ) : (
-          <div className="text-gray-300 text-4xl font-light">No Image</div>
+          <div className="text-gray-300 text-4xl font-light">📦</div>
         )}
       </div>
       <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">{product.brand}</p>
@@ -581,9 +645,18 @@ export function AdminCatalogPage() {
                   <div className="col-span-4 flex items-center gap-3">
                     <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
                       {product.image ? (
-                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            target.parentElement!.innerHTML = '<span style="color:#ccc;font-size:0.6rem;">📦</span>'
+                          }}
+                        />
                       ) : (
-                        <span className="text-gray-300 text-xs">N/A</span>
+                        <span className="text-gray-300 text-xs">📦</span>
                       )}
                     </div>
                     <div>
