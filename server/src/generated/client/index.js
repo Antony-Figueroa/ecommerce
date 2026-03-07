@@ -568,7 +568,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Antony\\Documents\\GitHub\\ecommerce\\server\\src\\generated\\client",
+      "value": "C:\\Users\\Server Admin\\Documents\\GitHub\\ecommerce\\server\\src\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -582,7 +582,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Antony\\Documents\\GitHub\\ecommerce\\server\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\Server Admin\\Documents\\GitHub\\ecommerce\\server\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
