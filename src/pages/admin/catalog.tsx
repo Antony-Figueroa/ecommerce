@@ -187,7 +187,6 @@ export function AdminCatalogPage() {
     try {
       const jsPDF = (await import('jspdf')).default
       const html2canvas = (await import('html2canvas')).default
-      const ReactDOMServer = await import('react-dom/server')
 
       const allPages = renderPreview()
 
@@ -195,81 +194,58 @@ export function AdminCatalogPage() {
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = pdf.internal.pageSize.getHeight()
 
-      const iframe = document.createElement('iframe')
-      iframe.style.position = 'fixed'
-      iframe.style.left = '-9999px'
-      iframe.style.top = '0'
-      iframe.style.width = '794px'
-      iframe.style.height = '1123px'
-      iframe.style.border = 'none'
-      document.body.appendChild(iframe)
-
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
-      if (!iframeDoc) throw new Error('Could not access iframe document')
-
-      // Load Tailwind in iframe
-      iframeDoc.head.innerHTML = `
-        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-        <style>
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          body { background: white !important; margin: 0 !important; }
-          .page { 
-            width: 794px !important; 
-            height: 1123px !important; 
-            position: relative !important;
-            overflow: hidden !important;
-            page-break-after: always;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-          .page-footer { 
-            margin-top: auto !important; 
-          }
-        </style>
-      `
-
       for (let i = 0; i < allPages.length; i++) {
-        iframeDoc.body.innerHTML = ''
-        
         const page = allPages[i]
         if (!page) continue
 
-        const html = ReactDOMServer.renderToStaticMarkup(page)
-        
-        // Add emerald color fix and footer class to last div
-        // Add footer class to the last div that contains the footer info
-        const fixedHtml = html
-          .replace(/text-emerald-600/g, 'text-emerald-600" style="color: #059669 !important;"')
-          .replace(/(<div[^>]*class="[^"]*flex justify-between[^"]*"[^>]*>[\s\S]*?<\/div>)/g, '<div class="page-footer">$1</div>')
-        
-        // Wrap in page container
-        const pageHtml = `
-          <div class="page" style="width: 794px; height: 1123px; background: white; overflow: hidden;">
-            ${fixedHtml}
-          </div>
-        `
-        
-        iframeDoc.body.innerHTML = pageHtml
+        const pageElement = document.createElement('div')
+        pageElement.style.width = '794px'
+        pageElement.style.height = '1123px'
+        pageElement.style.backgroundColor = '#FFFFFF'
+        pageElement.style.position = 'fixed'
+        pageElement.style.left = '-9999px'
+        pageElement.style.top = '0'
+        document.body.appendChild(pageElement)
 
-        // Wait for styles to apply
+        const ReactDOMServer = await import('react-dom/server')
+        let html = ReactDOMServer.renderToStaticMarkup(page)
+        
+        // Replace oklch colors with rgb in inline styles
+        html = html.replace(/oklch\([^)]+\)/g, 'rgb(240 240 240)')
+
+        pageElement.innerHTML = html
+
         await new Promise(resolve => setTimeout(resolve, 100))
 
-        const canvas = await html2canvas(iframeDoc.body, {
+        const canvas = await html2canvas(pageElement, {
           scale: 2,
+          width: 794,
+          height: 1123,
           useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#FFFFFF',
           logging: false,
-          windowWidth: 794,
-          windowHeight: 1123,
-          backgroundColor: '#FFFFFF'
+          onclone: (clonedDoc) => {
+            // Override parseColor to handle oklch
+            const style = clonedDoc.createElement('style')
+            style.textContent = `
+              * { 
+                background-color: #fff !important; 
+                color: #000 !important;
+              }
+            `
+            clonedDoc.head.appendChild(style)
+          }
         })
 
-        const imgData = canvas.toDataURL('image/png')
+        document.body.removeChild(pageElement)
 
+        const imgData = canvas.toDataURL('image/png')
+        
         if (i > 0) pdf.addPage()
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
       }
 
-      document.body.removeChild(iframe)
       pdf.save(`catalogo-productos-${CATALOG_YEAR}.pdf`)
     } catch (error) {
       console.error("Error generating PDF:", error)
