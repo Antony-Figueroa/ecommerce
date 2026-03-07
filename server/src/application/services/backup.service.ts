@@ -122,65 +122,30 @@ export class BackupService {
 
   /**
    * Restaura un respaldo específico
-   * IMPORTANTE: Crea un respaldo automático de la DB actual antes de restaurar
+   * NOTA: En producción (PostgreSQL), la restauración desde archivos no es posible
    */
   async restoreBackup(filename: string) {
+    const isProduction = process.env.NODE_ENV === 'production'
+    
+    if (isProduction) {
+      throw new Error('La restauración de respaldos no está disponible en producción con PostgreSQL. Los datos se sincronizan automáticamente desde Google Drive.')
+    }
+    
     try {
       const source = path.join(this.backupDir, filename);
       
-      // Verificar si el archivo existe
       await fs.access(source);
 
-      console.log(`[${new Date().toISOString()}] Iniciando restauración de base de datos: ${filename}`);
+      console.log(`[${new Date().toISOString()}] Iniciando restauración: ${filename}`);
 
-      // =====================================================
-      // CREAR RESPALDO AUTOMÁTICO ANTES DE RESTAURAR
-      // Esto asegura que tenemos un punto de retorno si algo falla
-      // =====================================================
-      const now = new Date();
-      const timestamp = now.toISOString()
-        .replace(/:/g, '-')
-        .replace(/\..+/, '')
-        .replace('T', '_');
+      await fs.copyFile(source, this.dbPath);
       
-      const autoBackupFilename = `db_backup_pre_restore_${timestamp}.db`;
-      const autoBackupPath = path.join(this.backupDir, autoBackupFilename);
+      console.log(`✅ Restauración completada: ${filename}`);
       
-      console.log(`📦 Creando respaldo automático de seguridad: ${autoBackupFilename}`);
-      await fs.copyFile(this.dbPath, autoBackupPath);
-      console.log(`✅ Respaldo de seguridad creado: ${autoBackupFilename}`);
-
-      // =====================================================
-      // PROCESO DE RESTAURACIÓN SELECTIVA
-      // Solo restaura tablas de productos, inventario y ventas
-      // =====================================================
-      
-      // Crear un respaldo temporal de la DB actual
-      const tempBackup = `${this.dbPath}.restore_tmp`;
-      await fs.copyFile(this.dbPath, tempBackup);
-
-      try {
-        // Restauración selectiva: solo tablas de productos/inventario/ventas
-        await this.selectiveRestore(source, this.dbPath);
-        
-        // Eliminar el respaldo temporal si todo salió bien
-        await fs.unlink(tempBackup);
-        
-        console.log(`✅ Restauración completada exitosamente: ${filename}`);
-        console.log(`💡 Puedes revertir usando el respaldo de seguridad: ${autoBackupFilename}`);
-        
-        return {
-          success: true,
-          autoBackupFilename,
-          restoredFrom: filename
-        };
-      } catch (restoreError) {
-        // Si falla la restauración, intentar recuperar la DB original
-        console.error('⚠️ Error durante la restauración, intentando recuperar...');
-        await fs.copyFile(tempBackup, this.dbPath);
-        await fs.unlink(tempBackup);
-        throw restoreError;
-      }
+      return {
+        success: true,
+        restoredFrom: filename
+      };
     } catch (error) {
       console.error('❌ Error restaurando respaldo:', error);
       throw error;
@@ -190,116 +155,11 @@ export class BackupService {
   /**
    * Restaura selectivamente solo las tablas de productos, inventario y ventas
    * Mantiene intactas las tablas de usuarios y administradores
+   * NOTA: Esta función no está disponible en PostgreSQL (producción)
    */
   private async selectiveRestore(sourceDbPath: string, targetDbPath: string) {
-    // Tablas que NO se restauran (usuarios y admins)
-    const protectedTables = [
-      'User',
-      'SystemAuditLog',
-      'BusinessEvent'
-    ];
-
-    // Tablas que SÍ se restauran (productos, inventario, ventas)
-    const tablesToRestore = [
-      // Productos
-      'Product',
-      'ProductImage',
-      'ProductPriceHistory',
-      'Category',
-      'Favorite',
-      'Brand',
-      'Format',
-      // Inventario
-      'InventoryBatch',
-      'InventoryBatchItem',
-      'InventoryStock',
-      'InventoryLocation',
-      'InventoryTransfer',
-      'InventoryTransferItem',
-      'Batch',
-      'Provider',
-      // Ventas
-      'Sale',
-      'SaleItem',
-      'SaleAuditLog',
-      'Installment',
-      // Requerimientos
-      'Requirement',
-      'RequirementItem',
-      // Carrito
-      'Cart',
-      'CartItem',
-      // Notificaciones
-      'Notification',
-      'NotificationSetting',
-      // Configuraciones
-      'Setting',
-      'SettingHistory'
-    ];
-
-    // Usar better-sqlite3 para acceso directo a SQLite
-    const Database = (await import('better-sqlite3')).default;
-    
-    const sourceDb = new Database(sourceDbPath, { readonly: true });
-    const targetDb = new Database(targetDbPath);
-
-    try {
-      // Habilitar foreign keys para seguridad
-      targetDb.pragma('foreign_keys = OFF');
-
-      for (const tableName of tablesToRestore) {
-        try {
-          // Verificar si la tabla existe en el respaldo
-          const tableExists = sourceDb.prepare(`
-            SELECT name FROM sqlite_master WHERE type='table' AND name=?
-          `).get(tableName);
-
-          if (!tableExists) {
-            console.log(`⚠️ Tabla ${tableName} no existe en el respaldo, omitiendo...`);
-            continue;
-          }
-
-          // Obtener datos del respaldo
-          const rows = sourceDb.prepare(`SELECT * FROM ${tableName}`).all();
-          
-          if (rows.length === 0) {
-            console.log(`📋 Tabla ${tableName} vacía en respaldo, omitiendo...`);
-            continue;
-          }
-
-          // Limpiar la tabla objetivo
-          targetDb.prepare(`DELETE FROM ${tableName}`).run();
-
-          // Insertar datos
-          if (rows.length > 0) {
-            const firstRow = rows[0] as Record<string, unknown>;
-            const columns = Object.keys(firstRow);
-            const placeholders = columns.map(() => '?').join(', ');
-            const insertSql = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${placeholders})`;
-            
-            const insertStmt = targetDb.prepare(insertSql);
-            
-            const insertMany = targetDb.transaction((items: Record<string, unknown>[]) => {
-              for (const row of items) {
-                insertStmt.run(...columns.map(col => row[col]));
-              }
-            });
-            
-            insertMany(rows as Record<string, unknown>[]);
-            console.log(`✅ Restaurada tabla ${tableName}: ${rows.length} registros`);
-          }
-        } catch (tableError) {
-          console.error(`❌ Error restaurando tabla ${tableName}:`, tableError);
-        }
-      }
-
-      targetDb.pragma('foreign_keys = ON');
-      console.log('✅ Restauración selectiva completada');
-
-    } finally {
-      sourceDb.close();
-      targetDb.close();
-    }
+    console.warn('⚠️ Restauración selectiva de SQLite no disponible en PostgreSQL');
+    throw new Error('La restauración selectiva de respaldos SQLite no está disponible en producción con PostgreSQL');
   }
 
   /**
