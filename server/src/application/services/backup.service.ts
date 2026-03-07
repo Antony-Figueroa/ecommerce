@@ -101,7 +101,7 @@ export class BackupService {
       
       const backups = await Promise.all(
         files
-          .filter(file => file.startsWith('db_backup_') && file.endsWith('.db'))
+          .filter(file => file.endsWith('.db'))
           .map(async file => {
             const filePath = path.join(this.backupDir, file);
             const stats = await fs.stat(filePath);
