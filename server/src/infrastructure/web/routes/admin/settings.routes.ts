@@ -80,18 +80,16 @@ router.post('/backups', async (req: Request, res: Response) => {
 
 /**
  * POST /api/admin/settings/backups/restore
- * Restaura un respaldo (requiere mensaje de confirmación)
+ * Restaura un respaldo
  */
 router.post('/backups/restore', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id
-    const { filename, confirmationMessage } = req.body
+    const { filename } = req.body
     
     console.log(`[BACKUP] Restore request for: ${filename}`)
-    console.log(`[BACKUP] confirmationMessage received: "${confirmationMessage}"`)
-    console.log(`[BACKUP] req.body:`, JSON.stringify(req.body))
     
-    const result = await settingsService.restoreBackup(userId, filename, confirmationMessage)
+    const result = await settingsService.restoreBackup(userId, filename)
     console.log(`[BACKUP] Restore result:`, result)
     
     res.json(result)
@@ -103,14 +101,13 @@ router.post('/backups/restore', async (req: Request, res: Response) => {
 
 /**
  * DELETE /api/admin/settings/backups/:filename
- * Elimina un respaldo (requiere mensaje de confirmación)
+ * Elimina un respaldo
  */
 router.delete('/backups/:filename', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id as string
     const { filename } = req.params as { filename: string }
-    const { confirmationMessage } = req.body
-    const result = await settingsService.deleteBackup(userId, filename, confirmationMessage)
+    const result = await settingsService.deleteBackup(userId, filename)
     res.json(result)
   } catch (error: any) {
     res.status(error.status || 500).json({ error: error.message || 'Error al eliminar respaldo' })
@@ -160,13 +157,12 @@ router.post('/backups/:filename/download', async (req: Request, res: Response) =
 
 /**
  * POST /api/admin/settings/backups/remote/:filename/restore
- * Descarga y restaura un respaldo desde Google Drive (requiere mensaje de confirmación)
+ * Descarga y restaura un respaldo desde Google Drive
  */
 router.post('/backups/remote/:filename/restore', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id
     const { filename } = req.params as { filename: string }
-    const { confirmationMessage } = req.body
     
     // Descargar desde Google Drive
     const downloadResult = await googleDriveBackupService.downloadBackup(filename)
@@ -175,8 +171,8 @@ router.post('/backups/remote/:filename/restore', async (req: Request, res: Respo
       return
     }
     
-    // Restaurar el respaldo descargado (pide mensaje de confirmación)
-    const restoreResult = await settingsService.restoreBackup(userId, filename, confirmationMessage)
+    // Restaurar el respaldo descargado
+    const restoreResult = await settingsService.restoreBackup(userId, filename)
     res.json({ 
       successMessage: 'Restaurado desde Google Drive',
       ...restoreResult

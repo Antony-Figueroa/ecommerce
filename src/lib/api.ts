@@ -349,10 +349,10 @@ class ApiClient {
     })
   }
 
-  async restoreBackup(filename: string, confirmationMessage: string) {
+  async restoreBackup(filename: string) {
     return this.request<any>('/admin/settings/backups/restore', {
       method: 'POST',
-      body: JSON.stringify({ filename, confirmationMessage })
+      body: JSON.stringify({ filename })
     })
   }
 

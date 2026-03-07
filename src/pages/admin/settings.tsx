@@ -89,7 +89,6 @@ export function AdminSettingsPage() {
   const [backups, setBackups] = useState<any[]>([])
   const [loadingBackups, setLoadingBackups] = useState(false)
   const [showBackupAuth, setShowBackupAuth] = useState(false)
-  const [confirmationMessage, setConfirmationMessage] = useState("")
   const [backupAction, setBackupAction] = useState<{
     type: 'create' | 'restore' | 'delete',
     filename?: string
@@ -244,40 +243,10 @@ export function AdminSettingsPage() {
   const handleBackupAuth = (type: 'create' | 'restore' | 'delete', filename?: string) => {
     setBackupAction({ type, filename })
     setShowBackupAuth(true)
-    setConfirmationMessage("")
-  }
-
-  const getConfirmationHint = () => {
-    if (!backupAction) return ""
-    if (backupAction.type === 'create') {
-      return "Escribe: CREAR"
-    }
-    if (backupAction.type === 'restore' && backupAction.filename) {
-      return `Escribe: RESTAURAR ${backupAction.filename}`
-    }
-    if (backupAction.type === 'delete' && backupAction.filename) {
-      return `Escribe: ELIMINAR ${backupAction.filename}`
-    }
-    return ""
   }
 
   const executeBackupAction = async () => {
     if (!backupAction) return
-
-    console.log(`[Settings] backupAction:`, backupAction)
-    console.log(`[Settings] confirmationMessage:`, confirmationMessage)
-    
-    const expectedMessage = getConfirmationHint().replace("Escribe: ", "").toUpperCase()
-    console.log(`[Settings] expectedMessage:`, expectedMessage)
-    
-    if (confirmationMessage.trim().toUpperCase() !== expectedMessage) {
-      toast({
-        title: "Confirmación inválida",
-        description: `Para confirmar escribe exactamente: "${expectedMessage}"`,
-        variant: "destructive"
-      })
-      return
-    }
 
     setProcessingBackup(true)
     try {
@@ -288,12 +257,12 @@ export function AdminSettingsPage() {
           description: "Respaldo creado correctamente",
         })
       } else if (backupAction.type === 'restore' && backupAction.filename) {
-        const result = await api.restoreBackup(backupAction.filename, confirmationMessage)
+        const result = await api.restoreBackup(backupAction.filename)
         toast({
           title: "Restauración completada",
           description: result?.autoBackupFilename
-            ? `Base de datos restaurada. Se creó un respaldo de seguridad: ${result.autoBackupFilename}`
-            : "Base de datos restaurada correctamente. El sistema puede requerir reiniciar la sesión.",
+            ? `✅ Datos restaurados. Se creó respaldo de seguridad actual: ${result.autoBackupFilename}`
+            : "✅ Base de datos restaurada correctamente",
         })
       } else if (backupAction.type === 'delete' && backupAction.filename) {
         await api.deleteBackup(backupAction.filename)
@@ -305,12 +274,11 @@ export function AdminSettingsPage() {
 
       setShowBackupAuth(false)
       setBackupAction(null)
-      setConfirmationMessage("")
       fetchBackups()
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Error al procesar la acción de respaldo",
+        description: error.message || "Error al procesar",
         variant: "destructive"
       })
     } finally {
@@ -1317,48 +1285,24 @@ export function AdminSettingsPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
-                Confirmar Operación
+                {backupAction?.type === 'create' ? 'Crear Respaldo' : 
+                 backupAction?.type === 'restore' ? 'Restaurar Respaldo' : 'Eliminar Respaldo'}
               </DialogTitle>
               <DialogDescription>
-                Escribe el mensaje de confirmación exactamente como se indica.
+                {backupAction?.type === 'create' ? 'Se creará una copia de seguridad de la base de datos actual.' :
+                 backupAction?.type === 'restore' ? 'ATENCIÓN: Se sobrescribirán todos los datos actuales con los datos del respaldo.' :
+                 'Se eliminará permanentemente este archivo de respaldo.'}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 my-4">
-              <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase">Atención</p>
-                  <p className="text-[11px] text-amber-700/80 dark:text-amber-500/80 leading-relaxed font-medium">
-                    {backupAction?.type === 'create' ? "Estás a punto de crear una copia de seguridad del estado actual del sistema." :
-                      backupAction?.type === 'restore' ? "ATENCIÓN: Se sobrescribirán todos los datos actuales con la versión del respaldo seleccionado." :
-                        "Se eliminará permanentemente este archivo de respaldo."}
+              {backupAction?.type === 'restore' && (
+                <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-xl border border-amber-200 dark:border-amber-900/50">
+                  <p className="text-sm text-amber-800 dark:text-amber-400 font-medium">
+                    Respaldo: <span className="font-mono">{backupAction?.filename}</span>
                   </p>
                 </div>
-              </div>
-
-              <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-900/50">
-                <p className="text-xs font-bold text-blue-800 dark:text-blue-400 uppercase mb-1">Escribe esto:</p>
-                <p className="text-lg font-mono font-bold text-blue-700 dark:text-blue-300">{getConfirmationHint()}</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmation-message" className="text-xs font-bold uppercase tracking-wider">Mensaje de Confirmación</Label>
-                <Input
-                  id="confirmation-message"
-                  type="text"
-                  placeholder="Escribe el mensaje de confirmación..."
-                  value={confirmationMessage}
-                  onChange={(e) => setConfirmationMessage(e.target.value)}
-                  className="bg-secondary/20 focus:bg-background font-mono"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && confirmationMessage && !processingBackup) {
-                      executeBackupAction();
-                    }
-                  }}
-                />
-              </div>
+              )}
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">
@@ -1367,7 +1311,7 @@ export function AdminSettingsPage() {
               </Button>
               <Button
                 onClick={executeBackupAction}
-                disabled={!confirmationMessage || processingBackup}
+                disabled={processingBackup}
                 variant={backupAction?.type === 'delete' ? "destructive" : "default"}
                 className="font-bold min-w-[120px]"
               >

@@ -71,19 +71,10 @@ export class SettingsService {
 
   /**
    * Restaura un respaldo de la base de datos
-   * Requiere un mensaje de confirmación escrito por el usuario
    */
-  async restoreBackup(userId: string, filename: string, confirmationMessage?: string) {
-    console.log(`[SettingsService] restoreBackup called: filename=${filename}, confirmationMessage=${confirmationMessage}`)
+  async restoreBackup(userId: string, filename: string) {
+    console.log(`[SettingsService] restoreBackup called: filename=${filename}`)
     
-    // Validar mensaje de confirmación
-    const expectedMessage = `RESTAURAR ${filename}`
-    if (confirmationMessage?.trim().toUpperCase() !== expectedMessage) {
-      console.log(`[SettingsService] Invalid confirmation. Expected: ${expectedMessage}, Got: ${confirmationMessage}`)
-      throw new ValidationError(`Para confirmar escribe exactamente: "${expectedMessage}"`)
-    }
-
-    console.log(`[SettingsService] Confirmation valid, proceeding with restore...`)
     const result = await this.backupService.restoreBackup(filename)
     
     await this.auditService.logAction({
@@ -92,8 +83,7 @@ export class SettingsService {
       userId,
       details: { 
         restoredFrom: filename,
-        autoBackupCreated: result.autoBackupFilename,
-        confirmedBy: confirmationMessage
+        autoBackupCreated: result.autoBackupFilename
       }
     })
 
@@ -107,20 +97,14 @@ export class SettingsService {
   /**
    * Elimina un respaldo
    */
-  async deleteBackup(userId: string, filename: string, confirmationMessage?: string) {
-    // Validar mensaje de confirmación
-    const expectedMessage = `ELIMINAR ${filename}`
-    if (confirmationMessage?.trim().toUpperCase() !== expectedMessage) {
-      throw new ValidationError(`Para confirmar escribe exactamente: "${expectedMessage}"`)
-    }
-
+  async deleteBackup(userId: string, filename: string) {
     await this.backupService.deleteBackup(filename)
     
     await this.auditService.logAction({
       entityType: 'SETTINGS',
       action: 'BACKUP_DELETE',
       userId,
-      details: { filename, confirmedBy: confirmationMessage }
+      details: { filename }
     })
 
     return { message: 'Respaldo eliminado con éxito' }
