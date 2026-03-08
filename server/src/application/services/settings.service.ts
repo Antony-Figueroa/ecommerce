@@ -82,14 +82,12 @@ export class SettingsService {
       action: 'BACKUP_RESTORE',
       userId,
       details: { 
-        restoredFrom: filename,
-        autoBackupCreated: result.autoBackupFilename
+        restoredFrom: filename
       }
     })
 
     return { 
       message: 'Base de datos restaurada con éxito',
-      autoBackupFilename: result.autoBackupFilename,
       restoredFrom: result.restoredFrom
     }
   }
