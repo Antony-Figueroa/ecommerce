@@ -3,7 +3,7 @@
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "cd server && npx prisma generate && cd .. && npm run server:build",
-    "startCommand": "cd server && npx prisma db push && node dist/index.js"
+    "startCommand": "npm run start"
   },
   "deploy": {
     "numReplicas": 1,
