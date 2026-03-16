@@ -22,6 +22,6 @@ services:
         generateValue: true
       - key: FRONTEND_URL
         value: https://ecommerce-phi-five-35.vercel.app
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install && npm install && npx prisma generate && npm run build
     startCommand: npm start
     autoDeploy: true
