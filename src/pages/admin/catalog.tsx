@@ -37,6 +37,49 @@ import {
   X,
 } from "lucide-react"
 
+// Placeholder para imágenes que fallan (SVG en base64)
+const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='1'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpath d='M21 15l-5-5L5 21'/%3E%3C/svg%3E"
+
+// Función para cargar imagen como base64 (evita CORS en html2canvas)
+async function loadImageAsBase64(url: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = "anonymous"
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/png'))
+      } catch {
+        resolve(PLACEHOLDER_SVG)
+      }
+    }
+    img.onerror = () => resolve(PLACEHOLDER_SVG)
+    img.src = url
+  })
+}
+
+// Pre-cargar todas las imágenes de productos seleccionados
+async function preloadProductImages(productList: CatalogProduct[]): Promise<Map<string, string>> {
+  const imageMap = new Map<string, string>()
+  
+  for (const product of productList) {
+    if (product.image && product.image.startsWith('http')) {
+      try {
+        const base64 = await loadImageAsBase64(product.image)
+        imageMap.set(product.image, base64)
+      } catch {
+        imageMap.set(product.image, PLACEHOLDER_SVG)
+      }
+    }
+  }
+  
+  return imageMap
+}
+
 interface CatalogProduct {
   id: string
   name: string
@@ -192,6 +235,20 @@ export function AdminCatalogPage() {
     try {
       const html2canvas = (await import('html2canvas')).default
       const { jsPDF } = await import('jspdf')
+
+      // Pre-cargar todas las imágenes de productos seleccionados
+      const selectedProductsList = products.filter(p => selectedProducts.has(p.id))
+      const imageMap = await preloadProductImages(selectedProductsList)
+
+      // Reemplazar las imágenes en el DOM del printRef antes de capturar
+      const printContainer = printRef.current
+      const allImages = printContainer.querySelectorAll('img')
+      allImages.forEach((img) => {
+        const src = img.getAttribute('src')
+        if (src && imageMap.has(src)) {
+          img.setAttribute('src', imageMap.get(src)!)
+        }
+      })
 
       const pdf = new jsPDF('portrait', 'mm', 'a4')
       const pageElements = printRef.current.children

@@ -57,7 +57,9 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'https://ecommerce-eosin.vercel.app',
-  config.frontendUrl
+  config.frontendUrl,
+  // Dominios de Vercel (comodín)
+  /\.vercel\.app$/,
 ];
 
 app.use((req, res, next) => {
@@ -75,7 +77,23 @@ app.use(cors({
     
     // Si el origen es undefined (como en herramientas de testing o llamadas directas) 
     // o está en la lista de permitidos, permitimos la petición.
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    // Verificar si es un origen permitido o si coincide con el patrón de Vercel
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (typeof allowed === 'string') {
+        return allowed === origin || allowed === 'config.frontendUrl' && origin.includes('vercel.app');
+      }
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed || origin.includes('vercel.app') || origin.includes('localhost')) {
       callback(null, true);
     } else {
       console.warn(`[CORS_DENIED] ${new Date().toISOString()} Origin: ${origin}`);
@@ -168,6 +186,11 @@ app.use('/api/admin/brands', adminBrandRoutes)
 app.use('/api/admin/formats', adminFormatRoutes)
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+
+// Servir uploads también desde la raíz del proyecto en producción
+if (process.env.NODE_ENV === 'production') {
+  app.use('/uploads', express.static(path.resolve(__dirname, '../../uploads')))
+}
 
 const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
