@@ -1,5 +1,3 @@
-/// <reference types="express" />
-/// <reference types="multer" />
 import sharp from 'sharp'
 import path from 'path'
 import fs from 'fs/promises'
