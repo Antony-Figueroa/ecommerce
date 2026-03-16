@@ -6,8 +6,9 @@ services:
       - 15
 
   - type: web
-    name: anas-supplements-backend
+    name: ecommerce-backend
     plan: free
+    rootDir: .
     envVars:
       - key: NODE_ENV
         value: production
@@ -20,7 +21,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: https://tu-proyecto.vercel.app
+        value: https://ecommerce-phi-five-35.vercel.app
     buildCommand: npm run server:build
     startCommand: npm run server:start
     autoDeploy: true
