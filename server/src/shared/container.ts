@@ -36,7 +36,6 @@ import { BackupService } from '../application/services/backup.service.js'
 import { googleDriveBackupService } from '../application/services/google-drive-backup.service.js'
 export { googleDriveBackupService }
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
-import { PrismaClient } from '../generated/client/index.js'
 
 // Repositories
 export const productRepo = new PrismaProductRepository()

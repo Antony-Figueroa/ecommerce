@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('fs').cpSync('src/generated/client', 'dist/generated/client', {recursive: true})\"",
     "start": "node dist/index.js"
   },
   "prisma": {
