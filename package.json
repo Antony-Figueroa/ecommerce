@@ -16,7 +16,7 @@
     "start": "npm run server:start",
     "server": "tsx server/src/index.ts",
     "server:install": "cd server && npm install",
-    "server:build": "cd server && npm run build && npm install",
+    "server:build": "cd server && npm install && npx prisma generate && npm run build",
     "server:start": "node server/dist/index.js",
     "db:generate": "cd server && npx prisma generate",
     "db:push": "cd server && npx prisma db push",
