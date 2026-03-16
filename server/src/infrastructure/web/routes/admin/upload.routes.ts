@@ -1,3 +1,5 @@
+/// <reference types="express" />
+/// <reference types="multer" />
 import { Router, Request, Response } from 'express'
 import multer from 'multer'
 import { uploadService } from '../../../../shared/container.js'
