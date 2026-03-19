@@ -8,13 +8,22 @@ export class SocketService {
   private userSockets: Map<string, string[]> = new Map() // userId -> socketIds[]
 
   init(server: HttpServer) {
+    const corsOrigins = [
+      config.frontendUrl,
+      'http://127.0.0.1:5173',
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001'
+    ]
+    
     this.io = new SocketServer(server, {
       cors: {
-        origin: [config.frontendUrl, 'http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+        origin: corsOrigins,
         credentials: true,
         methods: ['GET', 'POST']
       },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      allowEIO3: true
     })
 
     this.io.use((socket, next) => {

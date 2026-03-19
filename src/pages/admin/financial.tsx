@@ -897,8 +897,8 @@ export function FinancialDashboard() {
               <Card className="overflow-hidden">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-blue-100 shrink-0">
-                      <DollarSign className="h-6 w-6 text-blue-600" />
+                    <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 shrink-0">
+                      <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Total Ventas (Bs)</p>
@@ -910,12 +910,12 @@ export function FinancialDashboard() {
               <Card className="overflow-hidden">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-green-100 shrink-0">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
+                    <div className="p-3 rounded-full bg-green-100 dark:bg-green-900/30 shrink-0">
+                      <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Ganancia (Bs)</p>
-                      <p className="text-xl sm:text-2xl font-bold text-green-600 truncate">Bs {formatBS(totals.profitBs)}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 truncate">Bs {formatBS(totals.profitBs)}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -923,8 +923,8 @@ export function FinancialDashboard() {
               <Card className="overflow-hidden">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-purple-100 shrink-0">
-                      <Package className="h-6 w-6 text-purple-600" />
+                    <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900/30 shrink-0">
+                      <Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Productos</p>
@@ -936,8 +936,8 @@ export function FinancialDashboard() {
               <Card className="overflow-hidden">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-full bg-yellow-100 shrink-0">
-                      <AlertTriangle className="h-6 w-6 text-yellow-600" />
+                    <div className="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30 shrink-0">
+                      <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate uppercase">Stock Bajo</p>
@@ -1288,8 +1288,8 @@ export function FinancialDashboard() {
                 onClick={() => handleGenerateReport("Ventas")}
               >
                 <CardContent className="p-6 text-center">
-                  <div className="bg-blue-50 dark:bg-blue-950/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <FileText className="h-6 w-6 text-blue-500" />
+                  <div className="bg-blue-50 dark:bg-blue-900/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <FileText className="h-6 w-6 text-blue-500 dark:text-blue-400" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">Ventas</h3>
                   <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
@@ -1302,8 +1302,8 @@ export function FinancialDashboard() {
                 onClick={() => handleGenerateReport("Inventario")}
               >
                 <CardContent className="p-6 text-center">
-                  <div className="bg-green-50 dark:bg-green-950/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <Package className="h-6 w-6 text-green-500" />
+                  <div className="bg-green-50 dark:bg-green-900/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <Package className="h-6 w-6 text-green-500 dark:text-green-400" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">Inventario</h3>
                   <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">
@@ -1316,8 +1316,8 @@ export function FinancialDashboard() {
                 onClick={() => handleGenerateReport("Financiero")}
               >
                 <CardContent className="p-6 text-center">
-                  <div className="bg-purple-50 dark:bg-purple-950/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                    <TrendingUp className="h-6 w-6 text-purple-500" />
+                  <div className="bg-purple-50 dark:bg-purple-900/30 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                    <TrendingUp className="h-6 w-6 text-purple-500 dark:text-purple-400" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">Financiero</h3>
                   <p className="text-[10px] text-muted-foreground font-medium leading-relaxed">

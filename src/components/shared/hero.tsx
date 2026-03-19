@@ -73,9 +73,6 @@ export function Hero() {
                 Ver Catálogo
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button variant="outline" size="lg" className="h-16 px-10 rounded-2xl text-lg font-black uppercase tracking-widest border-2 hover:bg-secondary/50">
-                Sobre Nosotros
-              </Button>
             </motion.div>
           </div>
 

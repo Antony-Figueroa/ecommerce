@@ -174,7 +174,7 @@ export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: Adm
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggleSidebar || onMenuClick}
+          onClick={onMenuClick}
           className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white h-9 w-9 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 shrink-0"
         >
           <Menu className="h-5 w-5" />

@@ -130,7 +130,6 @@ class ApiClient {
         ...options.headers,
       }
 
-      console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
       const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         method,

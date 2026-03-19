@@ -1,9 +1,27 @@
 const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
 
 const prisma = new PrismaClient()
 
 async function seed() {
   const count = await prisma.category.count()
+  
+  // Always create admin user
+  const hashedPassword = await bcrypt.hash('admin123', 12)
+  await prisma.user.upsert({
+    where: { email: 'admin@anas-supplements.com' },
+    update: { role: 'ADMIN', isActive: true },
+    create: {
+      email: 'admin@anas-supplements.com',
+      password: hashedPassword,
+      name: 'Admin',
+      role: 'ADMIN',
+      isActive: true,
+      emailVerified: true
+    }
+  })
+  console.log('✓ Admin user: admin@anas-supplements.com / admin123')
+
   if (count > 0) {
     console.log('Database already has data, skipping seed')
     await prisma.$disconnect()

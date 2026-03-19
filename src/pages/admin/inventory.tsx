@@ -1153,12 +1153,12 @@ export function AdminInventoryPage() {
 
   const getStatusConfig = (status: string) => {
     const statusMap: Record<string, { label: string; class: string; icon: any }> = {
-      normal: { label: "Óptimo", class: "bg-emerald-50 text-emerald-600 border-emerald-100", icon: Activity },
-      low: { label: "Alerta Baja", class: "bg-amber-50 text-amber-600 border-amber-100", icon: AlertTriangle },
-      critical: { label: "Crítico", class: "bg-rose-50 text-rose-600 border-rose-100", icon: TrendingDown },
-      overstock: { label: "Excedente", class: "bg-sky-50 text-sky-600 border-sky-100", icon: ArrowUp },
+      normal: { label: "Óptimo", class: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800", icon: Activity },
+      low: { label: "Alerta Baja", class: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800", icon: AlertTriangle },
+      critical: { label: "Crítico", class: "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800", icon: TrendingDown },
+      overstock: { label: "Excedente", class: "bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 border-sky-100 dark:border-sky-800", icon: ArrowUp },
     }
-    return statusMap[status] || { label: status, class: "bg-slate-50 text-slate-600 border-slate-100", icon: Package }
+    return statusMap[status] || { label: status, class: "bg-slate-50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800", icon: Package }
   }
 
   const getStockIndicatorColor = (current: number, max: number) => {
