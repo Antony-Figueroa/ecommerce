@@ -50,13 +50,6 @@ interface MenuGroup {
 }
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("adminSidebarOpen")
-      return saved === null ? true : saved === "true"
-    }
-    return true
-  })
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   
@@ -129,7 +122,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   ]
 
   const SidebarContent = ({ isMobile = false }) => {
-    const isCollapsed = !sidebarOpen && !isMobile
+    const isCollapsed = !isMobile
 
     return (
       <div className="flex flex-col h-full bg-white dark:bg-background select-none border-r border-neutral-100 dark:border-white/5 transition-colors">
@@ -257,7 +250,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         <aside
           className={cn(
             "fixed left-0 top-0 z-40 h-screen transition-all duration-200 ease-out hidden md:block border-r border-border/30",
-            sidebarOpen ? "w-56" : "w-20"
+            "w-56"
           )}
         >
           <SidebarContent />
@@ -276,7 +269,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
 
         <div className={cn(
           "transition-all duration-200 ease-out min-h-screen flex flex-col",
-          sidebarOpen ? "md:ml-56" : "md:ml-20"
+          "md:ml-56"
         )}>
           <AdminTopNav
             onMenuClick={() => setIsMobileMenuOpen(true)}
