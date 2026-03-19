@@ -80,9 +80,14 @@ Sistema completo de comercio electrónico para la venta de suplementos nutricion
 | **Estado** | React Context (Auth, Cart, Favorites) |
 | **Rutas** | React Router DOM v6 |
 | **Backend** | Node.js + Express + TypeScript |
-| **Base de Datos** | SQLite (Prisma ORM) |
+| **Base de Datos** | PostgreSQL (Prisma ORM) |
 | **Tiempo Real** | Socket.io |
 | **Autenticación** | JWT + Google OAuth |
+| **Despliegue** | Vercel (Frontend) + Render (Backend) |
+
+### URLs de Producción
+- **Frontend**: https://ecommerce-phi-five-35.vercel.app
+- **Backend**: https://ecommerce-backend-r75w.onrender.com
 
 ### Estructura del Proyecto
 
@@ -92,18 +97,22 @@ Sistema completo de comercio electrónico para la venta de suplementos nutricion
 │   │   ├── admin/          # Componentes del panel admin
 │   │   ├── layout/        # Layouts (Admin, Shop)
 │   │   └── ui/            # Componentes shadcn/ui
-│   ├── contexts/          # Estado global (Auth, Cart)
+│   ├── contexts/          # Estado global (Auth, Cart, Settings)
 │   ├── hooks/             # Hooks personalizados
 │   ├── lib/               # API client, utilidades
 │   ├── pages/             # Vistas (admin/, shop/)
 │   └── types/             # Tipos TypeScript
-├── server/                 # Backend (Express)
-│   └── src/
-│       ├── application/    # Lógica de negocio
-│       ├── domain/        # Entidades
-│       ├── infrastructure/ # Prisma, Socket.io
-│       └── interfaces/     # Controladores, rutas
-└── prisma/                # Schema y migraciones
+├── server/                 # Backend (Express + Prisma)
+│   ├── src/
+│   │   ├── application/    # Servicios y lógica de negocio
+│   │   ├── domain/        # Entidades y repositorios
+│   │   ├── infrastructure/ # Prisma, Socket.io, rutas
+│   │   └── shared/        # Configuración, errores
+│   ├── prisma/
+│   │   └── schema.prisma  # Schema de base de datos
+│   └── scripts/            # Scripts de migración y seed
+├── vercel.json            # Configuración de Vercel
+└── render.yaml            # Configuración de Render
 ```
 
 ---
@@ -113,6 +122,7 @@ Sistema completo de comercio electrónico para la venta de suplementos nutricion
 ### Requisitos Previos
 - Node.js v18+
 - npm v9+
+- PostgreSQL (para desarrollo local)
 
 ### Pasos
 
@@ -125,21 +135,41 @@ npm install
 VITE_API_URL=http://localhost:3001/api
 
 # Crear server/.env:
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:tu_password@localhost:5432/farmacia_ecommerce"
 JWT_SECRET=tu-clave-secreta
 PORT=3001
 
-# 3. Inicializar base de datos
-npm run db:push
-npm run db:generate
+# 3. Crear base de datos PostgreSQL
+createdb farmacia_ecommerce
 
-# 4. (Opcional) Poblar con datos de prueba
-npm run db:seed
+# 4. Inicializar base de datos
+cd server
+npx prisma db push
+npx prisma generate
 
-# 5. Iniciar servidores
+# 5. (Opcional) Poblar con datos de prueba
+npx tsx src/scripts/seed-basic.ts
+
+# 6. Iniciar servidores
+cd ..
 npm run dev      # Frontend (Puerto 5173)
 npm run server   # Backend (Puerto 3001)
 ```
+
+### Despliegue en Producción
+
+**Frontend (Vercel):**
+1. Conectar repositorio en vercel.com
+2. Agregar variables de entorno:
+   - `VITE_API_URL=https://ecommerce-backend-r75w.onrender.com/api`
+   - `VITE_GOOGLE_CLIENT_ID=tu_client_id`
+
+**Backend (Render):**
+1. Crear Web Service desde render.yaml
+2. Render crea automáticamente PostgreSQL
+3. Agregar variables de Google OAuth:
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
 
 ---
 
@@ -147,12 +177,17 @@ npm run server   # Backend (Puerto 3001)
 
 | Comando | Descripción |
 |---------|-------------|
-| `npm run dev` | Servidor de desarrollo frontend |
+| `npm run dev` | Servidor de desarrollo (frontend + backend) |
+| `npm run dev:frontend` | Solo frontend (Vite) |
+| `npm run dev:backend` | Solo backend (tsx) |
 | `npm run build` | Compilación de producción |
-| `npm run server` | Servidor backend con tsx |
-| `npm run db:push` | Sincronizar esquema Prisma |
-| `npm run db:seed` | Poblar base de datos |
 | `npm run lint` | Verificar código |
+| `npm run preview` | Previsualizar build de producción |
+| `npm test` | Ejecutar pruebas |
+| `npm run server` | Servidor backend con tsx |
+| `cd server && npx prisma db push` | Sincronizar schema a BD |
+| `cd server && npx prisma generate` | Generar cliente Prisma |
+| `cd server && npx prisma studio` | GUI de base de datos |
 
 ---
 
