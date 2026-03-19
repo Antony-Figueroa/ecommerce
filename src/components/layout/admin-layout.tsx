@@ -285,7 +285,6 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         )}>
           <AdminTopNav
             onMenuClick={() => setIsMobileMenuOpen(true)}
-            onToggleSidebar={toggleSidebar}
             onSearchClick={() => setIsSearchOpen(true)}
           />
           <main className="p-4 md:p-6 flex-1">

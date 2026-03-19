@@ -41,11 +41,10 @@ import { toast } from "@/hooks/use-toast"
 
 interface AdminTopNavProps {
   onMenuClick?: () => void
-  onToggleSidebar?: () => void
   onSearchClick?: () => void
 }
 
-export function AdminTopNav({ onMenuClick, onToggleSidebar, onSearchClick }: AdminTopNavProps) {
+export function AdminTopNav({ onMenuClick, onSearchClick }: AdminTopNavProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
