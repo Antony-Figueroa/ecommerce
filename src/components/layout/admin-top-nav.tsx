@@ -11,7 +11,8 @@ import {
   Settings,
   Plus,
   ExternalLink,
-  Menu
+  Menu,
+  ChevronLeft,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -42,9 +43,10 @@ import { toast } from "@/hooks/use-toast"
 interface AdminTopNavProps {
   onMenuClick?: () => void
   onSearchClick?: () => void
+  onToggleSidebar?: () => void
 }
 
-export function AdminTopNav({ onMenuClick, onSearchClick }: AdminTopNavProps) {
+export function AdminTopNav({ onMenuClick, onSearchClick, onToggleSidebar }: AdminTopNavProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -169,14 +171,24 @@ export function AdminTopNav({ onMenuClick, onSearchClick }: AdminTopNavProps) {
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-white dark:bg-background border-b border-neutral-100 dark:border-white/5 px-6 md:px-8">
       <div className="flex items-center gap-4">
-        {/* Mobile menu button / Sidebar toggle */}
+        {/* Mobile menu button */}
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white h-9 w-9 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 shrink-0"
+          className="md:hidden text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white h-9 w-9 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 shrink-0"
         >
           <Menu className="h-5 w-5" />
+        </Button>
+
+        {/* Desktop sidebar toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+          className="hidden md:flex text-neutral-400 hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300 h-8 w-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 shrink-0"
+        >
+          <ChevronLeft className="h-4 w-4 transition-transform duration-200" />
         </Button>
 
         <h2 className="hidden text-base font-bold text-neutral-900 dark:text-white md:block">

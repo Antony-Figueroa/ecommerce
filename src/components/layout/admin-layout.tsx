@@ -16,6 +16,7 @@ import {
   Shield,
   Kanban,
   BookOpen,
+  ChevronLeft,
 } from "lucide-react"
 import { AdminTopNav } from "./admin-top-nav"
 import { CommandPalette } from "@/components/admin/command-palette"
@@ -50,8 +51,21 @@ interface MenuGroup {
 }
 
 export function AdminLayout({ children, title }: AdminLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("adminSidebarOpen")
+      return saved === null ? true : saved === "true"
+    }
+    return true
+  })
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  const toggleSidebar = () => {
+    const newValue = !sidebarOpen
+    setSidebarOpen(newValue)
+    localStorage.setItem("adminSidebarOpen", String(newValue))
+  }
   
   const [pendingOrders, setPendingOrders] = useState(0)
   const [lowStockCount, setLowStockCount] = useState(0)
@@ -121,21 +135,30 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
     }
   ]
 
-  const SidebarContent = ({ isMobile = false }) => {
-    const isCollapsed = !isMobile
-
+  const SidebarContent = ({ isMobile = false, isCollapsed = false, onToggle }: { isMobile?: boolean; isCollapsed?: boolean; onToggle?: () => void }) => {
     return (
       <div className="flex flex-col h-full bg-white dark:bg-background select-none border-r border-neutral-100 dark:border-white/5 transition-colors">
         {/* Header: Logo & Branding */}
         <div className={cn(
-          "flex h-20 items-center px-6 shrink-0",
-          isCollapsed ? "justify-center px-0" : "justify-start"
+          "flex h-20 items-center shrink-0",
+          isCollapsed ? "justify-center px-0" : "justify-between px-4"
         )}>
           <Link to="/admin" className="flex items-center gap-3 group">
             <div className="h-9 w-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-black text-lg shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-200">
               A
             </div>
+            {!isCollapsed && (
+              <span className="font-black text-sm text-neutral-900 dark:text-white">Admin</span>
+            )}
           </Link>
+          {!isCollapsed && !isMobile && onToggle && (
+            <button
+              onClick={onToggle}
+              className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Navigation */}
@@ -250,10 +273,10 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         <aside
           className={cn(
             "fixed left-0 top-0 z-40 h-screen transition-all duration-200 ease-out hidden md:block border-r border-border/30",
-            "w-56"
+            sidebarOpen ? "w-56" : "w-20"
           )}
         >
-          <SidebarContent />
+          <SidebarContent isCollapsed={!sidebarOpen} onToggle={toggleSidebar} />
         </aside>
 
         {/* Mobile Sidebar (Sheet) */}
@@ -269,11 +292,12 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
 
         <div className={cn(
           "transition-all duration-200 ease-out min-h-screen flex flex-col",
-          "md:ml-56"
+          sidebarOpen ? "md:ml-56" : "md:ml-20"
         )}>
           <AdminTopNav
             onMenuClick={() => setIsMobileMenuOpen(true)}
             onSearchClick={() => setIsSearchOpen(true)}
+            onToggleSidebar={toggleSidebar}
           />
           <main className="p-4 md:p-6 flex-1">
             <div className="max-w-7xl mx-auto w-full animate-in fade-in duration-200">
