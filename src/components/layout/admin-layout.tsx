@@ -59,12 +59,7 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
   })
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
-
-  const toggleSidebar = () => {
-    const newState = !sidebarOpen
-    setSidebarOpen(newState)
-    localStorage.setItem("adminSidebarOpen", String(newState))
-  }
+  
   const [pendingOrders, setPendingOrders] = useState(0)
   const [lowStockCount, setLowStockCount] = useState(0)
   const location = useLocation()
