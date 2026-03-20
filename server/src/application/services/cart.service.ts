@@ -44,6 +44,20 @@ export class CartService {
     return this.getCart(userId)
   }
 
+  async syncCart(userId: string, items: Array<{ productId: string; quantity: number }>) {
+    const cart = await this.getCart(userId)
+    
+    await this.cartRepo.clear(cart.id)
+    
+    for (const item of items) {
+      if (item.quantity > 0) {
+        await this.cartRepo.addItem(cart.id, item.productId, item.quantity)
+      }
+    }
+    
+    return this.getCart(userId)
+  }
+
   async checkAbandonedCarts() {
     // Definir el umbral (ej: 24 horas de inactividad)
     const threshold = new Date()
