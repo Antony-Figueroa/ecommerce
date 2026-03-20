@@ -177,14 +177,14 @@ export function Navbar() {
                 </DropdownMenu>
               </>
             ) : (
-              <div className="hidden sm:flex items-center gap-2">
-                <Link to="/login">
+              <>
+                <Link to="/login" className="hidden sm:block">
                   <Button variant="ghost" size="sm" className="font-bold h-10 px-4 rounded-xl">Iniciar Sesión</Button>
                 </Link>
                 <Link to="/registro">
                   <Button size="sm" className="font-bold h-10 px-4 rounded-xl shadow-lg shadow-primary/20">Regístrate</Button>
                 </Link>
-              </div>
+              </>
             )}
 
             <Sheet>
@@ -226,6 +226,17 @@ export function Navbar() {
                       </Link>
                     ))}
                   </nav>
+                  {!user && (
+                    <div className="mt-auto pt-4 px-4 space-y-3">
+                      <Separator className="mb-4" />
+                      <Link to="/login" className="block">
+                        <Button variant="outline" className="w-full font-bold rounded-xl">Iniciar Sesión</Button>
+                      </Link>
+                      <Link to="/registro" className="block">
+                        <Button className="w-full font-bold rounded-xl shadow-lg shadow-primary/20">Regístrate</Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
