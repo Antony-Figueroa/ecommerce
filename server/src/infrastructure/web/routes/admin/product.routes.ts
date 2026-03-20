@@ -75,18 +75,6 @@ router.delete('/:id', async (req: Request, res: Response, next) => {
   }
 })
 
-router.post('/import-csv', async (req: Request, res: Response, next) => {
-  try {
-    const userId = (req as any).user?.id
-    const ipAddress = req.ip
-    const userAgent = req.get('User-Agent')
-    const result = await inventoryService.importProductsFromCSV(req.body, userId, ipAddress, userAgent)
-    res.json(result)
-  } catch (error) {
-    next(error)
-  }
-})
-
 router.get('/', async (req: Request, res: Response) => {
   try {
     const categoryId = req.query.categoryId as string | undefined

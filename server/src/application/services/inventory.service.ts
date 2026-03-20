@@ -1,6 +1,6 @@
-import { NotFoundError, ConflictError } from '../../shared/errors/app.errors.js'
+import { NotFoundError } from '../../shared/errors/app.errors.js'
 import { ProductRepository } from '../../domain/repositories/product.repository.js'
-import { CategoryRepository, BrandRepository, FormatRepository, InventoryLogRepository, ProviderRepository, InventoryBatchRepository } from '../../domain/repositories/inventory.repository.js'
+import { CategoryRepository, BrandRepository, InventoryLogRepository, ProviderRepository, InventoryBatchRepository } from '../../domain/repositories/inventory.repository.js'
 import { NotificationService } from './notification.service.js'
 import { FavoriteRepository } from '../../domain/repositories/favorite.repository.js'
 import { BatchManager } from './batch-manager.service.js'
@@ -13,7 +13,6 @@ export class InventoryService {
     private productRepo: ProductRepository,
     private categoryRepo: CategoryRepository,
     private brandRepo: BrandRepository,
-    private formatRepo: FormatRepository,
     private logRepo: InventoryLogRepository,
     private providerRepo: ProviderRepository,
     private inventoryBatchRepo: InventoryBatchRepository,
@@ -22,7 +21,7 @@ export class InventoryService {
     private batchManager: BatchManager,
     private productManager: ProductManager,
     private auditService: AuditService
-  ) { }
+  ) {}
 
   /**
    * Actualiza precios basado en la tasa BCV.
@@ -52,14 +51,14 @@ export class InventoryService {
       await Promise.all(batch.map(async (product) => {
         const currentPrice = Number(product.price)
         const newPrice = currentPrice * ratio
-
+        
         await this.productRepo.update(product.id, { price: newPrice })
 
         if (Math.abs(newPrice - currentPrice) > 0.01) {
           try {
             const interestedUsers = await this.favoriteRepo.findAllByProductId(product.id)
             // No bloqueamos el flujo principal por notificaciones
-            Promise.all(interestedUsers.map(fav =>
+            Promise.all(interestedUsers.map(fav => 
               this.notificationService.createNotification({
                 type: 'PRICE_UPDATE',
                 category: 'FAVORITES',
@@ -94,7 +93,7 @@ export class InventoryService {
     if (!product) {
       throw new NotFoundError('Producto')
     }
-
+    
     // Marcamos como inactivo en lugar de borrar físicamente
     await this.productRepo.update(id, { isActive: false })
 
@@ -116,24 +115,24 @@ export class InventoryService {
   }
 
   async getAllProducts(options?: any) {
-    const {
-      categoryId = null,
-      categoryIds = null,
-      search = '',
-      page = 1,
-      limit = 20,
+    const { 
+      categoryId = null, 
+      categoryIds = null, 
+      search = '', 
+      page = 1, 
+      limit = 20, 
       onlyActive = true, // Cambiado a true por defecto
-      isActive = undefined
+      isActive = undefined 
     } = options || {}
-
-    const { products, total } = await this.productRepo.findAll({
-      categoryId,
-      categoryIds,
-      search,
-      page,
-      limit,
+    
+    const { products, total } = await this.productRepo.findAll({ 
+      categoryId, 
+      categoryIds, 
+      search, 
+      page, 
+      limit, 
       onlyActive,
-      isActive
+      isActive 
     })
 
     return {
@@ -143,174 +142,31 @@ export class InventoryService {
   }
 
   async getPublicProducts(options?: any) {
-    const {
-      categoryId = null,
-      categoryIds = null,
-      search = '',
-      page = 1,
-      limit = 12,
+    const { 
+      categoryId = null, 
+      categoryIds = null, 
+      search = '', 
       isFeatured = undefined,
       isOffer = undefined,
-      brand = null,
-      minPrice = undefined,
-      maxPrice = undefined,
-      sortBy = 'newest'
+      limit = 1000 
     } = options || {}
-
-    const { products, total } = await this.productRepo.findAll({
-      categoryId,
-      categoryIds,
-      search,
-      page,
-      limit,
-      onlyActive: true,
+    
+    const { products } = await this.productRepo.findAll({ 
+      categoryId, 
+      categoryIds, 
+      search, 
+      onlyActive: true, 
       isFeatured: isFeatured === 'true' || isFeatured === true ? true : (isFeatured === 'false' || isFeatured === false ? false : undefined),
       isOffer: isOffer === 'true' || isOffer === true ? true : (isOffer === 'false' || isOffer === false ? false : undefined),
-      brand,
-      minPrice,
-      maxPrice,
-      sortBy
+      limit 
     })
-
-    return {
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    }
+    return products
   }
 
-  async getRelatedProducts(productId: string, categoryIds: string[], limit = 4) {
-    return this.productRepo.findRelated(productId, categoryIds, limit)
-  }
+  // --- Gestión de Marcas y Proveedores ---
 
-  // --- Gestión de Marcas, Formatos y Proveedores ---
-
-  async getAllBrands(options?: { onlyActive?: boolean }) {
-    return this.brandRepo.findAll(options)
-  }
-
-  async createBrand(data: { name: string; description?: string; isActive?: boolean }, userId?: string, ipAddress?: string, userAgent?: string) {
-    const brand = await this.brandRepo.create(data)
-    await this.auditService.logAction({
-      entityType: 'BRAND',
-      entityId: brand.id,
-      action: 'CREATE',
-      userId,
-      details: { name: brand.name },
-      ipAddress,
-      userAgent
-    })
-    return brand
-  }
-
-  async updateBrand(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, userId?: string, ipAddress?: string, userAgent?: string) {
-    if (data.isActive === false) {
-      const productCount = await this.brandRepo.countProducts(id)
-      if (productCount > 0) {
-        throw new ConflictError('No se puede inactivar una marca que está siendo utilizada por productos.')
-      }
-    }
-
-    const brand = await this.brandRepo.update(id, data)
-    await this.auditService.logAction({
-      entityType: 'BRAND',
-      entityId: id,
-      action: 'UPDATE',
-      userId,
-      details: { name: brand.name, ...data },
-      ipAddress,
-      userAgent
-    })
-    return brand
-  }
-
-  async deleteBrand(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
-    const productCount = await this.brandRepo.countProducts(id)
-    if (productCount > 0) {
-      throw new ConflictError('No se puede eliminar o inactivar una marca que está siendo utilizada por productos.')
-    }
-
-    await this.brandRepo.delete(id)
-
-    await this.auditService.logAction({
-      entityType: 'BRAND',
-      entityId: id,
-      action: 'DELETE',
-      userId,
-      details: { productCount },
-      ipAddress,
-      userAgent
-    })
-    return { success: true }
-  }
-
-  async getAllFormats(options?: { onlyActive?: boolean }) {
-    return this.formatRepo.findAll(options)
-  }
-
-  async createFormat(data: { name: string; description?: string; isActive?: boolean }, userId?: string, ipAddress?: string, userAgent?: string) {
-    const format = await this.formatRepo.create(data)
-    await this.auditService.logAction({
-      entityType: 'FORMAT',
-      entityId: format.id,
-      action: 'CREATE',
-      userId,
-      details: { name: format.name },
-      ipAddress,
-      userAgent
-    })
-    return format
-  }
-
-  async updateFormat(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, userId?: string, ipAddress?: string, userAgent?: string) {
-    if (data.isActive === false) {
-      const format = await this.formatRepo.findById(id)
-      if (format) {
-        const productCount = await this.formatRepo.countProducts(format.name)
-        if (productCount > 0) {
-          throw new ConflictError('No se puede inactivar un formato que está siendo utilizado por productos.')
-        }
-      }
-    }
-
-    const format = await this.formatRepo.update(id, data)
-    await this.auditService.logAction({
-      entityType: 'FORMAT',
-      entityId: id,
-      action: 'UPDATE',
-      userId,
-      details: { name: format.name, ...data },
-      ipAddress,
-      userAgent
-    })
-    return format
-  }
-
-  async deleteFormat(id: string, userId?: string, ipAddress?: string, userAgent?: string) {
-    const format = await this.formatRepo.findById(id)
-    if (!format) throw new NotFoundError('Formato')
-
-    const productCount = await this.formatRepo.countProducts(format.name)
-    if (productCount > 0) {
-      throw new ConflictError('No se puede eliminar o inactivar un formato que está siendo utilizado por productos.')
-    }
-
-    await this.formatRepo.delete(id)
-
-    await this.auditService.logAction({
-      entityType: 'FORMAT',
-      entityId: id,
-      action: 'DELETE',
-      userId,
-      details: { name: format.name, productCount },
-      ipAddress,
-      userAgent
-    })
-    return { success: true }
+  async getAllBrands() {
+    return this.productRepo.getAllBrands()
   }
 
   async getProviders() {
@@ -416,17 +272,17 @@ export class InventoryService {
     })
 
     const { products } = await this.productRepo.findAll({ limit: 1000 })
-
+    
     const lowStock = products.filter(p => p.stock <= p.minStock && p.stock > 0)
     const outOfStock = products.filter(p => p.stock === 0)
-
+    
     const totalCost = products.reduce((sum, p) => sum + (Number(p.purchasePrice || 0) * p.stock), 0)
     const totalValue = products.reduce((sum, p) => sum + (Number(p.price || 0) * p.stock), 0)
 
     // Fetch near expiry batches (e.g., next 90 days)
     const ninetyDaysFromNow = new Date()
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90)
-
+    
     const nearExpiryItems = await this.inventoryBatchRepo.findAll({
       limit: 100 // Adjust as needed
     }).then(batches => {
@@ -478,114 +334,5 @@ export class InventoryService {
 
   async getInventoryLogs(productId?: string | null, limit = 50) {
     return this.logRepo.findAll(productId || undefined)
-  }
-
-  async importProductsFromCSV(products: any[], userId?: string, ipAddress?: string, userAgent?: string) {
-    const results = {
-      created: [] as any[],
-      updated: [] as any[],
-      errors: [] as { row: number; sku: string; error: string }[]
-    }
-
-    for (let i = 0; i < products.length; i++) {
-      const row = products[i]
-      try {
-        if (!row.sku || !row.name) {
-          results.errors.push({ row: i + 2, sku: row.sku || 'N/A', error: 'SKU y nombre son requeridos' })
-          continue
-        }
-
-        const existingProduct = await this.productRepo.findBySku(row.sku)
-
-        if (existingProduct) {
-          const updateData: any = {}
-          if (row.name) updateData.name = row.name
-          if (row.description) updateData.description = row.description
-          if (row.price !== undefined) updateData.price = parseFloat(row.price)
-          if (row.purchasePrice !== undefined) updateData.purchasePrice = parseFloat(row.purchasePrice)
-          if (row.stock !== undefined) updateData.stock = parseInt(row.stock)
-          if (row.minStock !== undefined) updateData.minStock = parseInt(row.minStock)
-          if (row.brand) updateData.brand = row.brand
-          if (row.format) updateData.format = row.format
-          if (row.image) updateData.image = row.image
-          if (row.isActive !== undefined) updateData.isActive = row.isActive === 'true' || row.isActive === true
-          if (row.isFeatured !== undefined) updateData.isFeatured = row.isFeatured === 'true' || row.isFeatured === true
-          if (row.isOffer !== undefined) updateData.isOffer = row.isOffer === 'true' || row.isOffer === true
-
-          const updated = await this.productManager.updateProduct(
-            existingProduct.id,
-            updateData,
-            userId,
-            ipAddress,
-            userAgent
-          )
-          results.updated.push({ sku: row.sku, id: updated.id, name: updated.name })
-        } else {
-          if (!row.categoryNames && !row.categoryIds) {
-            results.errors.push({ row: i + 2, sku: row.sku, error: 'Se requiere al menos una categoría' })
-            continue
-          }
-
-          let categoryIds: string[] = []
-          if (row.categoryIds) {
-            categoryIds = row.categoryIds.split('|').map((id: string) => id.trim()).filter(Boolean)
-          } else if (row.categoryNames) {
-            const categoryNames = row.categoryNames.split('|').map((name: string) => name.trim())
-            for (const catName of categoryNames) {
-              const category = await this.categoryRepo.findByName(catName)
-              if (!category) {
-                const slug = catName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-                const newCat = await this.categoryRepo.create({
-                  name: catName,
-                  slug,
-                  isActive: true,
-                  sortOrder: 0
-                })
-                categoryIds.push(newCat.id)
-              } else {
-                categoryIds.push(category.id)
-              }
-            }
-          }
-
-          if (categoryIds.length === 0) {
-            results.errors.push({ row: i + 2, sku: row.sku, error: 'No se encontraron categorías válidas' })
-            continue
-          }
-
-          const createData: any = {
-            sku: row.sku,
-            productCode: row.productCode || '',
-            name: row.name,
-            description: row.description || '',
-            price: parseFloat(row.price) || 0,
-            purchasePrice: parseFloat(row.purchasePrice) || 0,
-            categoryIds,
-            brand: row.brand || '',
-            format: row.format || '',
-            image: row.image || null,
-            stock: parseInt(row.stock) || 0,
-            minStock: parseInt(row.minStock) || 5,
-            isActive: row.isActive !== 'false',
-            isFeatured: row.isFeatured === 'true',
-            isOffer: row.isOffer === 'true'
-          }
-
-          const created = await this.productManager.createProduct(createData, userId, ipAddress, userAgent)
-          results.created.push({ sku: row.sku, id: created.id, name: created.name })
-        }
-      } catch (error: any) {
-        results.errors.push({ row: i + 2, sku: row.sku || 'N/A', error: error.message || 'Error desconocido' })
-      }
-    }
-
-    return {
-      success: true,
-      total: products.length,
-      created: results.created.length,
-      updated: results.updated.length,
-      errors: results.errors.length,
-      details: results
-    }
   }
 }
