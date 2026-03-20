@@ -36,12 +36,12 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-0 border bg-background shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state-closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state-closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-xl max-h-[90vh] overflow-hidden",
+        "fixed left-0 right-0 bottom-0 md:left-[50%] md:top-[50%] md:translate-x-[-50%] md:translate-y-[-50%] z-50 grid w-full md:max-w-lg md:max-h-[90vh] gap-0 border bg-background shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state-closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state-closed]:slide-out-to-bottom-full data-[state=open]:slide-in-from-bottom-full md:data-[state-closed]:slide-out-to-left-1/2 md:data-[state-closed]:slide-out-to-top-[48%] md:data-[state-open]:slide-in-from-left-1/2 md:data-[state-open]:slide-in-from-top-[48%] md:rounded-xl rounded-b-none md:rounded-xl",
         className
       )}
       {...props}
     >
-      <div className="overflow-y-auto max-h-[calc(90vh-2rem)]">
+      <div className="overflow-y-auto max-h-[calc(100vh-8rem)] md:max-h-[calc(90vh-2rem)] px-4 pb-4 md:px-0 md:pb-0">
         {children}
       </div>
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-md opacity-50 ring-offset-background transition-all hover:opacity-100 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
@@ -73,7 +73,7 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 mt-4 border-t border-border/50",
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 pt-4 mt-4 pb-safe border-t border-border/50 gap-2",
       className
     )}
     {...props}
