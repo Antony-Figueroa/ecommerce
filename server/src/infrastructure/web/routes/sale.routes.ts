@@ -35,6 +35,40 @@ router.post('/confirm/:token/respond', async (req: Request, res: Response) => {
   }
 })
 
+// Public endpoint for order tracking by sale number
+router.get('/track/:saleNumber', async (req: Request, res: Response) => {
+  try {
+    const saleNumber = req.params.saleNumber as string
+    const sale = await saleService.getSaleBySaleNumber(saleNumber)
+    
+    if (!sale) {
+      return res.status(404).json({ error: 'Pedido no encontrado' })
+    }
+
+    // Return only public information
+    res.json({
+      saleNumber: sale.saleNumber,
+      status: sale.status,
+      deliveryStatus: sale.deliveryStatus,
+      customerName: sale.customerName,
+      createdAt: sale.createdAt,
+      updatedAt: sale.updatedAt,
+      items: sale.items?.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        status: item.status
+      })) || [],
+      totalUSD: sale.totalUSD,
+      totalBS: sale.totalBS,
+      isPaid: sale.isPaid,
+      paymentStatus: sale.paymentStatus
+    })
+  } catch (error: any) {
+    console.error('Error al rastrear pedido:', error)
+    res.status(500).json({ error: error.message || 'Error al obtener información del pedido' })
+  }
+})
+
 router.use(authenticate)
 
 // Obtener pedidos del usuario autenticado

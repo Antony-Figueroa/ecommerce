@@ -15,6 +15,8 @@ const HomePage = lazy(() => import("@/pages/home").then(m => ({ default: m.HomeP
 const CatalogPage = lazy(() => import("@/pages/catalog").then(m => ({ default: m.CatalogPage })))
 const ProductPage = lazy(() => import("@/pages/product").then(m => ({ default: m.ProductPage })))
 const CartPage = lazy(() => import("@/pages/cart").then(m => ({ default: m.CartPage })))
+const CheckoutPage = lazy(() => import("@/pages/shop/checkout").then(m => ({ default: m.CheckoutPage })))
+const OrderTrackingPage = lazy(() => import("@/pages/shop/order-tracking").then(m => ({ default: m.OrderTrackingPage })))
 const LoginPage = lazy(() => import("@/pages/login").then(m => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import("@/pages/register").then(m => ({ default: m.RegisterPage })))
 const FavoritesPage = lazy(() => import("@/pages/favorites").then(m => ({ default: m.FavoritesPage })))
@@ -91,6 +93,8 @@ function App() {
                   <Route path="/productos/:slug" element={<CatalogPage />} />
                   <Route path="/producto/:id" element={<ProductPage />} />
                   <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+                  <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+                  <Route path="/pedido/:saleNumber" element={<OrderTrackingPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/registro" element={<RegisterPage />} />
                   <Route path="/registro/confirmacion" element={<GoogleConfirmPage />} />

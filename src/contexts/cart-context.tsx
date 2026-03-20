@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react"
 import type { Product, CartItem } from "@/types"
 import { useAuth } from "./auth-context"
+import { api } from "@/lib/api"
 
 interface CartContextType {
   items: CartItem[]
@@ -13,30 +14,67 @@ interface CartContextType {
   getSavedItems: () => CartItem[]
   totalItems: number
   totalPrice: number
+  isSyncing: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 const CART_STORAGE_KEY = "farmasiaplus_cart"
 const SAVED_ITEMS_STORAGE_KEY = "farmasiaplus_saved"
+const SYNC_DEBOUNCE_MS = 1000
+
+interface ServerCartItem {
+  productId: string
+  product: Product
+  quantity: number
+}
+
+interface ServerCart {
+  items: ServerCartItem[]
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [items, setItems] = useState<CartItem[]>([])
   const [savedItems, setSavedItems] = useState<CartItem[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const localCartRef = useRef<CartItem[]>([])
+
+  const syncCartToServer = useCallback(async (cartItems: CartItem[]) => {
+    if (!user) return
+
+    try {
+      setIsSyncing(true)
+      const serverCart: ServerCart = {
+        items: cartItems.map((item) => ({
+          productId: item.product.id,
+          product: item.product,
+          quantity: item.quantity,
+        })),
+      }
+      await api.syncCart(serverCart)
+    } catch (error) {
+      console.error("Error syncing cart to server:", error)
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [user])
+
+  const debouncedSync = useCallback((cartItems: CartItem[]) => {
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current)
+    }
+    syncTimeoutRef.current = setTimeout(() => {
+      syncCartToServer(cartItems)
+    }, SYNC_DEBOUNCE_MS)
+  }, [syncCartToServer])
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (!user) {
-        setItems([])
-        setSavedItems([])
-        localStorage.removeItem(CART_STORAGE_KEY)
-        localStorage.removeItem(SAVED_ITEMS_STORAGE_KEY)
-        setIsLoaded(true)
-        return
-      }
+    if (typeof window === "undefined") return
 
+    if (!user) {
       try {
         const storedCart = localStorage.getItem(CART_STORAGE_KEY)
         const storedSaved = localStorage.getItem(SAVED_ITEMS_STORAGE_KEY)
@@ -45,6 +83,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const parsed = JSON.parse(storedCart)
           if (Array.isArray(parsed)) {
             setItems(parsed)
+            localCartRef.current = parsed
           }
         }
 
@@ -57,8 +96,55 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } catch {
       }
       setIsLoaded(true)
+      return
     }
-  }, [user])
+
+    const loadServerCart = async () => {
+      try {
+        const serverCart = await api.getCart()
+        const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || "[]")
+
+        let mergedItems: CartItem[] = []
+
+        if (serverCart?.items && serverCart.items.length > 0) {
+          mergedItems = serverCart.items.map((item: any) => ({
+            product: item.product,
+            quantity: item.quantity,
+          }))
+        }
+
+        for (const localItem of localCart) {
+          const existsInServer = mergedItems.find(
+            (item) => item.product.id === localItem.product.id
+          )
+          if (!existsInServer) {
+            mergedItems.push(localItem)
+          }
+        }
+
+        setItems(mergedItems)
+        localCartRef.current = mergedItems
+
+        if (mergedItems.length > 0) {
+          await syncCartToServer(mergedItems)
+        }
+      } catch (error) {
+        console.error("Error loading server cart:", error)
+        const storedCart = localStorage.getItem(CART_STORAGE_KEY)
+        if (storedCart) {
+          const parsed = JSON.parse(storedCart)
+          if (Array.isArray(parsed)) {
+            setItems(parsed)
+            localCartRef.current = parsed
+          }
+        }
+      } finally {
+        setIsLoaded(true)
+      }
+    }
+
+    loadServerCart()
+  }, [user, syncCartToServer])
 
   useEffect(() => {
     if (isLoaded && typeof window !== "undefined") {
@@ -77,6 +163,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [savedItems, isLoaded])
+
+  useEffect(() => {
+    if (user && isLoaded && items !== localCartRef.current) {
+      localCartRef.current = items
+      debouncedSync(items)
+    }
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current)
+      }
+    }
+  }, [items, user, isLoaded, debouncedSync])
 
   const addItem = useCallback((product: Product, quantity = 1) => {
     setItems((prev) => {
@@ -110,7 +209,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([])
-  }, [])
+    if (user) {
+      api.clearCart().catch(console.error)
+    }
+  }, [user])
 
   const saveForLater = useCallback((productId: string) => {
     setItems((prev) => {
@@ -146,49 +248,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const getSavedItems = useCallback(() => savedItems, [savedItems])
 
-  // Optimizando estados derivados (rerender-derived-state-no-effect)
-  const totalItems = useMemo(() => 
-    items.reduce((sum, item) => sum + item.quantity, 0),
+  const totalItems = useMemo(
+    () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items]
   )
 
-  const totalPrice = useMemo(() => 
-    items.reduce(
-      (sum, item) => sum + Number(item.product.price) * item.quantity,
-      0
-    ),
+  const totalPrice = useMemo(
+    () =>
+      items.reduce(
+        (sum, item) => sum + Number(item.product.price) * item.quantity,
+        0
+      ),
     [items]
   )
 
-  // Memoizando el valor del contexto para evitar re-renders innecesarios en consumidores (rerender-memo)
-  const value = useMemo(() => ({
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    saveForLater,
-    moveToCart,
-    getSavedItems,
-    totalItems,
-    totalPrice,
-  }), [
-    items,
-    addItem,
-    removeItem,
-    updateQuantity,
-    clearCart,
-    saveForLater,
-    moveToCart,
-    getSavedItems,
-    totalItems,
-    totalPrice,
-  ])
+  const value = useMemo(
+    () => ({
+      items,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      saveForLater,
+      moveToCart,
+      getSavedItems,
+      totalItems,
+      totalPrice,
+      isSyncing,
+    }),
+    [
+      items,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      saveForLater,
+      moveToCart,
+      getSavedItems,
+      totalItems,
+      totalPrice,
+      isSyncing,
+    ]
+  )
 
   return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
+    <CartContext.Provider value={value}>{children}</CartContext.Provider>
   )
 }
 

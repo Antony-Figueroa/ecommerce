@@ -1188,6 +1188,18 @@ class ApiClient {
     return this.request<any>('/cart')
   }
 
+  async syncCart(cart: any) {
+    await this.clearCart()
+    const items = cart.items || []
+    for (const item of items) {
+      await this.request('/cart/items', {
+        method: 'POST',
+        body: JSON.stringify({ productId: item.productId || item.product?.id, quantity: item.quantity }),
+      })
+    }
+    return { success: true }
+  }
+
   async addToCart(productId: string, quantity: number) {
     return this.request<any>('/cart/items', {
       method: 'POST',

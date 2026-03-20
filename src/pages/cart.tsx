@@ -6,51 +6,19 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/contexts/cart-context"
-import { useAuth } from "@/contexts/auth-context"
-import { useToast } from "@/hooks/use-toast"
 import { formatUSD, formatBS } from "@/lib/utils"
 import { api } from "@/lib/api"
 
 export function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, totalPrice, saveForLater, moveToCart, getSavedItems } = useCart()
-  const { user } = useAuth()
-  const { toast } = useToast()
+  const { items, updateQuantity, removeItem, totalPrice, saveForLater, moveToCart, getSavedItems } = useCart()
   const navigate = useNavigate()
 
-  const [showCheckout, setShowCheckout] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
   const [bcvRate, setBcvRate] = useState<number>(0)
-  const [checkoutData, setCheckoutData] = useState({
-    customerName: "",
-    customerPhone: "",
-    customerEmail: "",
-    deliveryAddress: "",
-    notes: "",
-  })
-
-  // Pre-llenar datos del usuario si está autenticado
-  useEffect(() => {
-    if (user && !showCheckout) {
-      setCheckoutData(prev => ({
-        ...prev,
-        customerName: prev.customerName || user.name || "",
-        customerPhone: prev.customerPhone || user.phone || "",
-        customerEmail: prev.customerEmail || user.email || "",
-        deliveryAddress: prev.deliveryAddress || user.address || "",
-      }))
-    }
-  }, [user, showCheckout])
-
   const [savedItems, setSavedItems] = useState<typeof items>([])
-  const [whatsappNumber, setWhatsappNumber] = useState("584123456789") // Default fallback (Venezuela)
 
   useEffect(() => {
     async function loadData() {
-      // Optimizando carga paralela para eliminar waterfalls (async-parallel)
-      await Promise.all([
-        fetchPublicSettings(),
-        fetchBCVRate()
-      ])
+      await Promise.all([fetchPublicSettings(), fetchBCVRate()])
       setSavedItems(getSavedItems())
     }
     loadData()
@@ -69,263 +37,17 @@ export function CartPage() {
 
   const fetchPublicSettings = async () => {
     try {
-      const settings = await api.getPublicSettings()
-      if (settings.whatsapp_number) {
-        // Limpiar el número para el enlace de WhatsApp (solo números)
-        // Asegurarse de que no tenga el signo + pero mantenga el código de país
-        const cleanNumber = settings.whatsapp_number.replace(/\+/g, '').replace(/\D/g, '')
-        setWhatsappNumber(cleanNumber)
-      }
+      await api.getPublicSettings()
     } catch (error) {
       console.error("Error fetching public settings:", error)
     }
   }
 
   const subtotal = totalPrice
-  const total = subtotal
 
   const handleCheckout = () => {
     if (items.length === 0) return
-    setShowCheckout(true)
-  }
-
-  const generateWhatsAppOrder = async () => {
-    if (isProcessing) return
-    
-    try {
-      setIsProcessing(true)
-      // 1. First, create the order in the database
-      const orderData = {
-        userId: user?.id,
-        customerName: checkoutData.customerName,
-        customerPhone: checkoutData.customerPhone,
-        customerEmail: checkoutData.customerEmail,
-        deliveryAddress: checkoutData.deliveryAddress,
-        notes: checkoutData.notes,
-        paymentMethod: 'WHATSAPP',
-        items: items.map(item => ({
-          productId: item.product.id,
-          name: item.product.name,
-          quantity: item.quantity,
-          unitPrice: Number(item.product.price)
-        }))
-      }
-
-      await api.createSale(orderData)
-
-      // 2. If database creation is successful, proceed with WhatsApp
-      const phoneNumber = whatsappNumber
-
-      let message = `*🧪 Nueva Orden - Ana's Supplements*\n\n`
-      message += `*Cliente:* ${checkoutData.customerName}\n`
-      message += `*Email:* ${checkoutData.customerEmail}\n`
-      message += `*Teléfono:* ${checkoutData.customerPhone}\n\n`
-
-      message += `*📦 Productos:*\n`
-      items.forEach((item, index) => {
-        message += `${index + 1}. ${item.product.name}\n`
-        message += `   Cantidad: ${item.quantity}\n`
-        message += `   Precio: $${formatUSD(item.product.price)}\n`
-        message += `   Subtotal: $${formatUSD(Number(item.product.price) * item.quantity)}\n\n`
-      })
-
-      message += `*💰 Resumen:*\n`
-      message += `   Subtotal: $${formatUSD(subtotal)}\n`
-      if (bcvRate > 0) {
-        message += `   Subtotal (Bs.): Bs. ${formatBS(subtotal * bcvRate)}\n`
-      }
-      message += `*   Total: $${formatUSD(total)}*\n`
-      if (bcvRate > 0) {
-        message += `*   Total (Bs.): Bs. ${formatBS(total * bcvRate)}*\n`
-        message += `   (Tasa BCV: Bs. ${formatBS(bcvRate)})\n`
-      }
-
-      message += `\n*📍 Dirección de Entrega:*\n${checkoutData.deliveryAddress}\n`
-
-      if (checkoutData.notes) {
-        message += `\n*📝 Notas:*\n${checkoutData.notes}\n`
-      }
-
-      message += `\n_\nPedido generado desde Ana's Supplements E-commerce_`
-
-      const encodedMessage = encodeURIComponent(message)
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
-
-      // Importante: No cerramos el checkout ni limpiamos el carrito inmediatamente
-      // para evitar que la UI cambie drásticamente mientras se abre la ventana
-      
-      // Abrir WhatsApp
-      const win = window.open(whatsappUrl, "_blank")
-      
-      // Si el popup fue bloqueado, redirigir en la misma pestaña
-      if (!win || win.closed || typeof win.closed === 'undefined') {
-        window.location.href = whatsappUrl
-      } else {
-        // Si se abrió con éxito, limpiamos y volvemos al inicio
-        clearCart()
-        setShowCheckout(false)
-        toast({
-          title: "¡Pedido Enviado!",
-          description: "Tu pedido ha sido registrado y enviado por WhatsApp.",
-        })
-        navigate("/")
-      }
-    } catch (error: any) {
-      console.error("Error creating order:", error)
-      toast({
-        title: "Error al procesar pedido",
-        description: error.message || "Hubo un error al procesar tu pedido. Por favor intenta de nuevo.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  if (showCheckout) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-6">
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">Inicio</Link>
-            <ChevronRight className="h-4 w-4" />
-            <Link to="/carrito" className="hover:text-primary">Carrito</Link>
-            <ChevronRight className="h-4 w-4" />
-            <span className="font-medium text-foreground">Finalizar Pedido</span>
-          </nav>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Informacion de Entrega</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Nombre completo</label>
-                  <Input
-                    value={checkoutData.customerName}
-                    onChange={(e) => setCheckoutData({ ...checkoutData, customerName: e.target.value })}
-                    placeholder="Juan Perez"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Teléfono (con WhatsApp)</label>
-                  <Input
-                    value={checkoutData.customerPhone}
-                    onChange={(e) => setCheckoutData({ ...checkoutData, customerPhone: e.target.value })}
-                    placeholder="04121234567"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <Input
-                    type="email"
-                    value={checkoutData.customerEmail}
-                    onChange={(e) => setCheckoutData({ ...checkoutData, customerEmail: e.target.value })}
-                    placeholder="cliente@email.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Dirección de entrega</label>
-                  <Input
-                    value={checkoutData.deliveryAddress}
-                    onChange={(e) => setCheckoutData({ ...checkoutData, deliveryAddress: e.target.value })}
-                    placeholder="Av. Principal, Edificio Ana, Piso 1, Caracas"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Notas adicionales</label>
-                  <Input
-                    value={checkoutData.notes}
-                    onChange={(e) => setCheckoutData({ ...checkoutData, notes: e.target.value })}
-                    placeholder="Entregar despues de las 6pm"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Resumen del Pedido</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="max-h-64 overflow-y-auto space-y-3">
-                  {items.map((item) => (
-                    <div key={item.product.id} className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium text-sm">{item.product.name}</p>
-                        <p className="text-xs text-muted-foreground">Qty: {item.quantity} x ${formatUSD(item.product.price)}</p>
-                      </div>
-                      <p className="font-semibold">${formatUSD(item.product.price * item.quantity)}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <div className="text-right">
-                      <div>${formatUSD(subtotal)}</div>
-                      {bcvRate > 0 && (
-                        <div className="text-xs text-muted-foreground">Bs. {formatBS(subtotal * bcvRate)}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <div className="text-right">
-                    <div>${formatUSD(total)}</div>
-                    {bcvRate > 0 && (
-                      <div className="text-sm font-normal text-muted-foreground italic">
-                        Bs. {formatBS(total * bcvRate)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700 mb-2">
-                    <MessageCircle className="h-5 w-5" />
-                    <span className="font-medium">Pedido por WhatsApp</span>
-                  </div>
-                  <p className="text-sm text-green-600">
-                    Se abrira WhatsApp para enviar tu pedido directamente a la farmacia. Un ejecutivo te contactara para confirmar.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex-1" onClick={() => setShowCheckout(false)}>
-                    Volver al carrito
-                  </Button>
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={generateWhatsAppOrder}
-                    disabled={!checkoutData.customerName || !checkoutData.customerPhone || !checkoutData.deliveryAddress || isProcessing}
-                  >
-                    {isProcessing ? (
-                      <RotateCcw className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                    )}
-                    {isProcessing ? "Procesando..." : "Enviar por WhatsApp"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    )
+    navigate("/checkout")
   }
 
   return (
@@ -489,10 +211,10 @@ export function CartPage() {
                 <div className="flex justify-between font-semibold">
                   <span>Total</span>
                   <div className="text-right">
-                    <div>${formatUSD(total)}</div>
+                    <div>${formatUSD(subtotal)}</div>
                     {bcvRate > 0 && (
                       <div className="text-sm font-normal text-muted-foreground italic">
-                        Bs. {formatBS(total * bcvRate)}
+                        Bs. {formatBS(subtotal * bcvRate)}
                       </div>
                     )}
                   </div>

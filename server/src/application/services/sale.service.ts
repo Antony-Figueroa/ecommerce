@@ -205,6 +205,12 @@ export class SaleService {
     return sale
   }
 
+  async getSaleBySaleNumber(saleNumber: string) {
+    const sale = await this.saleRepo.findBySaleNumber(saleNumber)
+    if (!sale) throw new NotFoundError('Pedido')
+    return sale
+  }
+
   async respondToProposal(tokenOrId: string, response: 'ACCEPT' | 'REJECT', userId?: string, reason?: string) {
     const isToken = tokenOrId.length > 36 // UUID is 36 chars, token is 64 (hex)
     let sale
