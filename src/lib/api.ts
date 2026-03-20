@@ -1141,26 +1141,6 @@ class ApiClient {
       method: 'DELETE',
     })
   }
-  async chat(message: string, history: any[] = []) {
-    return this.request<{ response: string; usage: { promptLength: number; responseLength: number } }>('/chat', {
-      method: 'POST',
-      body: JSON.stringify({ message, history }),
-    })
-  }
-
-  async adminChat(message: string, history: any[] = [], image?: string | null, analysisContext?: any) {
-    return this.request<{ response: string; usage: { promptLength: number; responseLength: number } }>('/admin/chat_ai/admin', {
-      method: 'POST',
-      body: JSON.stringify({ message, history, image, analysisContext }),
-    })
-  }
-
-  async analyzeImage(image: string) {
-    return this.request<any>('/admin/chat_ai/analyze-image', {
-      method: 'POST',
-      body: JSON.stringify({ image }),
-    })
-  }
 }
 
 export const api = new ApiClient()

@@ -140,8 +140,8 @@ export const saleCreateSchema = z.object({
   userId: z.string().optional(),
   customerName: z.string().optional(),
   customerPhone: z.string().optional(),
-  customerEmail: z.string().email().optional().nullable(),
-  deliveryAddress: z.string().optional().nullable(),
+  customerEmail: z.string().email().optional().nullable().or(z.literal('')),
+  deliveryAddress: z.string().optional().nullable().or(z.literal('')),
   paymentMethod: z.string().optional().default('POS'),
   items: z.array(z.object({
     productId: z.string(),
@@ -152,6 +152,8 @@ export const saleCreateSchema = z.object({
   shippingCost: z.number().nonnegative().optional().default(0),
   bcvRate: z.number().positive().optional(),
   notes: z.string().optional(),
+  initialPayment: z.number().nonnegative().optional(),
+  status: z.string().optional(),
 })
 
 export const requirementCreateSchema = z.object({
