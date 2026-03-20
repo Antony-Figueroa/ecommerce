@@ -76,7 +76,7 @@ export function OrderTrackingPage() {
     setError(null)
 
     try {
-      const data = await api.trackOrder(number)
+      const data = await api.trackOrder(number) as TrackedOrder
       setOrder(data)
     } catch (err: any) {
       console.error("Error fetching order:", err)

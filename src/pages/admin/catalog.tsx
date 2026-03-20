@@ -12,7 +12,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  SelectWithSearch,
 } from "@/components/ui/select"
 import {
   Dialog,
@@ -156,17 +155,17 @@ export function AdminCatalogPage() {
   const fetchCatalogData = async () => {
     try {
       setLoading(true)
-      const data = await api.getCatalogData()
+      const data = await api.getCatalogData() as any
       setProducts(data.products || [])
       setCategories(data.categories || [])
 
       // Extract unique brands
-      const uniqueBrands = Array.from(new Set(data.products.map((p: CatalogProduct) => p.brand).filter(Boolean)))
+      const uniqueBrands = Array.from(new Set((data.products || []).map((p: CatalogProduct) => p.brand).filter(Boolean)))
         .map((name, index) => ({ id: String(index), name: name as string }))
       setBrands(uniqueBrands)
 
       // Auto-select all visible products
-      const visibleIds = data.products.filter((p: CatalogProduct) => p.visible).map((p: CatalogProduct) => p.id)
+      const visibleIds = (data.products || []).filter((p: CatalogProduct) => p.visible).map((p: CatalogProduct) => p.id)
       setSelectedProducts(new Set(visibleIds))
     } catch (error) {
       console.error("Error fetching catalog data:", error)
@@ -595,23 +594,29 @@ export function AdminCatalogPage() {
       />
 
       <div className="flex gap-4 mb-6 flex-wrap">
-        <SelectWithSearch
-          value={selectedCategory}
-          onValueChange={setSelectedCategory}
-          options={[{ value: "all", label: "Todas las categorías" }, ...categories.map(cat => ({ value: cat.id, label: cat.name }))]}
-          placeholder="Categoría"
-          triggerClassName="w-[180px]"
-          minItemsForSearch={5}
-        />
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Categoría" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las categorías</SelectItem>
+            {categories.map(cat => (
+              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-        <SelectWithSearch
-          value={brandFilter}
-          onValueChange={setBrandFilter}
-          options={[{ value: "all", label: "Todas las marcas" }, ...brands.map(brand => ({ value: brand.name, label: brand.name }))]}
-          placeholder="Marca"
-          triggerClassName="w-[150px]"
-          minItemsForSearch={5}
-        />
+        <Select value={brandFilter} onValueChange={setBrandFilter}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="Marca" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las marcas</SelectItem>
+            {brands.map(brand => (
+              <SelectItem key={brand.name} value={brand.name}>{brand.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Select value={formatFilter} onValueChange={setFormatFilter}>
           <SelectTrigger className="w-[140px]">

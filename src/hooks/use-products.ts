@@ -95,11 +95,14 @@ export function useProducts(options: UseProductsOptions = {}): UseProductsReturn
       })
 
       setProducts(result.products || [])
-      setPagination(prev => ({
-        ...prev,
-        total: result.pagination.total,
-        totalPages: result.pagination.totalPages
-      }))
+      const paginationData = result.pagination
+      if (paginationData) {
+        setPagination(prev => ({
+          ...prev,
+          total: paginationData.total,
+          totalPages: paginationData.totalPages
+        }))
+      }
 
       const allBrands = new Set<string>()
       result.products.forEach((p: any) => {

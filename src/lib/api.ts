@@ -130,6 +130,7 @@ class ApiClient {
         ...options.headers,
       }
 
+      console.log(`[DEBUG] API Request: ${method} ${API_BASE}${endpoint}`);
       const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         method,
@@ -341,24 +342,24 @@ class ApiClient {
     return this.request<any[]>('/admin/settings/backups')
   }
 
-  async createBackup() {
+  async createBackup(password: string) {
     return this.request<any>('/admin/settings/backups', {
       method: 'POST',
-      body: JSON.stringify({})
+      body: JSON.stringify({ password })
     })
   }
 
-  async restoreBackup(filename: string) {
+  async restoreBackup(filename: string, password: string) {
     return this.request<any>('/admin/settings/backups/restore', {
       method: 'POST',
-      body: JSON.stringify({ filename })
+      body: JSON.stringify({ filename, password })
     })
   }
 
-  async deleteBackup(filename: string) {
+  async deleteBackup(filename: string, password: string) {
     return this.request<any>(`/admin/settings/backups/${filename}`, {
       method: 'DELETE',
-      body: JSON.stringify({})
+      body: JSON.stringify({ password })
     })
   }
 
@@ -492,78 +493,72 @@ class ApiClient {
     })
   }
 
-    // Brands
-  async getBrands(onlyActive = true) {
-    return this.request<any[]>(`/admin/brands?onlyActive=${onlyActive}`)
+  // Productos
+  async getBrands(onlyActive = false) {
+    const params = onlyActive ? '?onlyActive=true' : ''
+    return this.request<any[]>(`/admin/products/brands${params}`)
   }
 
-  async createBrand(data: { name: string; description?: string; isActive?: boolean }) {
-    return this.request<any>('/admin/brands', {
+  async createBrand(data: { name: string; description?: string }) {
+    return this.request('/admin/brands', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateBrand(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
-    return this.request<any>(`/admin/brands/${id}`, {
-      method: 'PUT',
+  async updateBrand(id: string, data: { name?: string; description?: string; isActive?: boolean }) {
+    return this.request(`/admin/brands/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     })
   }
 
   async deleteBrand(id: string) {
-    return this.request<{ success: boolean }>(`/admin/brands/${id}`, {
+    return this.request(`/admin/brands/${id}`, {
       method: 'DELETE',
     })
   }
 
-  // Formats
-  async getFormats(onlyActive = true) {
-    return this.request<any[]>(`/admin/formats?onlyActive=${onlyActive}`)
+  async getFormats(onlyActive = false) {
+    const params = onlyActive ? '?onlyActive=true' : ''
+    return this.request<any[]>(`/admin/formats${params}`)
   }
 
-  async createFormat(data: { name: string; description?: string; isActive?: boolean }) {
-    return this.request<any>('/admin/formats', {
+  async createFormat(data: { name: string; description?: string }) {
+    return this.request('/admin/formats', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateFormat(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
-    return this.request<any>(`/admin/formats/${id}`, {
-      method: 'PUT',
+  async updateFormat(id: string, data: { name?: string; description?: string; isActive?: boolean }) {
+    return this.request(`/admin/formats/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     })
   }
 
   async deleteFormat(id: string) {
-    return this.request<{ success: boolean }>(`/admin/formats/${id}`, {
+    return this.request(`/admin/formats/${id}`, {
       method: 'DELETE',
     })
   }
 
-  // Providers
-  async getProviders() {
-    return this.request<{ providers: any[] }>('/admin/providers')
-  }
-
-  async createProvider(data: { name: string; country?: string; address?: string }) {
-    return this.request<any>('/admin/providers', {
-      method: 'POST',
-      body: JSON.stringify(data),
+  async updateProductStock(id: string, stock: number) {
+    return this.request(`/admin/products/${id}/stock`, {
+      method: 'PATCH',
+      body: JSON.stringify({ stock }),
     })
   }
 
-  async updateProvider(id: string, data: Partial<{ name: string; country?: string; address?: string }>) {
-    return this.request<any>(`/admin/providers/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
+  async getCatalogData() {
+    return this.request('/admin/catalog')
   }
 
-  async deleteProvider(id: string) {
-    return this.request<{ success: boolean }>(`/admin/providers/${id}`, {
-      method: 'DELETE',
+  async updateCatalogProductVisibility(productId: string, visible: boolean) {
+    return this.request(`/admin/catalog/products/${productId}/visibility`, {
+      method: 'PATCH',
+      body: JSON.stringify({ visible }),
     })
   }
 
@@ -571,14 +566,14 @@ class ApiClient {
     categoryId?: string; 
     categoryIds?: string[]; 
     search?: string;
-    page?: number;
-    limit?: number;
     isFeatured?: boolean;
     isOffer?: boolean;
     brand?: string;
     minPrice?: number;
     maxPrice?: number;
-    sortBy?: 'popular' | 'newest' | 'price-low' | 'price-high';
+    sortBy?: string;
+    page?: number;
+    limit?: number;
   } = {}) {
     const searchParams = new URLSearchParams()
     if (params?.categoryId) searchParams.set('categoryId', params.categoryId)
@@ -586,21 +581,17 @@ class ApiClient {
       params.categoryIds.forEach(id => searchParams.append('categoryIds[]', id))
     }
     if (params?.search) searchParams.set('search', params.search)
-    if (params?.page !== undefined) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
     if (params?.isFeatured !== undefined) searchParams.set('isFeatured', params.isFeatured.toString())
     if (params?.isOffer !== undefined) searchParams.set('isOffer', params.isOffer.toString())
     if (params?.brand) searchParams.set('brand', params.brand)
-    if (params?.minPrice !== undefined) searchParams.set('minPrice', params.minPrice.toString())
-    if (params?.maxPrice !== undefined) searchParams.set('maxPrice', params.maxPrice.toString())
+    if (params?.minPrice) searchParams.set('minPrice', params.minPrice.toString())
+    if (params?.maxPrice) searchParams.set('maxPrice', params.maxPrice.toString())
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy)
+    if (params?.page) searchParams.set('page', params.page.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
     
     const query = searchParams.toString()
-    return this.request<{ products: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/products/public${query ? `?${query}` : ''}`)
-  }
-
-  async getRelatedProducts(productId: string, limit = 4) {
-    return this.request<{ products: any[] }>(`/products/${productId}/related?limit=${limit}`)
+    return this.request<{ products: any[]; pagination?: { total: number; totalPages: number } }>(`/products/public${query ? `?${query}` : ''}`)
   }
 
   async getProduct(id: string) {
@@ -657,33 +648,6 @@ class ApiClient {
     })
   }
 
-  // Order tracking (public)
-  async trackOrder(saleNumber: string) {
-    return this.request<any>(`/sales/track/${saleNumber}`)
-  }
-
-  // Catalog
-  async getCatalogData() {
-    return this.request<{
-      products: any[];
-      categories: any[];
-    }>('/admin/catalog')
-  }
-
-  async updateCatalogProductVisibility(productId: string, visible: boolean) {
-    return this.request(`/admin/catalog/products/${productId}/visibility`, {
-      method: 'PUT',
-      body: JSON.stringify({ visible }),
-    })
-  }
-
-  async updateCatalogProductOrder(productId: string, order: number) {
-    return this.request(`/admin/catalog/products/${productId}/order`, {
-      method: 'PUT',
-      body: JSON.stringify({ order }),
-    })
-  }
-
   // Admin Products
   async getAdminProducts(params?: { page?: number; limit?: number; categoryId?: string; categoryIds?: string[]; search?: string; onlyActive?: boolean }) {
     const searchParams = new URLSearchParams()
@@ -715,23 +679,9 @@ class ApiClient {
     })
   }
 
-  async updateProductStock(id: string, stock: number) {
-    return this.request(`/admin/products/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ stock }),
-    })
-  }
-
   async deleteProduct(id: string) {
     return this.request(`/admin/products/${id}`, {
       method: 'DELETE',
-    })
-  }
-
-  async importProductsCSV(products: any[]) {
-    return this.request('/admin/products/import-csv', {
-      method: 'POST',
-      body: JSON.stringify(products),
     })
   }
 
@@ -747,6 +697,30 @@ class ApiClient {
     return this.request<{ logs: any[] }>(
       `/admin/products/inventory-logs${query ? `?${query}` : ''}`
     )
+  }
+
+  async getProviders() {
+    return this.request<{ providers: any[] }>('/admin/providers')
+  }
+
+  async createProvider(data: { name: string; country: string; address: string }) {
+    return this.request('/admin/providers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateProvider(id: string, data: Partial<{ name: string; country: string; address: string }>) {
+    return this.request(`/admin/providers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteProvider(id: string) {
+    return this.request(`/admin/providers/${id}`, {
+      method: 'DELETE',
+    })
   }
 
   async getBatches(params?: { search?: string; limit?: number }) {
@@ -776,60 +750,6 @@ class ApiClient {
   async deleteBatch(id: string) {
     return this.request(`/admin/batches/${id}`, {
       method: 'DELETE',
-    })
-  }
-
-  // Inventory Locations
-  async getLocations() {
-    return this.request<{ locations: any[] }>('/admin/inventory/locations')
-  }
-
-  async createLocation(data: { name: string; description?: string; address?: string; isDefault?: boolean }) {
-    return this.request('/admin/inventory/locations', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-  }
-
-  async updateLocation(id: string, data: Partial<{ name: string; description: string; address: string; isActive: boolean; isDefault: boolean }>) {
-    return this.request(`/admin/inventory/locations/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-  }
-
-  async deleteLocation(id: string) {
-    return this.request(`/admin/inventory/locations/${id}`, {
-      method: 'DELETE',
-    })
-  }
-
-  async getLocationStock(locationId: string) {
-    return this.request<{ stock: any[] }>(`/admin/inventory/locations/${locationId}/stock`)
-  }
-
-  // Inventory Transfers
-  async getTransfers(status?: string) {
-    const query = status ? `?status=${status}` : ''
-    return this.request<{ transfers: any[] }>(`/admin/inventory/transfers${query}`)
-  }
-
-  async createTransfer(data: { fromLocationId: string; toLocationId: string; productId: string; quantity: number; notes?: string }) {
-    return this.request('/admin/inventory/transfers', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-  }
-
-  async completeTransfer(id: string) {
-    return this.request(`/admin/inventory/transfers/${id}/complete`, {
-      method: 'POST',
-    })
-  }
-
-  async cancelTransfer(id: string) {
-    return this.request(`/admin/inventory/transfers/${id}/cancel`, {
-      method: 'POST',
     })
   }
 
@@ -873,6 +793,10 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ amount, reason }),
     })
+  }
+
+  async trackOrder(saleNumber: string) {
+    return this.request(`/sales/track/${saleNumber}`)
   }
 
   async cancelSale(id: string) {
@@ -1113,12 +1037,8 @@ class ApiClient {
   }
 
   // Admin Stats
-  async getStats(params?: { startDate?: string; endDate?: string }) {
-    const searchParams = new URLSearchParams()
-    if (params?.startDate) searchParams.set('startDate', params.startDate)
-    if (params?.endDate) searchParams.set('endDate', params.endDate)
-    const query = searchParams.toString()
-    return this.request<any>(`/admin/stats${query ? `?${query}` : ''}`)
+  async getStats() {
+    return this.request<any>('/admin/stats')
   }
 
   // Admin Management
@@ -1194,18 +1114,6 @@ class ApiClient {
   // Cart
   async getCart() {
     return this.request<any>('/cart')
-  }
-
-  async syncCart(cart: any) {
-    await this.clearCart()
-    const items = cart.items || []
-    for (const item of items) {
-      await this.request('/cart/items', {
-        method: 'POST',
-        body: JSON.stringify({ productId: item.productId || item.product?.id, quantity: item.quantity }),
-      })
-    }
-    return { success: true }
   }
 
   async addToCart(productId: string, quantity: number) {
