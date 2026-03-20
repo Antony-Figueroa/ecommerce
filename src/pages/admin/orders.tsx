@@ -225,6 +225,12 @@ export function AdminOrdersPage() {
     }
   }, [selectedOrder])
 
+  useEffect(() => {
+    fetchOrders()
+    const interval = setInterval(fetchOrders, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
   const fetchOrders = async () => {
     try {
       const data = await api.getSales()
