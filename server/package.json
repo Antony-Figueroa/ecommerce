@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "tsc && node -e \"require('fs').cpSync('src/generated/client', 'dist/generated/client', {recursive: true})\"",
+    "build": "npm install --include=dev && tsc && node -e \"require('fs').cpSync('src/generated/client', 'dist/generated/client', {recursive: true})\"",
     "start": "node dist/index.js",
     "db:push": "npx prisma db push --schema=prisma/schema.prisma"
   },
@@ -34,9 +34,7 @@
     "jspdf-autotable": "^5.0.7",
     "sharp": "^0.34.5",
     "pg": "^8.20.0",
-    "uuid": "^13.0.0"
-  },
-  "devDependencies": {
+    "uuid": "^13.0.0",
     "@types/node": "^22.19.8",
     "@types/express": "^5.0.6",
     "@types/cors": "^2.8.19",
@@ -48,5 +46,6 @@
     "@types/socket.io": "^3.0.1",
     "@types/pdfkit": "^0.13.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "devDependencies": {}
 }
