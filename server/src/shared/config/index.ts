@@ -2,6 +2,17 @@ import * as dotenv from 'dotenv'
 
 dotenv.config()
 
+function getDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL
+  if (!url) {
+    return 'file:./data/prod.db'
+  }
+  if (url.startsWith('file:') || url.startsWith('postgresql://') || url.startsWith('postgres://')) {
+    return url
+  }
+  return `file:./${url}`
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -12,7 +23,7 @@ export const config = {
   refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '30d',
   
   // Database
-  databaseUrl: process.env.DATABASE_URL || 'file:./dev.db',
+  databaseUrl: getDatabaseUrl(),
   
   // Email (Nodemailer)
   smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -37,6 +48,6 @@ export const config = {
   aiModel: process.env.AI_MODEL || 'gemma-3-27b-it',
 
   // Rate Limiting
-  rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10), // 1 minuto
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10), // Default limit
+  rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '1000', 10),
 }
