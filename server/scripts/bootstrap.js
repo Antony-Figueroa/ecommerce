@@ -2,15 +2,25 @@
 // Fixes DATABASE_URL to have proper file: prefix for SQLite
 // This MUST run as a separate process via `node scripts/bootstrap.js`
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPath = join(__dirname, '..', '.env');
+const dataDir = join(__dirname, '..', 'data');
+
+function ensureDataDirectory() {
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true });
+    console.log('✓ Created data/ directory');
+  }
+}
 
 function fixDatabaseUrl() {
   let envContent = '';
+  
+  ensureDataDirectory();
   
   // Read existing .env or create default
   if (existsSync(envPath)) {
