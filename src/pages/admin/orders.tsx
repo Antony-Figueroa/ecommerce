@@ -1071,28 +1071,28 @@ export function AdminOrdersPage() {
 
       {/* Order Detail Modal */}
       <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="max-w-4xl w-full md:w-[95vw] max-h-[100vh] md:max-h-[90vh] h-full md:h-auto overflow-hidden flex flex-col p-0 md:p-0">
           {selectedOrder && (
             <>
-              <div className="p-6 border-b bg-muted/30 dark:bg-muted/10 shrink-0">
-                <DialogHeader className="flex flex-col pr-8">
-                  <div className="flex items-center justify-between">
-                    <DialogTitle className="text-2xl font-black">Orden {selectedOrder?.saleNumber}</DialogTitle>
+              <div className="p-4 md:p-6 border-b bg-muted/30 dark:bg-muted/10 shrink-0">
+                <DialogHeader className="flex flex-col pr-8 gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <DialogTitle className="text-xl md:text-2xl font-black">Orden {selectedOrder?.saleNumber}</DialogTitle>
                     <Badge
-                      className={`${formatStatus(selectedOrder?.status || 'PENDING').class} text-sm px-3 py-1`}
+                      className={`${formatStatus(selectedOrder?.status || 'PENDING').class} text-xs md:text-sm px-2 md:px-3 py-1 w-fit`}
                       aria-label={`Estado actual: ${formatStatus(selectedOrder?.status || 'PENDING').label}`}
                     >
                       {formatStatus(selectedOrder?.status || 'PENDING').label}
                     </Badge>
                   </div>
-                  <DialogDescription className="mt-1">
+                  <DialogDescription className="text-xs md:text-sm">
                     Gestiona los productos, revisa el historial y realiza acciones sobre el pedido.
                   </DialogDescription>
                 </DialogHeader>
               </div>
               <ScrollArea className="flex-1">
-                <div className="p-6 space-y-8">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="p-4 md:p-6 space-y-6 md:space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                     {/* Customer & Payment Info */}
                     <div className="lg:col-span-2 space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl border bg-card dark:border-gray-800" role="region" aria-label="Información del cliente y pedido">
