@@ -96,7 +96,7 @@ model Product {
   price               Decimal
   currency            String                @default("USD")
   purchasePrice       Decimal               @default(0)
-  profitMargin        Decimal               @default(1.5)
+  profitMargin        Decimal               @default(35)
   image               String?
   brand               String
   format              String
@@ -111,11 +111,13 @@ model Product {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   brandId             String?
+  supplierId          String?
   batches             Batch[]
   cartItems           CartItem[]
   favorites           Favorite[]
   inventoryBatchItems InventoryBatchItem[]
   brandRelation       Brand?                @relation(fields: [brandId], references: [id])
+  supplierRelation    Provider?             @relation(fields: [supplierId], references: [id])
   images              ProductImage[]
   priceHistory        ProductPriceHistory[]
   requirementItems    RequirementItem[]
@@ -126,6 +128,7 @@ model Product {
 
   @@index([isActive])
   @@index([brandId])
+  @@index([supplierId])
   @@index([createdAt])
   @@index([isFeatured])
   @@index([isOffer])

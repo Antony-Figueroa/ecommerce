@@ -479,4 +479,113 @@ export class InventoryService {
   async getInventoryLogs(productId?: string | null, limit = 50) {
     return this.logRepo.findAll(productId || undefined)
   }
+
+  async importProductsFromCSV(products: any[], userId?: string, ipAddress?: string, userAgent?: string) {
+    const results = {
+      created: [] as any[],
+      updated: [] as any[],
+      errors: [] as { row: number; sku: string; error: string }[]
+    }
+
+    for (let i = 0; i < products.length; i++) {
+      const row = products[i]
+      try {
+        if (!row.sku || !row.name) {
+          results.errors.push({ row: i + 2, sku: row.sku || 'N/A', error: 'SKU y nombre son requeridos' })
+          continue
+        }
+
+        const existingProduct = await this.productRepo.findBySku(row.sku)
+
+        if (existingProduct) {
+          const updateData: any = {}
+          if (row.name) updateData.name = row.name
+          if (row.description) updateData.description = row.description
+          if (row.price !== undefined) updateData.price = parseFloat(row.price)
+          if (row.purchasePrice !== undefined) updateData.purchasePrice = parseFloat(row.purchasePrice)
+          if (row.stock !== undefined) updateData.stock = parseInt(row.stock)
+          if (row.minStock !== undefined) updateData.minStock = parseInt(row.minStock)
+          if (row.brand) updateData.brand = row.brand
+          if (row.format) updateData.format = row.format
+          if (row.image) updateData.image = row.image
+          if (row.isActive !== undefined) updateData.isActive = row.isActive === 'true' || row.isActive === true
+          if (row.isFeatured !== undefined) updateData.isFeatured = row.isFeatured === 'true' || row.isFeatured === true
+          if (row.isOffer !== undefined) updateData.isOffer = row.isOffer === 'true' || row.isOffer === true
+
+          const updated = await this.productManager.updateProduct(
+            existingProduct.id,
+            updateData,
+            userId,
+            ipAddress,
+            userAgent
+          )
+          results.updated.push({ sku: row.sku, id: updated.id, name: updated.name })
+        } else {
+          if (!row.categoryNames && !row.categoryIds) {
+            results.errors.push({ row: i + 2, sku: row.sku, error: 'Se requiere al menos una categoría' })
+            continue
+          }
+
+          let categoryIds: string[] = []
+          if (row.categoryIds) {
+            categoryIds = row.categoryIds.split('|').map((id: string) => id.trim()).filter(Boolean)
+          } else if (row.categoryNames) {
+            const categoryNames = row.categoryNames.split('|').map((name: string) => name.trim())
+            for (const catName of categoryNames) {
+              const category = await this.categoryRepo.findByName(catName)
+              if (!category) {
+                const slug = catName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+                const newCat = await this.categoryRepo.create({
+                  name: catName,
+                  slug,
+                  isActive: true,
+                  sortOrder: 0
+                })
+                categoryIds.push(newCat.id)
+              } else {
+                categoryIds.push(category.id)
+              }
+            }
+          }
+
+          if (categoryIds.length === 0) {
+            results.errors.push({ row: i + 2, sku: row.sku, error: 'No se encontraron categorías válidas' })
+            continue
+          }
+
+          const createData: any = {
+            sku: row.sku,
+            productCode: row.productCode || '',
+            name: row.name,
+            description: row.description || '',
+            price: parseFloat(row.price) || 0,
+            purchasePrice: parseFloat(row.purchasePrice) || 0,
+            categoryIds,
+            brand: row.brand || '',
+            format: row.format || '',
+            image: row.image || null,
+            stock: parseInt(row.stock) || 0,
+            minStock: parseInt(row.minStock) || 5,
+            isActive: row.isActive !== 'false',
+            isFeatured: row.isFeatured === 'true',
+            isOffer: row.isOffer === 'true'
+          }
+
+          const created = await this.productManager.createProduct(createData, userId, ipAddress, userAgent)
+          results.created.push({ sku: row.sku, id: created.id, name: created.name })
+        }
+      } catch (error: any) {
+        results.errors.push({ row: i + 2, sku: row.sku || 'N/A', error: error.message || 'Error desconocido' })
+      }
+    }
+
+    return {
+      success: true,
+      total: products.length,
+      created: results.created.length,
+      updated: results.updated.length,
+      errors: results.errors.length,
+      details: results
+    }
+  }
 }

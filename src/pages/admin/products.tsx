@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Plus,
   Search,
@@ -10,6 +10,17 @@ import {
   List,
   Eye,
   EyeOff,
+  Calculator,
+  DollarSign,
+  Truck,
+  TrendingUp,
+  Percent,
+  Loader2,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  CheckCircle,
+  XCircle,
 } from "lucide-react"
 import { AdminPageHeader } from "@/components/admin/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,6 +65,7 @@ interface Product {
   profitMargin: number
   originalPrice: number | null
   stock: number
+  minStock?: number
   inStock: boolean
   categoryIds: string[]
   categoryName?: string
@@ -61,6 +73,7 @@ interface Product {
   format: string
   isFeatured: boolean
   isActive: boolean
+  isOffer?: boolean
   image: string
   images?: ProductImage[]
   categories?: { id: string; name: string }[]
@@ -68,6 +81,7 @@ interface Product {
   priceHistory?: any[]
   salesCount?: number
   viewCount?: number
+  createdAt?: string
   _count?: {
     batches: number
     inventoryBatchItems: number
@@ -75,6 +89,19 @@ interface Product {
     cartItems: number
     favorites: number
     requirementItems: number
+  }
+}
+
+interface ImportResult {
+  success: boolean
+  total: number
+  created: number
+  updated: number
+  errors: number
+  details?: {
+    created: { sku: string; id: string; name: string }[]
+    updated: { sku: string; id: string; name: string }[]
+    errors: { row: number; sku: string; error: string }[]
   }
 }
 
@@ -89,6 +116,13 @@ interface Category {
   sortOrder: number
   createdAt?: string
   updatedAt?: string
+}
+
+interface Provider {
+  id: string
+  name: string
+  country?: string | null
+  address?: string | null
 }
 
 interface ProductFormData {
@@ -110,6 +144,7 @@ interface ProductFormData {
   images: Partial<ProductImage>[]
   batchNumber?: string
   expirationDate?: string
+  supplierId?: string
 }
 
 interface ProductErrors {
@@ -128,10 +163,12 @@ export function AdminProductsPage() {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [providers, setProviders] = useState<Provider[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("all")
+  const [supplierFilter, setSupplierFilter] = useState("all")
   const [stockFilter, setStockFilter] = useState("all")
   const [sortBy, setSortBy] = useState<"name" | "price" | "stock" | "createdAt">("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
@@ -153,10 +190,23 @@ export function AdminProductsPage() {
   const [brands, setBrands] = useState<any[]>([])
   const [formats, setFormats] = useState<any[]>([])
 
+  // Price calculator states
+  const [showCalculator, setShowCalculator] = useState(false)
+  const [shippingCostPerOrder, setShippingCostPerOrder] = useState(0)
+  const [calculatorQuantity, setCalculatorQuantity] = useState(1)
+  const [bcvRate, setBcvRate] = useState<number>(0)
+  const [loadingBcv, setLoadingBcv] = useState(false)
+
   // Bulk selection state
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [showBulkDialog, setShowBulkDialog] = useState(false)
   const [bulkAction, setBulkAction] = useState<"activate" | "deactivate" | "feature" | "unfeature" | "delete">("activate")
+
+  // CSV Import states
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // States for ConfirmDialog
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -204,6 +254,7 @@ export function AdminProductsPage() {
 
   const handleOpenAdd = () => {
     resetForm()
+    fetchBCVRate()
     setShowAddDialog(true)
   }
 
@@ -238,7 +289,7 @@ export function AdminProductsPage() {
     description: "",
     price: 0,
     purchasePrice: 0,
-    profitMargin: 1.5,
+    profitMargin: 35,
     originalPrice: null,
     stock: 0,
     categoryIds: [],
@@ -250,6 +301,7 @@ export function AdminProductsPage() {
     images: [],
     batchNumber: "",
     expirationDate: "",
+    supplierId: "",
   })
 
   useEffect(() => {
@@ -258,16 +310,39 @@ export function AdminProductsPage() {
 
   useEffect(() => {
     async function loadData() {
-      // Optimizando carga paralela para eliminar waterfalls (async-parallel)
       await Promise.all([
         fetchProducts(),
         fetchCategories(),
         fetchBrands(),
-        fetchFormats()
+        fetchFormats(),
+        fetchProviders()
       ])
     }
     loadData()
   }, [])
+
+  const fetchBCVRate = async () => {
+    setLoadingBcv(true)
+    try {
+      const data = await api.getBCVRate()
+      if (data && data.rate) {
+        setBcvRate(data.rate)
+      }
+    } catch (error) {
+      console.error("Error fetching BCV rate:", error)
+    } finally {
+      setLoadingBcv(false)
+    }
+  }
+
+  const fetchProviders = async () => {
+    try {
+      const data = await api.getProviders()
+      setProviders(data?.providers || [])
+    } catch (error) {
+      console.error("Error fetching providers:", error)
+    }
+  }
 
   const fetchFormats = async () => {
     try {
@@ -341,7 +416,7 @@ export function AdminProductsPage() {
       description: "",
       price: 0,
       purchasePrice: 0,
-      profitMargin: 1.5,
+      profitMargin: 35,
       originalPrice: null,
       stock: 0,
       categoryIds: [],
@@ -353,6 +428,7 @@ export function AdminProductsPage() {
       images: [],
       batchNumber: "",
       expirationDate: "",
+      supplierId: "",
     })
     setEditingProduct(null)
     setShowCustomBrand(false)
@@ -360,6 +436,8 @@ export function AdminProductsPage() {
     setCustomBrand("")
     setCustomFormat("")
     setSelectedProducts([])
+    setShippingCostPerOrder(0)
+    setCalculatorQuantity(1)
   }
 
   const toggleProductSelection = (productId: string) => {
@@ -400,6 +478,167 @@ export function AdminProductsPage() {
         }
       }
     })
+  }
+
+  const handleCSVImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.endsWith('.csv')) {
+      toast({ title: "Error", description: "Por favor selecciona un archivo CSV", variant: "destructive" })
+      return
+    }
+
+    setImporting(true)
+    setImportResult(null)
+
+    try {
+      const text = await file.text()
+      const lines = text.split('\n').filter(line => line.trim())
+      
+      if (lines.length < 2) {
+        toast({ title: "Error", description: "El CSV debe tener al menos una fila de encabezado y una fila de datos", variant: "destructive" })
+        setImporting(false)
+        return
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      
+      const products: any[] = []
+      const errors: string[] = []
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim())
+        if (values.length !== headers.length) {
+          errors.push(`Fila ${i + 1}: Número de columnas incorrecto`)
+          continue
+        }
+
+        const product: any = {}
+        headers.forEach((header, index) => {
+          const value = values[index]
+          switch (header) {
+            case 'sku':
+              product.sku = value
+              break
+            case 'name':
+            case 'nombre':
+              product.name = value
+              break
+            case 'description':
+            case 'descripcion':
+              product.description = value
+              break
+            case 'price':
+            case 'precio':
+              product.price = value
+              break
+            case 'purchaseprice':
+            case 'preciocompra':
+            case 'cost':
+            case 'costo':
+              product.purchasePrice = value
+              break
+            case 'stock':
+              product.stock = value
+              break
+            case 'minstock':
+            case 'stockmin':
+              product.minStock = value
+              break
+            case 'brand':
+            case 'marca':
+              product.brand = value
+              break
+            case 'format':
+            case 'formato':
+              product.format = value
+              break
+            case 'image':
+            case 'imagen':
+              product.image = value
+              break
+            case 'categorynames':
+            case 'categorias':
+              product.categoryNames = value
+              break
+            case 'categoryids':
+            case 'idscategorias':
+              product.categoryIds = value
+              break
+            case 'isactive':
+            case 'activo':
+              product.isActive = value
+              break
+            case 'isfeatured':
+            case 'destacado':
+              product.isFeatured = value
+              break
+            case 'isoffer':
+            case 'oferta':
+              product.isOffer = value
+              break
+          }
+        })
+        products.push(product)
+      }
+
+      if (products.length === 0) {
+        toast({ title: "Error", description: "No se encontraron productos válidos para importar", variant: "destructive" })
+        setImporting(false)
+        return
+      }
+
+      const result = await api.importProductsCSV(products) as ImportResult
+      setImportResult(result)
+      
+      if (result.errors === 0) {
+        toast({ title: "Éxito", description: `${result.created} productos creados, ${result.updated} actualizados` })
+        fetchProducts()
+      } else if (result.created > 0 || result.updated > 0) {
+        toast({ title: "Parcial", description: `${result.created} creados, ${result.updated} actualizados, ${result.errors} errores`, variant: "default" })
+        fetchProducts()
+      } else {
+        toast({ title: "Error", description: "Todos los productos tuvieron errores", variant: "destructive" })
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Error al importar productos", variant: "destructive" })
+    } finally {
+      setImporting(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const exportProductsToCSV = () => {
+    const headers = ['sku', 'name', 'description', 'price', 'purchasePrice', 'stock', 'minStock', 'brand', 'format', 'categoryNames', 'isActive', 'isFeatured', 'isOffer']
+    const rows = products.map(p => [
+      p.sku,
+      p.name,
+      p.description?.replace(/,/g, ';') || '',
+      p.price,
+      p.purchasePrice,
+      p.stock,
+      p.minStock || 5,
+      p.brand,
+      p.format,
+      p.categories?.map(c => c.name).join('|') || '',
+      p.isActive,
+      p.isFeatured,
+      p.isOffer,
+    ])
+
+    const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `productos_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+    
+    toast({ title: "Éxito", description: "Productos exportados exitosamente" })
   }
 
   const validateForm = (): boolean => {
@@ -473,12 +712,12 @@ export function AdminProductsPage() {
           // Clean up the data before sending
           const productData = {
             ...rest,
-            // Ensure price is a number
             price: Number(formData.price),
             purchasePrice: Number(formData.purchasePrice),
             profitMargin: Number(formData.profitMargin),
             stock: Number(formData.stock),
             originalPrice: formData.originalPrice ? Number(formData.originalPrice) : null,
+            supplierId: formData.supplierId || null,
           }
 
           if (editingProduct) {
@@ -556,12 +795,12 @@ export function AdminProductsPage() {
       description: String(product.description || ""),
       price: Number(product.price) || 0,
       purchasePrice: Number(product.purchasePrice) || 0,
-      profitMargin: Number(product.profitMargin) || 1.5,
+      profitMargin: Number(product.profitMargin) || 35,
       originalPrice: product.originalPrice ? Number(product.originalPrice) : null,
       stock: Number(product.stock) || 0,
       categoryIds: catIds,
-      brand: String(brandValue || ""), // Asegurar que sea string
-      format: String(formatValue || ""), // Asegurar que sea string
+      brand: String(brandValue || ""),
+      format: String(formatValue || ""),
       isFeatured: !!product.isFeatured,
       isActive: !!product.isActive,
       image: String(product.image || "/placeholder.jpg"),
@@ -576,8 +815,9 @@ export function AdminProductsPage() {
           sortOrder: Number(img.sortOrder) || 0
         }))
         : [],
-      batchNumber: "", // Limpiar campos de lote al editar
+      batchNumber: "",
       expirationDate: "",
+      supplierId: (product as any).supplierId || "",
     }
 
     console.log("Setting form data:", newFormData);
@@ -593,6 +833,7 @@ export function AdminProductsPage() {
     setCustomBrand("")
     setCustomFormat("")
 
+    fetchBCVRate()
     setShowAddDialog(true)
   }
 
@@ -703,7 +944,9 @@ export function AdminProductsPage() {
     const matchesCategory = categoryFilter === "all" ||
       (product.categoryIds && product.categoryIds.includes(categoryFilter)) ||
       (product.categories && product.categories.some(c => c.id === categoryFilter)) ||
-      (product as any).categoryId === categoryFilter // compatibility with legacy data
+      (product as any).categoryId === categoryFilter
+    const matchesSupplier = supplierFilter === "all" ||
+      (product as any).supplierId === supplierFilter
     const matchesStock =
       stockFilter === "all" ||
       (stockFilter === "low" && product.stock < 10) ||
@@ -714,7 +957,7 @@ export function AdminProductsPage() {
       (activeTab === "active" && product.isActive) ||
       (activeTab === "inactive" && !product.isActive)
 
-    return matchesSearch && matchesCategory && matchesStock && matchesStatus
+    return matchesSearch && matchesCategory && matchesSupplier && matchesStock && matchesStatus
   }).sort((a, b) => {
     let comparison = 0
     if (sortBy === "name") comparison = a.name.localeCompare(b.name)
@@ -747,16 +990,43 @@ export function AdminProductsPage() {
 
   return (
     <div className="space-y-6 pb-20 md:pb-0" role="main" aria-label="Gestión de Productos">
-      <AdminPageHeader
-        title="Productos"
-        subtitle="Gestiona tu catálogo de productos y existencias"
-        icon={Package}
-        action={{
-          label: "Nuevo Producto",
-          onClick: () => handleOpenAdd(),
-          icon: Plus
-        }}
-      />
+      <div className="flex items-center justify-between">
+        <AdminPageHeader
+          title="Productos"
+          subtitle="Gestiona tu catálogo de productos y existencias"
+          icon={Package}
+        />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setShowImportDialog(true)
+            }}
+            className="h-9 text-xs"
+          >
+            <Upload className="h-3.5 w-3.5 mr-2" />
+            Importar CSV
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportProductsToCSV}
+            className="h-9 text-xs"
+          >
+            <Download className="h-3.5 w-3.5 mr-2" />
+            Exportar
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => handleOpenAdd()}
+            className="h-9 text-xs"
+          >
+            <Plus className="h-3.5 w-3.5 mr-2" />
+            Nuevo Producto
+          </Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="p-4 border-slate-100 dark:border-border/60 shadow-sm bg-white dark:bg-card rounded-2xl">
@@ -847,6 +1117,20 @@ export function AdminProductsPage() {
                 <SelectItem value="out">Agotado</SelectItem>
               </SelectContent>
             </Select>
+
+            {providers.length > 0 && (
+              <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                <SelectTrigger className="w-[150px] h-10 rounded-xl border-slate-200 bg-white dark:bg-card dark:border-border text-xs">
+                  <SelectValue placeholder="Proveedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {providers.map(provider => (
+                    <SelectItem key={provider.id} value={provider.id}>{provider.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             <div className="flex bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl gap-1">
               <Button
@@ -1408,7 +1692,170 @@ export function AdminProductsPage() {
               {errors.description && <p className="text-xs text-red-500 mt-1" role="alert">{errors.description}</p>}
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Calculadora de Precios */}
+            <div className="bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900/50 dark:to-blue-900/20 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calculator className="h-5 w-5 text-primary" />
+                  <h3 className="font-bold text-sm">Calculadora de Precios</h3>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCalculator(!showCalculator)}
+                  className="text-xs"
+                >
+                  {showCalculator ? "Ocultar" : "Mostrar"}
+                </Button>
+              </div>
+
+              {showCalculator && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Inputs de cálculo */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        Costo Producto (USD)
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.purchasePrice || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : parseFloat(e.target.value)
+                          setFormData({ ...formData, purchasePrice: value })
+                        }}
+                        placeholder="0.00"
+                        className="h-9 text-sm font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <Truck className="h-3 w-3" />
+                        Costo Envío Pedido
+                      </label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={shippingCostPerOrder || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 0 : parseFloat(e.target.value)
+                          setShippingCostPerOrder(value)
+                        }}
+                        placeholder="0.00"
+                        className="h-9 text-sm font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">Cantidad (Stock)</label>
+                      <Input
+                        type="number"
+                        step="1"
+                        min="1"
+                        value={calculatorQuantity || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 1 : Math.max(1, parseInt(e.target.value))
+                          setCalculatorQuantity(value)
+                          setFormData({ ...formData, stock: value })
+                        }}
+                        placeholder="1"
+                        className="h-9 text-sm font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <Percent className="h-3 w-3" />
+                        Margen Ganancia (%)
+                      </label>
+                      <Input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={formData.profitMargin || ""}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 35 : parseFloat(e.target.value)
+                          setFormData({ ...formData, profitMargin: value })
+                        }}
+                        placeholder="35"
+                        className="h-9 text-sm font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Resultado del cálculo */}
+                  {formData.purchasePrice > 0 && (
+                    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-medium text-muted-foreground">RESULTADO CALCULADO</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const costoPorUnidad = formData.purchasePrice + (shippingCostPerOrder / Math.max(1, calculatorQuantity))
+                            const precioVenta = costoPorUnidad * (1 + (formData.profitMargin || 35) / 100)
+                            setFormData({ ...formData, price: Math.round(precioVenta * 100) / 100 })
+                            toast({ title: "Precio calculado", description: `Precio de venta: $${precioVenta.toFixed(2)}` })
+                          }}
+                          className="h-7 text-xs bg-primary/10 text-primary hover:bg-primary/20"
+                        >
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                          Aplicar
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-2">
+                          <p className="text-[10px] text-muted-foreground uppercase font-bold">Costo/Unidad</p>
+                          <p className="font-black text-slate-900 dark:text-white">
+                            ${((formData.purchasePrice || 0) + ((shippingCostPerOrder || 0) / Math.max(1, calculatorQuantity))).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-2">
+                          <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold">Precio Venta</p>
+                          <p className="font-black text-blue-700 dark:text-blue-300">
+                            ${(((formData.purchasePrice || 0) + ((shippingCostPerOrder || 0) / Math.max(1, calculatorQuantity))) * (1 + ((formData.profitMargin || 35)) / 100)).toFixed(2)}
+                          </p>
+                        </div>
+                        {bcvRate > 0 && (
+                          <>
+                            <div className="bg-emerald-50 dark:bg-emerald-900/30 rounded-lg p-2">
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold">Precio Venta BS</p>
+                              <p className="font-black text-emerald-700 dark:text-emerald-300">
+                                Bs. {(((formData.purchasePrice || 0) + ((shippingCostPerOrder || 0) / Math.max(1, calculatorQuantity))) * (1 + ((formData.profitMargin || 35)) / 100) * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                            </div>
+                            <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-2">
+                              <p className="text-[10px] text-amber-600 dark:text-amber-400 uppercase font-bold">Ganancia/Unidad</p>
+                              <p className="font-black text-amber-700 dark:text-amber-300">
+                                Bs. {(((formData.purchasePrice || 0) + ((shippingCostPerOrder || 0) / Math.max(1, calculatorQuantity))) * ((formData.profitMargin || 35)) / 100 * bcvRate).toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {loadingBcv && (
+                        <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Cargando tasa BCV...
+                        </p>
+                      )}
+                      {bcvRate > 0 && (
+                        <p className="text-[10px] text-muted-foreground mt-2">
+                          Tasa BCV: Bs. {bcvRate.toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Campos simples de precio */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium">Precio de venta (USD) *</label>
                 <Input
@@ -1422,7 +1869,7 @@ export function AdminProductsPage() {
                     if (errors.price) setErrors({ ...errors, price: undefined })
                   }}
                   placeholder="0.00"
-                  className={errors.price ? "border-red-500" : ""}
+                  className={cn("font-bold", errors.price ? "border-red-500" : "")}
                 />
                 {errors.price && <p className="text-xs text-red-500 mt-1">{errors.price}</p>}
               </div>
@@ -1441,55 +1888,61 @@ export function AdminProductsPage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Margen de ganancia</label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formData.profitMargin || ""}
-                  onChange={(e) => {
-                    const value = e.target.value === "" ? 1.5 : parseFloat(e.target.value)
-                    setFormData({ ...formData, profitMargin: value })
-                  }}
-                  placeholder="1.5"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Stock inicial</label>
+                <label className="text-sm font-medium">Margen de ganancia (%)</label>
                 <Input
                   type="number"
                   step="1"
                   min="0"
-                  value={formData.stock || ""}
+                  value={formData.profitMargin || ""}
                   onChange={(e) => {
-                    const value = e.target.value === "" ? 0 : parseInt(e.target.value)
-                    setFormData({ ...formData, stock: value })
+                    const value = e.target.value === "" ? 35 : parseFloat(e.target.value)
+                    setFormData({ ...formData, profitMargin: value })
                   }}
-                  placeholder="0"
+                  placeholder="35"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isFeatured"
-                  checked={formData.isFeatured}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: !!checked })}
-                />
-                <label htmlFor="isFeatured" className="text-sm cursor-pointer">
-                  Producto destacado
-                </label>
+              <div>
+                <label className="text-sm font-medium">Proveedor por defecto</label>
+                <Select
+                  value={formData.supplierId || ""}
+                  onValueChange={(val) => setFormData({ ...formData, supplierId: val || "" })}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Sin proveedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map(provider => (
+                      <SelectItem key={provider.id} value={provider.id}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: !!checked })}
-                />
-                <label htmlFor="isActive" className="text-sm cursor-pointer">
-                  Activo
-                </label>
+              <div className="flex items-center gap-4 pt-6">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isFeatured"
+                    checked={formData.isFeatured}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isFeatured: !!checked })}
+                  />
+                  <label htmlFor="isFeatured" className="text-sm cursor-pointer">
+                    Destacado
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isActive"
+                    checked={formData.isActive}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: !!checked })}
+                  />
+                  <label htmlFor="isActive" className="text-sm cursor-pointer">
+                    Activo
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -1754,6 +2207,145 @@ export function AdminProductsPage() {
               onClick={() => handleBulkAction(bulkAction as any)}
             >
               Aplicar a {selectedProducts.length} productos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* CSV Import Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              Importar Productos desde CSV
+            </DialogTitle>
+            <DialogDescription>
+              Importa productos desde un archivo CSV. Los productos existentes se actualizarán por SKU.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleCSVImport}
+                className="hidden"
+                id="csv-upload"
+              />
+              <label
+                htmlFor="csv-upload"
+                className="cursor-pointer flex flex-col items-center gap-3"
+              >
+                {importing ? (
+                  <>
+                    <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                    <span className="text-sm text-slate-500">Procesando archivo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-10 w-10 text-slate-400" />
+                    <span className="text-sm text-slate-500">
+                      Haz clic para seleccionar un archivo CSV
+                    </span>
+                  </>
+                )}
+              </label>
+            </div>
+
+            {importResult && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="flex flex-col items-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+                    <CheckCircle className="h-8 w-8 text-emerald-600 mb-2" />
+                    <span className="text-2xl font-bold text-emerald-600">{importResult.created}</span>
+                    <span className="text-xs text-emerald-600">Creados</span>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                    <TrendingUp className="h-8 w-8 text-blue-600 mb-2" />
+                    <span className="text-2xl font-bold text-blue-600">{importResult.updated}</span>
+                    <span className="text-xs text-blue-600">Actualizados</span>
+                  </div>
+                  <div className="flex flex-col items-center p-4 bg-red-50 dark:bg-red-900/20 rounded-xl">
+                    <XCircle className="h-8 w-8 text-red-600 mb-2" />
+                    <span className="text-2xl font-bold text-red-600">{importResult.errors}</span>
+                    <span className="text-xs text-red-600">Errores</span>
+                  </div>
+                </div>
+
+                {importResult.details?.errors && importResult.details.errors.length > 0 && (
+                  <div className="max-h-48 overflow-y-auto border border-red-200 dark:border-red-900/50 rounded-xl">
+                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/50">
+                      <span className="text-sm font-bold text-red-600">Errores:</span>
+                    </div>
+                    <div className="p-2 space-y-1">
+                      {importResult.details.errors.slice(0, 20).map((err, idx) => (
+                        <div key={idx} className="text-xs text-slate-600 dark:text-slate-400 p-1">
+                          <span className="font-bold">Fila {err.row}:</span> SKU {err.sku} - {err.error}
+                        </div>
+                      ))}
+                      {importResult.details.errors.length > 20 && (
+                        <div className="text-xs text-slate-500 p-1">
+                          ... y {importResult.details.errors.length - 20} errores más
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
+              <h4 className="text-sm font-bold mb-3">Formato del CSV</h4>
+              <p className="text-xs text-slate-500 mb-3">
+                El archivo debe tener las siguientes columnas en la primera fila:
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-primary font-bold">sku</span> (requerido)
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-primary font-bold">name</span> (requerido)
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">description</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">price</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">purchasePrice</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">stock</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">minStock</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">brand</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">format</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border">
+                  <span className="text-slate-600">image</span>
+                </div>
+                <div className="font-mono bg-white dark:bg-slate-900 p-2 rounded border col-span-2">
+                  <span className="text-slate-600">categoryNames</span> (separar con | para múltiples)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowImportDialog(false)
+              setImportResult(null)
+            }}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>

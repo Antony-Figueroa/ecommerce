@@ -542,6 +542,31 @@ class ApiClient {
     })
   }
 
+  // Providers
+  async getProviders() {
+    return this.request<{ providers: any[] }>('/admin/providers')
+  }
+
+  async createProvider(data: { name: string; country?: string; address?: string }) {
+    return this.request<any>('/admin/providers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateProvider(id: string, data: Partial<{ name: string; country?: string; address?: string }>) {
+    return this.request<any>(`/admin/providers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteProvider(id: string) {
+    return this.request<{ success: boolean }>(`/admin/providers/${id}`, {
+      method: 'DELETE',
+    })
+  }
+
   async getPublicProducts(params: { 
     categoryId?: string; 
     categoryIds?: string[]; 
@@ -703,6 +728,13 @@ class ApiClient {
     })
   }
 
+  async importProductsCSV(products: any[]) {
+    return this.request('/admin/products/import-csv', {
+      method: 'POST',
+      body: JSON.stringify(products),
+    })
+  }
+
   async getInventoryReport() {
     return this.request('/admin/products/inventory-report')
   }
@@ -715,30 +747,6 @@ class ApiClient {
     return this.request<{ logs: any[] }>(
       `/admin/products/inventory-logs${query ? `?${query}` : ''}`
     )
-  }
-
-  async getProviders() {
-    return this.request<{ providers: any[] }>('/admin/providers')
-  }
-
-  async createProvider(data: { name: string; country: string; address: string }) {
-    return this.request('/admin/providers', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
-  }
-
-  async updateProvider(id: string, data: Partial<{ name: string; country: string; address: string }>) {
-    return this.request(`/admin/providers/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-  }
-
-  async deleteProvider(id: string) {
-    return this.request(`/admin/providers/${id}`, {
-      method: 'DELETE',
-    })
   }
 
   async getBatches(params?: { search?: string; limit?: number }) {

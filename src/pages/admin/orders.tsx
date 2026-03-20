@@ -12,8 +12,6 @@ import {
   Truck,
   User,
   TrendingUp,
-  PlusCircle,
-  CreditCard,
   Calendar,
   AlertCircle,
 } from "lucide-react"
@@ -39,7 +37,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -109,14 +106,7 @@ export function AdminOrdersPage() {
 
   // Acceptance & Financing states
   const [acceptanceModalOpen, setAcceptanceModalOpen] = useState(false)
-  const [financingModalMode, setFinancingModalMode] = useState<"acceptance" | "installment-plan">("acceptance")
   const [acceptanceOrder, setAcceptanceOrder] = useState<Order | null>(null)
-  const [initialPaymentUSD, setInitialPaymentUSD] = useState<string>("0")
-  const [installmentCount, setInstallmentCount] = useState<number>(0)
-  const [customInstallments, setCustomInstallments] = useState<any[]>([])
-  const [isFinancingEnabled, setIsFinancingEnabled] = useState(false)
-  const [customerOrders, setCustomerOrders] = useState<any[]>([])
-  const [loadingSolvency, setLoadingSolvency] = useState(false)
 
   // Payment confirmation states
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
@@ -129,14 +119,9 @@ export function AdminOrdersPage() {
   const [newDeliveryStatus] = useState<string>("")
   const [deliveryReason, setDeliveryReason] = useState("")
 
-  // Installment plan states
+  // Payment status state
   const [paymentStatus, setPaymentStatus] = useState<any>(null)
   const [, setLoadingPaymentStatus] = useState(false)
-  const [installmentPlanCount, setInstallmentPlanCount] = useState<number>(2)
-  const [newInstallments, setNewInstallments] = useState<any[]>([
-    { amountUSD: 0, dueDate: new Date().toISOString().split('T')[0] },
-    { amountUSD: 0, dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] }
-  ])
 
   // Proof verification states
   const [proofModalOpen, setProofModalOpen] = useState(false)
@@ -166,10 +151,6 @@ export function AdminOrdersPage() {
     setConfirmConfig({ ...config, open: true })
   }
 
-  const hasAcceptanceChanges = () => {
-    return initialPaymentUSD !== "0" || installmentCount !== 0 || customInstallments.length > 0 || isFinancingEnabled
-  }
-
   const hasPaymentChanges = () => {
     return paymentAmount !== "" || paymentReason !== ""
   }
@@ -183,23 +164,7 @@ export function AdminOrdersPage() {
   }
 
   const handleCloseAcceptanceModal = () => {
-    if (hasAcceptanceChanges()) {
-      confirmAction({
-        title: "¿Salir sin guardar?",
-        description: "Tienes cambios sin guardar en la configuración del pedido. ¿Estás seguro de que deseas salir?",
-        confirmText: "Salir",
-        variant: "destructive",
-        onConfirm: () => {
-          setAcceptanceModalOpen(false)
-          setInitialPaymentUSD("0")
-          setInstallmentCount(0)
-          setCustomInstallments([])
-          setIsFinancingEnabled(false)
-        }
-      })
-    } else {
-      setAcceptanceModalOpen(false)
-    }
+    setAcceptanceModalOpen(false)
   }
 
   const handleClosePaymentModal = () => {
@@ -260,29 +225,6 @@ export function AdminOrdersPage() {
     }
   }, [selectedOrder])
 
-  useEffect(() => {
-    fetchOrders()
-    // Polling cada 30 segundos para nuevos pedidos (tiempo real simulado)
-    const interval = setInterval(fetchOrders, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (selectedOrder) {
-      const updatedOrder = orders.find(o => o.id === selectedOrder.id)
-      if (updatedOrder && JSON.stringify(updatedOrder) !== JSON.stringify(selectedOrder)) {
-        setSelectedOrder(updatedOrder)
-      }
-    }
-  }, [orders])
-
-  useEffect(() => {
-    if (!acceptanceModalOpen || financingModalMode !== "installment-plan") return
-    const remaining = paymentStatus?.remainingUSD || 0
-    const nextCount = Math.max(1, installmentPlanCount || 1)
-    setNewInstallments(buildInstallments(nextCount, remaining))
-  }, [acceptanceModalOpen, financingModalMode, installmentPlanCount, paymentStatus?.remainingUSD])
-
   const fetchOrders = async () => {
     try {
       const data = await api.getSales()
@@ -342,77 +284,6 @@ export function AdminOrdersPage() {
     URL.revokeObjectURL(url)
 
     toast({ title: "Exportación Exitosa", description: "Los pedidos se han exportado correctamente." })
-  }
-
-  const handleCreateInstallmentPlan = async () => {
-    if (!selectedOrder) return
-
-    const totalInstallments = newInstallments.reduce((sum, inst) => sum + parseFloat(inst.amountUSD || 0), 0)
-    const remainingToPay = selectedOrder.totalUSD - (paymentStatus?.paidAmountUSD || 0)
-
-    if (Math.abs(totalInstallments - remainingToPay) > 0.01) {
-      toast({
-        title: "Monto inválido",
-        description: `La suma de las cuotas (${formatUSD(totalInstallments)}) debe ser igual al saldo pendiente (${formatUSD(remainingToPay)})`,
-        variant: "destructive"
-      })
-      return
-    }
-
-    // Validar que las fechas sean quincenales (opcional, pero recomendado según el usuario)
-    // El usuario dijo "ej: 2 o 3 quincenas", así que validamos 14 días entre ellas
-    for (let i = 1; i < newInstallments.length; i++) {
-      const prevDate = new Date(newInstallments[i - 1].dueDate);
-      const currDate = new Date(newInstallments[i].dueDate);
-      const diffTime = currDate.getTime() - prevDate.getTime();
-      const diffDays = diffTime / (1000 * 3600 * 24);
-
-      if (Math.abs(diffDays - 14) > 0.5) { // Permitir pequeño margen por zona horaria
-        toast({
-          title: "Intervalo inválido",
-          description: `Las cuotas ${i} y ${i + 1} deben tener 14 días de diferencia (quincena).`,
-          variant: "destructive"
-        })
-        return
-      }
-    }
-
-    const dates = newInstallments.map(i => i.dueDate);
-    const uniqueDates = new Set(dates);
-    if (uniqueDates.size !== dates.length) {
-      toast({
-        title: "Fechas duplicadas",
-        description: "Cada cuota debe tener una fecha de vencimiento única.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    confirmAction({
-      title: "¿Crear plan de cuotas?",
-      description: `¿Estás seguro de que deseas crear un plan de ${newInstallments.length} cuotas para este pedido?`,
-      confirmText: "Crear Plan",
-      onConfirm: async () => {
-        setUpdatingId(selectedOrder.id)
-        try {
-          await api.createInstallmentPlan(selectedOrder.id, newInstallments)
-          toast({
-            title: "Plan creado",
-            description: "El plan de cuotas ha sido creado exitosamente",
-          })
-          setAcceptanceModalOpen(false)
-          refreshPaymentStatus(selectedOrder.id)
-        } catch (error: any) {
-          toast({
-            title: "Error",
-            description: error.message || "No se pudo crear el plan de cuotas",
-            variant: "destructive"
-          })
-        } finally {
-          setUpdatingId(null)
-        }
-      }
-    })
   }
 
   const formatStatus = (status: string) => {
@@ -496,36 +367,11 @@ export function AdminOrdersPage() {
 
   const handleAcceptClick = async (order: Order) => {
     setAcceptanceOrder(order)
-    setInitialPaymentUSD("0")
-    setFinancingModalMode("acceptance")
     setAcceptanceModalOpen(true)
-
-    // Fetch customer history for solvency validation
-    if (order.customerEmail) {
-      setLoadingSolvency(true)
-      try {
-        const response = await api.getCustomers({ search: order.customerEmail })
-        const customer = response.customers.find((c: any) => c.email === order.customerEmail)
-        if (customer) {
-          const ordersData = await api.getCustomerOrders(customer.id)
-          setCustomerOrders(ordersData.orders || [])
-        }
-      } catch (error) {
-        console.error("Error fetching solvency history:", error)
-      } finally {
-        setLoadingSolvency(false)
-      }
-    }
   }
 
   const confirmAcceptance = async () => {
     if (!acceptanceOrder) return
-
-    const initial = parseFloat(initialPaymentUSD) || 0
-    const financing = (initial > 0) ? {
-      initialPaymentUSD: initial,
-      installmentPlan: []
-    } : undefined
 
     confirmAction({
       title: "¿Aceptar pedido?",
@@ -534,7 +380,7 @@ export function AdminOrdersPage() {
       onConfirm: async () => {
         setUpdatingId(acceptanceOrder.id)
         try {
-          await api.updateSaleStatus(acceptanceOrder.id, 'ACCEPTED', undefined, financing)
+          await api.updateSaleStatus(acceptanceOrder.id, 'ACCEPTED')
           toast({
             title: "Pedido Aceptado",
             description: "El pedido ha sido aceptado correctamente.",
@@ -552,35 +398,6 @@ export function AdminOrdersPage() {
         }
       }
     })
-  }
-
-  const buildInstallments = (count: number, total: number) => {
-    const safeCount = Math.max(1, Math.floor(count))
-    const safeTotal = Math.max(0, total)
-    const amountPerInstallment = parseFloat((safeTotal / safeCount).toFixed(2))
-    const newInst = []
-    for (let i = 1; i <= safeCount; i++) {
-      const dueDate = new Date()
-      dueDate.setDate(dueDate.getDate() + (i * 14))
-      const amount = i === safeCount
-        ? safeTotal - (amountPerInstallment * (safeCount - 1))
-        : amountPerInstallment
-      newInst.push({
-        amountUSD: amount.toFixed(2),
-        dueDate: dueDate.toISOString().split('T')[0]
-      })
-    }
-    return newInst
-  }
-
-  const calculateAutomaticInstallments = (count: number, initial: number) => {
-    if (!acceptanceOrder) return
-    const remaining = acceptanceOrder.totalUSD - initial
-    if (remaining <= 0) {
-      setCustomInstallments([])
-      return
-    }
-    setCustomInstallments(buildInstallments(count, remaining))
   }
 
   const updateOrderStatus = async (orderId: string, status: string, reason?: string) => {
@@ -1021,14 +838,6 @@ export function AdminOrdersPage() {
     CANCELLED: orders.filter(o => o.status === "CANCELLED").length,
     PROPOSED: orders.filter(o => o.status === "PROPOSED").length,
   }
-  const initialPaymentValue = parseFloat(initialPaymentUSD) || 0
-  const financedTotalValue = customInstallments.reduce((s, i) => s + (parseFloat(i.amountUSD) || 0), 0)
-  const acceptanceOrderTotal = acceptanceOrder?.totalUSD || 0
-  const totalCombinedValue = initialPaymentValue + (isFinancingEnabled ? financedTotalValue : 0)
-  const exceedsOrderTotal = totalCombinedValue - acceptanceOrderTotal > 0.01
-  const planTotalValue = newInstallments.reduce((sum, inst) => sum + parseFloat(inst.amountUSD || 0), 0)
-  const planRemainingValue = paymentStatus?.remainingUSD || 0
-  const planExceedsRemaining = planTotalValue - planRemainingValue > 0.01
 
   if (loading) {
     return (
@@ -1657,23 +1466,6 @@ export function AdminOrdersPage() {
                                     </div>
                                   )}
 
-                                  {!paymentStatus.hasInstallmentPlan && (
-                                    <Button
-                                      variant="outline"
-                                      className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold h-9 text-xs"
-                                      onClick={() => {
-                                        const remaining = paymentStatus.remainingUSD;
-                                        setFinancingModalMode("installment-plan");
-                                        setInstallmentPlanCount(2);
-                                        setNewInstallments(buildInstallments(2, remaining));
-                                        setAcceptanceModalOpen(true);
-                                      }}
-                                    >
-                                      <PlusCircle className="h-3.5 w-3.5 mr-2" />
-                                      Crear Plan de Cuotas
-                                    </Button>
-                                  )}
-
                                   <Button
                                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10"
                                     onClick={() => {
@@ -1835,348 +1627,63 @@ export function AdminOrdersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Acceptance & Financing Modal */}
+      {/* Acceptance Modal */}
       <Dialog open={acceptanceModalOpen} onOpenChange={(open) => {
         if (!open) handleCloseAcceptanceModal()
         else setAcceptanceModalOpen(true)
       }}>
-        <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-primary text-xl font-black">
-              {financingModalMode === "acceptance" ? (
-                <>
-                  <CheckCircle className="h-6 w-6" aria-hidden="true" />
-                  Aceptar Pedido y Configurar Financiamiento
-                </>
-              ) : (
-                <>
-                  <Calendar className="h-6 w-6" aria-hidden="true" />
-                  Crear Plan de Cuotas
-                </>
-              )}
+              <CheckCircle className="h-6 w-6" aria-hidden="true" />
+              Aceptar Pedido
             </DialogTitle>
             <DialogDescription>
-              {financingModalMode === "acceptance" ? (
-                <>
-                  Confirma la aceptación del pedido <strong>{acceptanceOrder?.saleNumber}</strong> para <strong>{acceptanceOrder?.customerName}</strong>.
-                  Configura el pago inicial y las cuotas si aplica.
-                </>
-              ) : (
-                <>
-                  Define las fechas y montos para el pago de esta orden. El total debe coincidir con el saldo pendiente: <strong>{formatUSD(paymentStatus?.remainingUSD || 0)}</strong>.
-                </>
-              )}
+              Confirma la aceptación del pedido <strong>{acceptanceOrder?.saleNumber}</strong> para <strong>{acceptanceOrder?.customerName}</strong>.
             </DialogDescription>
           </DialogHeader>
 
-          {financingModalMode === "acceptance" ? (
-            <>
-              <div className="py-6 space-y-6">
-                <div className="p-4 bg-muted/50 rounded-xl border flex justify-between items-center" role="region" aria-label="Resumen del pedido a aceptar">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total del Pedido</p>
-                    <p className="text-2xl font-black text-primary" aria-label={`Total del pedido: ${formatUSD(acceptanceOrder?.totalUSD || 0)}`}>{formatUSD(acceptanceOrder?.totalUSD || 0)}</p>
-                  </div>
-                  <Badge variant="outline" className="bg-background font-bold px-3 py-1" aria-label={`${(acceptanceOrder?.items || []).length} productos en el pedido`}>
-                    {(acceptanceOrder?.items || []).length} Productos
-                  </Badge>
+          <div className="py-4 space-y-4">
+            <div className="p-4 bg-muted/50 rounded-xl border" role="region" aria-label="Resumen del pedido">
+              <div className="flex justify-between items-center mb-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total del Pedido</p>
+                  <p className="text-2xl font-black text-primary">{formatUSD(acceptanceOrder?.totalUSD || 0)}</p>
                 </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label htmlFor="initial-payment" className="text-sm font-bold flex items-center gap-2">
-                      <CreditCard className="h-4 w-4 text-primary" aria-hidden="true" />
-                      Pago Inicial (USD)
-                    </label>
-                    <span className="text-xs text-muted-foreground">Opcional</span>
-                  </div>
-                  <Input
-                    id="initial-payment"
-                    type="number"
-                    step="0.01"
-                    max={acceptanceOrderTotal}
-                    placeholder="0.00"
-                    value={initialPaymentUSD}
-                    onChange={(e) => {
-                      setInitialPaymentUSD(e.target.value)
-                      if (isFinancingEnabled && installmentCount > 0) {
-                        calculateAutomaticInstallments(installmentCount, parseFloat(e.target.value) || 0)
-                      }
-                    }}
-                    className="text-lg font-bold h-12"
-                    aria-label="Monto del pago inicial en dólares"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
-                  <div className="space-y-0.5">
-                    <label htmlFor="enable-financing" className="text-sm font-bold flex items-center gap-2 cursor-pointer">
-                      <Calendar className="h-4 w-4 text-primary" aria-hidden="true" />
-                      Habilitar Plan de Cuotas
-                    </label>
-                    <p className="text-xs text-muted-foreground">Dividir el saldo restante en pagos quincenales.</p>
-                  </div>
-                  <Checkbox
-                    id="enable-financing"
-                    checked={isFinancingEnabled}
-                    onCheckedChange={(checked) => {
-                      setIsFinancingEnabled(!!checked)
-                      if (checked && installmentCount === 0) {
-                        setInstallmentCount(2)
-                        calculateAutomaticInstallments(2, parseFloat(initialPaymentUSD) || 0)
-                      }
-                    }}
-                    className="h-5 w-5"
-                    aria-label="Habilitar plan de financiamiento en cuotas"
-                  />
-                </div>
-
-                {isFinancingEnabled && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="space-y-3">
-                      <label htmlFor="installment-count" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Número de Cuotas (Quincenales)</label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="installment-count"
-                          type="number"
-                          min={1}
-                          step={1}
-                          value={installmentCount}
-                          onChange={(e) => {
-                            const nextCount = Math.max(1, parseInt(e.target.value, 10) || 1)
-                            setInstallmentCount(nextCount)
-                            calculateAutomaticInstallments(nextCount, parseFloat(initialPaymentUSD) || 0)
-                          }}
-                          className="h-10 text-sm font-bold"
-                          aria-label="Cantidad de cuotas para el financiamiento"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Detalle del Plan</label>
-                      </div>
-                      <div className="space-y-2" role="group" aria-label="Detalles de las cuotas">
-                        {customInstallments.length === 0 && (
-                          <div className="text-center py-4 border border-dashed rounded-lg bg-muted/20">
-                            <p className="text-[10px] font-medium text-muted-foreground">No hay cuotas definidas. Ajusta el número de cuotas.</p>
-                          </div>
-                        )}
-                        {customInstallments.map((inst, idx) => (
-                          <div key={idx} className="flex gap-2 items-end p-3 border rounded-lg bg-background group relative animate-in zoom-in-95 duration-200">
-                            <div className="flex-[1.2]">
-                              <label htmlFor={`inst-amount-${idx}`} className="text-[9px] font-bold text-muted-foreground uppercase mb-1 block">Monto (USD)</label>
-                              <Input
-                                id={`inst-amount-${idx}`}
-                                type="number"
-                                value={inst.amountUSD}
-                                readOnly
-                                className="h-8 text-xs font-bold"
-                                aria-label={`Monto de la cuota ${idx + 1}`}
-                              />
-                            </div>
-                            <div className="flex-[1.5]">
-                              <label htmlFor={`inst-date-${idx}`} className="text-[9px] font-bold text-muted-foreground uppercase mb-1 block">Vencimiento</label>
-                              <Input
-                                id={`inst-date-${idx}`}
-                                type="date"
-                                value={inst.dueDate}
-                                onChange={(e) => {
-                                  const updated = [...customInstallments]
-                                  updated[idx].dueDate = e.target.value
-                                  setCustomInstallments(updated)
-                                }}
-                                className="h-8 text-xs"
-                                aria-label={`Fecha de vencimiento de la cuota ${idx + 1}`}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={`p-3 border rounded-lg flex gap-3 items-start transition-colors duration-300 ${loadingSolvency
-                      ? "bg-gray-50 border-gray-200"
-                      : customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                        ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
-                        : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"
-                      }`} role="status" aria-live="polite">
-                      {loadingSolvency ? (
-                        <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin mt-0.5" role="presentation" />
-                      ) : (
-                        <AlertCircle className={`h-4 w-4 mt-0.5 ${customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                          ? "text-amber-600 dark:text-amber-400"
-                          : "text-blue-600 dark:text-blue-400"
-                          }`} aria-hidden="true" />
-                      )}
-                      <div>
-                        <p className={`text-xs font-bold ${customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                          ? "text-amber-800 dark:text-amber-300"
-                          : "text-blue-800 dark:text-blue-300"
-                          }`}>
-                          Validación de Solvencia
-                        </p>
-                        {loadingSolvency ? (
-                          <p className="text-[10px] text-muted-foreground animate-pulse">Analizando historial del cliente...</p>
-                        ) : (
-                          <p className={`text-[10px] ${customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                            ? "text-amber-700 dark:text-amber-400/80"
-                            : "text-blue-700 dark:text-blue-400/80"
-                            }`}>
-                            {customerOrders.some(o => o.status === 'ACCEPTED' && !o.isPaid)
-                              ? `ATENCIÓN: El cliente tiene ${customerOrders.filter(o => o.status === 'ACCEPTED' && !o.isPaid).length} pedido(s) pendiente(s) de pago.`
-                              : "Cliente sin deudas pendientes detectadas en su historial."}
-                            {" El plan propuesto es quincenal (cada 14 días)."}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <Badge variant="outline" className="font-bold px-3 py-1">
+                  {(acceptanceOrder?.items || []).length} Productos
+                </Badge>
               </div>
-
-              <DialogFooter className="bg-muted/30 p-4 -mx-6 -mb-6 mt-4 border-t">
-                <div className="flex flex-col w-full gap-3">
-                  <div className="flex justify-between items-center px-2" role="region" aria-label="Resumen de financiamiento">
-                    <div className="text-left">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Resumen Final</p>
-                      <p className="text-sm font-bold">
-                        {formatUSD(initialPaymentValue)} Inicial + {formatUSD(financedTotalValue)} Financiado
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Diferencia</p>
-                      <p className={`text-sm font-black ${Math.abs(totalCombinedValue - acceptanceOrderTotal) < 0.01
-                        ? 'text-emerald-600'
-                        : 'text-destructive'
-                        }`} aria-live="polite">
-                        {formatUSD(totalCombinedValue - acceptanceOrderTotal)}
-                      </p>
-                      {exceedsOrderTotal && (
-                        <p className="text-[10px] font-bold text-destructive" role="alert">La suma supera el total del pedido.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 font-bold" onClick={handleCloseAcceptanceModal} aria-label="Cancelar aceptación del pedido">
-                      Cancelar
-                    </Button>
-                    <Button
-                      className="flex-[2] font-black bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
-                      onClick={confirmAcceptance}
-                      disabled={
-                        updatingId !== null ||
-                        exceedsOrderTotal ||
-                        (isFinancingEnabled && Math.abs(totalCombinedValue - acceptanceOrderTotal) >= 0.01)
-                      }
-                      aria-label="Confirmar aceptación del pedido y plan de financiamiento"
-                    >
-                      {updatingId !== null ? (
-                        <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
-                      ) : (
-                        <CheckCircle className="h-5 w-5 mr-2" aria-hidden="true" />
-                      )}
-                      CONFIRMAR ACEPTACIÓN
-                    </Button>
-                  </div>
-                </div>
-              </DialogFooter>
-            </>
-          ) : (
-            <>
-              <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="plan-installment-count" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Número de Cuotas (Quincenales)</label>
-                  <Input
-                    id="plan-installment-count"
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={installmentPlanCount}
-                    onChange={(e) => {
-                      const nextCount = Math.max(1, parseInt(e.target.value, 10) || 1)
-                      setInstallmentPlanCount(nextCount)
-                    }}
-                    aria-label="Número de cuotas quincenales"
-                  />
-                </div>
-                <div className="space-y-3" role="group" aria-label="Detalle de nuevas cuotas">
-                  {newInstallments.map((inst, idx) => (
-                    <div key={idx} className="flex gap-4 items-end p-3 border rounded-lg bg-muted/30">
-                      <div className="flex-1 space-y-2">
-                        <label htmlFor={`plan-amount-${idx}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Monto (USD)</label>
-                        <Input
-                          id={`plan-amount-${idx}`}
-                          type="number"
-                          step="0.01"
-                          value={inst.amountUSD}
-                          readOnly
-                          placeholder="0.00"
-                          aria-label={`Monto de la nueva cuota ${idx + 1}`}
-                        />
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        <label htmlFor={`plan-date-${idx}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fecha de Vencimiento</label>
-                        <Input
-                          id={`plan-date-${idx}`}
-                          type="date"
-                          value={inst.dueDate}
-                          onChange={(e) => {
-                            const updated = [...newInstallments];
-                            updated[idx].dueDate = e.target.value;
-                            setNewInstallments(updated);
-                          }}
-                          aria-label={`Fecha de vencimiento de la nueva cuota ${idx + 1}`}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="p-3 bg-primary/5 rounded-lg border border-primary/10" role="region" aria-label="Resumen del nuevo plan de cuotas">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-medium">Total en cuotas:</span>
-                    <span className={`font-black ${Math.abs(planTotalValue - planRemainingValue) < 0.01
-                      ? 'text-emerald-600'
-                      : 'text-destructive'
-                      }`} aria-live="polite">
-                      {formatUSD(planTotalValue)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs text-muted-foreground mt-1">
-                    <span>Saldo pendiente:</span>
-                    <span>{formatUSD(planRemainingValue)}</span>
-                  </div>
-                  {planExceedsRemaining && (
-                    <p className="text-[10px] font-bold text-destructive mt-1" role="alert">La suma supera el saldo pendiente.</p>
-                  )}
-                </div>
+              <div className="text-sm text-muted-foreground">
+                <p>Cliente: {acceptanceOrder?.customerName}</p>
+                <p>Teléfono: {acceptanceOrder?.customerPhone}</p>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setAcceptanceModalOpen(false)} aria-label="Cancelar creación de plan de cuotas">
-                  Cancelar
-                </Button>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                  onClick={handleCreateInstallmentPlan}
-                  disabled={
-                    updatingId !== null ||
-                    Math.abs(planTotalValue - planRemainingValue) >= 0.01
-                  }
-                  aria-label="Confirmar nuevo plan de cuotas"
-                >
-                  {updatingId !== null ? (
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" role="status" aria-label="Procesando..." />
-                  ) : (
-                    <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                  )}
-                  Confirmar Plan
-                </Button>
-              </DialogFooter>
-            </>
-          )}
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800/50">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Al aceptar el pedido, el pago se gestionará por separado. Puedes crear un plan de cuotas desde el panel del pedido después de aceptarlo.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={handleCloseAcceptanceModal}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={confirmAcceptance}
+              disabled={updatingId !== null}
+            >
+              {updatingId !== null ? (
+                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              ) : (
+                <CheckCircle className="h-5 w-5 mr-2" />
+              )}
+              Aceptar Pedido
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
