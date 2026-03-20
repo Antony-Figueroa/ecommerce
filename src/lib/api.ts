@@ -546,9 +546,14 @@ class ApiClient {
     categoryId?: string; 
     categoryIds?: string[]; 
     search?: string;
+    page?: number;
+    limit?: number;
     isFeatured?: boolean;
     isOffer?: boolean;
-    limit?: number;
+    brand?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: 'popular' | 'newest' | 'price-low' | 'price-high';
   } = {}) {
     const searchParams = new URLSearchParams()
     if (params?.categoryId) searchParams.set('categoryId', params.categoryId)
@@ -556,12 +561,21 @@ class ApiClient {
       params.categoryIds.forEach(id => searchParams.append('categoryIds[]', id))
     }
     if (params?.search) searchParams.set('search', params.search)
+    if (params?.page !== undefined) searchParams.set('page', params.page.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
     if (params?.isFeatured !== undefined) searchParams.set('isFeatured', params.isFeatured.toString())
     if (params?.isOffer !== undefined) searchParams.set('isOffer', params.isOffer.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
+    if (params?.brand) searchParams.set('brand', params.brand)
+    if (params?.minPrice !== undefined) searchParams.set('minPrice', params.minPrice.toString())
+    if (params?.maxPrice !== undefined) searchParams.set('maxPrice', params.maxPrice.toString())
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy)
     
     const query = searchParams.toString()
-    return this.request<{ products: any[] }>(`/products/public${query ? `?${query}` : ''}`)
+    return this.request<{ products: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/products/public${query ? `?${query}` : ''}`)
+  }
+
+  async getRelatedProducts(productId: string, limit = 4) {
+    return this.request<{ products: any[] }>(`/products/${productId}/related?limit=${limit}`)
   }
 
   async getProduct(id: string) {
@@ -616,6 +630,11 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     })
+  }
+
+  // Order tracking (public)
+  async trackOrder(saleNumber: string) {
+    return this.request<any>(`/sales/track/${saleNumber}`)
   }
 
   // Catalog

@@ -147,21 +147,44 @@ export class InventoryService {
       categoryId = null,
       categoryIds = null,
       search = '',
+      page = 1,
+      limit = 12,
       isFeatured = undefined,
       isOffer = undefined,
-      limit = 1000
+      brand = null,
+      minPrice = undefined,
+      maxPrice = undefined,
+      sortBy = 'newest'
     } = options || {}
 
-    const { products } = await this.productRepo.findAll({
+    const { products, total } = await this.productRepo.findAll({
       categoryId,
       categoryIds,
       search,
+      page,
+      limit,
       onlyActive: true,
       isFeatured: isFeatured === 'true' || isFeatured === true ? true : (isFeatured === 'false' || isFeatured === false ? false : undefined),
       isOffer: isOffer === 'true' || isOffer === true ? true : (isOffer === 'false' || isOffer === false ? false : undefined),
-      limit
+      brand,
+      minPrice,
+      maxPrice,
+      sortBy
     })
-    return products
+
+    return {
+      products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    }
+  }
+
+  async getRelatedProducts(productId: string, categoryIds: string[], limit = 4) {
+    return this.productRepo.findRelated(productId, categoryIds, limit)
   }
 
   // --- Gestión de Marcas, Formatos y Proveedores ---

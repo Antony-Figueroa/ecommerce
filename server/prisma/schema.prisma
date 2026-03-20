@@ -127,6 +127,13 @@ model Product {
   @@index([isActive])
   @@index([brandId])
   @@index([createdAt])
+  @@index([isFeatured])
+  @@index([isOffer])
+  @@index([slug])
+  @@index([stock])
+  @@index([isActive, isFeatured])
+  @@index([isActive, isOffer])
+  @@index([isActive, stock])
 }
 
 model Provider {

@@ -126,8 +126,8 @@ export class AIChatService {
   private async getProductContext() {
     try {
       console.log('[AIChatService] Fetching product context...');
-      // Reducimos el límite para evitar exceder la cuota de tokens en modelos gratuitos
-      const products = await this.inventoryService.getPublicProducts({ limit: 50 })
+      const result = await this.inventoryService.getPublicProducts({ limit: 50 })
+      const products = result.products
       
       if (!products || products.length === 0) {
         console.warn('[AIChatService] No products found in database for context.')
@@ -137,7 +137,6 @@ export class AIChatService {
       console.log(`[AIChatService] Found ${products.length} products for context.`) 
 
       const context = (products as any[]).map((p: any) => {
-        // Formato ultra-compacto: Nombre (Marca) $Precio
         return `- ${p.name} (${p.brand}): $${p.price}`
       }).join('\n')
 
