@@ -47,9 +47,7 @@ export function RegisterPage() {
   const [googleReady, setGoogleReady] = useState(false)
 
   useEffect(() => {
-    if (import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-      setGoogleReady(true)
-    }
+    setGoogleReady(true)
   }, [])
   useEffect(() => {
     const validate = () => {
@@ -77,7 +75,7 @@ export function RegisterPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
-
+    
     // Restricciones de entrada inmediata según requerimientos
     if (name === "phone" && value && !/^\d*$/.test(value)) return
 
@@ -127,16 +125,16 @@ export function RegisterPage() {
     try {
       setLoading(true)
       setError("")
-
+      
       if (!credentialResponse.credential) {
         throw new Error("No se recibió la credencial de Google")
       }
-
+      
       const result = await loginWithGoogle(credentialResponse.credential)
-
+      
       if (result.requiresRegistration) {
-        navigate("/registro/confirmacion", {
-          state: { googleData: result.googleData }
+        navigate("/registro/confirmacion", { 
+          state: { googleData: result.googleData } 
         })
       } else {
         navigate("/")
@@ -192,7 +190,7 @@ export function RegisterPage() {
                 />
               </div>
             )}
-
+            
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-slate-100 dark:border-white/5"></span>
@@ -379,7 +377,7 @@ export function RegisterPage() {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
+          
           {/* Logo overlay */}
           <div className="absolute top-12 left-12">
             <div className="flex items-center gap-3 text-white">
@@ -397,7 +395,7 @@ export function RegisterPage() {
                 Empieza hoy tu<br />nueva vida.
               </h2>
             </div>
-
+            
             <div className="flex flex-wrap gap-4 pt-4">
               <div className="px-6 py-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-bold flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.8)]" />

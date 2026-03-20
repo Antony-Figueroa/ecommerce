@@ -22,11 +22,24 @@ export function ProductPage() {
 
       try {
         setLoading(true)
-        const productRes = await api.getProduct(id)
+        // Optimizando waterfalls mediante ejecución paralela (async-parallel)
+        const [productRes, productsRes] = await Promise.all([
+          api.getProduct(id),
+          api.getPublicProducts()
+        ])
+
         setProduct(productRes.product)
 
-        const relatedRes = await api.getRelatedProducts(id, 4)
-        setRelatedProducts(relatedRes.products || [])
+        const allProducts = productsRes.products || []
+        const related = allProducts.filter(
+          (p: Product) => {
+            if (p.id === id) return false;
+            const pCats = p.categoryIds || [(p as any).categoryId];
+            const currentCats = productRes.product.categoryIds || [(productRes.product as any).categoryId];
+            return pCats.some(catId => currentCats.includes(catId));
+          }
+        )
+        setRelatedProducts(related)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al cargar producto")
       } finally {

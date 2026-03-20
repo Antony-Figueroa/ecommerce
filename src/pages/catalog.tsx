@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { Link, useParams, useNavigate, useLocation } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, Grid, List, Search } from "lucide-react"
@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { ProductGrid } from "@/components/shop/product-grid"
 import { ProductFilters } from "@/components/shop/product-filters"
 import { api } from "@/lib/api"
-import { useProducts } from "@/hooks/use-products"
-import { formatBS, cn } from "@/lib/utils"
+import { formatUSD, formatBS, cn } from "@/lib/utils"
+import type { Product, Category } from "@/types"
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -26,17 +26,19 @@ const staggerContainer = {
   }
 };
 
+const ITEMS_PER_PAGE = 12
+
 interface CatalogPageProps {
   offersOnly?: boolean
 }
 
 export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
-  const { slug } = useParams<{ slug?: string }>()
-  const navigate = useNavigate()
-  const location = useLocation()
-
   const [searchQuery, setSearchQuery] = useState("")
-  const [bcvRate, setBcvRate] = useState(42.50)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
+  const [sortBy, setSortBy] = useState("popular")
   const [viewMode, setViewMode] = useState<"default" | "list">(() => {
     if (typeof window !== "undefined") {
       return (localStorage.getItem("catalogViewMode") as "default" | "list") || "default"
@@ -44,26 +46,28 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
     return "default"
   })
 
-  const [currentPage, setCurrentPage] = useState(1)
-  const catalogHeaderRef = useRef<HTMLDivElement>(null)
-  const searchRef = useRef<HTMLDivElement>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [bcvRate, setBcvRate] = useState(42.50)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const {
-    products,
-    categories,
-    loading,
-    error,
-    pagination,
-    filters,
-    setFilters,
-    brands,
-    priceStats
-  } = useProducts({
-    categoryId: slug || null,
-    isOffer: offersOnly ? true : undefined,
-    initialPage: currentPage,
-    initialLimit: 12
-  })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [searchSuggestions, setSearchSuggestions] = useState<Product[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const catalogHeaderRef = useRef<HTMLDivElement>(null)
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (catalogHeaderRef.current) {
+      const headerBottom = catalogHeaderRef.current.getBoundingClientRect().bottom + window.scrollY;
+      window.scrollTo({
+        top: headerBottom - 100, // Offset for sticky headers or better positioning
+        behavior: 'smooth'
+      });
+    }
+  }, [currentPage])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -72,39 +76,58 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
   }, [viewMode])
 
   useEffect(() => {
-    api.getBCVRate()
-      .then(res => setBcvRate(res.rate || 42.50))
-      .catch(() => {})
+    async function loadData() {
+      try {
+        if (products.length === 0) {
+          setLoading(true)
+        }
+        // Optimizando carga paralela para eliminar waterfalls (async-parallel)
+        const [productsRes, categoriesRes, bcvRes] = await Promise.all([
+          api.getPublicProducts(),
+          api.getCategories(),
+          api.getBCVRate().catch((err) => {
+            console.warn("Error fetching BCV rate, using fallback:", err)
+            return { rate: 42.50 }
+          }),
+        ])
+        setProducts(productsRes.products || [])
+        setCategories(categoriesRes.categories || [])
+        setBcvRate(bcvRes.rate || 42.50)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al cargar productos")
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
   }, [])
 
+  const { slug } = useParams<{ slug?: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  // Sincronizar filtros con URL (incluyendo parámetros de búsqueda del Quiz)
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const search = params.get('search')
-    if (search) setSearchQuery(search)
+    const tags = params.getAll('tags')
+
+    if (search) {
+      setSearchQuery(search)
+    }
+    if (tags.length > 0) {
+      setSelectedTags(tags)
+    }
   }, [location.search])
 
+  // Evitar efectos innecesarios para estados derivados (rerender-derived-state-no-effect)
   useEffect(() => {
-    const debounce = setTimeout(() => {
-      if (searchQuery !== filters.search) {
-        setFilters({ search: searchQuery })
-      }
-    }, 500)
-    return () => clearTimeout(debounce)
-  }, [searchQuery, filters.search, setFilters])
-
-  useEffect(() => {
-    setCurrentPage(pagination.page)
-  }, [pagination.page])
-
-  useEffect(() => {
-    if (catalogHeaderRef.current) {
-      const headerBottom = catalogHeaderRef.current.getBoundingClientRect().bottom + window.scrollY;
-      window.scrollTo({
-        top: headerBottom - 100,
-        behavior: 'smooth'
-      });
+    if (slug) {
+      setSelectedCategory(slug)
+    } else {
+      setSelectedCategory(null)
     }
-  }, [currentPage])
+  }, [slug])
 
   const handleCategoryChange = useCallback((categorySlug: string | null) => {
     if (categorySlug) {
@@ -116,24 +139,88 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
   const handleClearFilters = useCallback(() => {
     handleCategoryChange(null)
-    setFilters({
-      search: '',
-      selectedBrands: [],
-      priceRange: null,
-      sortBy: 'newest'
-    })
-    setSearchQuery('')
+    setSelectedBrands([])
+    setPriceRange(null)
+    setSearchQuery("")
+    setSelectedTags([])
     setCurrentPage(1)
     navigate('/productos', { replace: true })
-  }, [handleCategoryChange, navigate, setFilters])
+  }, [handleCategoryChange, navigate])
 
-  const handleSortChange = useCallback((sortBy: 'popular' | 'newest' | 'price-low' | 'price-high') => {
-    setFilters({ sortBy })
-  }, [setFilters])
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
-  if (loading && products.length === 0) {
+  useEffect(() => {
+    if (searchQuery.length >= 2) {
+      const suggestions = products
+        .filter(p => 
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.category?.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .slice(0, 5)
+      setSearchSuggestions(suggestions)
+      setShowSuggestions(true)
+    } else {
+      setSearchSuggestions([])
+      setShowSuggestions(false)
+    }
+  }, [searchQuery, products])
+
+  const brands = useMemo(() => {
+    const b = new Set<string>()
+    products.forEach(p => {
+      if (p.brand) b.add(p.brand)
+    })
+    return Array.from(b).sort()
+  }, [products])
+
+  const priceStats = useMemo(() => {
+    if (products.length === 0) return { min: 0, max: 0 }
+    const prices = products.map(p => p.price)
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices)
+    }
+  }, [products])
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.category?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (selectedTags.length > 0 && selectedTags.some(tag => 
+                            product.name.toLowerCase().includes(tag.toLowerCase()) || 
+                            product.description?.toLowerCase().includes(tag.toLowerCase())
+                          ))
+      const matchesCategory = !selectedCategory || product.category?.slug === selectedCategory
+      const matchesBrands = selectedBrands.length === 0 || (product.brand && selectedBrands.includes(product.brand))
+      const matchesPrice = !priceRange || (product.price >= priceRange[0] && product.price <= priceRange[1])
+      const matchesOffers = !offersOnly || product.isOffer
+
+      return (matchesSearch || (selectedTags.length > 0 && matchesSearch)) && matchesCategory && matchesBrands && matchesPrice && matchesOffers
+    }).sort((a, b) => {
+      if (sortBy === "price-low") return a.price - b.price
+      if (sortBy === "price-high") return b.price - a.price
+      if (sortBy === "newest") return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+      return 0 // popular as default
+    })
+  }, [products, searchQuery, selectedCategory, selectedBrands, priceRange, sortBy, offersOnly])
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -146,7 +233,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center bg-[#F8FAFC] dark:bg-background">
+      <div className="container mx-auto px-4 py-8 text-center bg-[#F8FAFC]">
         <p className="text-destructive font-bold uppercase tracking-widest text-xs">Error: {error}</p>
         <Button onClick={() => window.location.reload()} className="mt-6 bg-slate-950 hover:bg-slate-800 text-white rounded-none font-black text-xs uppercase tracking-[0.2em] px-8 py-6">
           Reintentar
@@ -157,6 +244,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Dynamic Header - Vitality Zen Style */}
       <div className="bg-white dark:bg-card border-b border-slate-100 dark:border-border py-16 relative overflow-hidden" ref={catalogHeaderRef}>
         <div className="absolute top-0 right-0 w-1/3 h-full bg-primary/5 rounded-full blur-3xl translate-x-1/4 -translate-y-1/4" />
         <div className="container mx-auto px-4 relative z-10">
@@ -191,6 +279,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
 
       <div className="container mx-auto px-4 py-12">
         <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+          {/* Sidebar Filters - Subtle Layering */}
           <motion.aside 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -202,13 +291,13 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                 <ProductFilters
                   categories={categories}
                   brands={brands}
-                  selectedCategory={filters.categoryId}
-                  selectedBrands={filters.selectedBrands}
-                  priceRange={filters.priceRange}
+                  selectedCategory={selectedCategory}
+                  selectedBrands={selectedBrands}
+                  priceRange={priceRange}
                   priceStats={priceStats}
                   onCategoryChange={handleCategoryChange}
-                  onBrandsChange={(brands) => setFilters({ selectedBrands: brands })}
-                  onPriceRangeChange={(range) => setFilters({ priceRange: range })}
+                  onBrandsChange={setSelectedBrands}
+                  onPriceRangeChange={setPriceRange}
                   onClearAll={handleClearFilters}
                 />
               </div>
@@ -216,6 +305,7 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
           </motion.aside>
 
           <main className="flex-1">
+            {/* Toolbar - Technical Feel */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -231,7 +321,44 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                     className="pl-11 h-12 bg-white dark:bg-background border-slate-200 dark:border-border focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all rounded-xl font-medium text-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
                   />
+                  <AnimatePresence>
+                    {showSuggestions && searchSuggestions.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute z-50 w-full mt-2 bg-white dark:bg-card border border-slate-100 dark:border-border rounded-xl shadow-2xl overflow-hidden"
+                      >
+                        {searchSuggestions.map((product) => (
+                          <Link
+                            key={product.id}
+                            to={`/producto/${product.id}`}
+                            className="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 dark:hover:bg-muted transition-colors border-b border-slate-50 dark:border-border last:border-none"
+                            onClick={() => setShowSuggestions(false)}
+                          >
+                            <div className="h-12 w-12 rounded-lg bg-slate-100 dark:bg-muted p-1">
+                              <img 
+                                src={product.image || "/placeholder.png"} 
+                                alt={product.name} 
+                                className="h-full w-full object-contain" 
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = "https://placehold.co/100x100/f8fafc/6366f1?text=X";
+                                  target.onerror = null;
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-black uppercase truncate text-slate-900 dark:text-foreground">{product.name}</p>
+                              <p className="text-[10px] font-bold text-primary">${formatUSD(product.price)}</p>
+                            </div>
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -260,9 +387,10 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ordenar:</span>
                     <select
                       className="bg-transparent text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-foreground focus:outline-none cursor-pointer"
-                      value={filters.sortBy}
-                      onChange={(e) => handleSortChange(e.target.value as any)}
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
                     >
+                      <option value="popular">Más Populares</option>
                       <option value="newest">Lo más nuevo</option>
                       <option value="price-low">Precio: Menor a Mayor</option>
                       <option value="price-high">Precio: Mayor a Menor</option>
@@ -271,26 +399,35 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <AnimatePresence>
-                  {filters.categoryId && (
-                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
-                      <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
-                        <span className="text-[10px] font-black uppercase tracking-widest">Cat: {categories.find((c) => c.slug === filters.categoryId)?.name}</span>
-                        <button className="hover:text-primary transition-colors" onClick={() => handleCategoryChange(null)}>×</button>
-                      </Badge>
-                    </motion.div>
-                  )}
-                  {filters.selectedBrands.map((brand) => (
-                    <motion.div key={brand} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
-                      <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
-                        <span className="text-[10px] font-black uppercase tracking-widest">{brand}</span>
-                        <button className="hover:text-primary transition-colors" onClick={() => setFilters({ selectedBrands: filters.selectedBrands.filter((b) => b !== brand) })}>×</button>
-                      </Badge>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                {(filters.categoryId || filters.selectedBrands.length > 0 || filters.search || filters.priceRange) && (
+              {/* Active Badges */}
+              {(selectedCategory || selectedBrands.length > 0 || selectedTags.length > 0 || searchQuery !== "" || priceRange) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <AnimatePresence>
+                    {selectedCategory && (
+                      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
+                        <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
+                          <span className="text-[10px] font-black uppercase tracking-widest">Cat: {categories.find((c) => c.slug === selectedCategory)?.name}</span>
+                          <button className="hover:text-primary transition-colors" onClick={() => handleCategoryChange(null)}>×</button>
+                        </Badge>
+                      </motion.div>
+                    )}
+                    {selectedBrands.map((brand) => (
+                      <motion.div key={brand} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
+                        <Badge className="h-8 bg-white dark:bg-card border border-slate-200 dark:border-border text-slate-900 dark:text-foreground px-3 rounded-lg gap-2 shadow-sm">
+                          <span className="text-[10px] font-black uppercase tracking-widest">{brand}</span>
+                          <button className="hover:text-primary transition-colors" onClick={() => setSelectedBrands(selectedBrands.filter((b) => b !== brand))}>×</button>
+                        </Badge>
+                      </motion.div>
+                    ))}
+                    {selectedTags.map((tag) => (
+                      <motion.div key={tag} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.8, opacity: 0 }}>
+                        <Badge className="h-8 bg-primary/10 border border-primary/20 text-primary px-3 rounded-lg gap-2 shadow-sm">
+                          <span className="text-[10px] font-black uppercase tracking-widest">Tag: {tag}</span>
+                          <button className="hover:text-primary transition-colors" onClick={() => setSelectedTags(selectedTags.filter((t) => t !== tag))}>×</button>
+                        </Badge>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -299,48 +436,49 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                   >
                     Clear All
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </motion.div>
 
+            {/* Results Grid */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
               className="mb-6 flex items-center justify-between text-[10px] font-black uppercase tracking-[0.2em] text-slate-400"
             >
-              <span>{loading ? 'Cargando...' : `${pagination.total} productos encontrados`}</span>
+              <span>{filteredProducts.length} Results Found</span>
               <span>BCV: Bs {formatBS(bcvRate)}</span>
             </motion.div>
 
             <AnimatePresence mode="wait">
-              {products.length > 0 ? (
+              {paginatedProducts.length > 0 ? (
                 <motion.div 
-                  key={currentPage + filters.sortBy + filters.categoryId + filters.search}
+                  key={currentPage + sortBy + selectedCategory + searchQuery}
                   initial="initial"
                   animate="animate"
                   exit="exit"
                   variants={staggerContainer}
                 >
-                  <ProductGrid products={products} bcvRate={bcvRate} viewMode={viewMode} />
+                  <ProductGrid products={paginatedProducts} bcvRate={bcvRate} viewMode={viewMode} />
 
-                  {pagination.totalPages > 1 && (
+                  {totalPages > 1 && (
                     <motion.div variants={fadeInUp} className="flex items-center justify-center gap-2 mt-16">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-[10px] font-black uppercase tracking-widest h-10 px-4 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted"
                           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                          disabled={currentPage === 1 || loading}
+                          disabled={currentPage === 1}
                         >
                           Anterior
                         </Button>
                         <div className="flex items-center gap-1 bg-white dark:bg-card p-1 rounded-xl border border-slate-100 dark:border-border shadow-sm">
-                          {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                          {[...Array(Math.min(5, totalPages))].map((_, i) => {
                             let pageNum: number
-                            if (pagination.totalPages <= 5) pageNum = i + 1
+                            if (totalPages <= 5) pageNum = i + 1
                             else if (currentPage <= 3) pageNum = i + 1
-                            else if (currentPage >= pagination.totalPages - 2) pageNum = pagination.totalPages - 4 + i
+                            else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i
                             else pageNum = currentPage - 2 + i
                             
                             return (
@@ -365,8 +503,8 @@ export function CatalogPage({ offersOnly = false }: CatalogPageProps) {
                           variant="ghost"
                           size="sm"
                           className="text-[10px] font-black uppercase tracking-widest h-10 px-4 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-muted"
-                          onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
-                          disabled={currentPage === pagination.totalPages || loading}
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
                         >
                           Siguiente
                         </Button>
