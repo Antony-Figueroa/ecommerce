@@ -13,12 +13,36 @@ export class SocketService {
       'http://127.0.0.1:5173',
       'http://localhost:5173',
       'http://localhost:3001',
-      'http://127.0.0.1:3001'
+      'http://127.0.0.1:3001',
+      /\.vercel\.app$/,
+      /\.vercel\.app:\d+$/
     ]
     
     this.io = new SocketServer(server, {
       cors: {
-        origin: corsOrigins,
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+          if (!origin) {
+            callback(null, true)
+            return
+          }
+          
+          const isAllowed = corsOrigins.some(allowed => {
+            if (typeof allowed === 'string') {
+              return allowed === origin
+            }
+            if (allowed instanceof RegExp) {
+              return allowed.test(origin)
+            }
+            return false
+          })
+          
+          if (isAllowed || origin.includes('vercel.app') || origin.includes('localhost')) {
+            callback(null, true)
+          } else {
+            console.warn(`[Socket.io CORS] Origin denied: ${origin}`)
+            callback(new Error('Not allowed by CORS'))
+          }
+        },
         credentials: true,
         methods: ['GET', 'POST']
       },
