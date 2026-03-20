@@ -36,7 +36,6 @@ import { notificationService, bcvUpdaterService, cartService, backupService } fr
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
 import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
-import aiChatRoutes from './infrastructure/web/routes/ai-chat.routes.js'
 
 import { createServer } from 'http'
 import { socketService } from './infrastructure/socket.service.js'
@@ -136,8 +135,6 @@ app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/catalog', catalogRoutes)
-app.use('/api/chat', aiChatRoutes)
-app.use('/api/admin/chat_ai', aiChatRoutes)
 app.use('/api/admin/bcv', bcvAdminRoutes)
 app.use('/api/admin/products', adminProductRoutes)
 app.use('/api/admin/categories', adminCategoryRoutes)

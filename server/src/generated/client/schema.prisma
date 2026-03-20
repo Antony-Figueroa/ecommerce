@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -121,12 +121,6 @@ model Product {
   requirementItems    RequirementItem[]
   saleItems           SaleItem[]
   categories          Category[]            @relation("CategoryToProduct")
-  inventoryStock      InventoryStock[]
-  inventoryTransfers  InventoryTransfer[]
-
-  @@index([isActive])
-  @@index([brandId])
-  @@index([createdAt])
 }
 
 model Provider {
@@ -273,38 +267,33 @@ model RequirementItem {
 }
 
 model Sale {
-  id                String         @id @default(uuid())
-  saleNumber        String         @unique
-  userId            String?
-  customerName      String?
-  customerPhone     String?
-  customerEmail     String?
-  deliveryAddress   String?
-  paymentMethod     String         @default("WHATSAPP")
-  status            String         @default("PENDING")
-  subtotalUSD       Decimal        @default(0)
-  shippingCostUSD   Decimal        @default(0)
-  totalUSD          Decimal        @default(0)
-  bcvRate           Decimal
-  totalBS           Decimal        @default(0)
-  profitUSD         Decimal        @default(0)
-  profitBS          Decimal        @default(0)
-  isPaid            Boolean        @default(false)
-  paidAmountUSD     Decimal        @default(0)
-  confirmationToken String?        @unique
-  deliveryStatus    String         @default("NOT_DELIVERED")
-  notes             String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  installments      Installment[]
-  payments          Payment[]
-  user              User?          @relation(fields: [userId], references: [id])
-  auditLogs         SaleAuditLog[]
-  items             SaleItem[]
-
-  @@index([status])
-  @@index([userId])
-  @@index([createdAt])
+  id              String         @id @default(uuid())
+  saleNumber      String         @unique
+  userId          String?
+  customerName    String?
+  customerPhone   String?
+  customerEmail   String?
+  deliveryAddress String?
+  paymentMethod   String         @default("WHATSAPP")
+  status          String         @default("PENDING")
+  subtotalUSD     Decimal        @default(0)
+  shippingCostUSD Decimal        @default(0)
+  totalUSD        Decimal        @default(0)
+  bcvRate         Decimal
+  totalBS         Decimal        @default(0)
+  profitUSD       Decimal        @default(0)
+  profitBS        Decimal        @default(0)
+  isPaid          Boolean        @default(false)
+  paidAmountUSD   Decimal?
+  deliveryStatus  String         @default("NOT_DELIVERED")
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  installments    Installment[]
+  payments        Payment[]
+  user            User?          @relation(fields: [userId], references: [id])
+  auditLogs       SaleAuditLog[]
+  items           SaleItem[]
 }
 
 model Payment {
@@ -402,61 +391,6 @@ model InventoryLog {
   changeAmount  Int
   reason        String?
   createdAt     DateTime @default(now())
-
-  @@index([productId])
-  @@index([createdAt])
-}
-
-model InventoryLocation {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  address     String?
-  isActive    Boolean  @default(true)
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  stock         InventoryStock[]
-  transfersFrom InventoryTransfer[] @relation("TransferFromLocation")
-  transfersTo   InventoryTransfer[] @relation("TransferToLocation")
-}
-
-model InventoryStock {
-  id         String   @id @default(uuid())
-  productId  String
-  locationId String
-  quantity   Int      @default(0)
-  minStock   Int      @default(5)
-  maxStock   Int      @default(100)
-  updatedAt  DateTime @updatedAt
-
-  product  Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
-  location InventoryLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
-
-  @@unique([productId, locationId])
-  @@index([productId])
-  @@index([locationId])
-}
-
-model InventoryTransfer {
-  id             String    @id @default(uuid())
-  fromLocationId String
-  toLocationId   String
-  productId      String
-  quantity       Int
-  status         String    @default("PENDING")
-  notes          String?
-  createdAt      DateTime  @default(now())
-  completedAt    DateTime?
-
-  fromLocation InventoryLocation @relation("TransferFromLocation", fields: [fromLocationId], references: [id])
-  toLocation   InventoryLocation @relation("TransferToLocation", fields: [toLocationId], references: [id])
-  product      Product           @relation(fields: [productId], references: [id])
-
-  @@index([fromLocationId])
-  @@index([toLocationId])
-  @@index([productId])
 }
 
 model Brand {
@@ -467,15 +401,6 @@ model Brand {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   products    Product[]
-}
-
-model Format {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
 
 model Setting {

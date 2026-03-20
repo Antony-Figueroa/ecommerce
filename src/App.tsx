@@ -37,7 +37,6 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings").then(m => 
 const AdminProvidersPage = lazy(() => import("@/pages/admin/providers").then(m => ({ default: m.AdminProvidersPage })))
 const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m => ({ default: m.FinancialDashboard })))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
-const AdminAIHub = lazy(() => import("@/pages/admin/AdminAIHub").then(m => ({ default: m.AdminAIHub })))
 const AdminAuditPage = lazy(() => import("@/pages/admin/audit").then(m => ({ default: m.AdminAuditPage })))
 const AdminKanbanPage = lazy(() => import("@/pages/admin/kanban").then(m => ({ default: m.AdminKanbanPage })))
 
@@ -77,7 +76,6 @@ function App() {
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />
                 <Route path="/admin/financial" element={<FinancialDashboard />} />
                 <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
-                <Route path="/admin/ai-hub" element={<AdminAIHub />} />
                 <Route path="/admin/audit" element={<AdminAuditPage />} />
                 <Route path="/admin/kanban" element={<AdminKanbanPage />} />
               </Route>

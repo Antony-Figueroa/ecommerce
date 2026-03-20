@@ -31,7 +31,6 @@ import { ProductManager } from '../application/services/product-manager.service.
 import { PaymentManager } from '../application/services/payment-manager.service.js'
 import { NotificationManager } from '../application/services/notification-manager.service.js'
 import { UserService } from '../application/services/user.service.js'
-import { AIChatService } from '../application/services/ai-chat.service.js'
 import { BusinessEventService } from '../application/services/business-event.service.js'
 import { BackupService } from '../application/services/backup.service.js'
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
@@ -189,4 +188,3 @@ export const favoriteService = new FavoriteService(favoriteRepo, notificationSer
 
 export const cartService = new CartService(cartRepo, notificationService, emailService)
 export const userService = new UserService(userRepo, auditService)
-export const aiChatService = new AIChatService(inventoryService)

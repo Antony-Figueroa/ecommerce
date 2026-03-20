@@ -116,9 +116,6 @@ Prisma.NullTypes = {
  */
 
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
-  ReadUncommitted: 'ReadUncommitted',
-  ReadCommitted: 'ReadCommitted',
-  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -349,7 +346,6 @@ exports.Prisma.SaleScalarFieldEnum = {
   profitBS: 'profitBS',
   isPaid: 'isPaid',
   paidAmountUSD: 'paidAmountUSD',
-  confirmationToken: 'confirmationToken',
   deliveryStatus: 'deliveryStatus',
   notes: 'notes',
   createdAt: 'createdAt',
@@ -445,49 +441,7 @@ exports.Prisma.InventoryLogScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.InventoryLocationScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  address: 'address',
-  isActive: 'isActive',
-  isDefault: 'isDefault',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.InventoryStockScalarFieldEnum = {
-  id: 'id',
-  productId: 'productId',
-  locationId: 'locationId',
-  quantity: 'quantity',
-  minStock: 'minStock',
-  maxStock: 'maxStock',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.InventoryTransferScalarFieldEnum = {
-  id: 'id',
-  fromLocationId: 'fromLocationId',
-  toLocationId: 'toLocationId',
-  productId: 'productId',
-  quantity: 'quantity',
-  status: 'status',
-  notes: 'notes',
-  createdAt: 'createdAt',
-  completedAt: 'completedAt'
-};
-
 exports.Prisma.BrandScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  description: 'description',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.FormatScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
@@ -550,11 +504,6 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
-};
-
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
@@ -586,11 +535,7 @@ exports.Prisma.ModelName = {
   SaleAuditLog: 'SaleAuditLog',
   BCVRate: 'BCVRate',
   InventoryLog: 'InventoryLog',
-  InventoryLocation: 'InventoryLocation',
-  InventoryStock: 'InventoryStock',
-  InventoryTransfer: 'InventoryTransfer',
   Brand: 'Brand',
-  Format: 'Format',
   Setting: 'Setting',
   SettingHistory: 'SettingHistory',
   Notification: 'Notification',

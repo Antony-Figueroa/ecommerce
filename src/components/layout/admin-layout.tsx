@@ -16,7 +16,6 @@ import {
   Bell,
   LogOut,
   Leaf,
-  Cpu,
   Shield,
   Kanban,
 } from "lucide-react"
@@ -111,7 +110,6 @@ export function AdminLayout({ children, title }: AdminLayoutProps) {
         { path: "/admin/customers", label: "Clientes", icon: Users },
         { path: "/admin/analytics", label: "Reportes", icon: BarChart3 },
         { path: "/admin/notifications", label: "Notificaciones", icon: Bell },
-        { path: "/admin/ai-hub", label: "AI Chat", icon: Cpu },
       ]
     },
     {
