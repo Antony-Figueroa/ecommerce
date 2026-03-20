@@ -1,14 +1,23 @@
 export interface SaleRepository {
-  create(data: any, tx?: any): Promise<any>
+  create(data: any): Promise<any>
   findById(id: string): Promise<any | null>
   findBySaleNumber(saleNumber: string): Promise<any | null>
-  findByConfirmationToken(token: string): Promise<any | null>
   findAll(options: any): Promise<any[]>
   count(where: any): Promise<number>
   getSummary(options: any): Promise<any>
   getStats(options: any): Promise<any>
-  update(id: string, data: any, tx?: any): Promise<any>
-  updateItem(itemId: string, data: any, tx?: any): Promise<any>
+  update(id: string, data: any): Promise<any>
+  updateItem(itemId: string, data: any): Promise<any>
+  createAuditLog(data: {
+    saleId: string
+    action: string
+    oldStatus?: string
+    newStatus?: string
+    oldDeliveryStatus?: string
+    newDeliveryStatus?: string
+    userId?: string
+    reason?: string
+  }): Promise<any>
   findDuplicate(data: {
     customerPhone: string
     totalUSD: number
@@ -17,26 +26,26 @@ export interface SaleRepository {
 }
 
 export interface PaymentRepository {
-  create(data: any, tx?: any): Promise<any>
+  create(data: any): Promise<any>
   findById(id: string): Promise<any | null>
   findBySaleId(saleId: string): Promise<any[]>
 }
 
 export interface InstallmentRepository {
-  create(data: any, tx?: any): Promise<any>
-  createMany(data: any[], tx?: any): Promise<any>
+  create(data: any): Promise<any>
+  createMany(data: any[]): Promise<any>
   findById(id: string): Promise<any | null>
   findBySaleId(saleId: string): Promise<any[]>
-  update(id: string, data: any, tx?: any): Promise<any>
+  update(id: string, data: any): Promise<any>
   findOverdue(date: Date): Promise<any[]>
 }
 
 export interface PaymentProofRepository {
-  create(data: any, tx?: any): Promise<any>
+  create(data: any): Promise<any>
   findById(id: string): Promise<any | null>
   findByInstallmentId(installmentId: string): Promise<any[]>
   findByStatus(status: string): Promise<any[]>
-  update(id: string, data: any, tx?: any): Promise<any>
+  update(id: string, data: any): Promise<any>
 }
 
 export interface NotificationRepository {
@@ -49,7 +58,7 @@ export interface NotificationRepository {
     userId?: string;
     link?: string;
     metadata?: string;
-  }, tx?: any): Promise<any>
+  }): Promise<any>
   findUnread(userId?: string): Promise<any[]>
   findAll(options: { 
     userId?: string; 

@@ -27,25 +27,25 @@
   }
 
   .dark {
-    --background: 224 25% 4%;
-    --foreground: 0 0% 98%;
-    --card: 224 25% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 224 25% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 85 75% 45%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 224 25% 12%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 224 25% 10%;
-    --muted-foreground: 224 10% 75%;
-    --accent: 85 75% 15%;
-    --accent-foreground: 85 75% 95%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 224 25% 12%;
-    --input: 224 25% 12%;
-    --ring: 85 75% 45%;
+    --background: 120 15% 8%;
+    --foreground: 85 20% 95%;
+    --card: 120 15% 10%;
+    --card-foreground: 85 20% 95%;
+    --popover: 120 15% 10%;
+    --popover-foreground: 85 20% 95%;
+    --primary: 85 70% 50%;
+    --primary-foreground: 120 15% 8%;
+    --secondary: 120 15% 15%;
+    --secondary-foreground: 85 20% 90%;
+    --muted: 120 15% 14%;
+    --muted-foreground: 85 10% 65%;
+    --accent: 35 40% 20%;
+    --accent-foreground: 35 60% 85%;
+    --destructive: 0 62.8% 45%;
+    --destructive-foreground: 85 20% 95%;
+    --border: 120 15% 18%;
+    --input: 120 15% 18%;
+    --ring: 85 70% 50%;
   }
 }
 
@@ -53,57 +53,7 @@
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Custom Scrollbar - Light Mode */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.5);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.5);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.3) hsl(var(--muted) / 0.5);
-}
-
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar-track {
-  background: hsl(var(--muted) / 0.3);
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.4);
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.6);
-}
-
-/* Scrollbar hide utility */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
 }

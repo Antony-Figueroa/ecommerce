@@ -28,28 +28,18 @@ import adminCuotaRoutes from './infrastructure/web/routes/admin/cuota.routes.js'
 import adminProviderRoutes from './infrastructure/web/routes/admin/provider.routes.js'
 import adminBatchRoutes from './infrastructure/web/routes/admin/batch.routes.js'
 import adminBusinessEventRoutes from './infrastructure/web/routes/admin/business-event.routes.js'
-import adminInventoryRoutes from './infrastructure/web/routes/admin/inventory.routes.js'
-import adminCatalogRoutes from './infrastructure/web/routes/admin/catalog.routes.js'
-import adminSyncRoutes from './infrastructure/web/routes/admin/sync.routes.js'
 import settingsRoutes from './infrastructure/web/routes/settings.routes.js'
 import notificationRoutes from './infrastructure/web/routes/notification.routes.js'
 import adminManagementRoutes from './infrastructure/web/routes/admin/admin-management.routes.js'
-import adminBrandRoutes from './infrastructure/web/routes/admin/brand.routes.js'
-import adminFormatRoutes from './infrastructure/web/routes/admin/format.routes.js'
 import { authenticate } from './infrastructure/web/middleware/auth.middleware.js'
 import { notificationService, bcvUpdaterService, cartService, backupService } from './shared/container.js'
 import path from 'path'
 import cartRoutes from './infrastructure/web/routes/cart.routes.js'
 import catalogRoutes from './infrastructure/web/routes/catalog.routes.js'
-import { prisma } from './infrastructure/persistence/prisma.client.js'
+import aiChatRoutes from './infrastructure/web/routes/ai-chat.routes.js'
 
 import { createServer } from 'http'
 import { socketService } from './infrastructure/socket.service.js'
-import { fileURLToPath } from 'url'
-import { dirname } from 'path'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
 
 const app = express()
 const httpServer = createServer(app)
@@ -60,11 +50,7 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://127.0.0.1:5174',
   'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'https://ecommerce-eosin.vercel.app',
-  config.frontendUrl,
-  // Dominios de Vercel (comodín)
-  /\.vercel\.app$/,
+  'http://127.0.0.1:3000'
 ];
 
 app.use((req, res, next) => {
@@ -82,23 +68,7 @@ app.use(cors({
     
     // Si el origen es undefined (como en herramientas de testing o llamadas directas) 
     // o está en la lista de permitidos, permitimos la petición.
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-    
-    // Verificar si es un origen permitido o si coincide con el patrón de Vercel
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (typeof allowed === 'string') {
-        return allowed === origin || allowed === 'config.frontendUrl' && origin.includes('vercel.app');
-      }
-      if (allowed instanceof RegExp) {
-        return allowed.test(origin);
-      }
-      return false;
-    });
-    
-    if (isAllowed || origin.includes('vercel.app') || origin.includes('localhost')) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       console.warn(`[CORS_DENIED] ${new Date().toISOString()} Origin: ${origin}`);
@@ -166,6 +136,8 @@ app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/cart', cartRoutes)
 app.use('/api/catalog', catalogRoutes)
+app.use('/api/chat', aiChatRoutes)
+app.use('/api/admin/chat_ai', aiChatRoutes)
 app.use('/api/admin/bcv', bcvAdminRoutes)
 app.use('/api/admin/products', adminProductRoutes)
 app.use('/api/admin/categories', adminCategoryRoutes)
@@ -182,20 +154,10 @@ app.use('/api/admin/upload', adminUploadRoutes)
 app.use('/api/admin/providers', adminProviderRoutes)
 app.use('/api/admin/batches', adminBatchRoutes)
 app.use('/api/admin/business-events', adminBusinessEventRoutes)
-app.use('/api/admin/inventory', adminInventoryRoutes)
-app.use('/api/admin/catalog', adminCatalogRoutes)
-app.use('/api/sync', adminSyncRoutes)
 app.use('/api/admin/settings', authenticate, adminSettingsRoutes)
 app.use('/api/admin/management', adminManagementRoutes)
-app.use('/api/admin/brands', adminBrandRoutes)
-app.use('/api/admin/formats', adminFormatRoutes)
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
-
-// Servir uploads también desde la raíz del proyecto en producción
-if (process.env.NODE_ENV === 'production') {
-  app.use('/uploads', express.static(path.resolve(__dirname, '../../uploads')))
-}
 
 const limiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
@@ -224,69 +186,39 @@ app.use(ErrorHandler.handle)
 // Background Tasks
 const RUN_TASKS = process.env.NODE_ENV !== 'test'
 
-const runBgTask = (name: string, task: () => Promise<unknown>) => {
-  task().catch((err) => {
-    // IMPORTANT: never allow background task promise rejections to crash the server
-    console.error(`[BG_TASK_ERROR] ${name}:`, err)
-  })
-}
-
 if (RUN_TASKS) {
   // Check stock and expirations every 12 hours
   setInterval(() => {
-    runBgTask('notificationService.checkLowStock', () => notificationService.checkLowStock())
-    runBgTask('notificationService.checkExpirations', () => notificationService.checkExpirations())
+    notificationService.checkLowStock()
+    notificationService.checkExpirations()
   }, 12 * 60 * 60 * 1000)
 
   // Actualizar tasa BCV cada hora
   setInterval(() => {
-    runBgTask('bcvUpdaterService.updateRate', () => bcvUpdaterService.updateRate())
+    bcvUpdaterService.updateRate()
   }, 60 * 60 * 1000)
 
   // Verificar carritos abandonados cada 6 horas
   setInterval(() => {
-    runBgTask('cartService.checkAbandonedCarts', () => cartService.checkAbandonedCarts())
+    cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
   }, 6 * 60 * 60 * 1000)
 
   // Respaldo diario de la base de datos (cada 24 horas)
   setInterval(() => {
-    runBgTask('backupService.createBackup (daily)', () => backupService.createBackup())
+    backupService.createBackup().catch(err => console.error('Error en respaldo diario:', err))
   }, 24 * 60 * 60 * 1000)
 
   // Ejecutar un respaldo inicial al arrancar
-  runBgTask('backupService.createBackup (initial)', () => backupService.createBackup())
-
+  backupService.createBackup().catch(err => console.error('Error en respaldo inicial:', err))
+}
   // Ejecución inicial después de un retraso
   setTimeout(() => {
     console.log('Ejecutando tareas iniciales de segundo plano...')
-    runBgTask('notificationService.checkLowStock (startup)', () => notificationService.checkLowStock())
-    runBgTask('notificationService.checkExpirations (startup)', () => notificationService.checkExpirations())
-    runBgTask('bcvUpdaterService.updateRate (startup)', () => bcvUpdaterService.updateRate())
-    runBgTask('cartService.checkAbandonedCarts (startup)', () => cartService.checkAbandonedCarts())
-    // Inicializar configuraciones críticas si no existen
-    runBgTask('init_settings', async () => {
-      try {
-        const showStockBadge = await prisma.setting.findUnique({ where: { key: 'show_stock_badge' } })
-        if (!showStockBadge) {
-          await prisma.setting.create({
-            data: {
-              key: 'show_stock_badge',
-              value: 'false',
-              type: 'boolean',
-              group: 'catalogo',
-              label: 'Mostrar etiqueta de Agotado',
-              description: 'Define si se muestra el indicador "Agotado" en productos sin stock.',
-              isPublic: true
-            }
-          })
-          console.log('✅ Setting "show_stock_badge" initialized as default (false)')
-        }
-      } catch (err) {
-        console.error('Error initializing settings:', err)
-      }
-    })
+    notificationService.checkLowStock().catch(err => console.error('Error en checkLowStock:', err))
+    notificationService.checkExpirations().catch(err => console.error('Error en checkExpirations:', err))
+    bcvUpdaterService.updateRate().catch(err => console.error('Error en updateRate:', err))
+    cartService.checkAbandonedCarts().catch(err => console.error('Error en checkAbandonedCarts:', err))
   }, 30000)
-}
 
 httpServer.on('error', (err) => {
   if ((err as any).code === 'EADDRINUSE') {

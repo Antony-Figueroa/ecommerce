@@ -1,5 +1,5 @@
 import { PrismaProductRepository } from '../infrastructure/persistence/prisma.product.repository.js'
-import { PrismaCategoryRepository, PrismaBrandRepository, PrismaFormatRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository, PrismaInventoryLocationRepository, PrismaInventoryStockRepository, PrismaInventoryTransferRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
+import { PrismaCategoryRepository, PrismaBrandRepository, PrismaInventoryLogRepository, PrismaProviderRepository, PrismaInventoryBatchRepository } from '../infrastructure/persistence/prisma.inventory.repository.js'
 import { PrismaSaleRepository, PrismaRequirementRepository, PrismaNotificationRepository, PrismaBatchRepository, PrismaPaymentRepository, PrismaInstallmentRepository, PrismaPaymentProofRepository, PrismaBusinessEventRepository } from '../infrastructure/persistence/prisma.business.repository.js'
 import { PrismaBCVRepository, PrismaSettingsRepository } from '../infrastructure/persistence/prisma.settings.repository.js'
 import { PrismaUserRepository } from '../infrastructure/persistence/prisma.user.repository.js'
@@ -31,17 +31,16 @@ import { ProductManager } from '../application/services/product-manager.service.
 import { PaymentManager } from '../application/services/payment-manager.service.js'
 import { NotificationManager } from '../application/services/notification-manager.service.js'
 import { UserService } from '../application/services/user.service.js'
+import { AIChatService } from '../application/services/ai-chat.service.js'
 import { BusinessEventService } from '../application/services/business-event.service.js'
 import { BackupService } from '../application/services/backup.service.js'
-import { googleDriveBackupService } from '../application/services/google-drive-backup.service.js'
-export { googleDriveBackupService }
 import { prisma } from '../infrastructure/persistence/prisma.client.js'
+import { PrismaClient } from '../generated/client/index.js'
 
 // Repositories
 export const productRepo = new PrismaProductRepository()
 export const categoryRepo = new PrismaCategoryRepository()
 export const brandRepo = new PrismaBrandRepository()
-export const formatRepo = new PrismaFormatRepository()
 export const logRepo = new PrismaInventoryLogRepository()
 export const providerRepo = new PrismaProviderRepository()
 export const inventoryBatchRepo = new PrismaInventoryBatchRepository()
@@ -60,9 +59,6 @@ export const favoriteRepo = new PrismaFavoriteRepository()
 export const cartRepo = new PrismaCartRepository()
 export const notificationSettingRepo = new PrismaNotificationSettingRepository()
 export const auditRepo = new PrismaAuditRepository()
-export const inventoryLocationRepo = new PrismaInventoryLocationRepository()
-export const inventoryStockRepo = new PrismaInventoryStockRepository()
-export const inventoryTransferRepo = new PrismaInventoryTransferRepository()
 
 // Services
 export const emailService = new EmailService()
@@ -122,7 +118,6 @@ export const inventoryService = new InventoryService(
   productRepo,
   categoryRepo,
   brandRepo,
-  formatRepo,
   logRepo,
   providerRepo,
   inventoryBatchRepo,
@@ -166,8 +161,7 @@ export const saleService = new SaleService(
   auditService,
   stockManager,
   saleCalculator,
-  logRepo,
-  prisma
+  logRepo
 )
 
 export const requirementService = new RequirementService(
@@ -195,3 +189,4 @@ export const favoriteService = new FavoriteService(favoriteRepo, notificationSer
 
 export const cartService = new CartService(cartRepo, notificationService, emailService)
 export const userService = new UserService(userRepo, auditService)
+export const aiChatService = new AIChatService(inventoryService)

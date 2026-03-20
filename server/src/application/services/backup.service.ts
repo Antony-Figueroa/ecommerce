@@ -43,8 +43,10 @@ export class BackupService {
         return null;
       }
 
+      // Asegurar que la carpeta de respaldos existe
       await fs.mkdir(this.backupDir, { recursive: true });
 
+      // Generar nombre de archivo con fecha y hora
       const now = new Date();
       const timestamp = now.toISOString()
         .replace(/:/g, '-')
@@ -54,10 +56,12 @@ export class BackupService {
       const backupFilename = `db_backup_${timestamp}.db`;
       const destination = path.join(this.backupDir, backupFilename);
 
+      // Copiar el archivo
       await fs.copyFile(this.dbPath, destination);
 
       console.log(`✅ Respaldo creado exitosamente: ${backupFilename}`);
       
+      // Opcional: Limpiar respaldos antiguos (mantener los últimos 30 días)
       await this.cleanupOldBackups();
       
       return {
@@ -72,26 +76,6 @@ export class BackupService {
   }
 
   /**
-   * Crea respaldo y sincroniza a Google Drive
-   */
-  async createAndSyncBackup(): Promise<{ success: boolean; filename?: string; message: string }> {
-    const result = await this.createBackup()
-    
-    if (!result) {
-      return { success: false, message: 'Error al crear respaldo local' }
-    }
-
-    const { googleDriveBackupService } = await import('../../shared/container.js')
-    const uploadResult = await googleDriveBackupService.uploadBackup(result.filename)
-    
-    if (uploadResult.success) {
-      return { success: true, filename: result.filename, message: `Respaldo creado y sincronizado a Google Drive` }
-    }
-    
-    return { success: true, filename: result.filename, message: `Respaldo creado (sincronización a Drive pendiente: ${uploadResult.message})` }
-  }
-
-  /**
    * Lista todos los respaldos disponibles
    */
   async listBackups() {
@@ -101,7 +85,7 @@ export class BackupService {
       
       const backups = await Promise.all(
         files
-          .filter(file => file.endsWith('.db'))
+          .filter(file => file.startsWith('db_backup_') && file.endsWith('.db'))
           .map(async file => {
             const filePath = path.join(this.backupDir, file);
             const stats = await fs.stat(filePath);
@@ -122,44 +106,39 @@ export class BackupService {
 
   /**
    * Restaura un respaldo específico
-   * NOTA: En producción (PostgreSQL), la restauración desde archivos no es posible
    */
   async restoreBackup(filename: string) {
-    const isProduction = process.env.NODE_ENV === 'production'
-    
-    if (isProduction) {
-      throw new Error('La restauración de respaldos no está disponible en producción con PostgreSQL. Los datos se sincronizan automáticamente desde Google Drive.')
-    }
-    
     try {
       const source = path.join(this.backupDir, filename);
       
+      // Verificar si el archivo existe
       await fs.access(source);
 
-      console.log(`[${new Date().toISOString()}] Iniciando restauración: ${filename}`);
+      console.log(`[${new Date().toISOString()}] Iniciando restauración de base de datos: ${filename}`);
 
-      await fs.copyFile(source, this.dbPath);
-      
-      console.log(`✅ Restauración completada: ${filename}`);
-      
-      return {
-        success: true,
-        restoredFrom: filename
-      };
+      // Crear un respaldo temporal de la DB actual antes de restaurar
+      const tempBackup = `${this.dbPath}.tmp`;
+      await fs.copyFile(this.dbPath, tempBackup);
+
+      try {
+        // Restaurar la DB
+        await fs.copyFile(source, this.dbPath);
+        
+        // Eliminar el respaldo temporal si todo salió bien
+        await fs.unlink(tempBackup);
+        
+        console.log(`✅ Restauración completada exitosamente: ${filename}`);
+        return true;
+      } catch (restoreError) {
+        // Si falla la restauración, intentar recuperar la DB original
+        await fs.copyFile(tempBackup, this.dbPath);
+        await fs.unlink(tempBackup);
+        throw restoreError;
+      }
     } catch (error) {
       console.error('❌ Error restaurando respaldo:', error);
       throw error;
     }
-  }
-
-  /**
-   * Restaura selectivamente solo las tablas de productos, inventario y ventas
-   * Mantiene intactas las tablas de usuarios y administradores
-   * NOTA: Esta función no está disponible en PostgreSQL (producción)
-   */
-  private async selectiveRestore(sourceDbPath: string, targetDbPath: string) {
-    console.warn('⚠️ Restauración selectiva de SQLite no disponible en PostgreSQL');
-    throw new Error('La restauración selectiva de respaldos SQLite no está disponible en producción con PostgreSQL');
   }
 
   /**
@@ -198,40 +177,6 @@ export class BackupService {
       }
     } catch (error) {
       console.error('Error limpiando respaldos antiguos:', error);
-    }
-  }
-
-  /**
-   * Obtiene el respaldo más reciente
-   */
-  async getLatestBackup() {
-    const backups = await this.listBackups();
-    return backups.length > 0 ? backups[0] : null;
-  }
-
-  /**
-   * Restaura automáticamente el respaldo más reciente
-   * Útil para mantener sincronizada la base de datos entre máquinas
-   */
-  async restoreLatestBackup(): Promise<{ success: boolean; filename?: string; message: string }> {
-    try {
-      const latestBackup = await this.getLatestBackup();
-      
-      if (!latestBackup) {
-        return { success: false, message: 'No hay respaldos disponibles' };
-      }
-
-      console.log(`[${new Date().toISOString()}] Restaurando respaldo más reciente: ${latestBackup.filename}`);
-      await this.restoreBackup(latestBackup.filename);
-      
-      return { 
-        success: true, 
-        filename: latestBackup.filename, 
-        message: `Restaurado desde: ${latestBackup.filename}` 
-      };
-    } catch (error) {
-      console.error('❌ Error restaurando respaldo más reciente:', error);
-      return { success: false, message: `Error: ${error}` };
     }
   }
 }

@@ -134,7 +134,7 @@ export class PrismaSettingsRepository implements SettingsRepository {
 
   async updateManyWithHistory(updates: { key: string; value: string; reason?: string }[], userId: string): Promise<Setting[]> {
     return await prisma.$transaction(async (tx) => {
-      const results: Setting[] = []
+      const results = []
 
       for (const update of updates) {
         const setting = await tx.setting.findUnique({ where: { key: update.key } })

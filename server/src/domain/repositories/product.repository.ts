@@ -9,16 +9,10 @@ export interface ProductRepository {
     isActive?: boolean
     isFeatured?: boolean
     isOffer?: boolean
-    brand?: string | null
-    minPrice?: number
-    maxPrice?: number
-    sortBy?: 'popular' | 'newest' | 'price-low' | 'price-high'
-    includeCount?: boolean
   }): Promise<{ products: any[]; total: number }>
   findById(id: string): Promise<any | null>
   findBySku(sku: string): Promise<any | null>
   findByProductCode(productCode: string): Promise<any | null>
-  findRelated(productId: string, categoryIds: string[], limit?: number): Promise<any[]>
   create(data: any, tx?: any): Promise<any>
   update(id: string, data: any, tx?: any): Promise<any>
   delete(id: string, tx?: any): Promise<void>

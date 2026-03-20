@@ -1,73 +1,8 @@
-import { Router, Response, Request } from 'express'
+import { Router, Response } from 'express'
 import { saleService, paymentService } from '../../../shared/container.js'
 import { authenticate, AuthRequest } from '../middleware/auth.middleware.js'
 
 const router = Router()
-
-// Public routes for proposal confirmation (no authentication required)
-router.get('/confirm/:token', async (req: Request, res: Response) => {
-  try {
-    const token = req.params.token as string
-    const sale = await saleService.getSaleByToken(token)
-    res.json(sale)
-  } catch (error: any) {
-    console.error('Error al obtener pedido por token:', error)
-    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
-    res.status(status).json({ error: error.message || 'Error al obtener pedido' })
-  }
-})
-
-router.post('/confirm/:token/respond', async (req: Request, res: Response) => {
-  try {
-    const token = req.params.token as string
-    const { response, reason } = req.body
-
-    if (!['ACCEPT', 'REJECT'].includes(response)) {
-      return res.status(400).json({ error: 'Respuesta inválida' })
-    }
-
-    const updatedSale = await saleService.respondToProposal(token, response, undefined, reason)
-    res.json(updatedSale)
-  } catch (error: any) {
-    console.error('Error al responder a propuesta por token:', error)
-    const status = error.name === 'ValidationError' ? 400 : error.name === 'NotFoundError' ? 404 : 500
-    res.status(status).json({ error: error.message || 'Error al procesar respuesta' })
-  }
-})
-
-// Public endpoint for order tracking by sale number
-router.get('/track/:saleNumber', async (req: Request, res: Response) => {
-  try {
-    const saleNumber = req.params.saleNumber as string
-    const sale = await saleService.getSaleBySaleNumber(saleNumber)
-    
-    if (!sale) {
-      return res.status(404).json({ error: 'Pedido no encontrado' })
-    }
-
-    // Return only public information
-    res.json({
-      saleNumber: sale.saleNumber,
-      status: sale.status,
-      deliveryStatus: sale.deliveryStatus,
-      customerName: sale.customerName,
-      createdAt: sale.createdAt,
-      updatedAt: sale.updatedAt,
-      items: sale.items?.map((item: any) => ({
-        name: item.name,
-        quantity: item.quantity,
-        status: item.status
-      })) || [],
-      totalUSD: sale.totalUSD,
-      totalBS: sale.totalBS,
-      isPaid: sale.isPaid,
-      paymentStatus: sale.paymentStatus
-    })
-  } catch (error: any) {
-    console.error('Error al rastrear pedido:', error)
-    res.status(500).json({ error: error.message || 'Error al obtener información del pedido' })
-  }
-})
 
 router.use(authenticate)
 
@@ -140,14 +75,13 @@ router.post('/:id/respond-proposal', async (req: AuthRequest, res: Response) => 
   try {
     const userId = req.user!.id
     const saleId = req.params.id as string
-    const { status, reason } = req.body
+    const { status } = req.body
 
-    const responseLabel = status === 'ACCEPTED' ? 'ACCEPT' : status === 'REJECTED' ? 'REJECT' : null
-    if (!responseLabel) {
+    if (!['ACCEPTED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ error: 'Estado de respuesta inválido' })
     }
 
-    const updatedSale = await saleService.respondToProposal(saleId, responseLabel, userId, reason)
+    const updatedSale = await saleService.respondToProposal(saleId, status, userId)
     res.json(updatedSale)
   } catch (error: any) {
     console.error('Error al responder a la propuesta:', error)

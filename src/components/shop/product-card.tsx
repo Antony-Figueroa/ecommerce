@@ -8,7 +8,6 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/contexts/auth-context"
 import { useCart } from "@/contexts/cart-context"
 import { useFavorites } from "@/contexts/favorites-context"
-import { useSettings } from "@/contexts/settings-context"
 import { ProductQuickView } from "./product-quick-view"
 import type { Product } from "@/types"
 
@@ -23,7 +22,6 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
   const { items, addItem, updateQuantity, removeItem } = useCart()
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
-  const { settings } = useSettings()
   const navigate = useNavigate()
   const location = useLocation()
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false)
@@ -69,34 +67,34 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
           isInCart && "border-primary/30 ring-1 ring-primary/10"
         )}>
           <div className="flex">
-            <div
-              className="relative w-48 h-48 flex-shrink-0 bg-secondary/20 dark:bg-white/5 p-4 cursor-pointer group/image"
-              onClick={() => setIsQuickViewOpen(true)}
-            >
-              {mainImage ? (
-                <img
-                  src={mainImage}
-                  alt={product.name}
-                  className="h-full w-full object-contain transition-transform duration-500 group-hover/image:scale-110"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
-                    target.onerror = null; // Prevent infinite loop if placeholder also fails
-                  }}
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center bg-muted/50 rounded-lg">
-                  <span className="text-muted-foreground font-medium text-xs">Sin imagen</span>
-                </div>
-              )}
-
-              <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/5 transition-colors flex items-center justify-center">
-                <Badge variant="secondary" className="opacity-0 group-hover/image:opacity-100 transition-opacity shadow-sm">
-                  Vista rápida
-                </Badge>
-              </div>
-
+            <div 
+          className="relative w-48 h-48 flex-shrink-0 bg-secondary/20 dark:bg-white/5 p-4 cursor-pointer group/image"
+          onClick={() => setIsQuickViewOpen(true)}
+        >
+          {mainImage ? (
+            <img
+              src={mainImage}
+              alt={product.name}
+              className="h-full w-full object-contain transition-transform duration-500 group-hover/image:scale-110"
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://placehold.co/400x400/f8fafc/6366f1?text=Suplemento";
+                target.onerror = null; // Prevent infinite loop if placeholder also fails
+              }}
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-muted/50 rounded-lg">
+              <span className="text-muted-foreground font-medium text-xs">Sin imagen</span>
+            </div>
+          )}
+          
+          <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/5 transition-colors flex items-center justify-center">
+            <Badge variant="secondary" className="opacity-0 group-hover/image:opacity-100 transition-opacity shadow-sm">
+              Vista rápida
+            </Badge>
+          </div>
+              
               {isInCart && (
                 <div className="absolute inset-0 bg-primary/5 flex items-center justify-center z-10 pointer-events-none">
                   <Badge className="bg-primary text-white font-bold px-3 py-1 shadow-lg animate-in zoom-in-50">
@@ -112,7 +110,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                   </Badge>
                 )}
               </div>
-              {!product.inStock && (settings.show_stock_badge ?? false) && (
+              {!product.inStock && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/60 dark:bg-black/40 backdrop-blur-[2px] z-20">
                   <Badge variant="outline" className="bg-background dark:bg-card text-foreground border-border font-bold">
                     AGOTADO
@@ -124,7 +122,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary/80">{product.brand}</span>
                 <div className="flex items-start justify-between">
-                  <div
+                  <div 
                     className="cursor-pointer"
                     onClick={() => setIsQuickViewOpen(true)}
                   >
@@ -132,9 +130,9 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                       {product.name}
                     </h3>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
                     className="rounded-full size-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={() => setIsQuickViewOpen(true)}
                   >
@@ -192,11 +190,11 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                         className="rounded-xl size-10 bg-secondary/80 hover:bg-secondary transition-colors"
                         onClick={handleToggleFavorite}
                       >
-                        <Heart
+                        <Heart 
                           className={cn(
                             "h-5 w-5 transition-colors",
                             isFavorite(product.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                          )}
+                          )} 
                         />
                       </Button>
                       <Button
@@ -214,11 +212,11 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
             </CardContent>
           </div>
         </Card>
-        <ProductQuickView
-          product={product}
-          isOpen={isQuickViewOpen}
-          onClose={() => setIsQuickViewOpen(false)}
-          bcvRate={bcvRate}
+        <ProductQuickView 
+          product={product} 
+          isOpen={isQuickViewOpen} 
+          onClose={() => setIsQuickViewOpen(false)} 
+          bcvRate={bcvRate} 
         />
       </>
     )
@@ -230,7 +228,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
         "group flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl border-border/50 bg-card",
         isInCart && "border-primary/30 ring-1 ring-primary/10"
       )}>
-        <div
+        <div 
           className="relative aspect-square flex-shrink-0 bg-secondary/20 dark:bg-white/5 p-6 overflow-hidden cursor-pointer group/image"
           onClick={() => setIsQuickViewOpen(true)}
         >
@@ -250,13 +248,13 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
               <span className="text-muted-foreground font-medium text-xs">Sin imagen</span>
             </div>
           )}
-
+          
           <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/5 transition-colors flex items-center justify-center z-10">
             <Badge variant="secondary" className="opacity-0 group-hover/image:opacity-100 transition-opacity shadow-sm">
               Vista rápida
             </Badge>
           </div>
-
+          
           {isInCart && (
             <div className="absolute inset-0 bg-primary/5 flex items-center justify-center z-10 pointer-events-none">
               <Badge className="bg-primary text-white font-bold px-3 py-1 shadow-lg animate-in zoom-in-50">
@@ -264,7 +262,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
               </Badge>
             </div>
           )}
-
+          
           <div className="absolute left-3 top-3 flex flex-col gap-1.5 z-20">
             {product.isFeatured && (
               <Badge className="bg-amber-500 text-white border-none text-[10px] font-black px-2 py-0.5 tracking-wider">
@@ -273,7 +271,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
             )}
           </div>
 
-          {!product.inStock && (settings.show_stock_badge ?? false) && (
+          {!product.inStock && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/60 dark:bg-black/40 backdrop-blur-[2px] z-20">
               <Badge variant="outline" className="bg-background dark:bg-card text-foreground border-border font-extrabold px-4 py-1">
                 AGOTADO
@@ -282,9 +280,9 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
           )}
 
           <div className="absolute right-3 top-3 translate-x-12 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 flex flex-col gap-2 z-20">
-            <Button
-              size="icon"
-              variant="secondary"
+            <Button 
+              size="icon" 
+              variant="secondary" 
               className="rounded-xl shadow-lg size-10 bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
@@ -293,17 +291,17 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
             >
               <Eye className="h-5 w-5" />
             </Button>
-            <Button
-              size="icon"
-              variant="secondary"
+            <Button 
+              size="icon" 
+              variant="secondary" 
               className="rounded-xl shadow-lg size-10 bg-card hover:bg-primary hover:text-primary-foreground transition-colors"
               onClick={handleToggleFavorite}
             >
-              <Heart
+              <Heart 
                 className={cn(
                   "h-5 w-5 transition-colors",
                   isFavorite(product.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"
-                )}
+                )} 
               />
             </Button>
           </div>
@@ -318,8 +316,8 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                 <span className="text-[10px] font-bold text-muted-foreground">4.8</span>
               </div>
             </div>
-
-            <div
+            
+            <div 
               className="cursor-pointer"
               onClick={() => setIsQuickViewOpen(true)}
             >
@@ -327,7 +325,7 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
                 {product.name}
               </h3>
             </div>
-
+            
             <p className="text-xs font-semibold text-muted-foreground">
               {product.format} • {product.weight}
             </p>
@@ -392,11 +390,11 @@ export const ProductCard = memo(function ProductCard({ product, bcvRate, variant
           </div>
         </CardContent>
       </Card>
-      <ProductQuickView
-        product={product}
-        isOpen={isQuickViewOpen}
-        onClose={() => setIsQuickViewOpen(false)}
-        bcvRate={bcvRate}
+      <ProductQuickView 
+        product={product} 
+        isOpen={isQuickViewOpen} 
+        onClose={() => setIsQuickViewOpen(false)} 
+        bcvRate={bcvRate} 
       />
     </>
   )

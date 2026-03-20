@@ -8,32 +8,30 @@ export class StockManager {
     private inventoryBatchRepo: InventoryBatchRepository
   ) {}
 
-  async deductStock(productId: string, quantity: number, reason: string, reference: string, tx?: any) {
-    const product = await this.productRepo.findById(productId)
-    if (!product) {
-      throw new Error('Product not found')
-    }
-    if (product.stock < quantity) {
-      throw new Error('Insufficient stock')
-    }
-
-    const previousStock = product.stock
-    const newStock = previousStock - quantity
-
+  async deductStock(productId: string, quantity: number, reason: string, reference: string) {
+    // Usamos una actualización atómica para evitar condiciones de carrera
+    // Aunque el servicio ya verificó el stock, esto es una capa extra de seguridad
     const updatedProduct = await this.productRepo.update(productId, {
       stock: { decrement: quantity },
-    }, tx)
+    })
 
+    const newStock = updatedProduct.stock
+    const previousStock = newStock + quantity
+
+    // Aseguramos que inStock esté sincronizado
     if (newStock <= 0) {
-      await this.productRepo.update(productId, { inStock: false }, tx)
+      await this.productRepo.update(productId, { inStock: false })
     }
 
+    // Point 5: Low stock alert
     if (newStock <= (updatedProduct.minStock || 5)) {
       console.log(`Low stock alert: ${updatedProduct.name} is at ${newStock}`)
     }
 
+    // FEFO (First Expired First Out) or FIFO (First In First Out) depending on implementation
+    // The current system uses inventory batches
     let remainingToDiscount = quantity
-    const batchItems = await this.inventoryBatchRepo.findAvailableItemsByProduct(productId, tx)
+    const batchItems = await this.inventoryBatchRepo.findAvailableItemsByProduct(productId)
 
     for (const batchItem of batchItems) {
       if (remainingToDiscount <= 0) break
@@ -44,7 +42,7 @@ export class StockManager {
       const discountFromThisBatch = Math.min(available, remainingToDiscount)
       await this.inventoryBatchRepo.updateItem(batchItem.id, {
         soldQuantity: Number(batchItem.soldQuantity || 0) + discountFromThisBatch,
-      }, tx)
+      })
       remainingToDiscount -= discountFromThisBatch
     }
 
@@ -55,12 +53,10 @@ export class StockManager {
       newStock,
       changeAmount: -quantity,
       reason: `${reason} ${reference}`,
-    }, tx)
-
-    return updatedProduct
+    })
   }
 
-  async addStock(productId: string, quantity: number, reference: string, reason: string, tx?: any) {
+  async addStock(productId: string, quantity: number, reason: string, reference: string) {
     const product = await this.productRepo.findById(productId)
     if (!product) return
 
@@ -70,7 +66,7 @@ export class StockManager {
     await this.productRepo.update(productId, {
       stock: newStock,
       inStock: newStock > 0,
-    }, tx)
+    })
 
     await this.logRepo.create({
       productId,
@@ -79,6 +75,6 @@ export class StockManager {
       newStock,
       changeAmount: quantity,
       reason: `${reason} ${reference}`,
-    }, tx)
+    })
   }
 }

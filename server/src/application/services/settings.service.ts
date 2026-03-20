@@ -39,17 +39,19 @@ export class SettingsService {
   /**
    * Crea un respaldo de la base de datos
    */
-  async createBackup(userId: string) {
+  async createBackup(userId: string, password?: string) {
+    if (password) {
+      await this.verifyAdminPassword(userId, password)
+    }
+
     const backup = await this.backupService.createBackup()
     
-    if (backup) {
-      await this.auditService.logAction({
-        entityType: 'SETTINGS',
-        action: 'BACKUP_CREATE',
-        userId,
-        details: { filename: backup.filename }
-      })
-    }
+    await this.auditService.logAction({
+      entityType: 'SETTINGS',
+      action: 'BACKUP_CREATE',
+      userId,
+      details: { filename: backup.filename }
+    })
 
     return backup
   }
@@ -62,40 +64,33 @@ export class SettingsService {
   }
 
   /**
-   * Lista los respaldos remotos (Google Drive)
-   */
-  async listRemoteBackups() {
-    const { googleDriveBackupService } = await import('../../shared/container.js')
-    return await googleDriveBackupService.listRemoteBackups()
-  }
-
-  /**
    * Restaura un respaldo de la base de datos
    */
-  async restoreBackup(userId: string, filename: string) {
-    console.log(`[SettingsService] restoreBackup called: filename=${filename}`)
-    
-    const result = await this.backupService.restoreBackup(filename)
+  async restoreBackup(userId: string, filename: string, password?: string) {
+    if (password) {
+      await this.verifyAdminPassword(userId, password)
+    }
+
+    await this.backupService.restoreBackup(filename)
     
     await this.auditService.logAction({
       entityType: 'SETTINGS',
       action: 'BACKUP_RESTORE',
       userId,
-      details: { 
-        restoredFrom: filename
-      }
+      details: { filename }
     })
 
-    return { 
-      message: 'Base de datos restaurada con éxito',
-      restoredFrom: result.restoredFrom
-    }
+    return { message: 'Base de datos restaurada con éxito' }
   }
 
   /**
    * Elimina un respaldo
    */
-  async deleteBackup(userId: string, filename: string) {
+  async deleteBackup(userId: string, filename: string, password?: string) {
+    if (password) {
+      await this.verifyAdminPassword(userId, password)
+    }
+
     await this.backupService.deleteBackup(filename)
     
     await this.auditService.logAction({

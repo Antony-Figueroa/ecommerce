@@ -1,7 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom"
 import { useEffect, lazy, useRef } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
-import { SettingsProvider } from "@/contexts/settings-context"
 import { CartProvider } from "@/contexts/cart-context"
 import { FavoritesProvider } from "@/contexts/favorites-context"
 import { ProtectedRoute } from "@/components/shared/protected-route"
@@ -15,8 +14,6 @@ const HomePage = lazy(() => import("@/pages/home").then(m => ({ default: m.HomeP
 const CatalogPage = lazy(() => import("@/pages/catalog").then(m => ({ default: m.CatalogPage })))
 const ProductPage = lazy(() => import("@/pages/product").then(m => ({ default: m.ProductPage })))
 const CartPage = lazy(() => import("@/pages/cart").then(m => ({ default: m.CartPage })))
-const CheckoutPage = lazy(() => import("@/pages/shop/checkout").then(m => ({ default: m.CheckoutPage })))
-const OrderTrackingPage = lazy(() => import("@/pages/shop/order-tracking").then(m => ({ default: m.OrderTrackingPage })))
 const LoginPage = lazy(() => import("@/pages/login").then(m => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import("@/pages/register").then(m => ({ default: m.RegisterPage })))
 const FavoritesPage = lazy(() => import("@/pages/favorites").then(m => ({ default: m.FavoritesPage })))
@@ -40,9 +37,9 @@ const AdminSettingsPage = lazy(() => import("@/pages/admin/settings").then(m => 
 const AdminProvidersPage = lazy(() => import("@/pages/admin/providers").then(m => ({ default: m.AdminProvidersPage })))
 const FinancialDashboard = lazy(() => import("@/pages/admin/financial").then(m => ({ default: m.FinancialDashboard })))
 const AdminNotificationsPage = lazy(() => import("@/pages/admin/notifications").then(m => ({ default: m.AdminNotificationsPage })))
+const AdminAIHub = lazy(() => import("@/pages/admin/AdminAIHub").then(m => ({ default: m.AdminAIHub })))
 const AdminAuditPage = lazy(() => import("@/pages/admin/audit").then(m => ({ default: m.AdminAuditPage })))
 const AdminKanbanPage = lazy(() => import("@/pages/admin/kanban").then(m => ({ default: m.AdminKanbanPage })))
-const AdminCatalogPage = lazy(() => import("@/pages/admin/catalog").then(m => ({ default: m.AdminCatalogPage })))
 
 function App() {
   const location = useLocation()
@@ -63,62 +60,58 @@ function App() {
 
   return (
     <AuthProvider>
-      <SettingsProvider>
-        <FavoritesProvider>
-          <CartProvider>
-            <div className="flex min-h-screen flex-col">
-              <Routes>
-                {/* Rutas de Administrador - Usan su propio Layout persistente */}
-                <Route element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/orders" element={<AdminOrdersPage />} />
-                  <Route path="/admin/products" element={<AdminProductsPage />} />
-                  <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-                  <Route path="/admin/customers" element={<AdminCustomersPage />} />
-                  <Route path="/admin/inventory" element={<AdminInventoryPage />} />
-                  <Route path="/admin/providers" element={<AdminProvidersPage />} />
-                  <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-                  <Route path="/admin/settings" element={<AdminSettingsPage />} />
-                  <Route path="/admin/financial" element={<FinancialDashboard />} />
-                  <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
-                  <Route path="/admin/audit" element={<AdminAuditPage />} />
-                  <Route path="/admin/kanban" element={<AdminKanbanPage />} />
-                  <Route path="/admin/catalog" element={<AdminCatalogPage />} />
+      <FavoritesProvider>
+        <CartProvider>
+          <div className="flex min-h-screen flex-col">
+            <Routes>
+              {/* Rutas de Administrador - Usan su propio Layout persistente */}
+              <Route element={<ProtectedRoute adminOnly={true}><AdminLayout /></ProtectedRoute>}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/orders" element={<AdminOrdersPage />} />
+                <Route path="/admin/products" element={<AdminProductsPage />} />
+                <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+                <Route path="/admin/customers" element={<AdminCustomersPage />} />
+                <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+                <Route path="/admin/providers" element={<AdminProvidersPage />} />
+                <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+                <Route path="/admin/settings" element={<AdminSettingsPage />} />
+                <Route path="/admin/financial" element={<FinancialDashboard />} />
+                <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+                <Route path="/admin/ai-hub" element={<AdminAIHub />} />
+                <Route path="/admin/audit" element={<AdminAuditPage />} />
+                <Route path="/admin/kanban" element={<AdminKanbanPage />} />
+              </Route>
+
+              {/* Rutas Públicas y de Usuario - Usan RootLayout para Navbar/Footer persistente */}
+              <Route element={<RootLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/productos" element={<CatalogPage />} />
+                <Route path="/productos/:slug" element={<CatalogPage />} />
+                <Route path="/producto/:id" element={<ProductPage />} />
+                <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/registro" element={<RegisterPage />} />
+                <Route path="/registro/confirmacion" element={<GoogleConfirmPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+                {/* Rutas de Usuario Protegidas con Layout de Cuenta anidado */}
+                <Route element={<ProtectedRoute><UserAccountLayout /></ProtectedRoute>}>
+                  <Route path="/perfil" element={<AccountPage />} />
+                  <Route path="/pedidos" element={<OrdersPage />} />
+                  <Route path="/favoritos" element={<FavoritesPage />} />
+                  <Route path="/notificaciones" element={<NotificationsPage />} />
                 </Route>
 
-                {/* Rutas Públicas y de Usuario - Usan RootLayout para Navbar/Footer persistente */}
-                <Route element={<RootLayout />}>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/productos" element={<CatalogPage />} />
-                  <Route path="/productos/:slug" element={<CatalogPage />} />
-                  <Route path="/producto/:id" element={<ProductPage />} />
-                  <Route path="/carrito" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-                  <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-                  <Route path="/pedido/:saleNumber" element={<OrderTrackingPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/registro" element={<RegisterPage />} />
-                  <Route path="/registro/confirmacion" element={<GoogleConfirmPage />} />
-                  <Route path="/verify-email" element={<VerifyEmailPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-                  {/* Rutas de Usuario Protegidas con Layout de Cuenta anidado */}
-                  <Route element={<ProtectedRoute><UserAccountLayout /></ProtectedRoute>}>
-                    <Route path="/perfil" element={<AccountPage />} />
-                    <Route path="/pedidos" element={<OrdersPage />} />
-                    <Route path="/favoritos" element={<FavoritesPage />} />
-                    <Route path="/notificaciones" element={<NotificationsPage />} />
-                  </Route>
-
-                  {/* Catch-all route to redirect to home */}
-                  <Route path="*" element={<HomePage />} />
-                </Route>
-              </Routes>
-              <Toaster />
-            </div>
-          </CartProvider>
-        </FavoritesProvider>
-      </SettingsProvider>
+                {/* Catch-all route to redirect to home */}
+                <Route path="*" element={<HomePage />} />
+              </Route>
+            </Routes>
+            <Toaster />
+          </div>
+        </CartProvider>
+      </FavoritesProvider>
     </AuthProvider>
   )
 }

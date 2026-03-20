@@ -1,222 +1,179 @@
-# AGENTS.md - Ana's Supplements
+# 🛠️ Guía de Desarrollo y Estándares - Ana's Supplements
 
-E-commerce de suplementos nutricionales con soporte multi-moneda (USD/VES).
-
----
-
-## 🛠 Stack
-
-| Capa | Tech |
-|------|------|
-| Frontend | React + Vite + TypeScript + shadcn/ui |
-| Backend | Express + Prisma + PostgreSQL |
-| Auth | JWT + Google OAuth |
-| Deploy | Vercel (frontend) + Render (backend) |
+Esta guía proporciona la información técnica necesaria para el desarrollo, mantenimiento y despliegue del ecosistema Ana's Supplements.
 
 ---
 
-## 📁 Estructura
+## 🚀 Comandos de Desarrollo
 
-```
-src/                    # Frontend
-├── components/ui/     # shadcn components
-├── pages/admin/       # Admin pages
-├── pages/shop/        # Customer pages
-├── contexts/          # Auth, Cart, Settings
-├── hooks/             # Custom hooks
-└── lib/               # API client, utils
-
-server/                 # Backend
-├── src/application/services/  # Business logic
-├── src/infrastructure/web/    # Routes & middleware
-├── src/infrastructure/persistence/  # Prisma repos
-└── prisma/schema.prisma
-```
-
----
-
-## ⚙️ Convenciones
-
-### Código
-- **Interfaces** para objetos, **types** para uniones
-- `cn()` de tailwind-merge para clases condicionales
-- `forwardRef` para componentes que aceptan refs
-- Siempre manejar estados de loading y error
-
-### Imports (orden obligatorio)
-1. React/hooks → 2. Libraries → 3. UI → 4. Components → 5. Contexts → 6. Utils → 7. Types → 8. API
-
-### Naming
-| Tipo | Convention |
-|------|------------|
-| Components | PascalCase (`ProductCard.tsx`) |
-| Hooks | camelCase + `use` (`useCart.ts`) |
-| Utils | camelCase (`formatPrice.ts`) |
-| Types | PascalCase, sin `I-` (`UserResponse`) |
-| Pages | kebab-case (`product-detail.tsx`) |
-
----
-
-## 🌙 Dark Mode (obligatorio)
-
-Nunca hardcodear colores sin variant `dark:`.
-
-```tsx
-// ✅ Correct
-<div className="bg-white dark:bg-card text-slate-800 dark:text-slate-200">
-
-// ❌ Wrong
-<div className="bg-white text-slate-800">
-```
-
-| Light | Dark |
-|-------|------|
-| `bg-white` | `dark:bg-card` |
-| `bg-slate-50` | `dark:bg-background` |
-| `text-slate-900` | `dark:text-white` |
-
----
-
-## ♿ Accessibility
-
-Todos los dialogs deben tener títulos accesibles:
-
-```tsx
-<DialogTitle className="sr-only">Product details</DialogTitle>
-<DialogDescription className="sr-only">View and edit product info</DialogDescription>
-```
-
----
-
-## 🚫 Prohibiciones
-
-- **NO** hardcodear colores sin dark mode
-- **NO** commits con `.env` o secretos
-- **NO** lógica de negocio en componentes (usar servicios)
-- **NO** fetch directo en componentes (usar API client)
-- **NO** console.log en producción
-
----
-
-## 🏗 API Design
-
-### Response
-```typescript
-// Success: { data: T, message?: string }
-// Error: { error: string, code?: string }
-```
-
-### HTTP Codes
-200/201 OK | 400 Validation | 401 Unauthorized | 403 Forbidden | 404 Not Found | 500 Server Error
-
-### Validation
-- Zod en frontend y backend
-- Validar en cliente para UX, en servidor para seguridad
-
----
-
-## 🚀 Quick Start
+### Instalación
 
 ```bash
 npm install
-npm run dev          # Frontend (5173) + Backend (3001)
-npm run build        # Vite + TypeScript
-npm test             # Run tests
 ```
+
+### Frontend (Vite)
+
+- `npm run dev`:  Inicia el servidor de desarrollo (puerto 5173).
+- `npm run build`: Compilación TypeScript + Build de producción.
+- `npm run preview`: Previsualiza el build de producción.
+
+### Backend (Express + Prisma)
+
+- `npm run server`:  Inicia el servidor con `tsx` (puerto 3001).
+- `npm run server:build`: Compila el TypeScript del servidor.
+- `cd server && node dist/index.js`: Inicia el servidor de producción.
+
+### Base de Datos (Prisma)
+
+- `npm run db:generate`:  Genera el cliente Prisma.
+- `npm run db:push`: Sincroniza el esquema con la base de datos.
+- `npm run db:seed`: Puebla la base de datos con datos de prueba.
+- `npm run db:studio`: Abre la interfaz GUI de Prisma Studio.
+
+### Calidad de Código
+
+- `npm run lint`:  Ejecuta ESLint.
+- `npm run lint -- --fix`: Corrige errores de linting automáticamente.
+- `tsc --noEmit`: Verificación de tipos sin emisión de archivos.
 
 ---
 
-## 🗄️ Database
+## ⚙️ Configuración del Entorno
+
+Cree archivos `.env` en la raíz y en `server/`:
+
+### Frontend (`.env`)
 
 ```bash
-# Local
-DATABASE_URL="postgresql://postgres:1234@localhost:5432/farmacia_ecommerce"
-npm run db:push      # Sync schema
-npm run db:generate # Generate types
-npm run db:studio   # GUI viewer
+VITE_API_URL=http://localhost:3001/api
 ```
 
----
-
-## 🔐 Environment Variables
-
-**Frontend (VITE_):** `VITE_API_URL`, `VITE_GOOGLE_CLIENT_ID`
-
-**Backend:** `DATABASE_URL`, `PORT`, `JWT_SECRET`, `FRONTEND_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SMTP_*`
-
----
-
-## 🚢 Deployment
-
-| Platform | URL |
-|----------|-----|
-| Frontend (Vercel) | https://ecommerce-phi-five-35.vercel.app |
-| Backend (Render) | https://ecommerce-backend-r75w.onrender.com |
-
-Auto-deploy en push a main.
-
----
-
-## 🧪 Testing
+### Backend (`server/.env`)
 
 ```bash
-npm test -- --watch         # Watch mode
-npm test -- --coverage      # Coverage
-npm test -- --testPathPattern=<pattern>
-```
-
----
-
-## 🔧 Common Tasks
-
-**Nueva API:**
-1. Crear ruta en `server/src/infrastructure/web/routes/`
-2. Agregar ruta en `server/src/index.ts`
-3. Crear servicio en `server/src/application/services/`
-
-**Nueva página:**
-1. Crear componente en `src/pages/admin/` o `src/pages/shop/`
-2. Agregar ruta en `src/App.tsx`
-3. Proteger si es admin-only
-
----
-
-## 📝 Required Skills
-
-| Task | Skill |
-|------|-------|
-| UI/Componentes | `interface-design` |
-| Performance | `vercel-react-best-practices` |
-| Nuevas features | `brainstorming` |
-| APIs | `api-design-principles` |
-| Error handling | `error-handling-patterns` |
-| Bugs | `systematic-debugging` |
-
----
-
-## 🔀 Git Workflow
-
-1. Branch: `git checkout -b feature/nombre`
-2. Commit mensajes claros
-3. PR → Merge a main (auto-deploy)
-
----
-
-## 📋 Env template
-
-```
-DATABASE_URL=
+DATABASE_URL="file:./dev.db"
+JWT_SECRET=tu-clave-secreta
 PORT=3001
-JWT_SECRET=
-FRONTEND_URL=http://localhost:5173
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASS=
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX=100
 ```
 
-**Last updated**: 2026-03-19
+---
+
+## 🎨 Estándares de Código
+
+### Orden de Importación
+
+Siga este orden para mantener la consistencia:
+
+1. React y Hooks
+2. Librerías externas (Router, etc.)
+3. Componentes de UI (`@/components/ui`)
+4. Utilidades (`@/lib/utils`)
+5. Contextos y Hooks propios
+6. Tipos e Interfaces
+7. API y Servicios
+
+### Convenciones de Nomenclatura
+
+- **Componentes**:  `PascalCase` (`ProductCard.tsx`)
+- **Hooks**: `useCamelCase` (`useCart.ts`)
+- **Utilidades**: `camelCase` (`formatPrice.ts`)
+- **Constantes**: `SCREAMING_SNAKE_CASE` (`API_BASE`)
+- **Interfaces/Types**: `PascalCase` (sin prefijo `I`)
+- **Archivos**: `kebab-case.tsx` para componentes generales.
+
+---
+
+## 🏗️ Arquitectura y Estructura
+
+### Estructura de Carpetas
+
+```text
+├── src/                # Frontend
+│   ├── components/     # UI, Layout, Shop, Cart, Product
+│   ├── pages/          # Páginas y rutas
+│   ├── contexts/       # Gestión de estado global
+│   ├── hooks/          # Lógica reutilizable
+│   ├── lib/            # Clientes API y utilidades
+│   └── types/          # Definiciones de TypeScript
+├── server/             # Backend
+│   ├── src/            # Controladores, Rutas, Servicios
+│   └── prisma/         # Esquema y migraciones
+```
+
+### Patrones React
+
+- Preferir **Interfaces** para objetos y **Types** para uniones.
+- Usar `forwardRef` para componentes que aceptan refs (estándar shadcn/ui).
+- Implementar el patrón **Context Provider** para estados compartidos.
+- Utilizar `cn()` para la gestión condicional de clases Tailwind.
+
+---
+
+## 🛡️ Seguridad y Errores
+
+- **Validación**: Uso obligatorio de `Zod` tanto en frontend como backend.
+- **Errores API**: Captura centralizada con estados HTTP descriptivos.
+- **Autenticación**: JWT almacenado en `localStorage` con validación en cada ruta protegida.
+
+---
+
+## 🧠 Uso Obligatorio de Skills (Agentes AI)
+
+Para mantener la coherencia y calidad técnica, los agentes deben invocar y seguir las skills ubicadas en `.agents/skills/`. Se priorizan las siguientes 4 skills para cada interacción:
+
+### 🎨 Interface Design (PRIORIDAD ALTA)
+
+- **Uso**: Cualquier modificación de UI, componentes o flujos de usuario.
+- **Mandato**: Aplicar 'Intent First' y 'Subtle Layering'. Realizar 'Squint Test' y 'Signature Test'.
+
+### ⚡ Vercel React Best Practices (PRIORIDAD ALTA)
+
+- **Uso**: Refactorización, creación de componentes o lógica de fetching.
+- **Mandato**: Eliminar waterfalls con `Promise.all()`, optimizar re-renders y reducir bundle size.
+
+### 💡 Brainstorming (PRIORIDAD ALTA)
+
+- **Uso**: Antes de cualquier trabajo creativo, creación de features o cambios de comportamiento.
+- **Mandato**: Explorar la intención del usuario y requerimientos antes de implementar.
+
+### 🛡️ Error Handling Patterns (PRIORIDAD ALTA)
+
+- **Uso**: Al diseñar APIs o implementar robustez en el código.
+- **Mandato**: Usar patrones de Result, Graceful degradation y validación estricta con Zod.
+
+---
+
+### Otras Skills Disponibles
+
+### 🔍 Systematic Debugging
+
+- **Uso**: Ante cualquier error, bug o comportamiento inesperado.
+- **Mandato**: Seguir el proceso de diagnóstico raíz antes de proponer soluciones. **IMPORTANTE**: El agente debe monitorear proactivamente la terminal y la consola durante cada implementación para detectar y corregir errores "al trote" sin intervención del usuario.
+
+### 📝 Changelog Generator
+
+- **Uso**: Al finalizar tareas significativas para documentar cambios.
+- **Mandato**: Transformar commits técnicos en notas de lanzamiento amigables.
+
+### 🛠️ API Design Principles
+
+- **Uso**: Al diseñar APIs o recursos del servidor.
+- **Mandato**: Usar principios REST/GraphQL y consistencia en endpoints.
+
+### 🌐 Agent Browser
+
+- **Uso**: Automatización web, scraping, testing y navegación.
+- **Mandato**: Usar el sistema de refs `@e` y seguir el flujo Open-Interact-Snapshot-Close.
+
+---
+
+## 🔗 Documentación Relacionada
+
+- [Análisis Funcional](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/analisis-funcional.md)
+- [Referencia API](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/api-reference.md)
+- [Arquitectura de Sistemas](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/arquitectura.md)
+- [Flujos de Negocio](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/flujos-negocio.md)
+- [Documentación Chat IA](file:///c:/Users/Server%20Admin/Desktop/ecommerce/docs/ai-chat.md)
+
+Última actualización: 2026-02-05

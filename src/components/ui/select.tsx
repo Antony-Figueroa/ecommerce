@@ -1,7 +1,8 @@
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
-import { Check, ChevronDown, ChevronUp, Search, Plus } from "lucide-react"
-import { cn, fuzzySearch } from "@/lib/utils"
+import { Check, ChevronDown, ChevronUp } from "lucide-react"
+
+import { cn } from "@/lib/utils"
 
 const Select = SelectPrimitive.Root
 
@@ -64,13 +65,9 @@ const SelectScrollDownButton = React.forwardRef<
 SelectScrollDownButton.displayName =
   SelectPrimitive.ScrollDownButton.displayName
 
-interface SelectContentProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> {
-  children: React.ReactNode
-}
-
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  SelectContentProps
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
@@ -147,212 +144,6 @@ const SelectSeparator = React.forwardRef<
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
-// =====================================================
-// Select con Buscador Inteligente
-// =====================================================
-
-interface SelectWithSearchProps {
-  value?: string
-  onValueChange?: (value: string) => void
-  options: { value: string; label: string }[]
-  placeholder?: string
-  className?: string
-  disabled?: boolean
-  triggerClassName?: string
-  minItemsForSearch?: number
-}
-
-function SelectWithSearch({
-  value,
-  onValueChange,
-  options,
-  placeholder = "Seleccionar...",
-  className,
-  disabled,
-  triggerClassName,
-  minItemsForSearch = 5
-}: SelectWithSearchProps) {
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [isOpen, setIsOpen] = React.useState(false)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  
-  const showSearch = options.length >= minItemsForSearch
-  
-  const filteredOptions = React.useMemo(() => {
-    if (!showSearch || !searchQuery) return options
-    return options.filter(option => 
-      fuzzySearch(searchQuery, option.label)
-    )
-  }, [options, searchQuery, showSearch])
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
-    if (open && showSearch) {
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-    if (!open) {
-      setSearchQuery("")
-    }
-  }
-
-  return (
-    <Select 
-      value={value} 
-      onValueChange={onValueChange}
-      open={isOpen}
-      onOpenChange={handleOpenChange}
-      disabled={disabled}
-    >
-      <SelectTrigger className={triggerClassName}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent className={className}>
-        {showSearch && (
-          <div className="px-2 py-2 border-b border-border/50">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 bg-muted/50 border border-border/50 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-muted-foreground/60"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-            </div>
-          </div>
-        )}
-        {filteredOptions.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            No se encontraron resultados
-          </div>
-        ) : (
-          filteredOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))
-        )}
-      </SelectContent>
-    </Select>
-  )
-}
-
-// =====================================================
-// Select con Buscador y Opción de Agregar
-// =====================================================
-
-interface SelectWithAddProps {
-  value?: string
-  onValueChange?: (value: string) => void
-  options: { value: string; label: string }[]
-  placeholder?: string
-  className?: string
-  disabled?: boolean
-  triggerClassName?: string
-  minItemsForSearch?: number
-  addLabel?: string
-  onAdd?: () => void
-}
-
-function SelectWithAdd({
-  value,
-  onValueChange,
-  options,
-  placeholder = "Seleccionar...",
-  className,
-  disabled,
-  triggerClassName,
-  minItemsForSearch = 5,
-  addLabel = "Agregar nueva opción",
-  onAdd
-}: SelectWithAddProps) {
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [isOpen, setIsOpen] = React.useState(false)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  
-  const showSearch = options.length >= minItemsForSearch - 2
-  
-  const filteredOptions = React.useMemo(() => {
-    if (!showSearch || !searchQuery) return options
-    return options.filter(option => 
-      fuzzySearch(searchQuery, option.label)
-    )
-  }, [options, searchQuery, showSearch])
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open)
-    if (open && showSearch) {
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-    if (!open) {
-      setSearchQuery("")
-    }
-  }
-
-  const handleAddClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onAdd?.()
-  }
-
-  return (
-    <Select 
-      value={value} 
-      onValueChange={onValueChange}
-      open={isOpen}
-      onOpenChange={handleOpenChange}
-      disabled={disabled}
-    >
-      <SelectTrigger className={triggerClassName}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent className={className}>
-        {showSearch && (
-          <div className="px-2 py-2 border-b border-border/50">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 bg-muted/50 border border-border/50 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-muted-foreground/60"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              />
-            </div>
-          </div>
-        )}
-        {filteredOptions.length === 0 && !addLabel ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            No se encontraron resultados
-          </div>
-        ) : (
-          filteredOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))
-        )}
-        {onAdd && (
-          <div className="border-t border-border/50 mt-1 pt-1">
-            <div 
-              className="px-2 py-2 cursor-pointer hover:bg-primary/10 hover:text-primary flex items-center gap-2 text-sm font-medium text-primary rounded-sm mx-1"
-              onClick={handleAddClick}
-            >
-              <Plus className="h-4 w-4" />
-              {addLabel}
-            </div>
-          </div>
-        )}
-      </SelectContent>
-    </Select>
-  )
-}
-
 export {
   Select,
   SelectGroup,
@@ -364,6 +155,4 @@ export {
   SelectSeparator,
   SelectScrollUpButton,
   SelectScrollDownButton,
-  SelectWithSearch,
-  SelectWithAdd,
 }

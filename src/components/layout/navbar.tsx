@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
@@ -27,8 +27,8 @@ export function Navbar() {
   const [categories, setCategories] = useState<Category[]>([])
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== "undefined") {
-      return document.documentElement.classList.contains("dark") ||
-        localStorage.getItem("theme") === "dark"
+      return document.documentElement.classList.contains("dark") || 
+             localStorage.getItem("theme") === "dark"
     }
     return false
   })
@@ -48,7 +48,7 @@ export function Navbar() {
   useEffect(() => {
     api.getCategories().then(res => {
       setCategories(res.categories || [])
-    }).catch(() => { })
+    }).catch(() => {})
   }, [])
 
   return (
@@ -117,15 +117,15 @@ export function Navbar() {
                   </Button>
                 </Link>
                 <NotificationBell />
-
+                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="gap-2 px-1 sm:px-2 hover:bg-secondary/50 rounded-xl h-10">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary overflow-hidden flex-shrink-0 shadow-inner">
                         {user.avatarUrl ? (
-                          <img
-                            src={user.avatarUrl}
-                            alt={user.name || ''}
+                          <img 
+                            src={user.avatarUrl} 
+                            alt={user.name || ''} 
                             className="h-full w-full object-cover"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'U')}&background=random`
@@ -167,7 +167,7 @@ export function Navbar() {
                       <Link to="/favoritos">Mis Favoritos</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
+                    <DropdownMenuItem 
                       className="text-destructive focus:text-destructive focus:bg-destructive/10"
                       onClick={logout}
                     >
@@ -177,14 +177,14 @@ export function Navbar() {
                 </DropdownMenu>
               </>
             ) : (
-              <>
-                <Link to="/login" className="hidden sm:block">
+              <div className="hidden sm:flex items-center gap-2">
+                <Link to="/login">
                   <Button variant="ghost" size="sm" className="font-bold h-10 px-4 rounded-xl">Iniciar Sesión</Button>
                 </Link>
                 <Link to="/registro">
                   <Button size="sm" className="font-bold h-10 px-4 rounded-xl shadow-lg shadow-primary/20">Regístrate</Button>
                 </Link>
-              </>
+              </div>
             )}
 
             <Sheet>
@@ -194,11 +194,9 @@ export function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-[300px] rounded-r-3xl border-none shadow-2xl">
-                <SheetTitle className="sr-only">Menú principal</SheetTitle>
-                <SheetDescription className="sr-only">Navegación de la tienda</SheetDescription>
                 {/* Mobile Navigation Content */}
                 <div className="flex flex-col h-full py-6 px-2">
-                  <Link to="/" className="flex items-center gap-3 mb-8 px-4">
+                   <Link to="/" className="flex items-center gap-3 mb-8 px-4">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                       <Leaf className="h-5 w-5" />
                     </div>
@@ -226,17 +224,6 @@ export function Navbar() {
                       </Link>
                     ))}
                   </nav>
-                  {!user && (
-                    <div className="mt-auto pt-4 px-4 space-y-3">
-                      <Separator className="mb-4" />
-                      <Link to="/login" className="block">
-                        <Button variant="outline" className="w-full font-bold rounded-xl">Iniciar Sesión</Button>
-                      </Link>
-                      <Link to="/registro" className="block">
-                        <Button className="w-full font-bold rounded-xl shadow-lg shadow-primary/20">Regístrate</Button>
-                      </Link>
-                    </div>
-                  )}
                 </div>
               </SheetContent>
             </Sheet>
@@ -276,8 +263,8 @@ export function Navbar() {
                   to={link.href}
                   className={cn(
                     "text-xs font-black uppercase tracking-widest transition-colors relative py-1",
-                    isActive
-                      ? "text-primary after:absolute after:bottom-[-4px] after:left-0 after:right-0 after:h-1 after:bg-primary after:rounded-full"
+                    isActive 
+                      ? "text-primary after:absolute after:bottom-[-4px] after:left-0 after:right-0 after:h-1 after:bg-primary after:rounded-full" 
                       : "text-muted-foreground hover:text-primary"
                   )}
                 >
@@ -288,8 +275,8 @@ export function Navbar() {
           </nav>
 
           <div className="ml-auto flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            <div className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-primary" /> Atención 24/7</div>
-            <div className="flex items-center gap-1.5"><Shield className="h-3 w-3 text-primary" /> Calidad Garantizada</div>
+             <div className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-primary" /> Atención 24/7</div>
+             <div className="flex items-center gap-1.5"><Shield className="h-3 w-3 text-primary" /> Calidad Garantizada</div>
           </div>
         </div>
       </div>

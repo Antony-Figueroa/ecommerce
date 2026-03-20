@@ -81,7 +81,7 @@ export function AdminKanbanPage() {
   return (
     <div className="space-y-6 h-[calc(100vh-120px)] flex flex-col">
       <AdminPageHeader
-        title="Flujo de Ventas"
+        title="Flujo de Ventas (Kanban)"
         subtitle="Gestiona el ciclo de vida de tus pedidos visualmente"
         icon={Kanban}
       />

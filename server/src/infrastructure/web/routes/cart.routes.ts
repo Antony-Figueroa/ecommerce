@@ -71,17 +71,4 @@ router.delete('/', async (req, res) => {
   }
 })
 
-router.post('/sync', async (req, res) => {
-  try {
-    const userId = req.user?.id
-    if (!userId) return res.status(401).json({ message: 'No autorizado' })
-    
-    const { items } = req.body
-    const cart = await cartService.syncCart(userId, items || [])
-    res.json(cart)
-  } catch (error) {
-    res.status(500).json({ message: 'Error al sincronizar el carrito' })
-  }
-})
-
 export default router

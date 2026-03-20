@@ -12,11 +12,6 @@ export class PrismaProductRepository implements ProductRepository {
     isActive?: boolean
     isFeatured?: boolean
     isOffer?: boolean
-    brand?: string | null
-    minPrice?: number
-    maxPrice?: number
-    sortBy?: 'popular' | 'newest' | 'price-low' | 'price-high'
-    includeCount?: boolean
   }) {
     const { 
       categoryId = null, 
@@ -24,19 +19,15 @@ export class PrismaProductRepository implements ProductRepository {
       search = '', 
       page = 1, 
       limit = 20, 
-      onlyActive = true,
+      onlyActive = true, // Cambiado a true por defecto
       isActive = undefined,
       isFeatured = undefined,
-      isOffer = undefined,
-      brand = null,
-      minPrice = undefined,
-      maxPrice = undefined,
-      sortBy = 'newest',
-      includeCount = false
+      isOffer = undefined
     } = options
 
     const where: any = {}
     
+    // Combinar categoryId y categoryIds
     const allCategoryIds = [...(categoryIds || [])]
     if (categoryId) allCategoryIds.push(categoryId)
 
@@ -48,6 +39,7 @@ export class PrismaProductRepository implements ProductRepository {
       }
     }
     
+    // Si se especifica isActive, tiene prioridad sobre onlyActive
     if (isActive !== undefined) {
       where.isActive = isActive
     } else if (onlyActive) {
@@ -55,50 +47,34 @@ export class PrismaProductRepository implements ProductRepository {
     }
     if (isFeatured !== undefined) where.isFeatured = isFeatured
     if (isOffer !== undefined) where.isOffer = isOffer
-    if (brand) where.brand = brand
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      where.price = {}
-      if (minPrice !== undefined) where.price.gte = minPrice
-      if (maxPrice !== undefined) where.price.lte = maxPrice
-    }
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-        { brand: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search } },
+        { sku: { contains: search } },
+        { brand: { contains: search } },
       ]
-    }
-
-    let orderBy: any = { createdAt: 'desc' }
-    if (sortBy === 'price-low') orderBy = { price: 'asc' }
-    else if (sortBy === 'price-high') orderBy = { price: 'desc' }
-    else if (sortBy === 'newest') orderBy = { createdAt: 'desc' }
-
-    const include: any = { 
-      categories: true,
-      images: {
-        orderBy: { sortOrder: 'asc' }
-      }
-    }
-
-    if (includeCount) {
-      include._count = {
-        select: {
-          batches: true,
-          inventoryBatchItems: true,
-          saleItems: true,
-          cartItems: true,
-          favorites: true,
-          requirementItems: true
-        }
-      }
     }
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include,
-        orderBy,
+        include: { 
+          categories: true,
+          images: {
+            orderBy: { sortOrder: 'asc' }
+          },
+          _count: {
+            select: {
+              batches: true,
+              inventoryBatchItems: true,
+              saleItems: true,
+              cartItems: true,
+              favorites: true,
+              requirementItems: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -106,30 +82,6 @@ export class PrismaProductRepository implements ProductRepository {
     ])
 
     return { products, total }
-  }
-
-  async findRelated(productId: string, categoryIds: string[], limit = 4) {
-    const excludeIds = [productId]
-    
-    return prisma.product.findMany({
-      where: {
-        isActive: true,
-        id: { notIn: excludeIds },
-        categories: {
-          some: {
-            id: { in: categoryIds }
-          }
-        }
-      },
-      include: { 
-        categories: true,
-        images: {
-          orderBy: { sortOrder: 'asc' }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    })
   }
 
   async findById(id: string) {
@@ -191,14 +143,8 @@ export class PrismaProductRepository implements ProductRepository {
 
   async delete(id: string, tx?: any) {
     const client = tx || prisma
-    return client.product.delete({
+    await client.product.delete({
       where: { id },
-      include: { 
-        categories: true,
-        images: {
-          orderBy: { sortOrder: 'asc' }
-        }
-      },
     })
   }
 

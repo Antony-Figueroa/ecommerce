@@ -23,15 +23,6 @@ export interface Brand {
   updatedAt: Date
 }
 
-export interface Format {
-  id: string
-  name: string
-  description: string | null
-  isActive: boolean
-  createdAt: Date
-  updatedAt: Date
-}
-
 export interface InventoryLog {
   id: string
   productId: string
@@ -90,25 +81,10 @@ export interface CategoryRepository {
 }
 
 export interface BrandRepository {
-  findAll(options?: { onlyActive?: boolean }): Promise<Brand[]>
+  findAll(): Promise<Brand[]>
   findById(id: string): Promise<Brand | null>
   findByName(name: string): Promise<Brand | null>
-  create(data: { name: string; description?: string; isActive?: boolean }, tx?: any): Promise<Brand>
-  update(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, tx?: any): Promise<Brand>
-  delete(id: string, tx?: any): Promise<void>
   upsert(name: string, tx?: any): Promise<Brand>
-  countProducts(brandId: string): Promise<number>
-}
-
-export interface FormatRepository {
-  findAll(options?: { onlyActive?: boolean }): Promise<Format[]>
-  findById(id: string): Promise<Format | null>
-  findByName(name: string): Promise<Format | null>
-  create(data: { name: string; description?: string; isActive?: boolean }, tx?: any): Promise<Format>
-  update(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>, tx?: any): Promise<Format>
-  delete(id: string, tx?: any): Promise<void>
-  upsert(name: string, tx?: any): Promise<Format>
-  countProducts(formatName: string): Promise<number>
 }
 
 export interface InventoryLogRepository {
@@ -120,9 +96,9 @@ export interface ProviderRepository {
   findAll(): Promise<Provider[]>
   findById(id: string): Promise<Provider | null>
   findByName(name: string): Promise<Provider | null>
-  create(data: any, tx?: any): Promise<Provider>
-  update(id: string, data: any, tx?: any): Promise<Provider>
-  delete(id: string, tx?: any): Promise<void>
+  create(data: any): Promise<Provider>
+  update(id: string, data: any): Promise<Provider>
+  delete(id: string): Promise<void>
 }
 
 export interface InventoryBatchRepository {
@@ -133,62 +109,4 @@ export interface InventoryBatchRepository {
   delete(id: string, tx?: any): Promise<void>
   findAvailableItemsByProduct(productId: string, tx?: any): Promise<any[]>
   updateItem(id: string, data: any, tx?: any): Promise<any>
-}
-
-export interface InventoryLocation {
-  id: string
-  name: string
-  description?: string | null
-  address?: string | null
-  isActive: boolean
-  isDefault: boolean
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface InventoryStock {
-  id: string
-  productId: string
-  locationId: string
-  quantity: number
-  minStock: number
-  maxStock: number
-  updatedAt: Date
-}
-
-export interface InventoryTransfer {
-  id: string
-  fromLocationId: string
-  toLocationId: string
-  productId: string
-  quantity: number
-  status: string
-  notes?: string | null
-  createdAt: Date
-  completedAt?: Date | null
-}
-
-export interface InventoryLocationRepository {
-  findAll(): Promise<InventoryLocation[]>
-  findById(id: string): Promise<InventoryLocation | null>
-  findDefault(): Promise<InventoryLocation | null>
-  create(data: any): Promise<InventoryLocation>
-  update(id: string, data: any): Promise<InventoryLocation>
-  delete(id: string): Promise<void>
-}
-
-export interface InventoryStockRepository {
-  findAll(locationId?: string): Promise<InventoryStock[]>
-  findByProductAndLocation(productId: string, locationId: string): Promise<InventoryStock | null>
-  upsert(productId: string, locationId: string, data: any): Promise<InventoryStock>
-  updateQuantity(id: string, quantity: number): Promise<InventoryStock>
-}
-
-export interface InventoryTransferRepository {
-  findAll(options?: any): Promise<InventoryTransfer[]>
-  findById(id: string): Promise<InventoryTransfer | null>
-  create(data: any): Promise<InventoryTransfer>
-  update(id: string, data: any): Promise<InventoryTransfer>
-  complete(id: string): Promise<InventoryTransfer>
-  cancel(id: string): Promise<InventoryTransfer>
 }

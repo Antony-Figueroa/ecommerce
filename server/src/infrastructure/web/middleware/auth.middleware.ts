@@ -4,6 +4,18 @@ import { config } from '../../../shared/config/index.js'
 import { userRepo } from '../../../shared/container.js'
 import { AuthenticationError, AuthorizationError } from '../../../shared/errors/app.errors.js'
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string
+        email: string
+        role: string
+      }
+    }
+  }
+}
+
 export interface AuthRequest extends Request {}
 
 interface JWTPayload {

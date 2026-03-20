@@ -20,7 +20,7 @@ export class AuditService {
         action: data.action,
         userId: data.userId || null,
         userName: data.userName || null,
-        details: data.details !== undefined ? JSON.stringify(data.details) : null,
+        details: data.details ? JSON.stringify(data.details) : null,
         ipAddress: data.ipAddress || null,
         userAgent: data.userAgent || null
       }, tx)

@@ -11,9 +11,8 @@ import {
 } from '../../domain/repositories/business.repository.js'
 
 export class PrismaSaleRepository implements SaleRepository {
-  async create(data: any, tx?: any) {
-    const client = tx || prisma
-    return client.sale.create({
+  async create(data: any) {
+    return prisma.sale.create({
       data,
       include: { items: true, user: true },
     })
@@ -35,6 +34,7 @@ export class PrismaSaleRepository implements SaleRepository {
           }
         }, 
         user: true, 
+        auditLogs: { orderBy: { createdAt: 'desc' } } 
       },
     })
   }
@@ -55,26 +55,7 @@ export class PrismaSaleRepository implements SaleRepository {
           }
         }, 
         user: true, 
-      },
-    })
-  }
-
-  async findByConfirmationToken(token: string) {
-    return prisma.sale.findUnique({
-      where: { confirmationToken: token },
-      include: { 
-        items: {
-          include: {
-            product: {
-              include: {
-                images: {
-                  orderBy: { sortOrder: 'asc' }
-                }
-              }
-            }
-          }
-        }, 
-        user: true, 
+        auditLogs: { orderBy: { createdAt: 'desc' } } 
       },
     })
   }
@@ -95,6 +76,7 @@ export class PrismaSaleRepository implements SaleRepository {
       include: { 
         user: true, 
         items: true,
+        auditLogs: { take: 1, orderBy: { createdAt: 'desc' } },
         ...include
       },
     })
@@ -126,42 +108,49 @@ export class PrismaSaleRepository implements SaleRepository {
     return {}
   }
 
-  async update(id: string, data: any, tx?: any) {
-    const client = tx || prisma
-    return client.sale.update({
+  async update(id: string, data: any) {
+    return prisma.sale.update({
       where: { id },
       data,
-      include: { items: true },
+      include: { items: true, auditLogs: true },
     })
   }
 
-  async updateItem(itemId: string, data: any, tx?: any) {
-    const client = tx || prisma
-    return client.saleItem.update({
+  async updateItem(itemId: string, data: any) {
+    return prisma.saleItem.update({
       where: { id: itemId },
       data,
     })
   }
 
-  async findDuplicate(data: any) {
+  async createAuditLog(data: any) {
+    return prisma.saleAuditLog.create({
+      data,
+    })
+  }
+
+  async findDuplicate(data: { customerPhone: string; totalUSD: number; minutesAgo: number }) {
     const { customerPhone, totalUSD, minutesAgo } = data
-    const timeThreshold = new Date(Date.now() - minutesAgo * 60 * 1000)
+    const dateLimit = new Date(Date.now() - minutesAgo * 60 * 1000)
 
     return prisma.sale.findFirst({
       where: {
         customerPhone,
-        totalUSD: { equals: totalUSD },
-        createdAt: { gte: timeThreshold },
-        status: { not: 'CANCELLED' }
-      }
+        totalUSD,
+        createdAt: {
+          gte: dateLimit,
+        },
+        status: {
+          not: 'CANCELLED',
+        },
+      },
     })
   }
 }
 
 export class PrismaPaymentRepository implements PaymentRepository {
-  async create(data: any, tx?: any) {
-    const client = tx || prisma
-    return client.payment.create({ data })
+  async create(data: any) {
+    return prisma.payment.create({ data })
   }
 
   async findById(id: string) {
@@ -177,14 +166,12 @@ export class PrismaPaymentRepository implements PaymentRepository {
 }
 
 export class PrismaInstallmentRepository implements InstallmentRepository {
-  async create(data: any, tx?: any) {
-    const client = tx || prisma
-    return client.installment.create({ data })
+  async create(data: any) {
+    return prisma.installment.create({ data })
   }
 
-  async createMany(data: any[], tx?: any) {
-    const client = tx || prisma
-    return client.installment.createMany({ data })
+  async createMany(data: any[]) {
+    return prisma.installment.createMany({ data })
   }
 
   async findById(id: string) {
@@ -202,9 +189,8 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
     })
   }
 
-  async update(id: string, data: any, tx?: any) {
-    const client = tx || prisma
-    return client.installment.update({
+  async update(id: string, data: any) {
+    return prisma.installment.update({
       where: { id },
       data
     })
@@ -222,9 +208,8 @@ export class PrismaInstallmentRepository implements InstallmentRepository {
 }
 
 export class PrismaPaymentProofRepository implements PaymentProofRepository {
-  async create(data: any, tx?: any) {
-    const client = tx || prisma
-    return client.paymentProof.create({ data })
+  async create(data: any) {
+    return prisma.paymentProof.create({ data })
   }
 
   async findById(id: string) {
@@ -249,9 +234,8 @@ export class PrismaPaymentProofRepository implements PaymentProofRepository {
     })
   }
 
-  async update(id: string, data: any, tx?: any) {
-    const client = tx || prisma
-    return client.paymentProof.update({
+  async update(id: string, data: any) {
+    return prisma.paymentProof.update({
       where: { id },
       data
     })
@@ -268,9 +252,8 @@ export class PrismaNotificationRepository implements NotificationRepository {
     userId?: string;
     link?: string;
     metadata?: string;
-  }, tx?: any) {
-    const client = tx || prisma
-    return client.notification.create({
+  }) {
+    return prisma.notification.create({
       data: {
         type: data.type,
         priority: data.priority || 'NORMAL',

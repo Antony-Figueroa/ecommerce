@@ -110,13 +110,13 @@ export class PaymentService {
     paymentMethod: string
     reference?: string
     notes?: string
-  }, userId?: string, ipAddress?: string, userAgent?: string, tx?: any) {
-    const result = await this.paymentManager.registerPayment(data, userId, ipAddress, userAgent, tx)
-    await this.paymentManager.updateInstallmentsWithPayment(data.saleId, data.amountUSD, tx)
+  }, userId?: string, ipAddress?: string, userAgent?: string) {
+    const result = await this.paymentManager.registerPayment(data, userId, ipAddress, userAgent)
+    await this.paymentManager.updateInstallmentsWithPayment(data.saleId, data.amountUSD)
     return result.payment
   }
 
-  async createInstallmentPlan(saleId: string, plan: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string, tx?: any) {
+  async createInstallmentPlan(saleId: string, plan: { amountUSD: number, dueDate: Date }[], userId?: string, ipAddress?: string, userAgent?: string) {
     const sale = await this.saleRepo.findById(saleId)
     if (!sale) throw new NotFoundError('Venta')
 
@@ -128,7 +128,7 @@ export class PaymentService {
       throw new ValidationError(`El total de las cuotas ($${totalInstallmentsUSD.toFixed(2)}) debe ser igual al saldo pendiente de la venta ($${remainingToPlanUSD.toFixed(2)})`)
     }
 
-    return this.paymentManager.createInstallmentPlan(saleId, plan, userId, ipAddress, userAgent, tx)
+    return this.paymentManager.createInstallmentPlan(saleId, plan, userId, ipAddress, userAgent)
   }
 
   async getPaymentStatus(saleId: string, userId?: string, ipAddress?: string, userAgent?: string) {

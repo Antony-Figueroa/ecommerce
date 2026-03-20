@@ -20,13 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -216,17 +209,40 @@ export function AdminNotificationsPage() {
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-3">
-              <Select value={filter} onValueChange={(value) => setFilter(value as "all" | "unread" | "read")}>
-                <SelectTrigger className="w-[160px] h-10 bg-white dark:bg-card text-xs font-bold uppercase tracking-wider">
-                  <SelectValue placeholder="Filtrar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-xs font-bold">Todas</SelectItem>
-                  <SelectItem value="unread" className="text-xs font-bold">No leídas</SelectItem>
-                  <SelectItem value="read" className="text-xs font-bold">Leídas</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto scrollbar-hide pb-1">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-muted-foreground whitespace-nowrap">Estado:</span>
+              <div className="flex bg-slate-100/50 dark:bg-muted/20 p-1 rounded-xl border border-slate-200/50 dark:border-border/50 shadow-sm h-11 items-center px-1.5 shrink-0">
+                <button
+                  onClick={() => setFilter("all")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    filter === "all" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  Todas
+                </button>
+                <button
+                  onClick={() => setFilter("unread")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    filter === "unread" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  No leídas
+                </button>
+                <button
+                  onClick={() => setFilter("read")}
+                  className={`flex items-center gap-2 px-4 py-1.5 text-xs font-bold uppercase tracking-widest transition-all duration-300 rounded-lg whitespace-nowrap group ${
+                    filter === "read" 
+                      ? "bg-white dark:bg-card text-primary shadow-md scale-[1.02]" 
+                      : "text-muted-foreground hover:text-primary hover:bg-white/50 dark:hover:bg-muted/50"
+                  }`}
+                >
+                  Leídas
+                </button>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">

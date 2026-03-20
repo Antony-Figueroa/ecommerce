@@ -9,10 +9,9 @@ import { ProductCard } from "@/components/shop/product-card"
 import { useCart } from "@/contexts/cart-context"
 import { useAuth } from "@/contexts/auth-context"
 import { useFavorites } from "@/contexts/favorites-context"
-import { useSettings } from "@/contexts/settings-context"
+import { toast } from "@/hooks/use-toast"
 import { api } from "@/lib/api"
-import { useToast } from "@/hooks/use-toast"
-import { cn, formatUSD, formatBS } from "@/lib/utils"
+import { formatUSD, formatBS, cn } from "@/lib/utils"
 import type { Product } from "@/types"
 
 interface ProductDetailProps {
@@ -24,8 +23,6 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
   const { addItem } = useCart()
   const { user } = useAuth()
   const { toggleFavorite, isFavorite } = useFavorites()
-  const { settings: _settings } = useSettings()
-  const { toast } = useToast()
   const navigate = useNavigate()
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState("description")
@@ -223,8 +220,8 @@ export function ProductDetail({ product, relatedProducts = [] }: ProductDetailPr
 
       <div className="mt-12">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start gap-1 border-b border-border/40 pb-px">
-            <TabsTrigger value="description">
+          <TabsList className="w-full justify-start border-b bg-transparent p-0">
+            <TabsTrigger value="description" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
               Descripción
             </TabsTrigger>
           </TabsList>

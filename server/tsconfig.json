@@ -13,20 +13,8 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "noImplicitAny": false
+    "sourceMap": true
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules", 
-    "dist", 
-    "src/**/__tests__/**", 
-    "src/**/*.test.ts", 
-    "src/**/*.spec.ts", 
-    "src/test-*.ts", 
-    "src/test-prisma.ts",
-    "src/scripts/**",
-    "src/seed-*.ts",
-    "src/infrastructure/web/routes/ai-chat.routes.ts"
-  ]
+  "exclude": ["node_modules", "dist"]
 }
