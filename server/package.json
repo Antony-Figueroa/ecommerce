@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "npm install --include=dev && tsc && node -e \"require('fs').cpSync('src/generated/client', 'dist/generated/client', {recursive: true})\"",
-    "start": "node dist/index.js",
+    "start": "node scripts/bootstrap.js && node --env-file=.env dist/index.js",
     "db:push": "node -e \"if(process.env.DATABASE_URL){require('child_process').execSync('npx prisma db push --schema=prisma/schema.prisma --skip-generate',{stdio:'inherit'})}\" || echo 'Skipping db:push'"
   },
   "prisma": {
