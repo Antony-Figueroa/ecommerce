@@ -8,13 +8,29 @@ export class SocketService {
   private userSockets: Map<string, string[]> = new Map() // userId -> socketIds[]
 
   init(server: HttpServer) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5174',
+      'http://localhost:3001',
+      'http://127.0.0.1:3001',
+      config.frontendUrl,
+      'https://ecommerce-phi-five-35.vercel.app',
+      ...(process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [])
+    ].filter(Boolean)
+
     this.io = new SocketServer(server, {
       cors: {
-        origin: [config.frontendUrl, 'http://127.0.0.1:5173', 'http://localhost:5173', 'http://localhost:3001', 'http://127.0.0.1:3001'],
+        origin: allowedOrigins,
         credentials: true,
-        methods: ['GET', 'POST']
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
       },
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      allowRequest: (req, callback) => {
+        callback(null, true)
+      }
     })
 
     this.io.use((socket, next) => {
