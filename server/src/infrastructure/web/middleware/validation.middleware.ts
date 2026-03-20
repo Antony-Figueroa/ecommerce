@@ -197,6 +197,7 @@ export const customerUpdateSchema = z.object({
   name: z.string().min(2).optional(),
   phone: z.string().min(7).optional(),
   isActive: z.boolean().optional(),
+  role: z.enum(['ADMIN', 'CUSTOMER']).optional(),
 })
 
 export const paginationSchema = z.object({

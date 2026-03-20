@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 import { formatUSD, formatBS } from "@/lib/utils"
-import { api, API_BASE } from "@/lib/api"
+import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import {
   generateInventoryReport,
@@ -623,34 +623,31 @@ export function FinancialDashboard() {
       onConfirm: async () => {
         const items = cart.map(item => ({
           productId: item.product.id,
+          name: item.product.name,
           quantity: item.quantity,
+          unitPrice: item.product.price,
         }))
 
         try {
-          const response = await fetch(`${API_BASE}/financial/sales`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              items,
-              bcvRate: bcvRate.rate,
-              customerName: "Venta directa",
-            }),
+          await api.createSale({
+            items,
+            bcvRate: bcvRate.rate,
+            customerName: "Venta directa",
+            paymentMethod: "POS",
           })
 
-          if (response.ok) {
-            setCart([])
-            fetchData()
-            toast({
-              title: "Venta procesada",
-              description: "Venta procesada exitosamente!",
-            })
-          }
+          setCart([])
+          fetchData()
+          toast({
+            title: "Venta procesada",
+            description: "Venta procesada exitosamente!",
+          })
         } catch (error) {
           toast({
-            title: "Venta procesada (demo)",
-            description: "La venta se procesó en modo demo.",
+            title: "Error",
+            description: "No se pudo procesar la venta",
+            variant: "destructive",
           })
-          setCart([])
         }
       }
     })
