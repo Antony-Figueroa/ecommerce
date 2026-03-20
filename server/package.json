@@ -5,8 +5,8 @@
   "scripts": {
     "build": "npm install --include=dev && tsc && node -e \"require('fs').cpSync('src/generated/client', 'dist/generated/client', {recursive: true})\"",
     "start": "node scripts/bootstrap.js && node --env-file=.env dist/index.js",
-    "db:push": "node scripts/bootstrap.js && npx prisma db push --schema=prisma/schema.prisma --skip-generate",
-    "postinstall": "node scripts/bootstrap.js && npx prisma db push --schema=prisma/schema.prisma --skip-generate"
+    "db:push": "node scripts/bootstrap.js && npx prisma generate --schema=prisma/schema.prisma && npx prisma db push --schema=prisma/schema.prisma --skip-generate || echo 'db:push skipped'",
+    "postinstall": "node scripts/bootstrap.js && npx prisma generate --schema=prisma/schema.prisma && npx prisma db push --schema=prisma/schema.prisma --skip-generate || echo 'db push skipped - check DATABASE_URL'"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
