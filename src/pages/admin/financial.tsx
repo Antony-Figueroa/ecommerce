@@ -1517,11 +1517,16 @@ export function FinancialDashboard() {
             
             <div className="space-y-2">
               <Label>Método de Pago</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {[
                   { value: "POS", label: "POS", icon: "💳" },
                   { value: "CASH", label: "Efectivo", icon: "💵" },
                   { value: "TRANSFER", label: "Transferencia", icon: "🏦" },
+                  { value: "MIXED", label: "Mixto", icon: "🔄" },
+                  { value: "ZELLE", label: "Zelle", icon: "📧" },
+                  { value: "PAGO_MOVIL", label: "Pago Móvil", icon: "📱" },
+                  { value: "CRYPTO", label: "Cripto", icon: "₿" },
+                  { value: "WHATSAPP", label: "WhatsApp", icon: "📲" },
                 ].map((opt) => (
                   <button
                     key={opt.value}

@@ -137,17 +137,17 @@ export const categoryCreateSchema = z.object({
 export const categoryUpdateSchema = categoryCreateSchema.partial()
 
 export const saleCreateSchema = z.object({
-  userId: z.string().uuid().optional(),
-  customerName: z.string().min(2).optional(),
-  customerPhone: z.string().min(7).optional(),
+  userId: z.string().optional(),
+  customerName: z.string().optional(),
+  customerPhone: z.string().optional(),
   customerEmail: z.string().email().optional().nullable(),
   deliveryAddress: z.string().optional().nullable(),
-  paymentMethod: z.string().optional().default('WHATSAPP'),
+  paymentMethod: z.string().optional().default('POS'),
   items: z.array(z.object({
-    productId: z.string().uuid(),
-    name: z.string(),
-    quantity: z.number().int().positive(),
-    unitPrice: z.number().positive(),
+    productId: z.string(),
+    name: z.string().optional(),
+    quantity: z.number().int().positive().default(1),
+    unitPrice: z.number().nonnegative().optional().default(0),
   })).min(1),
   shippingCost: z.number().nonnegative().optional().default(0),
   bcvRate: z.number().positive().optional(),
