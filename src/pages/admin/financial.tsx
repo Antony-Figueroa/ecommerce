@@ -105,6 +105,8 @@ export function FinancialDashboard() {
   const [customerPhone, setCustomerPhone] = useState("")
   const [paymentMethod, setPaymentMethod] = useState("POS")
   const [showCustomerDialog, setShowCustomerDialog] = useState(false)
+  const [initialPayment, setInitialPayment] = useState(0)
+  const [isPartialPayment, setIsPartialPayment] = useState(false)
 
   const [confirmConfig, setConfirmConfig] = useState<{
     open: boolean;
@@ -635,24 +637,41 @@ export function FinancialDashboard() {
         }))
 
         try {
-          const result = await api.createSale({
+          const saleData: any = {
             items,
             bcvRate: bcvRate.rate,
             customerName: customerName || "Cliente mostrador",
             customerPhone: customerPhone || undefined,
             paymentMethod: paymentMethod,
-          }) as any
+          }
+
+          if (isPartialPayment && initialPayment > 0) {
+            saleData.initialPayment = initialPayment
+            saleData.status = "ACCEPTED"
+          }
+
+          const result = await api.createSale(saleData) as any
 
           setCart([])
           setCustomerName("")
           setCustomerPhone("")
           setPaymentMethod("POS")
+          setInitialPayment(0)
+          setIsPartialPayment(false)
           setShowCustomerDialog(false)
           fetchData()
-          toast({
-            title: "Venta procesada",
-            description: `Venta ${result.saleNumber || 'registrada'} exitosamente!`,
-          })
+          
+          if (isPartialPayment && initialPayment > 0) {
+            toast({
+              title: "Venta con pago parcial",
+              description: `Venta ${result.saleNumber} registrada. Resta: $${formatUSD(totals.totalUSD - initialPayment)}`,
+            })
+          } else {
+            toast({
+              title: "Venta procesada",
+              description: `Venta ${result.saleNumber || 'registrada'} exitosamente!`,
+            })
+          }
         } catch (error: any) {
           toast({
             title: "Error",
@@ -1490,7 +1509,7 @@ export function FinancialDashboard() {
               Completar Venta
             </DialogTitle>
             <DialogDescription>
-              Ingresa los datos del cliente para registrar la venta.
+              Ingresa los datos del cliente y método de pago.
             </DialogDescription>
           </DialogHeader>
           
@@ -1499,7 +1518,7 @@ export function FinancialDashboard() {
               <Label htmlFor="customerName">Nombre del Cliente</Label>
               <Input
                 id="customerName"
-                placeholder="Nombre completo (opcional)"
+                placeholder="Nombre completo"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
               />
@@ -1509,7 +1528,7 @@ export function FinancialDashboard() {
               <Label htmlFor="customerPhone">Teléfono</Label>
               <Input
                 id="customerPhone"
-                placeholder="0412-123-4567 (opcional)"
+                placeholder="0412-123-4567"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
               />
@@ -1544,12 +1563,78 @@ export function FinancialDashboard() {
                 ))}
               </div>
             </div>
+
+            {/* Payment Type: Full or Partial */}
+            <div className="space-y-2">
+              <Label>Tipo de Pago</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPartialPayment(false)
+                    setInitialPayment(0)
+                  }}
+                  className={`flex-1 p-3 rounded-xl border-2 text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                    !isPartialPayment
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-primary/50"
+                  }`}
+                >
+                  PAGO COMPLETO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPartialPayment(true)}
+                  className={`flex-1 p-3 rounded-xl border-2 text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                    isPartialPayment
+                      ? "border-amber-500 bg-amber-50 text-amber-600 dark:bg-amber-900/20"
+                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-amber-500/50"
+                  }`}
+                >
+                  PAGO PARCIAL
+                </button>
+              </div>
+            </div>
+
+            {/* Initial Payment Amount */}
+            {isPartialPayment && (
+              <div className="space-y-2">
+                <Label htmlFor="initialPayment">Monto Inicial (USD)</Label>
+                <Input
+                  id="initialPayment"
+                  type="number"
+                  min="0"
+                  max={totals.totalUSD}
+                  step="0.01"
+                  placeholder="0.00"
+                  value={initialPayment || ""}
+                  onChange={(e) => setInitialPayment(parseFloat(e.target.value) || 0)}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                  <span>Mínimo: $0.00</span>
+                  <span>Máximo: ${formatUSD(totals.totalUSD)}</span>
+                </div>
+              </div>
+            )}
             
+            {/* Summary */}
             <div className="p-4 bg-muted/50 rounded-xl space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Total USD:</span>
                 <span className="font-bold">${formatUSD(totals.totalUSD)}</span>
               </div>
+              {isPartialPayment && (
+                <div className="flex justify-between text-sm text-amber-600">
+                  <span>Pago Inicial:</span>
+                  <span className="font-bold">-${formatUSD(initialPayment)}</span>
+                </div>
+              )}
+              {isPartialPayment && (
+                <div className="flex justify-between text-sm font-bold text-amber-600 border-t pt-2 mt-2">
+                  <span>Por Cobrar:</span>
+                  <span>${formatUSD(totals.totalUSD - initialPayment)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Tasa BCV:</span>
                 <span className="font-bold">Bs {formatBS(bcvRate.rate)}</span>
@@ -1558,16 +1643,26 @@ export function FinancialDashboard() {
                 <span className="font-black">Total BS:</span>
                 <span className="font-black text-primary">Bs {formatBS(totals.totalBs)}</span>
               </div>
+              {isPartialPayment && initialPayment > 0 && (
+                <div className="flex justify-between text-lg text-amber-600">
+                  <span className="font-black">Resto BS:</span>
+                  <span className="font-black">Bs {formatBS((totals.totalUSD - initialPayment) * bcvRate.rate)}</span>
+                </div>
+              )}
             </div>
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCustomerDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowCustomerDialog(false)
+              setIsPartialPayment(false)
+              setInitialPayment(0)
+            }}>
               Cancelar
             </Button>
             <Button onClick={processSale}>
               <DollarSign className="h-4 w-4 mr-2" />
-              Confirmar Venta
+              {isPartialPayment && initialPayment > 0 ? "Registrar Pago Parcial" : "Confirmar Venta"}
             </Button>
           </DialogFooter>
         </DialogContent>

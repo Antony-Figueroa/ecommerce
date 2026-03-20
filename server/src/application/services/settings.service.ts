@@ -50,7 +50,7 @@ export class SettingsService {
       entityType: 'SETTINGS',
       action: 'BACKUP_CREATE',
       userId,
-      details: { filename: backup.filename }
+      details: { filename: backup?.filename || 'unknown' }
     })
 
     return backup
